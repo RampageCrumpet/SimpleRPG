@@ -1,0 +1,62 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+/// <summary>
+/// This script handles controller the cooldown display for an abillity.
+/// </summary>
+public class AbilityUIController : MonoBehaviour
+{
+    /// <summary>
+    /// The button axis we use to trigger the abillity associated with this AbillityCooldown.
+    /// </summary>
+    [SerializeField]
+    [Tooltip("The button axis we use to trigger the abillity associated with this AbillityCooldown.")]
+    public string abillityButtonAxisName = "Fire1";
+
+    [SerializeField]
+    [Tooltip("The mask used to darken this abillity when it's cooling down.")]
+    public Image darkMask;
+
+    [SerializeField]
+    [Tooltip("The Text Mesh we use to display the cooldown time.")]
+    public TextMesh cooldownText;
+
+    private Image abilityIconImage;
+    private Image darkAbillityIcon;
+
+
+    private AbilityInstance abilityInstance;
+
+    public void Initialize(AbilityInstance abilityInstance)
+    {
+        this.abilityInstance = abilityInstance;
+        abilityIconImage.sprite = abilityInstance.abillity.abillitySprite;
+        darkAbillityIcon.sprite = abilityInstance.abillity.abillitySprite;
+    }
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        abilityIconImage = this.GetComponent<Image>();
+        darkAbillityIcon = this.GetComponentInChildren<Image>();
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        UpdateCooldown();
+    }
+
+    private void UpdateCooldown()
+    {
+        float cooldownTimeLeft = Time.time - abilityInstance.abillity.cooldownTime;
+        float percentCooledDown = cooldownTimeLeft - abilityInstance.abillity.cooldownTime;
+
+        //Scale the dark mask so the abillity is properly visible behind it.
+        darkAbillityIcon.fillAmount = percentCooledDown;
+
+        cooldownText.text = Mathf.Round(cooldownTimeLeft).ToString();
+    }
+}
