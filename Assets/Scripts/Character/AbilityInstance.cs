@@ -10,31 +10,33 @@ public class AbilityInstance
     /// <summary>
     /// The abillity we want to invoke.
     /// </summary>
-    public Ability abillity;
+    public Ability ability;
 
     /// <summary>
     /// The last time this abillity was used.
     /// </summary>
-    private float lastActivationTime;
-
-    // Start is called before the first frame update
-    void Start()
+    public float LastActivationTime
     {
-        
+        get;
+        private set;
     }
 
-    // Update is called once per frame
-    void Update()
+    /// <summary>
+    /// Creates a new instance of the AbilityInstance object.
+    /// </summary>
+    /// <param name="ability"> The ability we want an instance of.</param>
+    /// <param name="owningCharacter"></param>
+    public AbilityInstance(Ability ability)
     {
-        
+        this.ability = ability;
     }
 
     public void Activate()
     {
-        if (Time.time > lastActivationTime + abillity.cooldownTime)
+        if (Time.time > LastActivationTime + ability.cooldownTime)
         {
-            abillity.Activate();
-            lastActivationTime = Time.time;
+            ability.Activate();
+            LastActivationTime = Time.time;
         }
     }
 }

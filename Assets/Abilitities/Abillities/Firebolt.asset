@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   abillityName: Fire Bolt
   toolTip: 
-  abillitySprite: {fileID: 0}
+  abillitySprite: {fileID: 21300000, guid: 0ac55f9f886d827408c102bdf33c5ff7, type: 3}
   abillitySound: {fileID: 0}
-  cooldownTime: 1
+  cooldownTime: 10
   projectile: {fileID: 0}
