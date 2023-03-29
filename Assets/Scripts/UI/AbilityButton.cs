@@ -30,12 +30,12 @@ public class AbilityButton : MonoBehaviour
 
     private Ability ability;
 
-    public void Initialize(Ability abilityInstance)
+    public void Initialize(Ability ability)
     {
         abilityIconImage = this.GetComponent<Image>();
         darkAbillityIcon = this.GetComponentInChildren<Image>();
 
-        this.ability = abilityInstance;
+        this.ability = ability;
         abilityIconImage.sprite = ability.abillitySprite;
         darkAbillityIcon.sprite = ability.abillitySprite;
     }

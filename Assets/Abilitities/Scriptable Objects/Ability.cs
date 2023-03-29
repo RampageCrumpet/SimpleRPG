@@ -25,7 +25,7 @@ public abstract class Ability : ScriptableObject
     /// This abillitys sprite.
     /// </summary>
     [SerializeField]
-    [Tooltip("This abilitys sprite.")]
+    [Tooltip("The icon this ability displays in the GUI.")]
     public Sprite abillitySprite;
 
     /// <summary>

@@ -11,21 +11,24 @@ public class Character : MonoBehaviour
     [Tooltip("The maximum health of this character.")]
     private int maxHealth = 100;
 
+    /// <summary>
+    /// The list of serialized abilities this player has.
+    /// </summary>
     [SerializeField]
-    [Tooltip("The list of abilities this character has.")]
+    [Tooltip("The list of abilities this character starts with.")]
     private List<Ability> abilities;
 
     /// <summary>
     /// Private backer for our <see cref="abilities"/> collection.
     /// </summary>
-    private List<Ability> abilityInstances;
+    private List<Ability> personalAbilityCollection = new List<Ability>();
 
     /// <summary>
-    /// A public read only collection of our abilities we can pass out safe in the knowledge that it wont be modified.
+    /// A public read only collection of our abilities with properties un
     /// </summary>
-    public IReadOnlyCollection<Ability> AbilityInstances
+    public IReadOnlyCollection<Ability> PersonalAbilities
     {
-        get => abilityInstances.AsReadOnly();
+        get => personalAbilityCollection.AsReadOnly();
     }
 
     /// <summary>
@@ -33,7 +36,8 @@ public class Character : MonoBehaviour
     /// </summary>
     public void AddAbilitry(Ability ability)
     {
-        abilityInstances.Add((Ability)ScriptableObject.CreateInstance(ability.GetType()));
+        personalAbilityCollection.Add((Ability)ScriptableObject.CreateInstance(ability.GetType()));
+        abilities.Add(ability);
     }
 
     /// <summary>
@@ -48,10 +52,10 @@ public class Character : MonoBehaviour
         health = maxHealth;
 
         // Populate our list of activatable abilities from the start.
-        abilityInstances = new List<Ability>();
         foreach(Ability ability in abilities)
         {
-            AddAbilitry(ability);
+            personalAbilityCollection.Add((Ability)Instantiate(ability));
+            //personalAbilityCollection.Add((Ability)ScriptableObject.CreateInstance(ability.GetType()));
         }
     }
 

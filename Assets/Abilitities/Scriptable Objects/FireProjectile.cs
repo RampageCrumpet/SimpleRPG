@@ -12,7 +12,6 @@ public class FireProjectile : Ability
     [Tooltip("The projectile we want to fire.")]
     public GameObject projectile;
 
-
     public override void Activate(Character callingCharacter)
     {
         base.Activate(callingCharacter);
