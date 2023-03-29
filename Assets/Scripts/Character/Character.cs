@@ -16,16 +16,24 @@ public class Character : MonoBehaviour
     private List<Ability> abilities;
 
     /// <summary>
-    /// Private backer for our <see cref="AbilityInstances"/> collection.
+    /// Private backer for our <see cref="abilities"/> collection.
     /// </summary>
-    private List<AbilityInstance> abilityInstances;
+    private List<Ability> abilityInstances;
 
     /// <summary>
     /// A public read only collection of our abilities we can pass out safe in the knowledge that it wont be modified.
     /// </summary>
-    public IReadOnlyCollection<AbilityInstance> AbilityInstances
+    public IReadOnlyCollection<Ability> AbilityInstances
     {
         get => abilityInstances.AsReadOnly();
+    }
+
+    /// <summary>
+    /// Adds an ability 
+    /// </summary>
+    public void AddAbilitry(Ability ability)
+    {
+        abilityInstances.Add((Ability)ScriptableObject.CreateInstance(ability.GetType()));
     }
 
     /// <summary>
@@ -39,11 +47,11 @@ public class Character : MonoBehaviour
         // Set the health to maximum.
         health = maxHealth;
 
-        // Populate our list of activatable abilities.
-        abilityInstances = new List<AbilityInstance>();
+        // Populate our list of activatable abilities from the start.
+        abilityInstances = new List<Ability>();
         foreach(Ability ability in abilities)
         {
-            abilityInstances.Add(new AbilityInstance(ability));
+            AddAbilitry(ability);
         }
     }
 

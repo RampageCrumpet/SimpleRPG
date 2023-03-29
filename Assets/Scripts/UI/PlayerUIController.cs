@@ -25,11 +25,11 @@ public class PlayerUIController : MonoBehaviour
     void Start()
     {
         // Create a button for each of our abilities.
-        foreach(AbilityInstance abilityInstance in player.character.AbilityInstances)
+        foreach(Ability ability in player.character.AbilityInstances)
         {
             GameObject newAbilityButtonGameObject = Object.Instantiate(abilityButtonPrefab, abillityBar.transform);
             AbilityButton newAbilityButton = newAbilityButtonGameObject.GetComponent<AbilityButton>();
-            newAbilityButton.Initialize(abilityInstance);
+            newAbilityButton.Initialize(ability);
             abilityButtons.Add(newAbilityButton);
         }
     }

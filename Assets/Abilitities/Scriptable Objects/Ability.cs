@@ -42,8 +42,24 @@ public abstract class Ability : ScriptableObject
     [Tooltip("The time delay in seconds before this abillity can be used again.")]
     public float cooldownTime = 1f;
 
+    [HideInInspector]
+    /// <summary>
+    /// The last time this abillity was used.
+    /// </summary>
+    public float LastActivationTime
+    {
+        get;
+        private set;
+    }
+
     /// <summary>
     /// Activate the abillity.
     /// </summary>
-    public abstract void Activate();
+    public virtual void Activate(Character callingCharacter)
+    {
+        if (Time.time > LastActivationTime + this.cooldownTime)
+        {
+            LastActivationTime = Time.time;
+        }
+    }
 }

@@ -28,16 +28,16 @@ public class AbilityButton : MonoBehaviour
     private Image darkAbillityIcon;
 
 
-    private AbilityInstance abilityInstance;
+    private Ability ability;
 
-    public void Initialize(AbilityInstance abilityInstance)
+    public void Initialize(Ability abilityInstance)
     {
         abilityIconImage = this.GetComponent<Image>();
         darkAbillityIcon = this.GetComponentInChildren<Image>();
 
-        this.abilityInstance = abilityInstance;
-        abilityIconImage.sprite = abilityInstance.ability.abillitySprite;
-        darkAbillityIcon.sprite = abilityInstance.ability.abillitySprite;
+        this.ability = abilityInstance;
+        abilityIconImage.sprite = ability.abillitySprite;
+        darkAbillityIcon.sprite = ability.abillitySprite;
     }
 
     // Update is called once per frame
@@ -51,8 +51,8 @@ public class AbilityButton : MonoBehaviour
     /// </summary>
     private void UpdateCooldown()
     {
-        float cooldownTimeLeft = abilityInstance.LastActivationTime - Time.time;
-        float percentCooledDown = (abilityInstance.ability.cooldownTime - cooldownTimeLeft) / abilityInstance.ability.cooldownTime;
+        float cooldownTimeLeft = ability.LastActivationTime - Time.time;
+        float percentCooledDown = (ability.cooldownTime - cooldownTimeLeft) / ability.cooldownTime;
 
         //Scale the dark mask so the abillity is properly visible behind it.
         darkAbillityIcon.fillAmount = percentCooledDown;
