@@ -21,11 +21,13 @@ public class PlayerUIController : MonoBehaviour
     [Tooltip("The layout control for the players ability buttons.")]
     private GameObject abillityBar;
     
-    // Start is called before the first frame update
-    void Start()
+    /// <summary>
+    /// Create the abillity buttons.
+    /// </summary>
+    public void CreateAbilityButtons()
     {
         // Create a button for each of our abilities.
-        foreach(Ability ability in player.character.PersonalAbilities)
+        foreach (Ability ability in player.character.PersonalAbilities)
         {
             GameObject newAbilityButtonGameObject = Object.Instantiate(abilityButtonPrefab, abillityBar.transform);
             AbilityButton newAbilityButton = newAbilityButtonGameObject.GetComponent<AbilityButton>();
