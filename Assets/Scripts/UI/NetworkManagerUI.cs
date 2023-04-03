@@ -34,7 +34,7 @@ public class NetworkManagerUI : MonoBehaviour
     {
         startServerButton.onClick.AddListener(() =>
         {
-            NetworkManager.Singleton.StartServer();
+            NetworkManager.Singleton.StartHost();
         });
 
         startClientButton.onClick.AddListener(() =>
@@ -44,7 +44,7 @@ public class NetworkManagerUI : MonoBehaviour
 
         startDedicatedButton.onClick.AddListener(() =>
         {
-            NetworkManager.Singleton.StartHost();
+            NetworkManager.Singleton.StartServer();
         });
     }
 

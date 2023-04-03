@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class Character : MonoBehaviour
+public class Character : NetworkBehaviour
 {
     /// <summary>
     /// The maximum health of this character.
@@ -54,8 +55,7 @@ public class Character : MonoBehaviour
         // Populate our list of activatable abilities from the start.
         foreach(Ability ability in abilities)
         {
-            personalAbilityCollection.Add((Ability)Instantiate(ability));
-            //personalAbilityCollection.Add((Ability)ScriptableObject.CreateInstance(ability.GetType()));
+            personalAbilityCollection.Add(Instantiate(ability));
         }
     }
 

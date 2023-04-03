@@ -1,12 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 /// <summary>
 /// This script manages player movement.
 /// </summary>
 [RequireComponent(typeof(Rigidbody))]
-public class PlayerController : MonoBehaviour
+public class PlayerController : NetworkBehaviour
 {
     /// <summary>
     /// The movement of the player in unity units per second.
@@ -35,11 +36,14 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // Calculate and enact our players movement.
-        Vector3 movement = CalculateMovement();
-        MoveCharacter(movement);
+        if(IsOwner)
+        {
+            // Calculate and enact our players movement.
+            Vector3 movement = CalculateMovement();
+            MoveCharacter(movement);
 
-        RotateCharacter();
+            RotateCharacter();
+        }
     }
 
     /// <summary>
