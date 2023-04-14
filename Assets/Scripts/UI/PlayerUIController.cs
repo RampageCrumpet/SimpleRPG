@@ -11,10 +11,6 @@ public class PlayerUIController : MonoBehaviour
     [Tooltip("The abillity button prefab.")]
     GameObject abilityButtonPrefab;
 
-    [SerializeField]
-    [Tooltip("The player object we're creating a UI for.")]
-    Player player;
-
     List<AbilityButton> abilityButtons = new List<AbilityButton>();
 
     [SerializeField]
@@ -24,10 +20,10 @@ public class PlayerUIController : MonoBehaviour
     /// <summary>
     /// Create the abillity buttons.
     /// </summary>
-    public void CreateAbilityButtons()
+    public void CreateAbilityButtons(Character character)
     {
         // Create a button for each of our abilities.
-        foreach (Ability ability in player.character.PersonalAbilities)
+        foreach (Ability ability in character.PersonalAbilities)
         {
             GameObject newAbilityButtonGameObject = Object.Instantiate(abilityButtonPrefab, abillityBar.transform);
             AbilityButton newAbilityButton = newAbilityButtonGameObject.GetComponent<AbilityButton>();

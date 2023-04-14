@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -37,6 +38,12 @@ public class Player : NetworkBehaviour
         {
             GameObject playerInstance = Instantiate(playerPrefab);
             playerInstance.GetComponent<NetworkObject>().SpawnWithOwnership(this.OwnerClientId, true);
+            character = playerInstance.GetComponent<Character>();
+        }
+
+        if(IsOwner)
+        {
+            GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<PlayerUIController>()).Where(x => x != null).First().CreateAbilityButtons(character);
         }
     }
 }
