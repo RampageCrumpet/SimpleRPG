@@ -24,25 +24,31 @@ public class PlayerController : NetworkBehaviour
     private float rotationSpeed;
 
     /// <summary>
-    /// The rigidbody controlling this players physics interactions.
+    /// The rigidbody we want to move around.
     /// </summary>
-    new private Rigidbody rigidbody;
+    /// <remarks> This hides the depreciated <see cref="Component.rigidbody"/> so it should be fine in this case.</remarks>
+    private new Rigidbody rigidbody;
 
-    // Start is called before the first frame update
-    void Start()
+    /// <summary>
+    /// Start is called before the first frame update.
+    /// </summary>
+    public void Start()
     {
         this.rigidbody = this.GetComponent<Rigidbody>();
     }
 
-    void Update()
+    /// <summary>
+    /// Update runs once every frame.
+    /// </summary>
+    public void Update()
     {
-        if(IsOwner)
+        if (this.IsOwner)
         {
             // Calculate and enact our players movement.
-            Vector3 movement = CalculateMovement();
-            MoveCharacter(movement);
+            Vector3 movement = this.CalculateMovement();
+            this.MoveCharacter(movement);
 
-            RotateCharacter();
+            this.RotateCharacter();
         }
     }
 
@@ -60,20 +66,16 @@ public class PlayerController : NetworkBehaviour
         movementDirection.y = 0;
         movementDirection.Normalize();
 
-        movementDirection *=  movementSpeed;
+        movementDirection *=  this.movementSpeed;
         return movementDirection;
     }
-
 
     /// <summary>
     /// Moves this player in the given direction.
     /// </summary>
     private void MoveCharacter(Vector3 direction)
     {
-        // Make the movement relative to the cameras local coordinates.
-        //direction = Camera.main.transform.TransformDirection(direction);
-        
-        rigidbody.MovePosition(this.transform.position + (direction * Time.deltaTime));
+        this.GetComponent<Rigidbody>().MovePosition(this.transform.position + (direction * Time.deltaTime));
     }
 
     /// <summary>
@@ -82,17 +84,17 @@ public class PlayerController : NetworkBehaviour
     private void RotateCharacter()
     {
         // The mouses position in 3d space.
-        Vector3 mousePosition = FindMousePosition();
+        Vector3 mousePosition = this.FindMousePosition();
 
-        //The final rotation we want to end up at.
+        // The final rotation we want to end up at.
         Quaternion targetRotation = Quaternion.LookRotation(mousePosition - this.transform.position, Vector3.up);
 
         // Rotate the player towards our target.
-        Quaternion newRotation = Quaternion.RotateTowards(this.rigidbody.rotation, targetRotation, rotationSpeed*Time.deltaTime);
-        newRotation.x = this.rigidbody.rotation.x;
-        newRotation.z = this.rigidbody.rotation.z;
-        
-        this.rigidbody.MoveRotation(newRotation);
+        Quaternion newRotation = Quaternion.RotateTowards(this.GetComponent<Rigidbody>().rotation, targetRotation, this.rotationSpeed * Time.deltaTime);
+        newRotation.x = this.GetComponent<Rigidbody>().rotation.x;
+        newRotation.z = this.GetComponent<Rigidbody>().rotation.z;
+
+        this.GetComponent<Rigidbody>().MoveRotation(newRotation);
     }
 
     /// <summary>
@@ -108,7 +110,7 @@ public class PlayerController : NetworkBehaviour
         // The details about what our ray hit and where.
         RaycastHit hit;
 
-        if(Physics.Raycast(cameraRay, out hit, Mathf.Infinity))
+        if (Physics.Raycast(cameraRay, out hit, Mathf.Infinity))
         {
             return hit.point;
         }
