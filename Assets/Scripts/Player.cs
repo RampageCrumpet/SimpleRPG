@@ -1,49 +1,49 @@
+using SimpleRPG;
+using SimpleRPG.UI;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 
-public class Player : NetworkBehaviour
+namespace SimpleRPG
 {
-    /// <summary>
-    /// The prefab we want to use to spawn our player character.
-    /// </summary>
-    [SerializeField]
-    [Tooltip("The prefab we want to use to spawn our player character.")]
-    private GameObject playerPrefab;
-
-    /// <summary>
-    /// The character our player is controlling.
-    /// </summary>
-    [SerializeField]
-    [Tooltip("Our player's character")]
-    public Character character;
-
-    // Start is called before the first frame update
-    void Start()
+    public class Player : NetworkBehaviour
     {
-        SpawnCharacter();
-    }
+        /// <summary>
+        /// The prefab we want to use to spawn our player character.
+        /// </summary>
+        [SerializeField]
+        [Tooltip("The prefab we want to use to spawn our player character.")]
+        private GameObject playerPrefab;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+        /// <summary>
+        /// The character our player is controlling.
+        /// </summary>
+        [Tooltip("Our player's character")]
+        public Character character;
 
-    private void SpawnCharacter()
-    {
-        if(IsServer)
+        // Start is called before the first frame update
+        void Start()
         {
-            GameObject playerInstance = Instantiate(playerPrefab);
-            playerInstance.GetComponent<NetworkObject>().SpawnWithOwnership(this.OwnerClientId, true);
-            character = playerInstance.GetComponent<Character>();
+            SpawnCharacter();
         }
 
-        if(IsOwner)
+        /// <summary>
+        /// Creates the character object across the network.
+        /// </summary>
+        private void SpawnCharacter()
         {
-            GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<PlayerUIController>()).Where(x => x != null).First().CreateAbilityButtons(character);
+            if (IsServer)
+            {
+                GameObject playerInstance = Instantiate(playerPrefab);
+                playerInstance.GetComponent<NetworkObject>().SpawnWithOwnership(this.OwnerClientId, true);
+            }
+
+            if (IsOwner)
+            {
+                GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<PlayerUIController>()).Single(x => x != null).CreateAbilityButtons(character);
+            }
         }
     }
 }

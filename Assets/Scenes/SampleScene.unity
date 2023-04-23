@@ -1543,6 +1543,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: PlayerUI
       objectReference: {fileID: 0}
+    - target: {fileID: 3479307613409049494, guid: b048e813960f1954eae9a3d13930a20c, type: 3}
+      propertyPath: m_TagString
+      value: UI
+      objectReference: {fileID: 0}
     - target: {fileID: 3479307613409049495, guid: b048e813960f1954eae9a3d13930a20c, type: 3}
       propertyPath: abillityBar
       value: 
