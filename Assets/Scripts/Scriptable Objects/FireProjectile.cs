@@ -15,9 +15,9 @@ namespace SimpleRPG.Abilities
         [Tooltip("The projectile we want to fire.")]
         public GameObject projectile;
 
-        public override void Activate(Character callingCharacter)
+        public override void Activate()
         {
-            base.Activate(callingCharacter);
+            base.Activate();
         }
     }
 }

@@ -52,7 +52,7 @@ namespace SimpleRPG.Abilities
         /// <summary>
         /// Activate the abillity.
         /// </summary>
-        public virtual void Activate(Character callingCharacter)
+        public virtual void Activate()
         {
             if (Time.time > LastActivationTime + this.cooldownTime)
             {

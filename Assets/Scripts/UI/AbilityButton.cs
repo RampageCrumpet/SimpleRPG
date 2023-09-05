@@ -1,6 +1,7 @@
 using SimpleRPG.Abilities;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -36,17 +37,31 @@ namespace SimpleRPG.UI
         public void Initialize(Ability ability)
         {
             abilityIconImage = this.GetComponent<Image>();
-            darkAbillityIcon = this.GetComponentInChildren<Image>();
+            darkAbillityIcon = this.GetComponentsInChildren<Image>().Single(x => x.gameObject != this.gameObject);
 
             this.ability = ability;
             abilityIconImage.sprite = ability.abillitySprite;
-            darkAbillityIcon.sprite = ability.abillitySprite;
+            //darkAbillityIcon.sprite = ability.abillitySprite;
         }
+
+        /// <summary>
+        /// Activate the abillity associate with this button.
+        /// </summary>
+        public void Activate()
+        {
+            this.ability.Activate();
+        }
+
 
         // Update is called once per frame
         void Update()
         {
             UpdateCooldown();
+
+            if(Input.GetKeyDown(abillityButtonAxisName))
+            {
+                this.ability.Activate();
+            }
         }
 
         /// <summary>
@@ -54,10 +69,10 @@ namespace SimpleRPG.UI
         /// </summary>
         private void UpdateCooldown()
         {
-            float cooldownTimeLeft = ability.LastActivationTime - Time.time;
+            float cooldownTimeLeft = ability.LastActivationTime + ability.cooldownTime - Time.time;
             
             //Scale the dark mask so the abillity is properly visible behind it.
-            darkAbillityIcon.fillAmount = (ability.cooldownTime - cooldownTimeLeft) / ability.cooldownTime;
+            darkAbillityIcon.fillAmount = cooldownTimeLeft / ability.cooldownTime;
 
             // If the ability is cooling down we want the text to be visible.
             if (cooldownTimeLeft >= 0)
