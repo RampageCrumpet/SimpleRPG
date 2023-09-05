@@ -27,6 +27,11 @@ namespace SimpleRPG
         private List<Ability> personalAbilityCollection = new List<Ability>();
 
         /// <summary>
+        /// The current health of this character.
+        /// </summary>
+        private int health;
+
+        /// <summary>
         /// A public read only collection of our abilities with properties un
         /// </summary>
         public IReadOnlyCollection<Ability> PersonalAbilities
@@ -43,13 +48,7 @@ namespace SimpleRPG
             abilities.Add(ability);
         }
 
-        /// <summary>
-        /// The current health of this character.
-        /// </summary>
-        private int health;
-
-        // Start is called before the first frame update
-        void Start()
+        public void Initialize()
         {
             // Set the health to maximum.
             health = maxHealth;

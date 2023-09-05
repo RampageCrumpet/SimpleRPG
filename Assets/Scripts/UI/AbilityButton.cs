@@ -55,10 +55,9 @@ namespace SimpleRPG.UI
         private void UpdateCooldown()
         {
             float cooldownTimeLeft = ability.LastActivationTime - Time.time;
-            float percentCooledDown = (ability.cooldownTime - cooldownTimeLeft) / ability.cooldownTime;
-
+            
             //Scale the dark mask so the abillity is properly visible behind it.
-            darkAbillityIcon.fillAmount = percentCooledDown;
+            darkAbillityIcon.fillAmount = (ability.cooldownTime - cooldownTimeLeft) / ability.cooldownTime;
 
             // If the ability is cooling down we want the text to be visible.
             if (cooldownTimeLeft >= 0)

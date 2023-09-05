@@ -36,13 +36,37 @@ namespace SimpleRPG
         {
             if (IsServer)
             {
+                // Ensure that only the server tries to spawn a character.
                 GameObject playerInstance = Instantiate(playerPrefab);
                 playerInstance.GetComponent<NetworkObject>().SpawnWithOwnership(this.OwnerClientId, true);
+
+                // Ensure that the server has the connection betweeen the character and the client.
+                character = playerInstance.GetComponent<Character>();
+                character.Initialize();
+
+                SetupCharacterAcrossNetwork_ClientRPC(playerInstance.GetComponent<NetworkObject>().NetworkObjectId);
+
             }
+        }
+
+        /// <summary>
+        /// Setups the connection between the character and client across the network.
+        /// </summary>
+        [ClientRpc]
+        private void SetupCharacterAcrossNetwork_ClientRPC(ulong playerInstanceNetworkID)
+        {
+            // Find and Initialize the character on the client. If the client is also the server the character may already be initialized.
+            if(character == null)
+            {
+                character = FindObjectsOfType<NetworkObject>().Single(x => x.NetworkObjectId == playerInstanceNetworkID).GetComponent<Character>();
+                character.Initialize();
+            }
+
 
             if (IsOwner)
             {
-                GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<PlayerUIController>()).Single(x => x != null).CreateAbilityButtons(character);
+                // Attach the UI to the character.
+                GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<PlayerUIController>()).Single(x => x != null).CreateAbilityButtons(character.PersonalAbilities);
             }
         }
     }
