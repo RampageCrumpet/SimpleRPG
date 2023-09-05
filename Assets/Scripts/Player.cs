@@ -20,6 +20,7 @@ namespace SimpleRPG
         /// <summary>
         /// The character our player is controlling.
         /// </summary>
+        [HideInInspector]
         [Tooltip("Our player's character")]
         public Character character;
 

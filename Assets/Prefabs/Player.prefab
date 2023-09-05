@@ -47,7 +47,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerPrefab: {fileID: 1669218347359381997, guid: 0998261311cb802448186c5b4f8816d0, type: 3}
-  character: {fileID: 1669218347359382004, guid: 0998261311cb802448186c5b4f8816d0, type: 3}
+  character: {fileID: 0}
 --- !u!114 &-9122513111298733417
 MonoBehaviour:
   m_ObjectHideFlags: 0
