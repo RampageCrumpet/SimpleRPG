@@ -1,5 +1,6 @@
 using SimpleRPG.Abilities;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -24,7 +25,7 @@ namespace SimpleRPG
         /// <summary>
         /// Private backer for our <see cref="abilities"/> collection.
         /// </summary>
-        private List<Ability> personalAbilityCollection = new List<Ability>();
+        private List<AbilityInstance> personalAbilityCollection = new List<AbilityInstance>();
 
         /// <summary>
         /// The current health of this character.
@@ -34,18 +35,9 @@ namespace SimpleRPG
         /// <summary>
         /// A public read only collection of our abilities with properties un
         /// </summary>
-        public IReadOnlyCollection<Ability> PersonalAbilities
+        public IReadOnlyCollection<AbilityInstance> PersonalAbilities
         {
             get => personalAbilityCollection.AsReadOnly();
-        }
-
-        /// <summary>
-        /// Adds an ability
-        /// </summary>
-        public void AddAbilitry(Ability ability)
-        {
-            personalAbilityCollection.Add((Ability)ScriptableObject.CreateInstance(ability.GetType()));
-            abilities.Add(ability);
         }
 
         public void Initialize()
@@ -54,10 +46,7 @@ namespace SimpleRPG
             health = maxHealth;
 
             // Populate our list of activatable abilities from the start.
-            foreach (Ability ability in abilities)
-            {
-                personalAbilityCollection.Add(Instantiate(ability));
-            }
+            this.personalAbilityCollection = abilities.Select(x => new AbilityInstance(x, this)).ToList();
         }
     }
 }

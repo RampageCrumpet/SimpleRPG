@@ -22,14 +22,14 @@ namespace SimpleRPG.UI
         /// <summary>
         /// Create the abillity buttons.
         /// </summary>
-        public void CreateAbilityButtons(IEnumerable<Ability> abilities)
+        public void CreateAbilityButtons(IEnumerable<AbilityInstance> abilityInstances)
         {
             // Create a button for each of our abilities.
-            foreach (Ability ability in abilities)
+            foreach (AbilityInstance abilityInstance in abilityInstances)
             {
                 GameObject newAbilityButtonGameObject = Object.Instantiate(abilityButtonPrefab, abillityBar.transform);
                 AbilityButton newAbilityButton = newAbilityButtonGameObject.GetComponent<AbilityButton>();
-                newAbilityButton.Initialize(ability);
+                newAbilityButton.Initialize(abilityInstance);
                 abilityButtons.Add(newAbilityButton);
             }
         }
