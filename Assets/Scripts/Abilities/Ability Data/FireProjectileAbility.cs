@@ -16,6 +16,7 @@ namespace SimpleRPG.Abilities
         [Tooltip("The projectile we want to fire.")]
         public GameObject Projectile;
 
+        /// <inheritdoc/>
         public override Type AbilityBehavior
         {
             get => typeof(FireProjectileBehaviour);

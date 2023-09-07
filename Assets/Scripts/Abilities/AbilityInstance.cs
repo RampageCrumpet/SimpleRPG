@@ -7,6 +7,9 @@ using UnityEngine;
 
 namespace SimpleRPG.Abilities
 {
+    /// <summary>
+    /// This class represents a specific instance of a castable <see cref="Ability"/>.
+    /// </summary>
     public class AbilityInstance
     {
         private IInvokeableAbilityBehaviour invokeableAbility;
@@ -19,6 +22,9 @@ namespace SimpleRPG.Abilities
             get;
         }
 
+        /// <summary>
+        /// Gets the time left before the ability is ready to be activated again.
+        /// </summary>
         public float CooldownTimeLeft
         {
             get

@@ -15,6 +15,9 @@ namespace SimpleRPG.UI
 
         private readonly List<AbilityButton> abilityButtons = new List<AbilityButton>();
 
+        /// <summary>
+        /// The <see cref="GameObject"/> that holds the UI for our abillities.
+        /// </summary>
         [SerializeField]
         [Tooltip("The layout control for the players ability buttons.")]
         private GameObject abillityBar;

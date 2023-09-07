@@ -30,6 +30,10 @@ namespace SimpleRPG.UI
 
         private AbilityInstance abilityInstance;
 
+        /// <summary>
+        /// Initialize the UI button after creation.
+        /// </summary>
+        /// <param name="abilityInstance"> The <see cref="AbilityInstance"/> we want this button to gather information from.</param>
         public void Initialize(AbilityInstance abilityInstance)
         {
             abilityIconImage = this.GetComponent<Image>();

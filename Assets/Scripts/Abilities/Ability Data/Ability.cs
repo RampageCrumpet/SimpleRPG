@@ -6,12 +6,12 @@ using UnityEngine;
 namespace SimpleRPG.Abilities
 {
     /// <summary>
-    /// The base class of an abillity.
+    /// The base class of an abillity. This class represents the information required to cast this ability.
     /// </summary>
     public abstract class Ability : ScriptableObject
     {
         /// <summary>
-        /// The type of behavior we want our ability to invoke.
+        /// Gets the type of behavior we want our ability to invoke.
         /// </summary>
         public abstract Type AbilityBehavior
         {
