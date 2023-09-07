@@ -45,7 +45,6 @@ namespace SimpleRPG.Abilities
         public AbilityInstance(Ability ability, Character sourceGameObject)
         {
             this.Ability = ability;
-            Type test = ability.AbilityBehavior;
             this.invokeableAbility = sourceGameObject.GetComponent(ability.AbilityBehavior) as IInvokeableAbilityBehaviour;
 
             if (invokeableAbility == null)

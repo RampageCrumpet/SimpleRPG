@@ -13,10 +13,9 @@ namespace SimpleRPG.Abilities
         /// <summary>
         /// The type of behavior we want our ability to invoke.
         /// </summary>
-        public Type AbilityBehavior
+        public abstract Type AbilityBehavior
         {
             get;
-            protected set;
         }
 
         /// <summary>

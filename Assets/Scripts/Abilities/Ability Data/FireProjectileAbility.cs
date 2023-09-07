@@ -1,5 +1,6 @@
 using SimpleRPG;
 using SimpleRPG.Abilities;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,5 +15,10 @@ namespace SimpleRPG.Abilities
         /// </summary>
         [Tooltip("The projectile we want to fire.")]
         public GameObject projectile;
+
+        public override Type AbilityBehavior 
+        { 
+            get => typeof(FireProjectileBehaviour);
+        }
     }
 }
