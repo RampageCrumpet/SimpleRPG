@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,6 +10,15 @@ namespace SimpleRPG.Abilities
     /// </summary>
     public abstract class Ability : ScriptableObject
     {
+        /// <summary>
+        /// The type of behavior we want our ability to invoke.
+        /// </summary>
+        public Type AbilityBehavior
+        {
+            get;
+            protected set;
+        }
+
         /// <summary>
         /// The name of this abillity.
         /// </summary>
@@ -38,26 +48,5 @@ namespace SimpleRPG.Abilities
         /// </summary>
         [Tooltip("The time delay in seconds before this abillity can be used again.")]
         public float cooldownTime = 1f;
-
-        [HideInInspector]
-        /// <summary>
-        /// The last time this abillity was used.
-        /// </summary>
-        public float LastActivationTime
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
-        /// Activate the abillity.
-        /// </summary>
-        public virtual void Activate()
-        {
-            if (Time.time > LastActivationTime + this.cooldownTime)
-            {
-                LastActivationTime = Time.time;
-            }
-        }
     }
 }

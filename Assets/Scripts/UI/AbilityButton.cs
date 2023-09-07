@@ -32,15 +32,15 @@ namespace SimpleRPG.UI
         private Image darkAbillityIcon;
 
 
-        private Ability ability;
+        private AbilityInstance abilityInstance;
 
-        public void Initialize(Ability ability)
+        public void Initialize(AbilityInstance abilityInstance)
         {
             abilityIconImage = this.GetComponent<Image>();
             darkAbillityIcon = this.GetComponentsInChildren<Image>().Single(x => x.gameObject != this.gameObject);
 
-            this.ability = ability;
-            abilityIconImage.sprite = ability.abillitySprite;
+            this.abilityInstance = abilityInstance;
+            abilityIconImage.sprite = abilityInstance.Ability.abillitySprite;
             //darkAbillityIcon.sprite = ability.abillitySprite;
         }
 
@@ -49,7 +49,7 @@ namespace SimpleRPG.UI
         /// </summary>
         public void Activate()
         {
-            this.ability.Activate();
+            this.abilityInstance.Activate();
         }
 
 
@@ -60,7 +60,7 @@ namespace SimpleRPG.UI
 
             if(Input.GetKeyDown(abillityButtonAxisName))
             {
-                this.ability.Activate();
+                this.abilityInstance.Activate();
             }
         }
 
@@ -68,16 +68,14 @@ namespace SimpleRPG.UI
         /// Updates the cooldown display.
         /// </summary>
         private void UpdateCooldown()
-        {
-            float cooldownTimeLeft = ability.LastActivationTime + ability.cooldownTime - Time.time;
-            
+        {  
             //Scale the dark mask so the abillity is properly visible behind it.
-            darkAbillityIcon.fillAmount = cooldownTimeLeft / ability.cooldownTime;
+            darkAbillityIcon.fillAmount = abilityInstance.CooldownTimeLeft / abilityInstance.Ability.cooldownTime;
 
             // If the ability is cooling down we want the text to be visible.
-            if (cooldownTimeLeft >= 0)
+            if (abilityInstance.CooldownTimeLeft >= 0)
             {
-                cooldownText.text = Mathf.Round(cooldownTimeLeft).ToString();
+                cooldownText.text = Mathf.Round(abilityInstance.CooldownTimeLeft).ToString();
             }
             else
             {
