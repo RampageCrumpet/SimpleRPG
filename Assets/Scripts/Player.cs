@@ -46,7 +46,6 @@ namespace SimpleRPG
                 character.Initialize();
 
                 SetupCharacterAcrossNetwork_ClientRPC(playerInstance.GetComponent<NetworkObject>().NetworkObjectId);
-
             }
         }
 
@@ -62,7 +61,6 @@ namespace SimpleRPG
                 character = FindObjectsOfType<NetworkObject>().Single(x => x.NetworkObjectId == playerInstanceNetworkID).GetComponent<Character>();
                 character.Initialize();
             }
-
 
             if (IsOwner)
             {

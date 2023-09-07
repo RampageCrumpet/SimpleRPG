@@ -46,7 +46,7 @@ namespace SimpleRPG
             health = maxHealth;
 
             // Populate our list of activatable abilities from the start.
-            this.personalAbilityCollection = abilities.Select(x => new AbilityInstance(x, this)).ToList();
+            this.personalAbilityCollection = abilities.ConvertAll(x => new AbilityInstance(x, this));
         }
     }
 }

@@ -17,7 +17,6 @@ namespace SimpleRPG.Abilities
         public Ability Ability
         {
             get;
-            private set;
         }
 
         public float CooldownTimeLeft
@@ -52,7 +51,7 @@ namespace SimpleRPG.Abilities
                 Debug.LogError(sourceGameObject.gameObject.name + " has no InvokableAbility for " + ability.abillityName + ".");
             }
         }
-         
+
         /// <summary>
         /// Activate the abillity.
         /// </summary>

@@ -14,10 +14,10 @@ namespace SimpleRPG.Abilities
         /// The prefab for the projectile we want to fire.
         /// </summary>
         [Tooltip("The projectile we want to fire.")]
-        public GameObject projectile;
+        public GameObject Projectile;
 
-        public override Type AbilityBehavior 
-        { 
+        public override Type AbilityBehavior
+        {
             get => typeof(FireProjectileBehaviour);
         }
     }

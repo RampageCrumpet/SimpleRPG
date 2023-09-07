@@ -13,17 +13,5 @@ namespace SimpleRPG.Abilities
         {
             Debug.Log("Invoked ability " + abilityInstace.Ability.abillityName);
         }
-
-        // Start is called before the first frame update
-        void Start()
-        {
-
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-
-        }
     }
 }
