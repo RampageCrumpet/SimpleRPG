@@ -38,8 +38,8 @@ namespace SimpleRPG.Abilities
         [ClientRpc]
         void FireProjectileClientRPC(string abilityName)
         {
-            FireProjectileAbility abilityInstance = (FireProjectileAbility)this.character.PersonalAbilities.Select(x => x.Ability).Single(x => x.abillityName == abilityName);
-            Debug.Log("Invoked ability " + abilityInstance.Ability.abillityName);
+            FireProjectileAbility abilityInstance = (FireProjectileAbility)(this.character.PersonalAbilities.Select(x => x.Ability).Single(x => x.abillityName == abilityName));
+            Debug.Log("Invoked ability " + abilityInstance.abillityName);
         }
     }
 }

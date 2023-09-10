@@ -48,7 +48,7 @@ namespace SimpleRPG
             {
                 // Calculate and enact our players movement.
                 Vector3 movement = this.CalculateMovement();
-                this.MoveCharacter(movement);
+                this.MoveCharacterServerRPC(movement);
 
                 this.RotateCharacter();
             }
@@ -68,16 +68,18 @@ namespace SimpleRPG
             movementDirection.y = 0;
             movementDirection.Normalize();
 
-            movementDirection *= this.movementSpeed;
             return movementDirection;
         }
 
         /// <summary>
         /// Moves this player in the given direction.
         /// </summary>
-        private void MoveCharacter(Vector3 direction)
+        [ServerRpc]
+        private void MoveCharacterServerRPC(Vector3 direction)
         {
-            this.GetComponent<Rigidbody>().MovePosition(this.transform.position + (direction * Time.deltaTime));
+            // Normalize the direction value given by the player to ensure it has no magnitude.
+            direction.Normalize();
+            rigidbody.MovePosition(this.transform.position + ( * this.movementSpeed * Time.deltaTime));
         }
 
         /// <summary>
