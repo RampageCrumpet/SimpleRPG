@@ -24,9 +24,5 @@ namespace SimpleRPG.Abilities
         /// Invoke the given ability.
         /// </summary>
         public void Invoke(AbilityInstance abilityInstace);
-
-        private void InitializeAbilityMap()
-        {
-        }
     }
 }

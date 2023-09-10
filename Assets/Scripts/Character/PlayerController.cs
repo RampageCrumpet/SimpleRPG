@@ -50,7 +50,11 @@ namespace SimpleRPG
                 Vector3 movement = this.CalculateMovement();
                 this.MoveCharacterServerRPC(movement);
 
-                this.RotateCharacter();
+                // Only try to rotate the character if the camera is focused on the game.
+                if (Application.isFocused)
+                {
+                    this.RotateCharacterServerRPC(FindMousePosition());
+                }
             }
         }
 
@@ -85,25 +89,19 @@ namespace SimpleRPG
         /// <summary>
         /// Rotates the character towards the mouse position.
         /// </summary>
-        private void RotateCharacter()
+        [ServerRpc]
+        private void RotateCharacterServerRPC(Vector3 mousePosition)
         {
-            // Only try to rotate the character if the camera is focused on the game.
-            if(Application.isFocused)
-            {
-                // The mouses position in 3d space.
-                Vector3 mousePosition = this.FindMousePosition();
+            // Move the position we're looking at to be on the same plane as us.
+            mousePosition.y = this.transform.position.y;
 
-                // Move the position we're looking at to be on the same plane as us.
-                mousePosition.y = this.transform.position.y;
+            // The final rotation we want to end up at.
+            Quaternion targetRotation = Quaternion.LookRotation(mousePosition - this.transform.position, Vector3.up);
 
-                // The final rotation we want to end up at.
-                Quaternion targetRotation = Quaternion.LookRotation(mousePosition - this.transform.position, Vector3.up);
+            // Rotate the player towards our target.
+            Quaternion newRotation = Quaternion.RotateTowards(rigidbody.rotation, targetRotation, this.rotationSpeed * Time.deltaTime);
 
-                // Rotate the player towards our target.
-                Quaternion newRotation = Quaternion.RotateTowards(rigidbody.rotation, targetRotation, this.rotationSpeed * Time.deltaTime);
-
-                rigidbody.MoveRotation(newRotation);
-            }
+            rigidbody.MoveRotation(newRotation);
         }
 
         /// <summary>
