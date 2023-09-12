@@ -59,9 +59,9 @@ namespace SimpleRPG
         }
 
         /// <summary>
-        /// Calculates the magnitude and direction of the players intended movement.
+        /// Calculates the direction of the players intended movement.
         /// </summary>
-        /// <returns> Returns the global position we want to move to.</returns>
+        /// <returns> Returns a <see cref="Vector3"/> representing the direction we want to move.</returns>
         private Vector3 CalculateMovement()
         {
             Vector3 movementDirection = Vector3.zero;

@@ -39,7 +39,6 @@ namespace SimpleRPG
         {
             get => personalAbilityCollection.AsReadOnly();
         }
-
         public void Initialize()
         {
             // Set the health to maximum.
@@ -47,6 +46,17 @@ namespace SimpleRPG
 
             // Populate our list of activatable abilities from the start.
             this.personalAbilityCollection = abilities.ConvertAll(x => new AbilityInstance(x, this));
+        }
+
+        [ClientRpc]
+        public void TakeDamageClientRPC(int damage)
+        {
+            health -= damage;
+
+            if(health <= 0)
+            {
+                Debug.Log(this.gameObject.name + " has died.");
+            }
         }
     }
 }
