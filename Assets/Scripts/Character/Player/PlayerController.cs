@@ -42,7 +42,7 @@ namespace SimpleRPG
         /// <summary>
         /// Update runs once every frame.
         /// </summary>
-        public void Update()
+        public void FixedUpdate()
         {
             if (this.IsOwner)
             {
@@ -83,7 +83,7 @@ namespace SimpleRPG
         {
             // Normalize the direction value given by the player to ensure it has no magnitude.
             direction.Normalize();
-            rigidbody.MovePosition(this.transform.position + (direction * this.movementSpeed * Time.deltaTime));
+            rigidbody.MovePosition(this.transform.position + (direction * this.movementSpeed * Time.fixedDeltaTime));
         }
 
         /// <summary>
@@ -99,7 +99,7 @@ namespace SimpleRPG
             Quaternion targetRotation = Quaternion.LookRotation(mousePosition - this.transform.position, Vector3.up);
 
             // Rotate the player towards our target.
-            Quaternion newRotation = Quaternion.RotateTowards(rigidbody.rotation, targetRotation, this.rotationSpeed * Time.deltaTime);
+            Quaternion newRotation = Quaternion.RotateTowards(rigidbody.rotation, targetRotation, this.rotationSpeed * Time.fixedDeltaTime);
 
             rigidbody.MoveRotation(newRotation);
         }
