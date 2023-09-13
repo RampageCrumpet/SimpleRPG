@@ -83,7 +83,7 @@ namespace SimpleRPG
         {
             // Normalize the direction value given by the player to ensure it has no magnitude.
             direction.Normalize();
-            rigidbody.MovePosition(this.transform.position + (direction * this.movementSpeed * Time.fixedDeltaTime));
+            rigidbody.MovePosition(this.transform.position + (this.movementSpeed * Time.fixedDeltaTime * direction));
         }
 
         /// <summary>
@@ -115,9 +115,7 @@ namespace SimpleRPG
             Ray cameraRay = Camera.main.ScreenPointToRay(Input.mousePosition);
 
             // The details about what our ray hit and where.
-            RaycastHit hit;
-
-            if (Physics.Raycast(cameraRay, out hit, Mathf.Infinity))
+            if (Physics.Raycast(cameraRay, out RaycastHit hit, Mathf.Infinity))
             {
                 return hit.point;
             }
