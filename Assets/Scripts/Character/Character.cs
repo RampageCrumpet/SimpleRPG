@@ -48,10 +48,16 @@ namespace SimpleRPG
             this.personalAbilityCollection = abilities.ConvertAll(x => new AbilityInstance(x, this));
         }
 
+        /// <summary>
+        /// Reduce the clients health by the given damage.
+        /// </summary>
+        /// <param name="damage"></param>
         [ClientRpc]
         public void TakeDamageClientRPC(int damage)
         {
             health -= damage;
+
+            Debug.Log(this.gameObject.name + " has taken " + damage + " damage.");
 
             if(health <= 0)
             {
