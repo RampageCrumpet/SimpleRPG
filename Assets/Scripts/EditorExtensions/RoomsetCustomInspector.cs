@@ -34,6 +34,8 @@ public class RoomsetCustomInspector : Editor
         //Package the room
         room.gameObject.transform.position = Vector3.zero;
         room.Size = CalculateRoomSize(room);
+
+        PrefabUtility.SavePrefabAsset(room.gameObject);
     }
 
     /// <summary>
