@@ -31,6 +31,11 @@ public class LevelGenerator
 
     private System.Random randomNumberGenerator;
 
+    /// <summary>
+    /// Randomly generate a world given a seed and a size.
+    /// </summary>
+    /// <param name="seed"> The seed we want to use for our random generator.</param>
+    /// <param name="worldSize"> The worlds size in cells.</param>
     public LevelGenerator(int seed, Vector2Int worldSize)
     {
         randomNumberGenerator = new System.Random(seed);
