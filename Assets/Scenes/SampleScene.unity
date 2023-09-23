@@ -458,7 +458,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomset: {fileID: 11400000, guid: b53c3e75126320c4ab86172b14bef442, type: 2}
   worldSize: {x: 150, y: 150}
-  minimumNumberOfRooms: 25
+  minimumNumberOfRooms: 500
 --- !u!4 &557752100
 Transform:
   m_ObjectHideFlags: 0
