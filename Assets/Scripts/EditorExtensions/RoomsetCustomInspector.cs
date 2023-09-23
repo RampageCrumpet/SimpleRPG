@@ -48,7 +48,7 @@ public class RoomsetCustomInspector : Editor
 
         foreach(Connection connection in room.connections)
         {
-            connection.location = new Vector2Int(Mathf.RoundToInt(connection.gameObject.transform.position.x), Mathf.RoundToInt((int)connection.transform.position.z));
+            connection.location = new Vector2Int(Mathf.FloorToInt(connection.gameObject.transform.position.x  / ((Roomset)target).cellSize), Mathf.FloorToInt((int)connection.transform.position.z) / ((Roomset)target).cellSize);
         }
     }
 
@@ -60,6 +60,7 @@ public class RoomsetCustomInspector : Editor
         Vector2Int farCornerLocation = new Vector2Int(Mathf.RoundToInt(objectsInRoom.Max(x => x.position.x)), Mathf.RoundToInt(objectsInRoom.Max(y => y.position.z)));
 
         // Find the distance between the corners and divide it by the cell size to get the rooms size in cells.
-        return (farCornerLocation - originLocation)/((Roomset)target).cellSize;
+        // Because the origin is in the middle of the tile we lose 1 tile's width in each direction and have to add that back.
+        return (farCornerLocation - originLocation + new Vector2Int(1,1))/((Roomset)target).cellSize;
     }
 }

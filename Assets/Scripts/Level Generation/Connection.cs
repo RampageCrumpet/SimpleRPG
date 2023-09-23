@@ -34,4 +34,21 @@ public class Connection : MonoBehaviour
         Vector3 direction = transform.TransformDirection(Vector3.forward) * 5;
         Gizmos.DrawRay(transform.position, direction);
     }
+
+    /// <summary>
+    /// Returns true if a connection is facing in the opposite direction as another connection.
+    /// </summary>
+    /// <param name="otherConnection"> The connection we want to see if we can connect to.</param>
+    /// <returns> True if the connections are facing opposite directions, false otherwise.</returns>
+    public bool CanConnect(Connection otherConnection)
+    {
+        if (this.Forward * -1 == otherConnection.Forward)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 }
