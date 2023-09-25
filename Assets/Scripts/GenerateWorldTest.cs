@@ -17,7 +17,7 @@ public class GenerateWorldTest : MonoBehaviour
     void Start()
     {
         LevelGenerator levelGenerator = new LevelGenerator((int)Time.time, worldSize, roomset.RoomCollection, roomset.cellSize);
-        levelGenerator.GenerateLevel(minimumNumberOfRooms);
+        levelGenerator.GenerateLevel(minimumNumberOfRooms, this.transform);
     }
 
     // Update is called once per frame

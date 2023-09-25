@@ -51,11 +51,11 @@ public class LevelGenerator
         this.roomBlueprints = roomBlueprints;
     }
 
-    public void GenerateLevel(int minimumNumberOfRooms)
+    public void GenerateLevel(int minimumNumberOfRooms, Transform parentTransform)
     {
         //Place a starting room to seed our dungeon.
         Room startingRoom = SelectRandomRoom(null);
-        PlaceRoom(startingRoom, new Vector2Int(worldGrid.GetLength(0)/2, worldGrid.GetLength(1)/2));
+        PlaceRoom(startingRoom, new Vector2Int(worldGrid.GetLength(0)/2, worldGrid.GetLength(1)/2), parentTransform);
 
         // Continue placing rooms while our room count hasn't been reached or we have open connections to fill.
         while (placedRooms.Count < minimumNumberOfRooms || openConnections.Count > 0)
@@ -74,7 +74,7 @@ public class LevelGenerator
                 {
                     if (ValidateRoomPlacement(newRoom, location))
                     {
-                        PlaceRoom(newRoom, location);
+                        PlaceRoom(newRoom, location, parentTransform);
                         break;
                     }
                 }
@@ -106,9 +106,9 @@ public class LevelGenerator
     /// </summary>
     /// <param name="room"> The room we want to place.</param>
     /// <param name="location"> The location in cells where we want to place the room.</param>
-    private void PlaceRoom(Room room, Vector2Int location)
+    private void PlaceRoom(Room room, Vector2Int location, Transform worldParent)
     {
-        Room placedRoom = GameObject.Instantiate(room.gameObject, new Vector3(location.x * cellSize, room.gameObject.transform.position.y, location.y * cellSize), room.gameObject.transform.rotation).GetComponent<Room>();
+        Room placedRoom = GameObject.Instantiate(room.gameObject, new Vector3(location.x * cellSize, room.gameObject.transform.position.y, location.y * cellSize), room.gameObject.transform.rotation, worldParent).GetComponent<Room>();
 
         // Fill out the rooms occupied spaces on the world grid.
         for (int x = 0; x < placedRoom.Size.x; x++)
