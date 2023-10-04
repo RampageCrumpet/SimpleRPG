@@ -509,9 +509,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Size: {x: 1, y: 1}
   connections:
-  - {fileID: 0}
   - {fileID: 6331231672936546016}
-  - {fileID: 0}
   - {fileID: 1229642834310455481}
 --- !u!1 &1868491286090553124
 GameObject:

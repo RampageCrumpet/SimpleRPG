@@ -177,6 +177,7 @@ public class LevelGenerator
         // Ensure that no new connection will be closed off by pointing at a wall.
         foreach (Vector2Int connectionTarget in roomConnectionTargets)
         {
+            // If the target position has no connection pointing out of it AND it's occupied the position must be filled by a wall.
             if (!openConnections.Any(x => x.location == connectionTarget) && worldGrid.ContainsKey(connectionTarget))
             {
                 return false;
