@@ -9,9 +9,6 @@ public class GenerateWorldTest : NetworkBehaviour
     Roomset roomset;
 
     [SerializeField]
-    Vector2Int worldSize;
-
-    [SerializeField]
     int minimumNumberOfRooms;
     
     public override void OnNetworkSpawn()
@@ -51,7 +48,7 @@ public class GenerateWorldTest : NetworkBehaviour
     /// <param name="seed">The seed we want to use to generate a level.</param>
     private void GenerateLevel(int seed)
     {
-        LevelGenerator levelGenerator = new LevelGenerator(seed, worldSize, roomset.RoomCollection, roomset.cellSize);
+        LevelGenerator levelGenerator = new LevelGenerator(seed, roomset.RoomCollection, roomset.cellSize);
         levelGenerator.GenerateLevel(minimumNumberOfRooms, this.transform);
     }
 }

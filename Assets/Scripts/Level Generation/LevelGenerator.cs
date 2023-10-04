@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using LevelGeneration;
 using System.Linq;
+using UnityEngine.Networking.PlayerConnection;
 
 public class LevelGenerator 
 {
@@ -15,7 +16,7 @@ public class LevelGenerator
     /// <summary>
     /// A map for each tile to the world grid. Each room can span multiple tiles.
     /// </summary>
-    private Room[,] worldGrid;
+    private Dictionary<Vector2Int, Room> worldGrid;
 
     /// <summary>
     /// A complete list of rooms we can draw from.
@@ -36,10 +37,10 @@ public class LevelGenerator
     /// </summary>
     /// <param name="seed"> The seed we want to use for our random generator.</param>
     /// <param name="worldSize"> The worlds size in cells.</param>
-    public LevelGenerator(int seed, Vector2Int worldSize, List<Room> roomBlueprints, int cellSize)
+    public LevelGenerator(int seed, List<Room> roomBlueprints, int cellSize)
     {
         randomNumberGenerator = new System.Random(seed);
-        worldGrid = new Room[worldSize.x, worldSize.y];
+        worldGrid = new Dictionary<Vector2Int, Room>();
         this.cellSize = cellSize;
         this.roomBlueprints = roomBlueprints;
     }
@@ -48,7 +49,7 @@ public class LevelGenerator
     {
         //Place a starting room to seed our dungeon.
         Room startingRoom = SelectRandomRoom(null);
-        PlaceRoom(startingRoom, new Vector2Int(worldGrid.GetLength(0)/2, worldGrid.GetLength(1)/2), parentTransform);
+        PlaceRoom(startingRoom, Vector2Int.zero, parentTransform);
 
         // Continue placing rooms while our room count hasn't been reached or we have open connections to fill.
         while (placedRooms.Count < minimumNumberOfRooms || openConnections.Count > 0)
@@ -63,7 +64,7 @@ public class LevelGenerator
                 int openConnectionsAfterRoomPlacement = GetOpenConnectionsAfterRoomPlacement(newRoom, location);
 
                 // Try to place the room if we haven't placed enough rooms or if placing the room will reduce the total 
-                if ((placedRooms.Count < minimumNumberOfRooms && openConnectionsAfterRoomPlacement != 0) || openConnectionsAfterRoomPlacement < openConnections.Count)
+                if ((placedRooms.Count < minimumNumberOfRooms && openConnectionsAfterRoomPlacement > 0) || (placedRooms.Count >= minimumNumberOfRooms && openConnectionsAfterRoomPlacement < openConnections.Count))
                 {
                     if (ValidateRoomPlacement(newRoom, location))
                     {
@@ -108,7 +109,8 @@ public class LevelGenerator
         {
             for (int y = 0; y < placedRoom.Size.y; y++)
             {
-                worldGrid[x + location.x, y + location.y] = placedRoom;
+                Vector2Int placementLocation = new Vector2Int(x + location.x, y + location.y);
+                worldGrid.Add(placementLocation, room);
             }
         }
 
@@ -118,7 +120,7 @@ public class LevelGenerator
             Connection connection = openConnections[x];
 
             Vector2Int connectionTarget = connection.location + connection.Forward;
-            if (worldGrid[connectionTarget.x, connectionTarget.y] != null)
+            if (worldGrid.ContainsKey(connectionTarget))
             {
                 closedConnections.Add(connection);
                 openConnections.Remove(connection);
@@ -129,7 +131,7 @@ public class LevelGenerator
         foreach (Connection connection in placedRoom.connections)
         {
             Vector2Int connectionTarget = connection.location + connection.Forward + location;
-            if (worldGrid[connectionTarget.x, connectionTarget.y] == null)
+            if (!worldGrid.ContainsKey(connectionTarget))
             {
                 openConnections.Add(connection);
             }
@@ -168,7 +170,8 @@ public class LevelGenerator
         {
             for(int y = 0; y < room.Size.y; y++)
             {
-                if (worldGrid[x + location.x, y + location.y] != null)
+                Vector2Int placementLocation = new Vector2Int(x + location.x, y + location.y);
+                if (worldGrid.ContainsKey(placementLocation))
                 {
                     return false;
                 }
@@ -190,7 +193,7 @@ public class LevelGenerator
         // Ensure that no new connection will be closed off by pointing at a wall.
         foreach (Vector2Int connectionTarget in roomConnectionTargets)
         {
-            if (!openConnections.Any(x => x.location == connectionTarget) && worldGrid[connectionTarget.x, connectionTarget.y] != null)
+            if (!openConnections.Any(x => x.location == connectionTarget) && worldGrid.ContainsKey(connectionTarget))
             {
                 return false;
             }
@@ -238,7 +241,7 @@ public class LevelGenerator
             if (IsWithinWorldBounds(connectionTargetLocation))
             {
                 // If the connection points at an open space in our world it wont be closed off.
-                if (worldGrid[connectionTargetLocation.x, connectionTargetLocation.y] == null)
+                if (!worldGrid.ContainsKey(connectionTargetLocation))
                 {
                     changeInConnections++;
                 }
@@ -271,14 +274,6 @@ public class LevelGenerator
     /// <returns> True if the given position is within the bounds of the world, false if it's not.</returns>
     private bool IsWithinWorldBounds(Vector2Int position)
     {
-        if (position.x < 0 ||
-            position.y < 0 ||
-            position.x >= worldGrid.GetLength(0) ||
-            position.y  >= worldGrid.GetLength(1))
-        {
-            return false;
-        }
-
         return true;
     }
     
