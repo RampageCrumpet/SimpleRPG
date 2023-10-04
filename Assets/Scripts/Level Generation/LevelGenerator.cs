@@ -64,7 +64,7 @@ public class LevelGenerator
                 int openConnectionsAfterRoomPlacement = GetOpenConnectionsAfterRoomPlacement(newRoom, location);
 
                 // Try to place the room if we haven't placed enough rooms or if placing the room will reduce the total 
-                if ((placedRooms.Count < minimumNumberOfRooms && openConnectionsAfterRoomPlacement > 0) || (placedRooms.Count >= minimumNumberOfRooms && openConnectionsAfterRoomPlacement < openConnections.Count))
+                if ((placedRooms.Count < minimumNumberOfRooms && openConnectionsAfterRoomPlacement != 0) || openConnectionsAfterRoomPlacement < openConnections.Count)
                 {
                     if (ValidateRoomPlacement(newRoom, location))
                     {
@@ -158,13 +158,6 @@ public class LevelGenerator
     /// <returns>True if the room can be placed here without issue, false is placing the room here would close off rooms or place the room outside of the map.</returns>
     bool ValidateRoomPlacement(Room room, Vector2Int location)
     {
-        // If we're trying to place a room that clips outside of the world grids bounds it's an invalid placement.
-        
-        if (!IsWithinWorldBounds(location) || !IsWithinWorldBounds(location + room.Size))
-        {
-            return false;
-        }
-
         // Ensure that none of the placement locations are already occupied.
         for (int x = 0; x < room.Size.x; x++)
         {
@@ -175,15 +168,6 @@ public class LevelGenerator
                 {
                     return false;
                 }
-            }
-        }
-
-        // Ensure that no connection points outside of the world grid.
-        foreach(Connection connection in room.connections)
-        {
-            if (!IsWithinWorldBounds(location + connection.location + connection.Forward))
-            {
-                return false;
             }
         }
 
@@ -238,13 +222,10 @@ public class LevelGenerator
                 connection.location.x + location.x + connection.Forward.x, 
                 connection.location.y + location.y + connection.Forward.y);
 
-            if (IsWithinWorldBounds(connectionTargetLocation))
+            // If the connection points at an open space in our world it wont be closed off.
+            if (!worldGrid.ContainsKey(connectionTargetLocation))
             {
-                // If the connection points at an open space in our world it wont be closed off.
-                if (!worldGrid.ContainsKey(connectionTargetLocation))
-                {
-                    changeInConnections++;
-                }
+                changeInConnections++;
             }
         }
 
@@ -265,16 +246,6 @@ public class LevelGenerator
         }
 
         return openConnections.Count + changeInConnections;
-    }
-
-    /// <summary>
-    /// Returns true if the given position is within the world bounds.
-    /// </summary>
-    /// <param name="position"> The position we want to check.</param>
-    /// <returns> True if the given position is within the bounds of the world, false if it's not.</returns>
-    private bool IsWithinWorldBounds(Vector2Int position)
-    {
-        return true;
     }
     
     /// <summary>
