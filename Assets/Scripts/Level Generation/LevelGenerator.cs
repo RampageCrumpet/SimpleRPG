@@ -91,6 +91,14 @@ public class LevelGenerator
         else
         {
             List<Room> filteredRoomBlueprints = roomBlueprints.Where(x => x.connections.Any(y => y.CanConnect(connection))).ToList();
+
+            if(filteredRoomBlueprints.Count == 0)
+            {
+                Debug.LogError("No connection connects to " + connection.gameObject.name + " at " + (connection.location + connection.Forward) + ".");
+                // Clear the open connections to ensure that we don't continue generating.
+                openConnections.Clear();
+            }
+
             return filteredRoomBlueprints.ElementAt(randomNumberGenerator.Next(0, filteredRoomBlueprints.Count));
         }
     }
