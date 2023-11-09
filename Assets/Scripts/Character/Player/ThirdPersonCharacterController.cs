@@ -9,7 +9,7 @@ namespace SimpleRPG
     /// This script manages player movement.
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
-    public class PlayerController : NetworkBehaviour
+    public class ThirdPersonCharacterController : NetworkBehaviour
     {
         /// <summary>
         /// The movement of the player in unity units per second.
