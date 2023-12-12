@@ -116,7 +116,7 @@ MonoBehaviour:
   - {fileID: -4583467165816326547, guid: 15e5e3cc21d0c8e4cb06072ca5f81735, type: 3}
   - {fileID: 9176310897612776759, guid: a3614a0b953c07145afd842d9f65d816, type: 3}
   - {fileID: 1200285447651055356, guid: 7b71c7af3f0237c459287916231a979a, type: 3}
-  rotationIncrement: 0
+  rotationIncrement: 90
   rotateXAxis: 0
-  rotateYAxis: 0
+  rotateYAxis: 1
   rotateZAxis: 0
