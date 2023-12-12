@@ -39,7 +39,10 @@ public class GenerateWorldTest : NetworkBehaviour
     [ClientRpc]
     private void GenerateLevelClientRpc(int seed)
     {
-        GenerateLevel(seed);
+        if(!this.IsHost)
+        {
+            GenerateLevel(seed);
+        }
     }
 
     /// <summary>

@@ -68,17 +68,20 @@ namespace SimpleRPG.UI
         /// </summary>
         private void UpdateCooldown()
         {
-            //Scale the dark mask so the abillity is properly visible behind it.
-            darkAbillityIcon.fillAmount = abilityInstance.CooldownTimeLeft / abilityInstance.Ability.cooldownTime;
+            if (abilityInstance != null)
+            {
+                //Scale the dark mask so the abillity is properly visible behind it.
+                darkAbillityIcon.fillAmount = abilityInstance.CooldownTimeLeft / abilityInstance.Ability.cooldownTime;
 
-            // If the ability is cooling down we want the text to be visible.
-            if (abilityInstance.CooldownTimeLeft >= 0)
-            {
-                cooldownText.text = Mathf.Round(abilityInstance.CooldownTimeLeft).ToString();
-            }
-            else
-            {
-                cooldownText.text = "";
+                // If the ability is cooling down we want the text to be visible.
+                if (abilityInstance.CooldownTimeLeft >= 0)
+                {
+                    cooldownText.text = Mathf.Round(abilityInstance.CooldownTimeLeft).ToString();
+                }
+                else
+                {
+                    cooldownText.text = "";
+                }
             }
         }
     }

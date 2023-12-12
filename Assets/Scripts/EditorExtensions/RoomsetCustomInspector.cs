@@ -51,13 +51,37 @@ namespace UnityEditor
 
             foreach (Connection connection in room.connections)
             {
-                connection.location = new Vector2Int(Mathf.FloorToInt(connection.gameObject.transform.position.x / ((Roomset)target).cellSize), Mathf.FloorToInt((int)connection.transform.position.z) / ((Roomset)target).cellSize);
+                if (connection.transform.position.x < 0 || connection.transform.position.z < 0)
+                {
+                    Debug.LogError("Room " + room.gameObject.name + " has a connection in a negative position. This isn't currently supported.");
+                }
+
+                // Calculate the x/y position of the connection. The Z direction in the 3d worldspace maps to the Y direction in the 2d room space.
+                int xPos = Mathf.FloorToInt(connection.transform.position.x / ((Roomset)target).cellSize) - (1 - Mathf.CeilToInt((connection.transform.position.x % ((Roomset)target).cellSize / ((Roomset)target).cellSize)));
+                int yPos = Mathf.FloorToInt(connection.transform.position.z / ((Roomset)target).cellSize) - (1 - Mathf.CeilToInt((connection.transform.position.z % ((Roomset)target).cellSize / ((Roomset)target).cellSize)));
+
+                // Ensure connections at the bottom of the room are placed inside the room.
+                if(connection.transform.position.x == 0)
+                {
+                    xPos += 1;
+                }
+                if(connection.transform.position.z == 0)
+                {
+                    yPos += 1;
+                }
+
+                connection.location = new Vector2Int(xPos, yPos);
             }
         }
 
         private Vector2Int CalculateRoomSize(Room room)
         {
             var objectsInRoom = room.gameObject.GetComponentsInChildren<Transform>();
+
+            if(objectsInRoom.Any(roomObject => roomObject.position.x < 0 || roomObject.position.y < 0))
+            {
+                Debug.LogWarning(room.name + " contains objects with negative position values that are not currently supported by the level generator.");
+            }
 
             Vector2Int originLocation = new Vector2Int(Mathf.RoundToInt(objectsInRoom.Min(x => x.position.x)), Mathf.RoundToInt(objectsInRoom.Min(y => y.position.z)));
             Vector2Int farCornerLocation = new Vector2Int(Mathf.RoundToInt(objectsInRoom.Max(x => x.position.x)), Mathf.RoundToInt(objectsInRoom.Max(y => y.position.z)));

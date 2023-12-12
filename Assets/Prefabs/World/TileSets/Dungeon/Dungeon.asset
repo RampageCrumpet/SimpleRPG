@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: daf5e34a2873be74dbf59d39272f81e1, type: 3}
+  m_Name: Dungeon
+  m_EditorClassIdentifier: 
+  RoomCollection:
+  - {fileID: -6051398298509623112, guid: 8796df93224368645ab10e56bd9caa1f, type: 3}
+  - {fileID: -6051398298509623112, guid: 69e2c0dd93125f149a12974f041750eb, type: 3}
+  - {fileID: -6051398298509623112, guid: 16229e6640defa64a8ad968d392956d9, type: 3}
+  - {fileID: -6051398298509623112, guid: 92d0c52c667ce9142b9bd967bfb6d344, type: 3}
+  - {fileID: -6051398298509623112, guid: 2a027a7fc23a44a4fb26956d313b51e6, type: 3}
+  - {fileID: -6051398298509623112, guid: 25149f5c20f648d43ba06e049b6e482c, type: 3}
+  - {fileID: -6051398298509623112, guid: 24327e77d124a3941918d0aadfb648c9, type: 3}
+  - {fileID: -6051398298509623112, guid: f4082734c487762459d1d87fca81e070, type: 3}
+  - {fileID: -6051398298509623112, guid: f5c9b8f9f59ee454a8ef1aa506d9cc1c, type: 3}
+  - {fileID: -6051398298509623112, guid: dc916991cf3a891418022b2e9df99288, type: 3}
+  - {fileID: -6051398298509623112, guid: 468f209775ab42a40a3eadf50ccd9dc0, type: 3}
+  - {fileID: -6051398298509623112, guid: 1e1f08ae60edfa445b0992c1aad4be13, type: 3}
+  - {fileID: -6051398298509623112, guid: 9c0ee02f2da8e49488dbbb5e30741493, type: 3}
+  - {fileID: -6051398298509623112, guid: 9fbb62a895dfaf24eb468982d511012f, type: 3}
+  - {fileID: -6051398298509623112, guid: 8f18e7b08afa77b4ba6d55360fda4005, type: 3}
+  cellSize: 4
