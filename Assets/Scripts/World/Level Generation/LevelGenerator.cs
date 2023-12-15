@@ -55,7 +55,7 @@ public class LevelGenerator
         while (placedRooms.Count < minimumNumberOfRooms || openConnections.Count > 0)
         {
             // The connection we want to build off of.
-            Connection openConnection = openConnections[randomNumberGenerator.Next(openConnections.Count)];
+            Connection openConnection = openConnections[randomNumberGenerator.Next(openConnections.Count - 1)];
 
             Room newRoom = SelectRandomRoom(openConnection);
 
