@@ -4,8 +4,13 @@ using LevelGeneration;
 using System.Linq;
 using UnityEngine.Networking.PlayerConnection;
 
-public class LevelGenerator 
+public class LevelGenerator
 {
+    /// <summary>
+    /// The seed we want to use for generating our level.
+    /// </summary>
+    public int Seed {get; private set;}
+
     /// <summary>
     /// The connections that have not currently been 
     /// </summary>
@@ -39,7 +44,8 @@ public class LevelGenerator
     /// <param name="worldSize"> The worlds size in cells.</param>
     public LevelGenerator(int seed, List<Room> roomBlueprints, int cellSize)
     {
-        randomNumberGenerator = new System.Random(seed);
+        Seed = seed;
+        randomNumberGenerator = new System.Random(Seed);
         worldGrid = new Dictionary<Vector2Int, Room>();
         this.cellSize = cellSize;
         this.roomBlueprints = roomBlueprints;
