@@ -186,17 +186,22 @@ public class LevelGenerator
         }
 
         // Find the place in the world all of the connections in the room would be pointing at.
-        IEnumerable<Vector2Int> roomConnectionTargets = room.connections.Select(x => x.location + x.Forward + location);
 
         // Ensure that no new connection will be closed off by pointing at a wall.
-        foreach (Vector2Int connectionTarget in roomConnectionTargets)
+        foreach (Connection connection in room.connections)
         {
-            // If the target position has no connection pointing out of it AND it's occupied the position must be filled by a wall.
-            if (!openConnections.Any(x => x.location == connectionTarget) && worldGrid.ContainsKey(connectionTarget))
+            // Find the location in the world our connection is pointing at.
+            Vector2Int connectionTarget = connection.location + connection.Forward + location;
+
+            // If the target position has no connection pointing out of it in the opposite direction as our connection AND it's occupied the position must be filled by a wall.
+            if (!openConnections.Any(x => x.location == connectionTarget && x.Forward*-1 == connection.Forward) && worldGrid.ContainsKey(connectionTarget))
             {
                 return false;
             }
         }
+
+        // Find the place in the world all of the connections in the room would be pointing at.
+        IEnumerable<Vector2Int> roomConnectionTargets = room.connections.Select(x => x.location + x.Forward + location);
 
         // Ensure that no existing connection will be closed off by hitting a wall.
         foreach (Connection connection in openConnections)
