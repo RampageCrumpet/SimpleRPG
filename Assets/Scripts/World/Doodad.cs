@@ -79,7 +79,7 @@ public class Doodad : MonoBehaviour
     {
         if (meshes.Count != 0)
         {
-            this.GetComponent<MeshFilter>().mesh = meshes[Random.Range(0, meshes.Count - 1)];
+            this.GetComponent<MeshFilter>().mesh = meshes[Random.Range(0, meshes.Count)];
         }
     }
 }
