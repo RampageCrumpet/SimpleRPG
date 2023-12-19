@@ -31,7 +31,7 @@ public class LevelGeneratorController : NetworkBehaviour
     public void GenerateLevelAcrossNetwork(int seed)
     {
         // Generate the level if this is a headless server.
-        if (this.IsServer)
+        if (this.IsServer && !this.IsHost)
         {
             GenerateLevel(seed);
         }
@@ -62,10 +62,7 @@ public class LevelGeneratorController : NetworkBehaviour
     [ClientRpc]
     private void GenerateLevelClientRpc(int seed, ClientRpcParams clientRpcParams = default)
     {
-        if(this.IsClient)
-        {
-            GenerateLevel(seed);
-        }
+        GenerateLevel(seed);
     }
 
     /// <summary>
