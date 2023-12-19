@@ -66,7 +66,6 @@ public class FirstPersonCharacterController : NetworkBehaviour
 
             //TODO: This doesn't belong here, delete it.
             this.gameObject.GetComponent<MeshRenderer>().forceRenderingOff = true;
-
         }
     }
 

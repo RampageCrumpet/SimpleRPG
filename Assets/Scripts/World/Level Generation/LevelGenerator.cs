@@ -89,7 +89,6 @@ public class LevelGenerator
     /// <returns> Returns a random room with at least one connection facing towards the given connection.</returns>
     private Room SelectRandomRoom(Connection connection)
     {
-        //TODO: Take into account the connection we're building off so we only pick potentially applicable rooms.
         if(connection == null)
         {
             return roomBlueprints[randomNumberGenerator.Next(roomBlueprints.Count)];
@@ -187,7 +186,7 @@ public class LevelGenerator
         }
 
         // Find the place in the world all of the connections in the room would be pointing at.
-        List<Vector2Int> roomConnectionTargets = room.connections.Select(x => x.location + x.Forward + location).ToList();
+        IEnumerable<Vector2Int> roomConnectionTargets = room.connections.Select(x => x.location + x.Forward + location);
 
         // Ensure that no new connection will be closed off by pointing at a wall.
         foreach (Vector2Int connectionTarget in roomConnectionTargets)
@@ -198,7 +197,6 @@ public class LevelGenerator
                 return false;
             }
         }
-
 
         // Ensure that no existing connection will be closed off by hitting a wall.
         foreach (Connection connection in openConnections)
