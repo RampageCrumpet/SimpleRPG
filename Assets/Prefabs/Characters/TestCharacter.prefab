@@ -292,7 +292,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f86392e45593a3c4496ef4982a9533db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  movementSpeed: 1
-  rotationSpeed: 12
-  bottomRotationLimit: 60
-  topRotationLimit: -60
+  movementSpeed: 4
+  rotationSpeed: 360
+  maximumPitch: 60
+  minimumPitch: -60

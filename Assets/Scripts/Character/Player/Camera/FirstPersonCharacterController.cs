@@ -29,41 +29,51 @@ public class FirstPersonCharacterController : NetworkBehaviour
     private CharacterController characterController;
 
     /// <summary>
-    /// The minimum X rotation our camera can have.
+    /// The distance below the horizon line our character can look.
     /// </summary>
     [SerializeField]
     [Tooltip("The furthest down our character can look.")]
-    private float bottomRotationLimit = 60;
+    private float maximumPitch = 60;
 
     /// <summary>
-    /// The maximum X rotation our camera can have.
+    /// The distance above our horizon line the character can look.
     /// </summary>
     [SerializeField]
     [Tooltip("The furthest up our character can look.")]
-    private float topRotationLimit = -60;
+    private float minimumPitch = -60;
+
+    /// <summary>
+    /// The camera we want our script to be actively controlling.
+    /// </summary>
+    private Camera activeCamera;
 
     /// <summary>
     /// Start is called before the first frame update.
     /// </summary>
     public void Start()
     {
+        this.activeCamera = Camera.main;
         this.characterController = this.GetComponent<CharacterController>();
 
         if (this.IsOwner)
         {
             // Move the main camera to this character.
-            Camera.main.transform.SetParent(this.gameObject.transform);
-            Camera.main.transform.position = this.gameObject.transform.position;
+            activeCamera.transform.SetParent(this.gameObject.transform);
+            activeCamera.transform.position = this.gameObject.transform.position;
+
+            // Lock the cursor so it doesn't go wiggling everywhere.
+            Cursor.lockState = CursorLockMode.Locked;
 
             //TODO: This doesn't belong here, delete it.
             this.gameObject.GetComponent<MeshRenderer>().forceRenderingOff = true;
+
         }
     }
 
     /// <summary>
     /// Update runs once every frame.
     /// </summary>
-    public void Update()
+    public void FixedUpdate()
     {
         if (this.IsOwner)
         {
@@ -110,15 +120,31 @@ public class FirstPersonCharacterController : NetworkBehaviour
     /// <summary>
     /// Rotates the character towards the mouse position.
     /// </summary>
-    /// <param name="xMove"> The horizontal movement.</param>
-    /// <param name="yMove"> The vertical movement.</param>
+    /// <param name="yaw"> The horizontal movement.</param>
+    /// <param name="pitch"> The vertical movement.</param>
     [ServerRpc]
-    private void RotateCharacterServerRPC(float xMove, float yMove)
+    private void RotateCharacterServerRPC(float yaw, float pitch)
     {
-        float clampedYRotation = Mathf.Clamp(yMove * rotationSpeed, topRotationLimit, bottomRotationLimit);
+        // Calculate the new camera rotation and then ensure it's clamped between our minimum and maximum rotations.
+        //Find the camera's rotation relative to the horizon line.
+        float cameraPitch = activeCamera.transform.localRotation.eulerAngles.x + 180f;
 
-        Camera.main.transform.Rotate(clampedYRotation, 0 , 0);
-        this.transform.Rotate(0, xMove * rotationSpeed, 0);
+        // Adjust the camera's rotation by the ammount we want to rotate.
+        cameraPitch += pitch * rotationSpeed * Time.fixedDeltaTime;
+
+        // Ensure it's between 0 and 360 degrees to be a valid angle.
+        cameraPitch %= 360;
+
+        // Ensure that it's between our minimum and maximum pitch, both adjusted to be relative to our horizon line.
+        cameraPitch = Mathf.Clamp(cameraPitch, minimumPitch + 180f,maximumPitch + 180f);
+
+        // Set the angle back to Unity's usual rotational origin and assign it to our camera.
+        activeCamera.transform.localEulerAngles = new Vector3(cameraPitch - 180f, activeCamera.transform.localRotation.y, activeCamera.transform.localRotation.z);
+
+
+        // Horizontal rotation.
+        float cameraYaw = yaw * rotationSpeed * Time.fixedDeltaTime;
+        this.gameObject.transform.Rotate(0, cameraYaw, 0);
     }
 
 }
