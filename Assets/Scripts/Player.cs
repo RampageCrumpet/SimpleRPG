@@ -58,7 +58,7 @@ namespace SimpleRPG
             // Find and Initialize the character on the client. If the client is also the server the character may already be initialized.
             if(character == null)
             {
-                character = FindObjectsOfType<NetworkObject>().Single(x => x.NetworkObjectId == playerInstanceNetworkID).GetComponent<Character>();
+                character = FindObjectsByType<NetworkObject>(FindObjectsSortMode.None).Single(x => x.NetworkObjectId == playerInstanceNetworkID).GetComponent<Character>();
                 character.Initialize();
             }
 
