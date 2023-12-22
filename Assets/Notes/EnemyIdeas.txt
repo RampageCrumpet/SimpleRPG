@@ -1,0 +1,24 @@
+Enemy Ideas
+
+
+Lava Crab
+Tries to grab player and carry them into lava.
+Hides? Hard to spot?
+
+
+Poltergheist
+Throws loose objects and loot, opens/closes doors and containers
+Bound to haunted object? Need a way to defeat.
+
+Spiders with spiderwebs
+Webs trigger spiders to attack.
+
+Something to attack isolated players?
+Ghost?
+
+Something to make players stay quiet.
+Bat creature? Echolocation?
+
+Skeletons
+Multiple variants? Armored? Regular?
+Spawn infinitely from bone piles or maybe get back up after being defeated?
