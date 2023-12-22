@@ -5,7 +5,8 @@
         "Unity.TextMeshPro",
         "Unity.Mathematics",
         "Unity.Netcode.Runtime",
-        "Unity.Netcode.Components"
+        "Unity.Netcode.Components",
+        "Unity.AI.Navigation"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
