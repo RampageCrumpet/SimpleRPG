@@ -52,6 +52,13 @@ namespace AI
         /// <inheritdoc/>
         public override void OnStateUpdate()
         {
+            //Check if we're dead.
+            if (SpiderAI.Health < 0)
+            {
+                SpiderAI.SpiderStateMachine.ChangeState(new SpiderStateDead(SpiderAI));
+                return;
+            }
+
             if (this.SpiderAI.NavigationAgent.pathStatus == NavMeshPathStatus.PathComplete && this.SpiderAI.NavigationAgent.remainingDistance < 0.25f)
             {
                 if(SpiderAI.Nest != null && (this.SpiderAI.NavigationAgent.destination - SpiderAI.Nest.transform.position).magnitude < 0.5f && SpiderAI.Nest.IsOwned == false)

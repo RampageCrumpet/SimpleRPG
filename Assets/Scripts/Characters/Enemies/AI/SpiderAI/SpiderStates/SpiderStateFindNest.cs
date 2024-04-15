@@ -36,7 +36,7 @@ namespace AI
             }
 
             // Find the spiders nest.
-            SpiderAI.NavigationAgent.SetDestination(SpiderAI.Nest.transform.position);
+            SpiderAI.SetDestinationRPC(SpiderAI.Nest.transform.position);
         }
 
         /// <inheritdoc/>
@@ -47,6 +47,13 @@ namespace AI
         /// <inheritdoc/>
         public override void OnStateUpdate()
         {
+            //Check if we're dead.
+            if (SpiderAI.Health < 0)
+            {
+                SpiderAI.SpiderStateMachine.ChangeState(new SpiderStateDead(SpiderAI));
+                return;
+            }
+
             // Check to see if anyone has wandered into our sight.
             IOrderedEnumerable<Character> visibleCharacters = FindVisibleTargets();
             if (visibleCharacters.Any())

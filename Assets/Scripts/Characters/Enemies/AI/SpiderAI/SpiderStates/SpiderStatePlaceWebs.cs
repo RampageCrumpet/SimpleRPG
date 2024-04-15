@@ -64,6 +64,13 @@ namespace AI
         /// <inheritdoc/>
         public override void OnStateUpdate()
         {
+            //Check if we're dead.
+            if (SpiderAI.Health < 0)
+            {
+                SpiderAI.SpiderStateMachine.ChangeState(new SpiderStateDead(SpiderAI));
+                return;
+            }
+
             if (Time.time - lastWebConstructionTime > minimumNumberOfSecondsBeforeWebConstruction && IsValidSpaceForWeb())
             {
                 lastWebConstructionTime = Time.time;

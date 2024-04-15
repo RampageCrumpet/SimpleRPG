@@ -39,6 +39,12 @@ namespace AI
         /// <inheritdoc/>
         public override void OnStateUpdate()
         {
+            if (SpiderAI.Health < 0)
+            {
+                SpiderAI.SpiderStateMachine.ChangeState(new SpiderStateDead(SpiderAI));
+                return;
+            }
+
             float distanceToTarget = (SpiderAI.transform.position - targetCharacter.transform.position).magnitude;
 
             // If we're close enough to attack transition to the attack state.

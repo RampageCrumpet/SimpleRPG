@@ -50,7 +50,7 @@ public class Projectile : NetworkBehaviour
     {
         this.damage = damage;
         direction.Normalize();
-        this.GetComponent<Rigidbody>().velocity = velocity * direction;
+        this.GetComponent<Rigidbody>().linearVelocity = velocity * direction;
     }
 
     public void OnCollisionEnter(Collision collision)

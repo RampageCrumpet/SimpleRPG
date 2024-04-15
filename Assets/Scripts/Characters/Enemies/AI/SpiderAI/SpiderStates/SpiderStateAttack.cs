@@ -30,6 +30,7 @@ namespace AI
         /// <inheritdoc/>
         public override void OnStateEnter()
         {
+            
         }
 
         /// <inheritdoc/>
@@ -40,6 +41,13 @@ namespace AI
         /// <inheritdoc/>
         public override void OnStateUpdate()
         {
+            //Check if we're dead.
+            if (SpiderAI.Health < 0)
+            {
+                SpiderAI.SpiderStateMachine.ChangeState(new SpiderStateDead(SpiderAI));
+                return;
+            }
+
             float distanceFromTarget = (SpiderAI.transform.position - targetCharacter.transform.position).magnitude;
 
             windUpTime += Time.deltaTime;
@@ -56,6 +64,7 @@ namespace AI
             if(windUpTime > SpiderAI.Attack.WindUpTime) 
             {
                 windUpTime = 0;
+                SpiderAI.animatable.Attack();
                 SpiderAI.Attack.AttackCharacter(targetCharacter);
                 cooldownTime = 0;
             }

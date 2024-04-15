@@ -39,6 +39,13 @@ namespace AI
 
         public override void OnStateUpdate()
         {
+            //Check if we're dead.
+            if (SpiderAI.Health < 0)
+            {
+                SpiderAI.SpiderStateMachine.ChangeState(new SpiderStateDead(SpiderAI));
+                return;
+            }
+
             // If we can see a player chase that.
             if (SpiderAI.TargetList.Any())
             {

@@ -14,7 +14,7 @@ namespace AI
     /// </summary>
     [RequireComponent(typeof(NavMeshAgent))]
     [RequireComponent (typeof(Attack))]
-    public class SpiderAI : NetworkBehaviour
+    public class SpiderAI : Character
     {
         /// <summary>
         /// The state machine used for the spiders decision making.
@@ -74,11 +74,18 @@ namespace AI
         /// </summary>
         public List<Spiderweb> spiderwebs = new List<Spiderweb>();
 
+        public Animatable animatable
+        {
+            get;
+            private set;
+        }
+
         // Start is called before the first frame update
         void Start()
         {
             NavigationAgent = GetComponent<NavMeshAgent>();
             Attack = GetComponent<Attack>();
+            animatable = GetComponent<Animatable>();
 
             SpiderStateMachine = new StateMachine();
             SpiderStateMachine.InitializeStateMachine(new SpiderStateMakeNewNest(this));
@@ -130,6 +137,12 @@ namespace AI
             IEnumerable<SpiderNest> nestLocations = Physics.OverlapSphere(this.transform.position, nestDetectionRange, LayerMask.GetMask("TriggerLocations"), QueryTriggerInteraction.Collide).Select(x => x.gameObject.GetComponent<SpiderNest>()).Where(x => x != null);
 
             Nest = nestLocations.Where(x => x != null).OrderByDescending(x => x.NestSuitability).Where(x => !x.IsOwned).FirstOrDefault();
+        }
+
+        [Rpc(SendTo.Everyone)]
+        public void SetDestinationRPC(Vector3 targetLocation)
+        {
+            NavigationAgent.SetDestination(targetLocation);
         }
     }
 }

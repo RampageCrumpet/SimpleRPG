@@ -16,7 +16,9 @@ namespace AI
         /// </summary>
         /// <param name="spiderAI"> The SpiderAI determining how our spider behaves.</param>
         /// <param name="stateMachine"> The state machine driving our <see cref="IState"/>.</param>
-        public SpiderStateIdle(SpiderAI spiderAI) : base(spiderAI) { }
+        public SpiderStateIdle(SpiderAI spiderAI) : base(spiderAI)
+        {
+        }
 
         /// <inheritdoc/>
         public override void OnStateEnter()
@@ -31,6 +33,12 @@ namespace AI
         /// <inheritdoc/>
         public override void OnStateUpdate()
         {
+            if(SpiderAI.Health < 0)
+            {
+                SpiderAI.SpiderStateMachine.ChangeState(new SpiderStateDead(SpiderAI));
+                return;
+            }
+
             // If we can see a player chase that.
             if(SpiderAI.TargetList.Any())
             {

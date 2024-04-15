@@ -30,7 +30,7 @@ namespace SimpleRPG
         /// <summary>
         /// The current health of this character.
         /// </summary>
-        private int health;
+        public int Health { get; private set; }
 
         /// <summary>
         /// A public read only collection of our abilities with properties un
@@ -39,10 +39,11 @@ namespace SimpleRPG
         {
             get => personalAbilityCollection.AsReadOnly();
         }
+
         public void Initialize()
         {
             // Set the health to maximum.
-            health = maxHealth;
+            Health = maxHealth;
 
             // Populate our list of activatable abilities from the start.
             this.personalAbilityCollection = abilities.ConvertAll(x => new AbilityInstance(x, this));
@@ -55,11 +56,11 @@ namespace SimpleRPG
         [ClientRpc]
         public void TakeDamageClientRPC(int damage)
         {
-            health -= damage;
+            Health -= damage;
 
             Debug.Log(this.gameObject.name + " has taken " + damage + " damage.");
 
-            if(health <= 0)
+            if(Health <= 0)
             {
                 Debug.Log(this.gameObject.name + " has died.");
             }
