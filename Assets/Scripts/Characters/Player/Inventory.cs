@@ -13,9 +13,9 @@ namespace Inventory
         /// <summary>
         /// The total size of our inventory grid.
         /// </summary>
-        [SerializeField]
+        [field: SerializeField]
         [Tooltip("The total size of the inventory grid.")]
-        Vector2Int inventorySize;
+        public Vector2Int inventorySize {get; private set; }
 
         /// <summary>
         /// The contents of our inventory grid.
