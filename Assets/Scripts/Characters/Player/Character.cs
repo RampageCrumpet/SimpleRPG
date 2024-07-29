@@ -50,11 +50,11 @@ namespace SimpleRPG
         }
 
         /// <summary>
-        /// Reduce the clients health by the given damage.
+        /// Reduce the characters health by the given damage across the network.
         /// </summary>
         /// <param name="damage"></param>
-        [ClientRpc]
-        public void TakeDamageClientRPC(int damage)
+        [Rpc(SendTo.Everyone)]
+        public void TakeDamageRPC(int damage)
         {
             Health -= damage;
 

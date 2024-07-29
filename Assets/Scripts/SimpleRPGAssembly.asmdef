@@ -6,7 +6,10 @@
         "Unity.Mathematics",
         "Unity.Netcode.Runtime",
         "Unity.Netcode.Components",
-        "Unity.AI.Navigation"
+        "Unity.AI.Navigation",
+        "Unity.VisualScripting.Core",
+        "Unity.VisualScripting.Flow",
+        "Unity.VisualScripting.State"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

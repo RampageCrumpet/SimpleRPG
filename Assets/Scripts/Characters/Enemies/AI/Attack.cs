@@ -1,6 +1,7 @@
 using SimpleRPG;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 public class Attack : MonoBehaviour
@@ -26,8 +27,8 @@ public class Attack : MonoBehaviour
     [field: SerializeField]
     public float CooldownTime { get; private set; }
 
-
-    public void AttackCharacter(Character character)
+    [Rpc(SendTo.Everyone)]
+    public void AttackCharacterRPC(Character character)
     {
         Debug.Log(character.gameObject.name + " has been attacked!");
     }

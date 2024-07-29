@@ -65,7 +65,7 @@ namespace AI
             {
                 windUpTime = 0;
                 SpiderAI.animatable.Attack();
-                SpiderAI.Attack.AttackCharacter(targetCharacter);
+                SpiderAI.Attack.AttackCharacterRPC(targetCharacter);
                 cooldownTime = 0;
             }
         }

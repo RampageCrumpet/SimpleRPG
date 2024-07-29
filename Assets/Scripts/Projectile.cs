@@ -60,7 +60,7 @@ public class Projectile : NetworkBehaviour
             Character character = collision.gameObject.GetComponent<Character>();
             if (character != null)
             {
-                character.TakeDamageClientRPC(damage);
+                character.TakeDamageRPC(damage);
             }
 
             this.DestroyProjectile();

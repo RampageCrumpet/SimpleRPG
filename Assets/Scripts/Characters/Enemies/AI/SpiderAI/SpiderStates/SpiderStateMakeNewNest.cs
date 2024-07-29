@@ -98,7 +98,7 @@ namespace AI
             NavMeshHit navHit;
             NavMesh.SamplePosition(desiredWanderLocation, out navHit, WanderDistance, NavMesh.AllAreas);
 
-            SpiderAI.NavigationAgent.SetDestination(navHit.position);
+            this.SpiderAI.SetDestinationRPC(navHit.position);
         }
     }
 }

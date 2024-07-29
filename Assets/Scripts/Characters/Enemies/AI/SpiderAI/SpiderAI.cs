@@ -87,14 +87,20 @@ namespace AI
             Attack = GetComponent<Attack>();
             animatable = GetComponent<Animatable>();
 
-            SpiderStateMachine = new StateMachine();
-            SpiderStateMachine.InitializeStateMachine(new SpiderStateMakeNewNest(this));
+            if (this.IsServer || this.IsHost)
+            {
+                SpiderStateMachine = new StateMachine();
+                SpiderStateMachine.InitializeStateMachine(new SpiderStateMakeNewNest(this));
+            }
         }
 
         // Update is called once per frame
         void Update()
         {
-            SpiderStateMachine.Update();
+            if (this.IsServer || this.IsHost)
+            {
+                SpiderStateMachine.Update();
+            }
         }
 
         /// <summary>
@@ -135,7 +141,6 @@ namespace AI
         {
             // Find all nests within range.
             IEnumerable<SpiderNest> nestLocations = Physics.OverlapSphere(this.transform.position, nestDetectionRange, LayerMask.GetMask("TriggerLocations"), QueryTriggerInteraction.Collide).Select(x => x.gameObject.GetComponent<SpiderNest>()).Where(x => x != null);
-
             Nest = nestLocations.Where(x => x != null).OrderByDescending(x => x.NestSuitability).Where(x => !x.IsOwned).FirstOrDefault();
         }
 
