@@ -34,9 +34,9 @@ namespace Inventory
         /// <param name="location"> The location within the inventory to add the item.</param>
         public void AddItem(Item item, Vector2Int location)
         {
-            for(int x = location.x; x < location.x + item.itemSize.x; x++) 
+            for(int x = location.x; x < location.x + item.ItemSize.x; x++) 
             { 
-                for(int y = location.y; y < location.y + item.itemSize.y; y++)
+                for(int y = location.y; y < location.y + item.ItemSize.y; y++)
                 {
                     inventory[x,y] = item;
                 }
@@ -73,9 +73,9 @@ namespace Inventory
         /// <returns> False if the item is outside the bounds of the inventory or overlaps another item, true otherwise.</returns>
         public bool ValidateItemPlacement(Item item, Vector2Int location)
         {
-            for (int x = location.x; x < location.x + item.itemSize.x; x++)
+            for (int x = location.x; x < location.x + item.ItemSize.x; x++)
             {
-                for (int y = location.y; y < location.y + item.itemSize.y; y++)
+                for (int y = location.y; y < location.y + item.ItemSize.y; y++)
                 {
                     // We're trying to place the item outside of the boundaries of the inventory and shouldn't be allowed to do so.
                     if (x >= inventorySize.x || x < 0 || y >= inventorySize.y || y < 0)
