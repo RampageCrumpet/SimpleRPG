@@ -32,7 +32,7 @@ namespace Inventory
         /// </summary>
         /// <param name="item"> The <see cref="Item"/> we want to add.</param>
         /// <param name="location"> The location within the inventory to add the item.</param>
-        public void AddItem(Item item, Vector2Int location)
+        private void PlaceItem(Item item, Vector2Int location)
         {
             for(int x = location.x; x < location.x + item.ItemSize.x; x++) 
             { 
@@ -61,6 +61,25 @@ namespace Inventory
             }
         }
 
+        /// <summary>
+        /// Adds an item to the given location in the inventory.
+        /// </summary>
+        /// <param name="item"> The item we want to place.</param>
+        /// <param name="location"> The location we want to place the item.</param>
+        /// <returns> Returns true if the item can be placed, false if it cant</returns>
+        public bool AddItem(Item item, Vector2Int location) 
+        { 
+            if(ValidateItemPlacement(item, location))
+            {
+                PlaceItem(item, location);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         public void MoveItem(Item item, Vector2Int location)
         {
         }
@@ -81,8 +100,8 @@ namespace Inventory
                     if (x >= inventorySize.x || x < 0 || y >= inventorySize.y || y < 0)
                         return false;
 
-                    // A slot the item would have filled is occupied and we can't place an item here.
-                    if (inventory[x, y] != null)
+                    // A slot the item would have filled is occupied by a different.
+                    if (inventory[x, y] != null && inventory[x, y] != item)
                         return false;
                 }
             }

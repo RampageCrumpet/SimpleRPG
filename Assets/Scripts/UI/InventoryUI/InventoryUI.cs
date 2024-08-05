@@ -75,7 +75,10 @@ namespace SimpleRPG.UI
                 {
                     GameObject newUISquarePrefab = Object.Instantiate(UISquarePrefab);
                     newUISquarePrefab.transform.SetParent(gridLayout.transform, false);
-                    inventorySlots.Add(newUISquarePrefab.GetComponent<InventorySlot>());
+
+                    InventorySlot newInventorySlot = newUISquarePrefab.GetComponent<InventorySlot>();
+                    inventorySlots.Add(newInventorySlot);
+                    newInventorySlot.position = new Vector2Int(x, y);
                 }
             }
         }
@@ -103,22 +106,6 @@ namespace SimpleRPG.UI
         public void RemoveItemIcon(ItemIcon itemIcon)
         {
             itemIcon.transform.SetParent(null);
-        }
-
-        public void AddItemIconToSlot(ItemIcon itemIcon, InventorySlot slot)
-        {
-            // Calculate the world position of the target slot
-            Vector3 slotWorldPosition = slot.transform.position;
-
-            // Set the item icon's position to match the slot's position
-            itemIcon.transform.position = slotWorldPosition;
-
-            // Optionally, adjust the local position if needed, depending on the hierarchy
-            itemIcon.transform.SetParent(transform.root); // Ensure it's part of the root canvas or desired hierarchy
-            itemIcon.transform.localScale = Vector3.one; // Reset scale to default
-
-            // Update the parent inventory reference in the ItemIcon script
-            itemIcon.SetParentInventory(this);
         }
     }
 }

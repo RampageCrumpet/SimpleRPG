@@ -1,5 +1,7 @@
+using GluonGui.WorkspaceWindow.Views.WorkspaceExplorer;
 using Inventory;
 using Unity.VisualScripting.YamlDotNet.Core.Tokens;
+using UnityEditor.Graphs;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -26,6 +28,11 @@ namespace SimpleRPG.UI
         /// </summary>
         private Transform originalParent;
 
+        /// <summary>
+        /// The original position of this ItemIcon before we started dragging.
+        /// </summary>
+        private Vector3 originalPosition;
+
         [SerializeField]
         /// <summary>
         /// The InventoryUI that owns this <see cref="ItemIcon"/>.
@@ -36,6 +43,8 @@ namespace SimpleRPG.UI
         public void OnBeginDrag(PointerEventData eventData)
         {
             originalParent = transform.parent;
+            originalPosition = transform.localPosition;
+
             transform.SetParent(transform.root);
             iconImage.raycastTarget = false;
         }
@@ -86,18 +95,23 @@ namespace SimpleRPG.UI
                 }
             }
 
-            if (targetSlot != null)
+            //If the user dropped the ItemIcon on a valid slot and the Icon can be added there add it.
+            if (targetSlot != null && targetInventory.inventory.AddItem(Item, targetSlot.position))
             {
                 if (inventoryUI != targetInventory)
                 {
                     inventoryUI.RemoveItemIcon(this); // Remove the item from the original inventory
                 }
-                targetInventory.AddItemIconToSlot(this, targetSlot); // Add the item to the new inventory
+
+                // Move the ItemIcon to the target slots position and make the itemIcon a child of the target inventory.
+                this.transform.position = targetSlot.transform.position;
+                this.transform.SetParent(targetInventory.transform, false);
             }
+            //Otherwise send the item icon back to where it started from.
             else
             {
                 transform.SetParent(originalParent);
-                transform.localPosition = Vector3.zero;
+                transform.localPosition = originalPosition;
             }
 
             iconImage.raycastTarget = true;
