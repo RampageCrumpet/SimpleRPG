@@ -1,5 +1,6 @@
 using GluonGui.WorkspaceWindow.Views.WorkspaceExplorer;
 using Inventory;
+using Unity.VisualScripting;
 using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEditor.Graphs;
 using UnityEngine;
@@ -33,6 +34,11 @@ namespace SimpleRPG.UI
         /// </summary>
         private Vector3 originalPosition;
 
+        /// <summary>
+        /// The offset relative to the world origin from the mouse position when this ItemIcon is dragged.
+        /// </summary>
+        private Vector3 dragOffset;
+
         [SerializeField]
         /// <summary>
         /// The InventoryUI that owns this <see cref="ItemIcon"/>.
@@ -47,12 +53,21 @@ namespace SimpleRPG.UI
 
             transform.SetParent(transform.root);
             iconImage.raycastTarget = false;
+
+            // Calculate the offset from the mouse position to the icon's top-left corner
+            dragOffset = transform.position- Input.mousePosition;
+        }
+
+        public void Update()
+        {
+            Debug.Log("MousePos:" + Input.mousePosition);
+
         }
 
         ///<inheritdoc/>
         public void OnDrag(PointerEventData eventData)
         {
-            transform.position = Input.mousePosition;
+            transform.position = Input.mousePosition + dragOffset;
         }
 
         ///<inheritdoc/>
@@ -74,13 +89,11 @@ namespace SimpleRPG.UI
         ///<inheritdoc/>
         public void OnEndDrag(PointerEventData eventData)
         {
-            Vector2 worldPosition = (Vector2)Input.mousePosition;
             InventoryUI targetInventory = null;
             InventorySlot targetSlot = null;
 
             // Iterate over all inventory views
-            InventoryUI[] inventoryViews = FindObjectsByType<InventoryUI>(FindObjectsSortMode.None);
-            foreach (InventoryUI inventory in inventoryViews)
+            foreach (InventoryUI inventory in FindObjectsByType<InventoryUI>(FindObjectsSortMode.None))
             {
                 RectTransform inventoryRectTransform = inventory.GetComponent<RectTransform>();
                 if (RectTransformUtility.RectangleContainsScreenPoint(inventoryRectTransform, Input.mousePosition, null))
@@ -103,9 +116,12 @@ namespace SimpleRPG.UI
                     inventoryUI.RemoveItemIcon(this); // Remove the item from the original inventory
                 }
 
+                //Find the size of the image so we can properly place it.
+                Vector3 imageOffset = new Vector3(iconImage.rectTransform.rect.size.x, iconImage.rectTransform.rect.size.y, 0)/2;
+
                 // Move the ItemIcon to the target slots position and make the itemIcon a child of the target inventory.
-                this.transform.position = targetSlot.transform.position;
                 this.transform.SetParent(targetInventory.transform, false);
+                this.transform.position = targetSlot.transform.position + imageOffset;
             }
             //Otherwise send the item icon back to where it started from.
             else

@@ -80,10 +80,6 @@ namespace Inventory
             }
         }
 
-        public void MoveItem(Item item, Vector2Int location)
-        {
-        }
-
         /// <summary>
         /// Validates an items placement ensuring that it's within the boundaries of the inventory and doesn't overlap other items.
         /// </summary>
