@@ -60,8 +60,6 @@ namespace SimpleRPG.UI
 
         public void Update()
         {
-            Debug.Log("MousePos:" + Input.mousePosition);
-
         }
 
         ///<inheritdoc/>
@@ -98,8 +96,8 @@ namespace SimpleRPG.UI
                 RectTransform inventoryRectTransform = inventory.GetComponent<RectTransform>();
                 if (RectTransformUtility.RectangleContainsScreenPoint(inventoryRectTransform, Input.mousePosition, null))
                 {
-                    // The mouse is over this inventory, find the corresponding slot
-                    targetSlot = inventory.FindInventorySlotAtScreenPosition(Input.mousePosition);
+                    // Find the InventorySlot underneath this ItemIcon
+                    targetSlot = inventory.FindInventorySlotClosestToPosition(this.transform.position);
                     if (targetSlot != null)
                     {
                         targetInventory = inventory;
@@ -116,12 +114,9 @@ namespace SimpleRPG.UI
                     inventoryUI.RemoveItemIcon(this); // Remove the item from the original inventory
                 }
 
-                //Find the size of the image so we can properly place it.
-                Vector3 imageOffset = new Vector3(iconImage.rectTransform.rect.size.x, iconImage.rectTransform.rect.size.y, 0)/2;
-
                 // Move the ItemIcon to the target slots position and make the itemIcon a child of the target inventory.
                 this.transform.SetParent(targetInventory.transform, false);
-                this.transform.position = targetSlot.transform.position + imageOffset;
+                this.transform.position = targetSlot.transform.position;
             }
             //Otherwise send the item icon back to where it started from.
             else

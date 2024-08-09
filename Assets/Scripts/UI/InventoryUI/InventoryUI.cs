@@ -5,6 +5,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.UIElements;
+using UnityEditor.Graphs;
 
 namespace SimpleRPG.UI
 {
@@ -83,29 +84,25 @@ namespace SimpleRPG.UI
             }
         }
 
-        /// <summary>
-        /// Finds the <see cref="InventorySlot"/> at the given screen position.
-        /// </summary>
-        /// <param name="screenPosition"> The screen position we want to find an inventory slot at.</param>
-        /// <returns> The <see cref="Inventory"/> at the given position. Returns Null if no inventory slot was found at that given position.</returns>
-        public InventorySlot FindInventorySlotAtScreenPosition(Vector2 screenPosition)
-        {
-            foreach (InventorySlot slot in inventorySlots)
-            {
-                RectTransform slotRectTransform = slot.GetComponent<RectTransform>();
-                if (RectTransformUtility.RectangleContainsScreenPoint(slotRectTransform, screenPosition, null))
-                {
-                    return slot;
-                }
-            }
-
-            // No inventory slot could be found at the given position.
-            return null;
-        }
-
         public void RemoveItemIcon(ItemIcon itemIcon)
         {
             itemIcon.transform.SetParent(null);
+        }
+
+        /// <summary>
+        /// Finds the <see cref="InventorySlot"/> closest to the given position.
+        /// </summary>
+        /// <param name="position"> The position we want to find the closest inventory slot to.</param>
+        /// <returns> The <see cref="InventorySlot"/> closest to the given position. Returns null if there are no inventory slots.</returns>
+        public InventorySlot FindInventorySlotClosestToPosition(Vector3 position)
+        {
+            if (inventorySlots == null || !inventorySlots.Any())
+            {
+                return null; // Handle the case where there are no inventory slots.
+            }
+
+            //InventorySlot closestInventorySlot = inventorySlots.First();
+            return inventorySlots.Aggregate((closestInventorySlot, nextInventorySlot) => (position - nextInventorySlot.transform.position).magnitude < (position - closestInventorySlot.transform.position).magnitude ? nextInventorySlot : closestInventorySlot);
         }
     }
 }
