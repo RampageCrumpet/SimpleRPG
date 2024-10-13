@@ -15,7 +15,7 @@ namespace Inventory
         /// </summary>
         [field: SerializeField]
         [Tooltip("The total size of the inventory grid.")]
-        public Vector2Int inventorySize {get; private set; }
+        public Vector2Int InventorySize {get; private set; }
 
         /// <summary>
         /// The contents of our inventory grid.
@@ -24,7 +24,7 @@ namespace Inventory
 
         public void Start()
         {
-            inventory = new Item[inventorySize.x, inventorySize.y];
+            inventory = new Item[InventorySize.x, InventorySize.y];
         }
 
         /// <summary>
@@ -34,8 +34,8 @@ namespace Inventory
         /// <param name="location"> The location within the inventory to add the item.</param>
         private void PlaceItem(Item item, Vector2Int location)
         {
-            for(int x = location.x; x < location.x + item.ItemSize.x; x++) 
-            { 
+            for(int x = location.x; x < location.x + item.ItemSize.x; x++)
+            {
                 for(int y = location.y; y < location.y + item.ItemSize.y; y++)
                 {
                     inventory[x,y] = item;
@@ -47,8 +47,8 @@ namespace Inventory
         /// Remove an item from the inventory.
         /// </summary>
         /// <param name="item"> The <see cref="Item"/> to remove from the inventory.</param>
-        public void RemoveItem(Item item) 
-        { 
+        public void RemoveItem(Item item)
+        {
             for(int x = 0; x < inventory.GetLength(0); x++)
             {
                 for(int y = 0; y < inventory.GetLength(1); y++)
@@ -67,8 +67,8 @@ namespace Inventory
         /// <param name="item"> The item we want to place.</param>
         /// <param name="location"> The location we want to place the item.</param>
         /// <returns> Returns true if the item can be placed, false if it cant</returns>
-        public bool AddItem(Item item, Vector2Int location) 
-        { 
+        public bool AddItem(Item item, Vector2Int location)
+        {
             if(ValidateItemPlacement(item, location))
             {
                 PlaceItem(item, location);
@@ -93,7 +93,7 @@ namespace Inventory
                 for (int y = location.y; y < location.y + item.ItemSize.y; y++)
                 {
                     // We're trying to place the item outside of the boundaries of the inventory and shouldn't be allowed to do so.
-                    if (x >= inventorySize.x || x < 0 || y >= inventorySize.y || y < 0)
+                    if (x >= InventorySize.x || x < 0 || y >= InventorySize.y || y < 0)
                         return false;
 
                     // A slot the item would have filled is occupied by a different.

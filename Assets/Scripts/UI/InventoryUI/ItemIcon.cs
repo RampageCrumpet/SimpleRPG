@@ -12,7 +12,7 @@ namespace SimpleRPG.UI
     /// <summary>
     /// The UI representation of an item in the inventory.
     /// </summary>
-    public class ItemIcon : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler
+    public class ItemIcon : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
         /// <summary>
         /// The item this icon represents
@@ -55,7 +55,7 @@ namespace SimpleRPG.UI
             iconImage.raycastTarget = false;
 
             // Calculate the offset from the mouse position to the icon's top-left corner
-            dragOffset = transform.position- Input.mousePosition;
+            dragOffset = transform.position - Input.mousePosition;
         }
 
         public void Update()
@@ -66,22 +66,6 @@ namespace SimpleRPG.UI
         public void OnDrag(PointerEventData eventData)
         {
             transform.position = Input.mousePosition + dragOffset;
-        }
-
-        ///<inheritdoc/>
-        public void OnDrop(PointerEventData eventData)
-        {
-            ItemIcon droppedItemIcon = eventData.pointerDrag.GetComponent<ItemIcon>();
-            if (droppedItemIcon != null)
-            {
-                InventorySlot targetSlot = GetComponentInParent<InventorySlot>();
-                InventorySlot originalSlot = droppedItemIcon.GetComponentInParent<InventorySlot>();
-
-                if (targetSlot != null && originalSlot != null)
-                {
-                    //Swap the items.
-                }
-            }
         }
 
         ///<inheritdoc/>
@@ -98,6 +82,7 @@ namespace SimpleRPG.UI
                 {
                     // Find the InventorySlot underneath this ItemIcon
                     targetSlot = inventory.FindInventorySlotClosestToPosition(this.transform.position);
+
                     if (targetSlot != null)
                     {
                         targetInventory = inventory;
@@ -107,16 +92,13 @@ namespace SimpleRPG.UI
             }
 
             //If the user dropped the ItemIcon on a valid slot and the Icon can be added there add it.
-            if (targetSlot != null && targetInventory.inventory.AddItem(Item, targetSlot.position))
+            if (targetSlot != null && targetInventory.inventory.ValidateItemPlacement(Item, targetSlot.position))
             {
-                if (inventoryUI != targetInventory)
-                {
-                    inventoryUI.RemoveItemIcon(this); // Remove the item from the original inventory
-                }
-
                 // Move the ItemIcon to the target slots position and make the itemIcon a child of the target inventory.
                 this.transform.SetParent(targetInventory.transform, false);
                 this.transform.position = targetSlot.transform.position;
+                inventoryUI.RemoveItemIcon(this);
+                targetInventory.AddItemIcon(this, targetSlot);
             }
             //Otherwise send the item icon back to where it started from.
             else
@@ -124,19 +106,24 @@ namespace SimpleRPG.UI
                 transform.SetParent(originalParent);
                 transform.localPosition = originalPosition;
             }
-
             iconImage.raycastTarget = true;
         }
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
         {
+            this.Item = Item.Instantiate(Item);
+
             this.iconImage = GetComponent<Image>();
 
             // Ensure that the ItemIcon is always rendered ontop.
             this.transform.SetAsLastSibling();
         }
 
+        /// <summary>
+        /// Sets this <see cref="ItemIcon"/>'s owning inventory.
+        /// </summary>
+        /// <param name="inventory"> The inventory we want this ItemIcon to be a part of.</param>
         public void SetParentInventory(InventoryUI inventory)
         {
             inventoryUI = inventory;

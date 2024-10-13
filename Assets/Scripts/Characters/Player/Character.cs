@@ -27,6 +27,10 @@ namespace SimpleRPG
         /// </summary>
         private List<AbilityInstance> personalAbilityCollection = new List<AbilityInstance>();
 
+        public delegate void NotifyDamageTaken();
+
+        public event NotifyDamageTaken TakeDamage;
+
         /// <summary>
         /// The current health of this character.
         /// </summary>
@@ -64,6 +68,8 @@ namespace SimpleRPG
             {
                 Debug.Log(this.gameObject.name + " has died.");
             }
+
+            TakeDamage.Invoke();
         }
     }
 }

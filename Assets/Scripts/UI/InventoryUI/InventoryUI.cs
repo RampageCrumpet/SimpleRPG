@@ -51,15 +51,15 @@ namespace SimpleRPG.UI
             gridLayout = GetComponentInChildren<GridLayoutGroup>();
             if (gridLayout.constraint == GridLayoutGroup.Constraint.FixedColumnCount)
             {
-                gridLayout.constraintCount = inventory.inventorySize.x;
+                gridLayout.constraintCount = inventory.InventorySize.x;
             }
             else if (gridLayout.constraint == GridLayoutGroup.Constraint.FixedRowCount)
             {
-                gridLayout.constraintCount = inventory.inventorySize.y;
+                gridLayout.constraintCount = inventory.InventorySize.y;
             }
             else
             {
-                Debug.LogError(this.gameObject.name + " has an unrecognized GridLayoutGroup constraint."); 
+                Debug.LogError(this.gameObject.name + " has an unrecognized GridLayoutGroup constraint and may not layout properly."); 
             }
 
             CreateBackingGrid();
@@ -70,23 +70,57 @@ namespace SimpleRPG.UI
         /// </summary>
         private void CreateBackingGrid()
         {
-            for (int x = 0; x < inventory.inventorySize.x; x++)
+            if (gridLayout.constraint == GridLayoutGroup.Constraint.FixedRowCount)
             {
-                for (int y = 0; y < inventory.inventorySize.y; y++)
+                for (int x = 0; x < inventory.InventorySize.x; x++)
                 {
-                    GameObject newUISquarePrefab = Object.Instantiate(UISquarePrefab);
-                    newUISquarePrefab.transform.SetParent(gridLayout.transform, false);
+                    for (int y = 0; y < inventory.InventorySize.y; y++)
+                    {
+                        GameObject newUISquarePrefab = Object.Instantiate(UISquarePrefab);
+                        newUISquarePrefab.transform.SetParent(gridLayout.transform, false);
 
-                    InventorySlot newInventorySlot = newUISquarePrefab.GetComponent<InventorySlot>();
-                    inventorySlots.Add(newInventorySlot);
-                    newInventorySlot.position = new Vector2Int(x, y);
+                        InventorySlot newInventorySlot = newUISquarePrefab.GetComponent<InventorySlot>();
+                        inventorySlots.Add(newInventorySlot);
+                        newInventorySlot.position = new Vector2Int(x, y);
+                    }
+                }
+            }
+            else if (gridLayout.constraint == GridLayoutGroup.Constraint.FixedColumnCount)
+            {
+                for  (int y = 0; y < inventory.InventorySize.y; y++)
+                {
+                    for (int x = 0; x < inventory.InventorySize.x; x++)
+                    {
+                        GameObject newUISquarePrefab = Object.Instantiate(UISquarePrefab);
+                        newUISquarePrefab.transform.SetParent(gridLayout.transform, false);
+
+                        InventorySlot newInventorySlot = newUISquarePrefab.GetComponent<InventorySlot>();
+                        inventorySlots.Add(newInventorySlot);
+                        newInventorySlot.position = new Vector2Int(x, y);
+                    }
                 }
             }
         }
 
+        /// <summary>
+        /// Add an ItemIcon to this InventoryUI.
+        /// </summary>
+        /// <param name="itemIcon"> The ItemIcon we want to have to this inventory.</param>
+        /// <param name="inventorySlot"> The slot we want to add the ItemIcon to.</param>
+        public void AddItemIcon(ItemIcon itemIcon, InventorySlot inventorySlot)
+        {
+            // Add the item to the backing data model.
+            inventory.AddItem(itemIcon.Item, inventorySlot.position);
+        }
+
+        /// <summary>
+        /// Removes an ItemIcon from the inventory.
+        /// </summary>
+        /// <param name="itemIcon"> The ItemIcon we want to remove from this inventoryUI.</param>
         public void RemoveItemIcon(ItemIcon itemIcon)
         {
-            itemIcon.transform.SetParent(null);
+            // Remove the item from the backing data model.
+            inventory.RemoveItem(itemIcon.Item);
         }
 
         /// <summary>
@@ -98,7 +132,8 @@ namespace SimpleRPG.UI
         {
             if (inventorySlots == null || !inventorySlots.Any())
             {
-                return null; // Handle the case where there are no inventory slots.
+                Debug.LogError(this.gameObject.name + " InventoryUI has no InventorySlots.");
+                return null; 
             }
 
             //InventorySlot closestInventorySlot = inventorySlots.First();
