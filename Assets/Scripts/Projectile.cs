@@ -1,3 +1,4 @@
+using HitDetection;
 using SimpleRPG;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(Unity.Netcode.Components.NetworkRigidbody))]
+[RequireComponent(typeof(Hitbox))]
 public class Projectile : NetworkBehaviour
 {
     /// <summary>
@@ -25,14 +27,21 @@ public class Projectile : NetworkBehaviour
     /// <summary>
     /// The total damage dealt by this projectile.
     /// </summary>
-    private int damage;
+    private DamageInfo damage;
 
     private float spawnTime;
+
+    /// <summary>
+    /// The hitbox used to determine if this projectile hit anything.
+    /// </summary>
+    private Hitbox hitBox;
 
     // Start is called before the first frame update
     void Start()
     {
         spawnTime = Time.time;
+        this.hitBox = this.GetComponent<Hitbox>();
+        hitBox.HitboxCollisionEvent.AddListener(TargetHit);
     }
 
     // Update is called once per frame
@@ -46,21 +55,20 @@ public class Projectile : NetworkBehaviour
     }
 
     [ClientRpc]
-    public void FireClientRPC(Vector3 direction, int damage)
+    public void FireClientRPC(Vector3 direction, DamageInfo damage)
     {
         this.damage = damage;
         direction.Normalize();
         this.GetComponent<Rigidbody>().linearVelocity = velocity * direction;
     }
 
-    public void OnCollisionEnter(Collision collision)
+    public void TargetHit(Character character, BodyLocation location)
     {
         if (this.IsServer)
         {
-            Character character = collision.gameObject.GetComponent<Character>();
             if (character != null)
             {
-                character.TakeDamageRPC(damage);
+                character.TakeDamageRPC(damage, location);
             }
 
             this.DestroyProjectile();
@@ -74,6 +82,7 @@ public class Projectile : NetworkBehaviour
     {
         if (this.IsServer)
         {
+            hitBox.HitboxCollisionEvent.RemoveListener(TargetHit);
             Destroy(this.gameObject);
         }
     }

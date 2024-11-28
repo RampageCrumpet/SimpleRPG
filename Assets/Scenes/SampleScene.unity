@@ -1006,7 +1006,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 340eb2f6079b78d4aa39f57b07af2cce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <inventorySize>k__BackingField: {x: 25, y: 15}
+  <InventorySize>k__BackingField: {x: 0, y: 0}
 --- !u!61 &725419908
 BoxCollider2D:
   m_ObjectHideFlags: 0

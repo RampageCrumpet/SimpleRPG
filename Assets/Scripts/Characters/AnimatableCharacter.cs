@@ -14,6 +14,7 @@ namespace SimpleRPG.Animations
     {
         private IEnumerable<Animator> animator;
         private Character character;
+        private CharacterController characterController;
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
@@ -21,6 +22,7 @@ namespace SimpleRPG.Animations
             animator = this.gameObject.GetComponentsInChildren<Animator>();
             character.GetComponent<Character>();
             character.TakeDamage += new Character.NotifyDamageTaken(UpdateTakeDamage);
+            characterController = character.GetComponent<CharacterController>();
         }
 
         // Update is called once per frame
@@ -30,16 +32,20 @@ namespace SimpleRPG.Animations
         }
 
         /// <summary>
-        /// Sets the forward speed of all <see cref="AnimatiorCOntroller"/>'s.
+        /// Sets the forward speed of all <see cref="AnimatorController"/>'s.
         /// </summary>
         private void UpdateAnimationValues()
         {
             foreach(Animator controller in animator)
             {
-                controller.SetFloat("ForwardMovementSpeed", 0);
+                controller.SetFloat("ForwardMovementSpeed", characterController.velocity.z);
+                controller.SetFloat("HorizontalMovementSpeed", characterController.velocity.x);
             }
         }
 
+        /// <summary>
+        /// Alerts all of the <see cref="AnimatorController"/>'s that we've taken damage.
+        /// </summary>
         private void UpdateTakeDamage()
         {
             foreach (Animator controller in animator)

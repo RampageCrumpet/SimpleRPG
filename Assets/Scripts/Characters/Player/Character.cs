@@ -1,3 +1,4 @@
+using HitDetection;
 using SimpleRPG.Abilities;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,11 +59,11 @@ namespace SimpleRPG
         /// </summary>
         /// <param name="damage"></param>
         [Rpc(SendTo.Everyone)]
-        public void TakeDamageRPC(int damage)
+        public void TakeDamageRPC(DamageInfo damage, BodyLocation location)
         {
-            Health -= damage;
+            Health -= damage.Damage;
 
-            Debug.Log(this.gameObject.name + " has taken " + damage + " damage.");
+            Debug.Log(this.gameObject.name + " has taken " + damage + " damage at " + location.ToString() + ".");
 
             if(Health <= 0)
             {
