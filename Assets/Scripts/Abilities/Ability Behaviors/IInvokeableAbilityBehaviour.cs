@@ -12,15 +12,6 @@ namespace SimpleRPG.Abilities
     public interface IInvokeableAbilityBehaviour
     {
         /// <summary>
-        /// The <see cref="Ability"/> that this scr
-        /// </summary>
-        public Ability Ability
-        {
-            get;
-            protected set;
-        }
-
-        /// <summary>
         /// Invoke the given ability.
         /// </summary>
         public void Invoke(AbilityInstance abilityInstace);

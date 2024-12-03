@@ -25,7 +25,7 @@ namespace SimpleRPG.Abilities
         /// <inheritdoc/>
         public override Type AbilityBehavior
         {
-            get => typeof(FireProjectileBehaviour);
+            get => typeof(FireProjectileAbillityBehaviour);
         }
     }
 }
