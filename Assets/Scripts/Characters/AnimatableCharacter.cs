@@ -10,6 +10,8 @@ namespace SimpleRPG.Animations
     /// This script handles reading values from the player character and sending them to the animation controllers.
     /// </summary>
     [RequireComponent(typeof(Character))]
+    [RequireComponent(typeof(CharacterController))]
+    [RequireComponent(typeof(Animator))]
     public class AnimatableCharacter : MonoBehaviour
     {
         private IEnumerable<Animator> animator;
@@ -19,10 +21,10 @@ namespace SimpleRPG.Animations
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
         {
-            animator = this.gameObject.GetComponentsInChildren<Animator>();
-            character.GetComponent<Character>();
+            character = this.gameObject.GetComponent<Character>();
+            animator = character.gameObject.GetComponentsInChildren<Animator>();
             character.TakeDamage += new Character.NotifyDamageTaken(UpdateTakeDamage);
-            characterController = character.GetComponent<CharacterController>();
+            characterController = character.gameObject.GetComponent<CharacterController>();
         }
 
         // Update is called once per frame

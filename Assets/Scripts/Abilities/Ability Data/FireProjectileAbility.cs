@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace SimpleRPG.Abilities
 {
-    [CreateAssetMenu(menuName = "Abilities/FireProjectile")]
+    [CreateAssetMenu(menuName = "Abilities/FireProjectileAbility")]
     public class FireProjectileAbility : Ability
     {
         /// <summary>

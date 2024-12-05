@@ -1,27 +1,48 @@
 using HitDetection;
 using SimpleRPG;
+using Unity.Netcode;
 using UnityEngine;
 
-public class Weapon : MonoBehaviour
+/// <summary>
+/// This script handles collision detection for weapons.
+/// </summary>
+public class Weapon : NetworkBehaviour
 {
     /// <summary>
-    /// The hitbox used to determine if this weapon hit anything.
+    /// The weapon data for the weapon we're currently attacking with.
     /// </summary>
-    private Hitbox hitBox;
+    private WeaponData weaponData;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private Hitbox hitbox;
+
+    /// <summary>
+    /// Triggers a melee attack on all clients.
+    /// </summary>
+    /// <param name="weaponData"> The weapon data for the weapon being used to attackl </param>
+    [ClientRpc]
+    public void MeleeAttackClientRPC(WeaponData weaponData)
     {
-        hitBox.HitboxCollisionEvent.AddListener(TargetHit);
+        this.weaponData = weaponData;
     }
 
-    // Update is called once per frame
-    void Update()
+    public void TargetHit(Character character, BodyLocation location)
     {
-
+        if (this.IsServer)
+        {
+            if (character != null)
+            {
+                character.TakeDamageRPC(weaponData.damage, location);
+            }
+        }
     }
 
-    void TargetHit(Character character, BodyLocation location)
+    public void ActivateHitbox()
     {
+        hitbox.enabled = true;
+    }
+
+    public void DeactivateHitbox()
+    {
+        hitbox.enabled = false;
     }
 }
