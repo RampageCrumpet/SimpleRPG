@@ -61,7 +61,7 @@ public class MeleeAttackAbilityBehaviour : NetworkBehaviour, IInvokeableAbilityB
             return;
         }
 
-        MeleeAttackClientRpc(weaponData);
+        MeleeAttackClientRpc();
     }
 
         /// <summary>
@@ -69,9 +69,8 @@ public class MeleeAttackAbilityBehaviour : NetworkBehaviour, IInvokeableAbilityB
     /// </summary>
     /// <param name="weaponData"> The weapon data for the weapon being used to attackl </param>
     [Rpc(SendTo.Everyone)]
-    public void MeleeAttackClientRpc(WeaponData weaponData)
+    public void MeleeAttackClientRpc()
     {
-        Debug.Log("Executing MeleeAttackClientRPC");
         weapon.StartSwinging(weaponData);
         MeleeAttackStarted.Invoke();
     }

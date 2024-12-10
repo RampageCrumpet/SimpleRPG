@@ -64,7 +64,6 @@ namespace SimpleRPG.Animations
         {
             foreach (Animator controller in animator)
             {
-                Debug.Log("Triggering Attack Animation");
                 controller.SetTrigger("Attack_OneHanded");
             }
         }
