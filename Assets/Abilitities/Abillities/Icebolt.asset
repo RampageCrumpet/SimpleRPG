@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aee3e7ff7df7b4b449896d4694af8d97, type: 3}
   m_Name: Icebolt
   m_EditorClassIdentifier: 
-  abillityName: Icebolt
-  toolTip: 
-  abillitySprite: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
-  abillitySound: {fileID: 0}
-  cooldownTime: 1
+  <AbillityName>k__BackingField: Icebolt
+  <ToolTip>k__BackingField: 
+  <AbilityIcon>k__BackingField: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
+  <AbillitySound>k__BackingField: {fileID: 0}
+  <CooldownTime>k__BackingField: 1
   Projectile: {fileID: 8785262167055422538, guid: 95546d9105ca9cb49ae49eaf5f212b5d, type: 3}
-  Damage: 0
+  Damage:
+    Damage: 0

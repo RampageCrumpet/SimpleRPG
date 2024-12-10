@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f15fc19af84cfad49a8278851b53a38c, type: 3}
   m_Name: MeleeAttack
   m_EditorClassIdentifier: 
-  abillityName: Melee Attack
-  toolTip: 
-  abillitySprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-  abillitySound: {fileID: 0}
-  cooldownTime: 1
+  <AbillityName>k__BackingField: Melee Attack
+  <ToolTip>k__BackingField: 
+  <AbilityIcon>k__BackingField: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  <AbillitySound>k__BackingField: {fileID: 0}
+  <CooldownTime>k__BackingField: 1

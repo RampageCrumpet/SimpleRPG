@@ -22,7 +22,7 @@ namespace SimpleRPG.Abilities
         /// <inheritdoc/>
         void IInvokeableAbilityBehaviour.Invoke(AbilityInstance abilityInstace)
         {
-            FireProjectileServerRPC(abilityInstace.Ability.abillityName);
+            FireProjectileServerRPC(abilityInstace.Ability.AbillityName);
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace SimpleRPG.Abilities
         [ServerRpc]
         void FireProjectileServerRPC(string abilityName)
         {
-            FireProjectileAbility abilityInstance = (FireProjectileAbility)this.character.PersonalAbilities.Select(x => x.Ability).Single(x => x.abillityName == abilityName);
+            FireProjectileAbility abilityInstance = (FireProjectileAbility)this.character.PersonalAbilities.Select(x => x.Ability).Single(x => x.AbillityName == abilityName);
 
             // If we weren't able to find an ability return and log an error.
             if (abilityInstance == null)

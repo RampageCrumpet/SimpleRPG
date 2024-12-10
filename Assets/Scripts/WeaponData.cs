@@ -1,6 +1,7 @@
 using HitDetection;
 using Inventory;
 using SimpleRPG;
+using System;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -17,8 +18,22 @@ public class WeaponData : Item, INetworkSerializable
     [SerializeField]
     public DamageInfo damage;
 
-    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+
+    /// <summary>
+    /// Serializes data for writing.
+    /// </summary>
+    protected override void SerializeData<T>(BufferSerializer<T> serializer)
     {
+        base.SerializeData(serializer);
+        serializer.SerializeNetworkSerializable(ref damage);
+    }
+
+    /// <summary>
+    /// Deserializes data for reading.
+    /// </summary>
+    protected override void DeserializeData<T>(BufferSerializer<T> serializer)
+    {
+        base.DeserializeData(serializer);
         serializer.SerializeNetworkSerializable(ref damage);
     }
 }

@@ -29,7 +29,7 @@ namespace SimpleRPG.Abilities
         {
             get
             {
-                return LastActivationTime + Ability.cooldownTime - Time.time;
+                return LastActivationTime + Ability.CooldownTime - Time.time;
             }
         }
 
@@ -54,7 +54,7 @@ namespace SimpleRPG.Abilities
 
             if (invokeableAbility == null)
             {
-                Debug.LogError(sourceGameObject.gameObject.name + " has no InvokableAbility for " + ability.abillityName + ".");
+                Debug.LogError(sourceGameObject.gameObject.name + " has no InvokableAbility for " + ability.AbillityName + ".");
             }
         }
 
@@ -63,7 +63,7 @@ namespace SimpleRPG.Abilities
         /// </summary>
         public void Activate()
         {
-            if (Time.time > LastActivationTime + this.Ability.cooldownTime)
+            if (Time.time > LastActivationTime + this.Ability.CooldownTime)
             {
                 LastActivationTime = Time.time;
                 invokeableAbility.Invoke(this);

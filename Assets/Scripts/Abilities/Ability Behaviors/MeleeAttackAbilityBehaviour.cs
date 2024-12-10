@@ -42,7 +42,7 @@ public class MeleeAttackAbilityBehaviour : NetworkBehaviour, IInvokeableAbilityB
     /// <inheritdoc/>
     void IInvokeableAbilityBehaviour.Invoke(AbilityInstance abilityInstace)
     {
-        MeleeAttackServerRpc(abilityInstace.Ability.abillityName);
+        MeleeAttackServerRpc(abilityInstace.Ability.AbillityName);
     }
 
     /// <summary>
@@ -52,7 +52,7 @@ public class MeleeAttackAbilityBehaviour : NetworkBehaviour, IInvokeableAbilityB
     [Rpc(SendTo.Server)]
     void MeleeAttackServerRpc(string abilityName)
     {
-        MeleeAttackAbility abilityInstance = (MeleeAttackAbility)this.character.PersonalAbilities.Select(x => x.Ability).Single(x => x.abillityName == abilityName);
+        MeleeAttackAbility abilityInstance = (MeleeAttackAbility)this.character.PersonalAbilities.Select(x => x.Ability).Single(x => x.AbillityName == abilityName);
 
         // If we weren't able to find an ability return and log an error.
         if (abilityInstance == null)
