@@ -15,5 +15,5 @@ public class MeleeAttackAbility : Ability
     /// The weapon used to attack.
     /// </summary>
     [Tooltip("The weapon used to attack.")]
-    public Weapon Weapon;
+    public WeaponData WeaponData { get; set; }
 }

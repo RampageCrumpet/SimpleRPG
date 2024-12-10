@@ -12,9 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f15fc19af84cfad49a8278851b53a38c, type: 3}
   m_Name: MeleeAttack
   m_EditorClassIdentifier: 
-  abillityName: New Abillity
+  abillityName: Melee Attack
   toolTip: 
-  abillitySprite: {fileID: 0}
+  abillitySprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   abillitySound: {fileID: 0}
   cooldownTime: 1
-  Weapon: {fileID: 0}

@@ -15,12 +15,11 @@ public class Weapon : NetworkBehaviour
 
     private Hitbox hitbox;
 
-    /// <summary>
-    /// Triggers a melee attack on all clients.
-    /// </summary>
-    /// <param name="weaponData"> The weapon data for the weapon being used to attackl </param>
-    [ClientRpc]
-    public void MeleeAttackClientRPC(WeaponData weaponData)
+    public void Start()
+    {
+        hitbox = GetComponentInChildren<Hitbox>();
+    }
+    public void StartSwinging(WeaponData weaponData)
     {
         this.weaponData = weaponData;
     }

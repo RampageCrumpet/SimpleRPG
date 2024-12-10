@@ -57,7 +57,7 @@ namespace SimpleRPG.UI
         {
             UpdateCooldown();
 
-            if(Input.GetKeyDown(abillityButtonAxisName))
+            if(Input.GetAxis(abillityButtonAxisName) > 0)
             {
                 this.abilityInstance.Activate();
             }

@@ -17,6 +17,8 @@ namespace SimpleRPG.Animations
         private IEnumerable<Animator> animator;
         private Character character;
         private CharacterController characterController;
+        private MeleeAttackAbilityBehaviour meleeAttackAbility;
+
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
@@ -25,6 +27,8 @@ namespace SimpleRPG.Animations
             animator = character.gameObject.GetComponentsInChildren<Animator>();
             character.TakeDamage += new Character.NotifyDamageTaken(UpdateTakeDamage);
             characterController = character.gameObject.GetComponent<CharacterController>();
+            meleeAttackAbility = character.gameObject.GetComponent<MeleeAttackAbilityBehaviour>();
+            meleeAttackAbility.MeleeAttackStarted += new MeleeAttackAbilityBehaviour.NotifyMeleeAttackStarted(MeleeAttack);
         }
 
         // Update is called once per frame
@@ -40,8 +44,8 @@ namespace SimpleRPG.Animations
         {
             foreach(Animator controller in animator)
             {
-                controller.SetFloat("ForwardMovementSpeed", characterController.velocity.z);
-                controller.SetFloat("HorizontalMovementSpeed", characterController.velocity.x);
+                controller.SetFloat("ForwardMovementSpeed", Vector3.Dot(characterController.velocity, this.transform.TransformDirection(Vector3.forward)));
+                controller.SetFloat("HorizontalMovementSpeed", Vector3.Dot(characterController.velocity, this.transform.TransformDirection(Vector3.right)));
             }
         }
 
@@ -53,6 +57,15 @@ namespace SimpleRPG.Animations
             foreach (Animator controller in animator)
             {
                 controller.SetTrigger("TakeDamage");
+            }
+        }
+
+        private void MeleeAttack()
+        {
+            foreach (Animator controller in animator)
+            {
+                Debug.Log("Triggering Attack Animation");
+                controller.SetTrigger("Attack_OneHanded");
             }
         }
     }

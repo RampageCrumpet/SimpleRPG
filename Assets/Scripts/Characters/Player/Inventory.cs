@@ -1,7 +1,5 @@
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Events;
-using static UnityEditor.FilePathAttribute;
 
 namespace Inventory
 {

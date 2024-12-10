@@ -1,5 +1,6 @@
 using SimpleRPG.Abilities;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace SimpleRPG.UI
@@ -28,11 +29,12 @@ namespace SimpleRPG.UI
         public void CreateAbilityButtons(IEnumerable<AbilityInstance> abilityInstances)
         {
             // Create a button for each of our abilities.
-            foreach (AbilityInstance abilityInstance in abilityInstances)
+            for (int x = 0; x < abilityInstances.Count(); x++)
             {
                 GameObject newAbilityButtonGameObject = Object.Instantiate(abilityButtonPrefab, abillityBar.transform);
                 AbilityButton newAbilityButton = newAbilityButtonGameObject.GetComponent<AbilityButton>();
-                newAbilityButton.Initialize(abilityInstance);
+                newAbilityButton.Initialize(abilityInstances.ElementAt(x));
+                newAbilityButton.abillityButtonAxisName = $"Spell{x+1}";
                 abilityButtons.Add(newAbilityButton);
             }
         }

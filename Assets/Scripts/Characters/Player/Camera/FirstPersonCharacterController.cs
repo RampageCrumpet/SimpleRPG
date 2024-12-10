@@ -65,7 +65,7 @@ public class FirstPersonCharacterController : NetworkBehaviour
             Cursor.lockState = CursorLockMode.Locked;
 
             //TODO: This doesn't belong here, delete it.
-            this.gameObject.GetComponent<MeshRenderer>().forceRenderingOff = true;
+            //this.gameObject.GetComponentInChildren<MeshRenderer>().forceRenderingOff = true;
         }
     }
 

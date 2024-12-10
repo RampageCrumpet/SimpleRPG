@@ -28,6 +28,8 @@ namespace SimpleRPG
         /// </summary>
         private List<AbilityInstance> personalAbilityCollection = new List<AbilityInstance>();
 
+        public WeaponData WeaponData;
+
         public delegate void NotifyDamageTaken();
 
         public event NotifyDamageTaken TakeDamage;

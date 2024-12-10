@@ -8,6 +8,7 @@ using UnityEngine;
 /// This scriptable object represents a weapons stat sheet.
 /// </summary>
 [CreateAssetMenu(fileName = "WeaponData", menuName = "Items/WeaponData")]
+[System.Serializable]
 public class WeaponData : Item, INetworkSerializable
 {
     /// <summary>
@@ -18,6 +19,6 @@ public class WeaponData : Item, INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        serializer.SerializeValue(ref damage);
+        serializer.SerializeNetworkSerializable(ref damage);
     }
 }
