@@ -113,7 +113,7 @@ public class FirstPersonCharacterController : NetworkBehaviour
     {
         // Normalize the direction value given by the player to ensure it has no magnitude.
         direction.Normalize();
-        characterController.Move((this.movementSpeed * Time.fixedDeltaTime * direction));
+        characterController.SimpleMove((this.movementSpeed * direction));
     }
 
     /// <summary>

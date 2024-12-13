@@ -35,10 +35,12 @@ namespace SimpleRPG
         /// </summary>
         private void SpawnCharacter()
         {
+            // Ensure that only the server tries to spawn a character.
             if (IsServer)
             {
-                // Ensure that only the server tries to spawn a character.
-                GameObject playerInstance = Instantiate(playerPrefab);
+                Transform spawnTransform = playerPrefab.transform;
+                spawnTransform.position = new Vector3(0, 5, 0);
+                GameObject playerInstance = Instantiate(playerPrefab, spawnTransform);
                 playerInstance.GetComponent<NetworkObject>().SpawnWithOwnership(this.OwnerClientId, true);
 
                 // Ensure that the server has the connection betweeen the character and the client.
