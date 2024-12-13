@@ -40,7 +40,7 @@ namespace SimpleRPG
             {
                 Transform spawnTransform = playerPrefab.transform;
                 spawnTransform.position = new Vector3(0, 5, 0);
-                GameObject playerInstance = Instantiate(playerPrefab, spawnTransform);
+                GameObject playerInstance = Instantiate(playerPrefab, spawnTransform.position, spawnTransform.rotation);
                 playerInstance.GetComponent<NetworkObject>().SpawnWithOwnership(this.OwnerClientId, true);
 
                 // Ensure that the server has the connection betweeen the character and the client.

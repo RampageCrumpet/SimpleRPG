@@ -42,6 +42,10 @@ public class FirstPersonCharacterController : NetworkBehaviour
     [Tooltip("The furthest up our character can look.")]
     private float minimumPitch = -60;
 
+    [SerializeField]
+    [Tooltip("The transform we want to snap the camera to.")]
+    private Transform cameraTransform;
+
     /// <summary>
     /// The camera we want our script to be actively controlling.
     /// </summary>
@@ -58,8 +62,8 @@ public class FirstPersonCharacterController : NetworkBehaviour
         if (this.IsOwner)
         {
             // Move the main camera to this character.
-            activeCamera.transform.SetParent(this.gameObject.transform);
-            activeCamera.transform.position = this.gameObject.transform.position;
+            activeCamera.transform.SetParent(cameraTransform);
+            activeCamera.transform.localPosition = Vector3.zero;
 
             // Lock the cursor so it doesn't go wiggling everywhere.
             Cursor.lockState = CursorLockMode.Locked;
