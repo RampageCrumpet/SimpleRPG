@@ -12,6 +12,11 @@ namespace SimpleRPG.Abilities
     /// </summary>
     public class AbilityInstance
     {
+        /// <summary>
+        /// An event that fires whenever the ability is activated.
+        /// </summary>
+        public event Action<AbilityInstance> OnAbilityActivated;
+
         private IInvokeableAbilityBehaviour invokeableAbility;
 
         /// <summary>
@@ -67,7 +72,14 @@ namespace SimpleRPG.Abilities
             {
                 LastActivationTime = Time.time;
                 invokeableAbility.Invoke(this);
+                OnAbilityActivated.Invoke(this);
             }
+        }
+
+        ~AbilityInstance()
+        {
+            // Ensure all subscribers are unsubscribed when the instance is destroyed
+            OnAbilityActivated = null;
         }
     }
 }

@@ -1,5 +1,5 @@
 using UnityEngine;
-using Inventory;
+using SimpleRPG.InventorySystem;
 using UnityEngine.UI;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -16,7 +16,7 @@ namespace SimpleRPG.UI
         /// </summary>
         [SerializeField]
         [Tooltip("The backing inventory.")]
-        public Inventory.Inventory inventory;
+        public InventorySystem.Inventory inventory;
 
         /// <summary>
         /// The grid layout group governing control over this inventory.

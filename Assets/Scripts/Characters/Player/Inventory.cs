@@ -1,7 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 
-namespace Inventory
+namespace SimpleRPG.InventorySystem
 {
     /// <summary>
     /// The datacontainer for an inventory.

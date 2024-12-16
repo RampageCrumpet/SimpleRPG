@@ -2,7 +2,7 @@ using SimpleRPG;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace Inventory
+namespace SimpleRPG.InventorySystem
 {
     public enum EquipmentSlot
     {

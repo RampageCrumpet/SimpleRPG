@@ -1,5 +1,5 @@
 using GluonGui.WorkspaceWindow.Views.WorkspaceExplorer;
-using Inventory;
+using SimpleRPG.InventorySystem;
 using Unity.VisualScripting;
 using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEditor.Graphs;

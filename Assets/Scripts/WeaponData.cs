@@ -1,5 +1,5 @@
 using HitDetection;
-using Inventory;
+using SimpleRPG.InventorySystem;
 using SimpleRPG;
 using System;
 using Unity.Netcode;

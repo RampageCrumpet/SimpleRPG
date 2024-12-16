@@ -18,13 +18,14 @@ namespace SimpleRPG
 
         /// <summary>
         /// The list of serialized abilities this player has.
+        /// These abilities act as a blueprint for the abilities this character can use but are not invokable.
         /// </summary>
         [SerializeField]
         [Tooltip("The list of abilities this character starts with.")]
         private List<Ability> abilities;
 
         /// <summary>
-        /// Private backer for our <see cref="abilities"/> collection.
+        /// Private backer for our <see cref="PersonalAbilities"/> collection.
         /// </summary>
         private List<AbilityInstance> personalAbilityCollection = new List<AbilityInstance>();
 
@@ -40,7 +41,7 @@ namespace SimpleRPG
         public int Health { get; private set; }
 
         /// <summary>
-        /// A public read only collection of our abilities with properties un
+        /// The list of invokable abilities this <see cref="Character"/> has.
         /// </summary>
         public IReadOnlyCollection<AbilityInstance> PersonalAbilities
         {
