@@ -7,7 +7,7 @@ namespace SimpleRPG.ObjectInteractions
     {
         Inventory Inventory;
 
-        protected override void FinishInteraction()
+        public override void FinishInteraction()
         {
             Debug.Log("Chest opened!");
         }

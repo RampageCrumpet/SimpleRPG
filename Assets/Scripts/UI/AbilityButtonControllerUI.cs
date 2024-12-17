@@ -5,21 +5,21 @@ using UnityEngine;
 
 namespace SimpleRPG.UI
 {
-    public class PlayerUIController : MonoBehaviour
+    public class AbilityButtonControllerUI : MonoBehaviour
     {
         /// <summary>
         /// The object we want to use as a blueprint for spawning all of our abillity buttons.
         /// </summary>
         [SerializeField]
         [Tooltip("The abillity button prefab.")]
-        GameObject abilityButtonPrefab;
+        private GameObject abilityButtonPrefab;
 
         private readonly List<AbilityButton> abilityButtons = new List<AbilityButton>();
 
         /// <summary>
         /// The <see cref="GameObject"/> that holds the UI for our abillities.
         /// </summary>
-        [SerializeField]
+        [field: SerializeField]
         [Tooltip("The layout control for the players ability buttons.")]
         private GameObject abillityBar;
 

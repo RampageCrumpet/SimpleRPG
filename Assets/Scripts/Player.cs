@@ -63,12 +63,6 @@ namespace SimpleRPG
                 character = FindObjectsByType<NetworkObject>(FindObjectsSortMode.None).Single(x => x.NetworkObjectId == playerInstanceNetworkID).GetComponent<Character>();
                 character.Initialize();
             }
-
-            if (IsOwner)
-            {
-                // Attach the UI to the character.
-                GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<PlayerUIController>()).Single(x => x != null).CreateAbilityButtons(character.PersonalAbilities);
-            }
         }
     }
 }

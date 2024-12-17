@@ -1,6 +1,9 @@
 using UnityEngine;
 using SimpleRPG.ObjectInteractions;
 using SimpleRPG.Abilities;
+using NUnit.Framework;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SimpleRPG
 {
@@ -9,7 +12,7 @@ namespace SimpleRPG
         /// <summary>
         /// The interactable object that the player is currently interacting with. Is null if the player is not interacting with anything.
         /// </summary>
-        private Interactable interactable;
+        public Interactable Interactable {get; private set; }
 
         /// <summary>
         /// The source location of the interaction.
@@ -20,6 +23,33 @@ namespace SimpleRPG
         /// The maximum distance in unity units the player can move from the interaction location before the interaction is cancelled.
         /// </summary>
         private const float maximumMoveDistance = 0.5f;
+
+
+        /// <summary>
+        /// The time the player last interacted with this object.
+        /// </summary>
+        public float InteractionTimeRemaining { get; private set; }
+
+
+        /// <summary>
+        /// Backing field for the IsInteracting property.
+        /// </summary>
+        private bool isInteracting;
+
+        /// <summary>
+        /// Is this Interactor currently interacting with something.
+        /// </summary>
+        public bool IsInteracting
+        {
+            get
+            {
+                return isInteracting && Interactable != null;
+            }
+            set
+            {
+                isInteracting = value;
+            }
+        }
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
@@ -32,16 +62,39 @@ namespace SimpleRPG
         } 
 
         // Update is called once per frame
-        void Update()
+        private void Update()
         {
             CheckInteractionDistance();
+
+            InteractionTimeRemaining -= Time.deltaTime;
+
+            // Check to see if we've completed interacting with the object.
+            if (InteractionTimeRemaining <= 0 && IsInteracting)
+            {
+                Interactable.FinishInteraction();
+                this.Interactable = null;
+            }
         }
 
+        /// <summary>
+        /// Start interacting with the interactable.
+        /// </summary>
+        /// <param name="interactable"> The <see cref="ObjectInteractions.Interactable"/> we want to start interacting with.</param>
         public void StartInteraction(Interactable interactable)
         {
+            InteractionTimeRemaining = interactable.InteractionTime;
+
             interactionLocation = transform.position;
-            this.interactable = interactable;
-            interactable.Interact();
+            this.Interactable = interactable;
+            this.IsInteracting = true;
+        }
+
+        public void StopInteraction()
+        {
+            if(Interactable != null)
+            {
+                Interactable = null;
+            }
         }
 
         /// <summary>
@@ -51,21 +104,34 @@ namespace SimpleRPG
         {
             if((this.gameObject.transform.position - interactionLocation).magnitude > maximumMoveDistance)
             {
-                interactable.StopInteraction();
-                interactable = null;
+                Interactable = null;
             }
         }
 
+        /// <summary>
+        /// Stop the interaction with the interactable if the player takes any action.
+        /// </summary>
+        /// <param name="abilityInstance">The abillity that was used.</param>
         private void HandleAbilityActivated(AbilityInstance abilityInstance)
         {
-            if(interactable != null)
+            if(Interactable != null)
             {
-                interactable.StopInteraction();
-                interactable = null;
+                Interactable = null;
             }
         }
 
-        void OnDestroy()
+        /// <summary>
+        /// Finds the closest <see cref="ObjectInteractions.Interactable"/> within range and returns it if one exists.
+        /// </summary>
+        /// <returns> Returns the closest <see cref="ObjectInteractions.Interactable"/> within range if one exists, otherwise returns null.</returns>
+        public Interactable FindInteractionTarget()
+        {
+            return InteractableManager.Interactables.Where(interactable => (this.transform.position - interactable.transform.position).magnitude < interactable.InteractionRange)
+                .OrderBy(interactable => (this.transform.position - interactable.transform.position).magnitude)
+                .FirstOrDefault();
+        }
+
+        private void OnDestroy()
         {
             // Unsubscribe from the ability activation event.
             foreach (var abilityInstance in GetComponent<Character>().PersonalAbilities)

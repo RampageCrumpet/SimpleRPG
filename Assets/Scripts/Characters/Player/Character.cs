@@ -45,16 +45,22 @@ namespace SimpleRPG
         /// </summary>
         public IReadOnlyCollection<AbilityInstance> PersonalAbilities
         {
-            get => personalAbilityCollection.AsReadOnly();
+            get
+            {
+                // Ensure that our personalAbilityCollection is up to date, if not repopulate it.
+                if(!personalAbilityCollection.Select(x => x.Ability).All(abilities.Contains) || personalAbilityCollection.Count != abilities.Count)
+                {
+                    this.personalAbilityCollection = abilities.ConvertAll(x => new AbilityInstance(x, this));
+                }
+
+                return personalAbilityCollection.AsReadOnly();
+            }
         }
 
         public void Initialize()
         {
             // Set the health to maximum.
             Health = maxHealth;
-
-            // Populate our list of activatable abilities from the start.
-            this.personalAbilityCollection = abilities.ConvertAll(x => new AbilityInstance(x, this));
         }
 
         /// <summary>
