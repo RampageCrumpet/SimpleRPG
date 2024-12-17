@@ -121,14 +121,27 @@ namespace SimpleRPG
         }
 
         /// <summary>
-        /// Finds the closest <see cref="ObjectInteractions.Interactable"/> within range and returns it if one exists.
+        /// Finds the interactable object that the player is looking at within range and returns it if one exists.
         /// </summary>
-        /// <returns> Returns the closest <see cref="ObjectInteractions.Interactable"/> within range if one exists, otherwise returns null.</returns>
+        /// <returns> Returns the interactable object the player is looking at within range if one exists, otherwise returns null.</returns>
         public Interactable FindInteractionTarget()
         {
-            return InteractableManager.Interactables.Where(interactable => (this.transform.position - interactable.transform.position).magnitude < interactable.InteractionRange)
-                .OrderBy(interactable => (this.transform.position - interactable.transform.position).magnitude)
-                .FirstOrDefault();
+            Camera mainCamera = Camera.main;
+            Ray ray = mainCamera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
+            RaycastHit hit;
+
+            if (Physics.Raycast(ray, out hit))
+            {
+                foreach (var interactable in InteractableManager.Interactables)
+                {
+                    if (interactable.gameObject == hit.collider.gameObject && Vector3.Distance(transform.position, interactable.transform.position) <= interactable.InteractionRange)
+                    {
+                        return interactable;
+                    }
+                }
+            }
+
+            return null;
         }
 
         private void OnDestroy()
