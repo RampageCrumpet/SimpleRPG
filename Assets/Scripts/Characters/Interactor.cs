@@ -71,8 +71,7 @@ namespace SimpleRPG
             // Check to see if we've completed interacting with the object.
             if (InteractionTimeRemaining <= 0 && IsInteracting)
             {
-                Interactable.FinishInteraction();
-                this.Interactable = null;
+                Interactable.ActivateInteraction(this);
             }
         }
 
@@ -93,6 +92,8 @@ namespace SimpleRPG
         {
             if(Interactable != null)
             {
+                this.IsInteracting = false;
+                Interactable.FinishInteraction(this);
                 Interactable = null;
             }
         }
@@ -104,7 +105,7 @@ namespace SimpleRPG
         {
             if((this.gameObject.transform.position - interactionLocation).magnitude > maximumMoveDistance)
             {
-                Interactable = null;
+                StopInteraction();
             }
         }
 
@@ -116,7 +117,7 @@ namespace SimpleRPG
         {
             if(Interactable != null)
             {
-                Interactable = null;
+                StopInteraction();
             }
         }
 

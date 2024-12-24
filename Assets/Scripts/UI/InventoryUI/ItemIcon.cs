@@ -92,7 +92,7 @@ namespace SimpleRPG.UI
             }
 
             //If the user dropped the ItemIcon on a valid slot and the Icon can be added there add it.
-            if (targetSlot != null && targetInventory.inventory.ValidateItemPlacement(Item, targetSlot.position))
+            if (targetSlot != null && targetInventory.Inventory.ValidateItemPlacement(Item, targetSlot.position))
             {
                 // Move the ItemIcon to the target slots position and make the itemIcon a child of the target inventory.
                 this.transform.SetParent(targetInventory.transform, false);
@@ -112,8 +112,6 @@ namespace SimpleRPG.UI
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
         {
-            this.Item = Item.Instantiate(Item);
-
             this.iconImage = GetComponent<Image>();
 
             // Ensure that the ItemIcon is always rendered ontop.
@@ -127,6 +125,16 @@ namespace SimpleRPG.UI
         public void SetParentInventory(InventoryUI inventory)
         {
             inventoryUI = inventory;
+        }
+
+        /// <summary>
+        /// Sets the item this <see cref="ItemIcon"/> represents.
+        /// </summary>
+        /// <param name="item"> The item this Icon is going to represent.</param>
+        public void SetItem(Item item)
+        {
+            this.Item = item;
+            iconImage.sprite = Item.Icon;
         }
     }
 }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -20,7 +21,7 @@ namespace SimpleRPG.InventorySystem
         /// </summary>
         Item[,] inventory;
 
-        public void Start()
+        public void Awake()
         {
             inventory = new Item[InventorySize.x, InventorySize.y];
         }
@@ -102,6 +103,29 @@ namespace SimpleRPG.InventorySystem
 
             // No problems were found with the items placement. It must be a valid placement.
             return true;
+        }
+
+        /// <summary>
+        /// Gets all items in the inventory along with their positions.
+        /// </summary>
+        /// <returns> An enumerable of tuples containing the item and its position.</returns>
+        public IEnumerable<(Item item, Vector2Int position)> GetItems()
+        {
+            var addedItems = new HashSet<Item>();
+
+            // By starting at 0, 0 we can ensure we always find the origin location of the item first.
+            for (int x = 0; x < inventory.GetLength(0); x++)
+            {
+                for (int y = 0; y < inventory.GetLength(1); y++)
+                {
+                    var item = inventory[x, y];
+                    if (item != null && !addedItems.Contains(item))
+                    {
+                        yield return (item, new Vector2Int(x, y));
+                        addedItems.Add(item);
+                    }
+                }
+            }
         }
     }
 }

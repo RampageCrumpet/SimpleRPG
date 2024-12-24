@@ -67,9 +67,6 @@ public class FirstPersonCharacterController : NetworkBehaviour
 
             // Lock the cursor so it doesn't go wiggling everywhere.
             Cursor.lockState = CursorLockMode.Locked;
-
-            //TODO: This doesn't belong here, delete it.
-            //this.gameObject.GetComponentInChildren<MeshRenderer>().forceRenderingOff = true;
         }
     }
 

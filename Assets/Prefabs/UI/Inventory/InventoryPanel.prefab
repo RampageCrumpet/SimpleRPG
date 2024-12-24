@@ -12,8 +12,6 @@ GameObject:
   - component: {fileID: 3226024629559778261}
   - component: {fileID: 8043487736527139385}
   - component: {fileID: 8001661230284816057}
-  - component: {fileID: 7116181790990683961}
-  - component: {fileID: 8233093628868557327}
   - component: {fileID: 3719406612627918422}
   m_Layer: 5
   m_Name: InventoryPanel
@@ -21,7 +19,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5515313885327613665
 RectTransform:
   m_ObjectHideFlags: 0
@@ -99,43 +97,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36f61044edcbfaf4089e995bad712f09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inventory: {fileID: 8233093628868557327}
-  UISquarePrefab: {fileID: 6673109191261657927, guid: 053bf26c1df396044ad03c411a912400, type: 3}
-  ItemIconPrefab: {fileID: 2988987434135489685, guid: 4eea04497e45e9f4b86ea5151304eaa8, type: 3}
---- !u!114 &7116181790990683961
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3596208641500080371}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 4270578422
-  InScenePlacedSourceGlobalObjectIdHash: 0
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
---- !u!114 &8233093628868557327
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3596208641500080371}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 340eb2f6079b78d4aa39f57b07af2cce, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <inventorySize>k__BackingField: {x: 25, y: 15}
+  <Inventory>k__BackingField: {fileID: 0}
+  <UISquarePrefab>k__BackingField: {fileID: 6673109191261657927, guid: 053bf26c1df396044ad03c411a912400, type: 3}
+  <ItemIconPrefab>k__BackingField: {fileID: 2988987434135489685, guid: 4eea04497e45e9f4b86ea5151304eaa8, type: 3}
 --- !u!61 &3719406612627918422
 BoxCollider2D:
   m_ObjectHideFlags: 0

@@ -39,9 +39,16 @@ namespace SimpleRPG.ObjectInteractions
         }
 
         /// <summary>
-        /// We've finished interacting with the interactable object and want to trigger it's effect.
+        /// Activates the effect of the interactable.
         /// </summary>
-        public abstract void FinishInteraction();
+        /// <param name="interactor"> The Interactor activating this interactable.</param>
+        public abstract void ActivateInteraction(Interactor interactor);
+
+        /// <summary>
+        /// Finish interacting with the interactable and apply the effects of the interaction.
+        /// </summary>
+        /// <param name="interactor"> The Interactor finishing the interaction.</param>
+        public abstract void FinishInteraction(Interactor interactor);
 
         public void OnDestroy()
         {

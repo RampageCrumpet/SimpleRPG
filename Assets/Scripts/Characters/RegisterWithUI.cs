@@ -1,3 +1,4 @@
+using SimpleRPG.InventorySystem;
 using SimpleRPG.UI;
 using System.Globalization;
 using System.Linq;
@@ -33,6 +34,12 @@ namespace SimpleRPG.UI
 
                 Interactor interactor = GetComponent<Interactor>();
                 GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<InteractionUI>()).Single(x => x != null).SetInteractor(interactor);
+
+                Inventory inventory = GetComponent<Inventory>();
+                GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<LootMenuUI>()).Single(x => x != null).PlayerInventoryUI.SetInventory(inventory);
+
+                FirstPersonCharacterController firstPersonCharacterController = GetComponent<FirstPersonCharacterController>();
+                GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<PlayerUIController>()).Single(x => x != null).SetCharacterController(firstPersonCharacterController);
             }
         }
 

@@ -28,10 +28,10 @@ namespace SimpleRPG.UI
 
         public void Start()
         {
-            interactionPrompt = this.gameObject.GetComponentsInChildren<InteractionPromptUI>().Single();
+            interactionPrompt = this.gameObject.GetComponentInChildren<InteractionPromptUI>();
             interactionPrompt.SetInteractionPromptDisplayStatus(false);
 
-            interactionCountdown = this.gameObject.GetComponentsInChildren<InteractionCountdownUI>().Single();
+            interactionCountdown = this.gameObject.GetComponentInChildren<InteractionCountdownUI>();
             interactionCountdown.SetCountdownDisplayStatus(false);
         }
 
@@ -70,7 +70,8 @@ namespace SimpleRPG.UI
             }
 
             // If we're interacting with an object make sure the countdown is displayed.
-            interactionCountdown.SetCountdownDisplayStatus(interactor.IsInteracting);
+            bool showInteractionCountdown = interactor.IsInteracting && interactor.InteractionTimeRemaining > 0;
+            interactionCountdown.SetCountdownDisplayStatus(showInteractionCountdown);
         }
 
         /// <summary>
