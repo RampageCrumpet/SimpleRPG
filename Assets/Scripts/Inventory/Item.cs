@@ -1,4 +1,6 @@
 using SimpleRPG;
+using SimpleRPG.InventorySystem.LootGeneration;
+using System;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -23,6 +25,7 @@ namespace SimpleRPG.InventorySystem
     [CreateAssetMenu(fileName = "Item", menuName = "Items/Item")]
     public class Item : NetworkSerializableScriptableObject
     {
+        [Header("Item Settings")]
         [field: SerializeField]
         [Tooltip("The image for the item to be displayed in the users Inventory.")]
         public Sprite Icon { get; private set; }

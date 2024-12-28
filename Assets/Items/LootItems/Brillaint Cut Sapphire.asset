@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6511a776aa640fb469496949a9bad1b2, type: 3}
   m_Name: Brillaint Cut Sapphire
   m_EditorClassIdentifier: 
-  <Icon>k__BackingField: {fileID: 21300000, guid: 9d25a531b5e228548b6ea6700e833dc7, type: 3}
-  <ItemName>k__BackingField: Brilliant Cut Ruby
+  <Icon>k__BackingField: {fileID: 21300000, guid: f0901b87d27eb3448af3d08b60c64315, type: 3}
+  <ItemName>k__BackingField: Brilliant Cut Sapphire
   <ItemSize>k__BackingField: {x: 1, y: 1}

@@ -12,8 +12,8 @@ GameObject:
   - component: {fileID: 7981897818472910324}
   - component: {fileID: 6776232741190368897}
   - component: {fileID: 7758389143854383614}
-  - component: {fileID: 1921388450370166975}
   - component: {fileID: 1652329947766146665}
+  - component: {fileID: 1921388450370166975}
   - component: {fileID: -4919240987484645200}
   m_Layer: 0
   m_Name: Chest
@@ -32,7 +32,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -5.5405188, y: 0.31806856, z: -2.566598}
-  m_LocalScale: {x: 0.4, y: 0.2, z: 0.2}
+  m_LocalScale: {x: 0.8, y: 0.4, z: 0.4}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -111,22 +111,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &1921388450370166975
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4298618282150699528}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 089769aca7eb3e04581297e1c7497d43, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <InteractionRange>k__BackingField: 3
-  <InteractionName>k__BackingField: Chest
-  <InteractionText>k__BackingField: Open
-  <InteractionTime>k__BackingField: 2
 --- !u!114 &1652329947766146665
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -152,6 +136,24 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &1921388450370166975
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4298618282150699528}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 089769aca7eb3e04581297e1c7497d43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  <InteractionRange>k__BackingField: 3
+  <InteractionName>k__BackingField: Chest
+  <InteractionText>k__BackingField: Open
+  <InteractionTime>k__BackingField: 2
+  lootTable: {fileID: 11400000, guid: 1bb9b749b34528149af588d4d58dc296, type: 2}
 --- !u!114 &-4919240987484645200
 MonoBehaviour:
   m_ObjectHideFlags: 0

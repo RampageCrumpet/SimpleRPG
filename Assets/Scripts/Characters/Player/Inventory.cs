@@ -80,6 +80,32 @@ namespace SimpleRPG.InventorySystem
         }
 
         /// <summary>
+        /// Place an item at the first available location in the inventory.
+        /// </summary>
+        /// <param name="item"> The item to be placed.</param>
+        /// <returns> True if we suceeded in placing the item, false otherwise.</returns>
+        public bool AddItem(Item item)
+        {
+            for (int x = 0; x < InventorySize.x; x++)
+            {
+                for (int y = 0; y < InventorySize.y; y++)
+                {
+                    if (inventory[x, y] == null)
+                    {
+                        if (ValidateItemPlacement(item, new Vector2Int(x, y)))
+                        {
+                            PlaceItem(item, new Vector2Int(x, y));
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            // We were not able to place the item in the inventory.
+            return false;
+        }
+
+        /// <summary>
         /// Validates an items placement ensuring that it's within the boundaries of the inventory and doesn't overlap other items.
         /// </summary>
         /// <param name="item"> The item we're trying to place.</param>

@@ -12,6 +12,7 @@ namespace SimpleRPG.UI
     /// <summary>
     /// The UI representation of an item in the inventory.
     /// </summary>
+    [RequireComponent(typeof(Image))]
     public class ItemIcon : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
         /// <summary>
@@ -56,6 +57,9 @@ namespace SimpleRPG.UI
 
             // Calculate the offset from the mouse position to the icon's top-left corner
             dragOffset = transform.position - Input.mousePosition;
+
+            //Ensure that the target slot is rendered ontop of all of the other slots, this ensures that the item is always visible.
+            this.transform.SetAsLastSibling();
         }
 
         public void Update()
@@ -94,9 +98,9 @@ namespace SimpleRPG.UI
             //If the user dropped the ItemIcon on a valid slot and the Icon can be added there add it.
             if (targetSlot != null && targetInventory.Inventory.ValidateItemPlacement(Item, targetSlot.position))
             {
-                // Move the ItemIcon to the target slots position and make the itemIcon a child of the target inventory.
-                this.transform.SetParent(targetInventory.transform, false);
+                // Move the ItemIcon to the target slots position and make the itemIcon a child of the target inventor sloty.
                 this.transform.position = targetSlot.transform.position;
+                this.transform.SetParent(targetInventory.transform);
                 inventoryUI.RemoveItemIcon(this);
                 targetInventory.AddItemIcon(this, targetSlot);
             }
@@ -109,8 +113,7 @@ namespace SimpleRPG.UI
             iconImage.raycastTarget = true;
         }
 
-        // Start is called once before the first execution of Update after the MonoBehaviour is created
-        void Start()
+        void OnEnable()
         {
             this.iconImage = GetComponent<Image>();
 
@@ -134,6 +137,14 @@ namespace SimpleRPG.UI
         public void SetItem(Item item)
         {
             this.Item = item;
+
+            // Check to see if the iconImage is null.
+            // Since SetItem can be called immediately after instantiation there's no opportunity to run Awake();
+            if (iconImage == null)
+            {
+                this.iconImage = GetComponent<Image>();
+            }
+
             iconImage.sprite = Item.Icon;
         }
     }

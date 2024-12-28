@@ -37,8 +37,14 @@ namespace SimpleRPG.UI
         [Tooltip("The Item Icon prefab to be used to create images of the items.")]
         private GameObject ItemIconPrefab {get; set; }
 
+        /// <summary>
+        /// A collection of all InventorySlot's currently contained within this InventoryUI.
+        /// </summary>
         private List<InventorySlot> inventorySlots = new List<InventorySlot>();
 
+        /// <summary>
+        /// A collection of all <see cref="ItemIcon"/>'s contained within this InventoryUI.
+        /// </summary>
         private List<ItemIcon> itemIcons = new List<ItemIcon>();
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -112,6 +118,9 @@ namespace SimpleRPG.UI
                     }
                 }
             }
+
+            // Force the layout to update so we can rely on the cels being placed accurately.
+            LayoutRebuilder.ForceRebuildLayoutImmediate(gridLayout.GetComponent<RectTransform>());
         }
 
         /// <summary>
@@ -180,16 +189,37 @@ namespace SimpleRPG.UI
             foreach (var (item, position) in inventory.GetItems())
             {
                 // Create a new inventory icon for each item
-                GameObject icon = Instantiate(ItemIconPrefab, gridLayout.transform);
+                GameObject icon = Instantiate(ItemIconPrefab, this.transform);
                 ItemIcon itemIcon = icon.GetComponent<ItemIcon>();
                 itemIcon.SetItem(item);
                 itemIcon.SetParentInventory(this);
-
-                // Find the corresponding inventory slot
+                
+                //// Find the corresponding inventory slot
                 InventorySlot slot = inventorySlots.FirstOrDefault(s => s.position == position);
                 if (slot != null)
                 {
-                    icon.transform.position = slot.transform.position;
+                    // Move the ItemIcon to the target slots position and make the itemIcon a child of the target inventor sloty.
+                    itemIcon.transform.SetParent(this.transform);
+                    itemIcon.transform.position = slot.transform.position;
+
+                    //icon.transform.position = slot.transform.position;
+                    //RectTransform iconRectTransform = icon.GetComponent<RectTransform>();
+                    //RectTransform slotRectTransform = slot.GetComponent<RectTransform>();
+                    //iconRectTransform.anchoredPosition = slotRectTransform.anchoredPosition;
+                    //iconRectTransform.position = slotRectTransform.position;
+
+                    // Move the ItemIcon to the target slot's position without changing its parent
+                    RectTransform slotRectTransform = slot.GetComponent<RectTransform>();
+                    RectTransform itemIconRectTransform = itemIcon.GetComponent<RectTransform>();
+
+                    // Set the anchored position of the itemIcon relative to the slot
+                    itemIconRectTransform.SetParent(this.transform, false);
+                    itemIconRectTransform.position = slotRectTransform.position;
+                    itemIconRectTransform.anchoredPosition = slotRectTransform.anchoredPosition;
+                }
+                else
+                {
+                    Debug.LogError("Could not find slot for " + item.ItemName + " at position " + position + ".");
                 }
 
                 itemIcons.Add(itemIcon);

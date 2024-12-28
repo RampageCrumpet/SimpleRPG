@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 
 namespace SimpleRPG.ObjectInteractions
@@ -5,8 +6,9 @@ namespace SimpleRPG.ObjectInteractions
     /// <summary>
     /// This class is the base class for all interactable objects in the game.
     /// </summary>
-    public abstract class Interactable : MonoBehaviour
+    public abstract class Interactable : NetworkBehaviour
     {
+        [Header("Interactable Settings")]
         /// <summary>
         /// The range at which the player can interact with this object.
         /// </summary>
@@ -50,10 +52,12 @@ namespace SimpleRPG.ObjectInteractions
         /// <param name="interactor"> The Interactor finishing the interaction.</param>
         public abstract void FinishInteraction(Interactor interactor);
 
-        public void OnDestroy()
+        new public void OnDestroy()
         {
             //Remove ourselves from the list of interactable objects.
             InteractableManager.UnregisterInteractable(this);
+
+            base.OnDestroy();
         }
     }
 }

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbae8d60aef12d44393f0b3d4f12279d, type: 3}
+  m_Name: GemLootTable
+  m_EditorClassIdentifier: 
+  <DropChance>k__BackingField: 1
+  <Unique>k__BackingField: 0
+  <Always>k__BackingField: 0
+  <Enabled>k__BackingField: 0
+  <Count>k__BackingField: 4
+  Contents:
+  - {fileID: 11400000, guid: d585ea21304664e41aa549203b1e4cf5, type: 2}
+  - {fileID: 11400000, guid: 54b3086d55cd3ae4fa1af0d3be454126, type: 2}
+  - {fileID: 11400000, guid: acf87a98d7680e44b98e179656ae525a, type: 2}
+  - {fileID: 11400000, guid: de1b07db474addd4fb3516edc2326dd3, type: 2}

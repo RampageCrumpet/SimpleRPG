@@ -34,7 +34,12 @@ namespace SimpleRPG
         /// <summary>
         /// Backing field for the IsInteracting property.
         /// </summary>
-        private bool isInteracting;
+        private bool isInteracting = false;
+
+        /// <summary>
+        /// Is the interaction effect currently active?
+        /// </summary>
+        private bool isInteractionActive = false;
 
         /// <summary>
         /// Is this Interactor currently interacting with something.
@@ -69,8 +74,9 @@ namespace SimpleRPG
             InteractionTimeRemaining -= Time.deltaTime;
 
             // Check to see if we've completed interacting with the object.
-            if (InteractionTimeRemaining <= 0 && IsInteracting)
+            if (InteractionTimeRemaining <= 0 && IsInteracting && !isInteractionActive)
             {
+                isInteractionActive = true;
                 Interactable.ActivateInteraction(this);
             }
         }
@@ -93,6 +99,7 @@ namespace SimpleRPG
             if(Interactable != null)
             {
                 this.IsInteracting = false;
+                this.isInteractionActive = false;
                 Interactable.FinishInteraction(this);
                 Interactable = null;
             }
