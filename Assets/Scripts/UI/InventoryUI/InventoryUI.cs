@@ -4,7 +4,6 @@ using UnityEngine.UI;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine.UIElements;
 using UnityEditor.Graphs;
 
 namespace SimpleRPG.UI
@@ -16,12 +15,9 @@ namespace SimpleRPG.UI
         /// </summary>
         [field: SerializeField]
         [Tooltip("The backing inventory.")]
-        public InventorySystem.Inventory Inventory { get; private set; }
+        private InventorySystem.Inventory Inventory { get; set; }
 
-        /// <summary>
-        /// The grid layout group governing control over this inventory.
-        /// </summary>
-        private GridLayoutGroup gridLayout;
+
 
         /// <summary>
         /// The prefab to be instantiated for every grid element.
@@ -47,118 +43,102 @@ namespace SimpleRPG.UI
         /// </summary>
         private List<ItemIcon> itemIcons = new List<ItemIcon>();
 
-        // Start is called once before the first execution of Update after the MonoBehaviour is created
+        [field: SerializeField]
+        [Tooltip("The inventory gird image.")]
+        private Image inventoryGridImage;
+
+        [field: SerializeField]
+        [Tooltip("The inventory grid backdrop image.")] 
+        private Image inventoryGridBackdrop;
+
+        /// <summary>
+        /// The RectTransform of the inventory grid image.
+        /// </summary>
+        private RectTransform inventoryGridRectTransform;
+
+        /// <summary>
+        /// The RectTransform of the inventory grid backdrop image.
+        /// </summary>
+        private RectTransform inventoryGridBackdropTransform;
+
+        /// <summary>
+        /// The size of an individual cell on our screen.
+        /// </summary>
+        private Vector2 cellSize;
+
         void Start()
         {
-            if(Inventory == null)
-            {
-                Debug.LogError(this.gameObject.name + " has no inventory attached to render.");
-            }
+            inventoryGridRectTransform = inventoryGridImage.gameObject.GetComponent<RectTransform>();
+            inventoryGridBackdropTransform = inventoryGridBackdrop.gameObject.GetComponent<RectTransform>();
 
-            // Create a grid layout that matches the inventory layout.
-            gridLayout = GetComponentInChildren<GridLayoutGroup>();
-            if (gridLayout.constraint == GridLayoutGroup.Constraint.FixedColumnCount)
-            {
-                gridLayout.constraintCount = Inventory.InventorySize.x;
-            }
-            else if (gridLayout.constraint == GridLayoutGroup.Constraint.FixedRowCount)
-            {
-                gridLayout.constraintCount = Inventory.InventorySize.y;
-            }
-            else
-            {
-                Debug.LogError(this.gameObject.name + " has an unrecognized GridLayoutGroup constraint and may not layout properly."); 
-            }
+            // Finds the size in pixels of a 1 unity unit object.
+            float canvasScaleFactor = this.GetComponentsInParent<Canvas>().Select(x =>  x.referencePixelsPerUnit/ x.scaleFactor).Aggregate(1f, (acc, value) => acc * value);
+           
+            // CellSize is equal to the ratio between the sprite and it's pixels per unit, scaled by the canvas and image's scale factors, then scaled byt
+            cellSize = (inventoryGridImage.sprite.rect.size/inventoryGridImage.sprite.pixelsPerUnit) * canvasScaleFactor / inventoryGridImage.pixelsPerUnitMultiplier;
+
+            // Hide this InventoryUI until it's needed.
+            this.gameObject.SetActive(false);
         }
 
         /// <summary>
-        /// Creates a grid with the width and height of the specified inventory.
+        /// Updates the grid size of the inventory.
         /// </summary>
-        private void CreateBackingGrid()
+        /// <param name="inventory"> The inventory we want to update our grid size to match.</param>
+        private void UpdateGridSize(Inventory inventory)
         {
-            if(gridLayout == null)
-            {
-                gridLayout = GetComponentInChildren<GridLayoutGroup>();
-            }
-
-            // Clear existing grid
-            foreach (Transform child in gridLayout.transform)
-            {
-                Destroy(child.gameObject);
-            }
-            inventorySlots.Clear();
-
-            if (gridLayout.constraint == GridLayoutGroup.Constraint.FixedRowCount)
-            {
-                for (int x = 0; x < Inventory.InventorySize.x; x++)
-                {
-                    for (int y = 0; y < Inventory.InventorySize.y; y++)
-                    {
-                        GameObject newUISquarePrefab = Object.Instantiate(UISquarePrefab);
-                        newUISquarePrefab.transform.SetParent(gridLayout.transform, false);
-
-                        InventorySlot newInventorySlot = newUISquarePrefab.GetComponent<InventorySlot>();
-                        inventorySlots.Add(newInventorySlot);
-                        newInventorySlot.position = new Vector2Int(x, y);
-                    }
-                }
-            }
-            else if (gridLayout.constraint == GridLayoutGroup.Constraint.FixedColumnCount)
-            {
-                for  (int y = 0; y < Inventory.InventorySize.y; y++)
-                {
-                    for (int x = 0; x < Inventory.InventorySize.x; x++)
-                    {
-                        GameObject newUISquarePrefab = Object.Instantiate(UISquarePrefab);
-                        newUISquarePrefab.transform.SetParent(gridLayout.transform, false);
-
-                        InventorySlot newInventorySlot = newUISquarePrefab.GetComponent<InventorySlot>();
-                        inventorySlots.Add(newInventorySlot);
-                        newInventorySlot.position = new Vector2Int(x, y);
-                    }
-                }
-            }
-
-            // Force the layout to update so we can rely on the cels being placed accurately.
-            LayoutRebuilder.ForceRebuildLayoutImmediate(gridLayout.GetComponent<RectTransform>());
+            inventoryGridRectTransform.sizeDelta = (Vector2)inventory.InventorySize * cellSize;
+            inventoryGridBackdropTransform.sizeDelta = (Vector2)inventory.InventorySize * cellSize;
         }
 
         /// <summary>
-        /// Add an ItemIcon to this InventoryUI.
+        /// Gets the cell position at the given screen position.
         /// </summary>
-        /// <param name="itemIcon"> The ItemIcon we want to have to this inventory.</param>
-        /// <param name="inventorySlot"> The slot we want to add the ItemIcon to.</param>
-        public void AddItemIcon(ItemIcon itemIcon, InventorySlot inventorySlot)
+        /// <param name="screenPosition"> The screen position we want to find the cel position of.</param>
+        /// <returns> The X/Y position of the cell at the given screen position.</returns>
+        public Vector2Int ScreenToCellPosition(Vector2Int screenPosition)
+        {
+            // Find the position relative to our origin.
+            Vector2 localPosition = new Vector2(screenPosition.x - this.transform.position.x, screenPosition.y - this.transform.position.y);
+
+            // Divide by the cellSize to find the cell position and round to an int to discard any remainders.
+            Vector2Int cellPosition = Vector2Int.RoundToInt(localPosition / cellSize);
+            return cellPosition;
+        }
+
+        /// <summary>
+        /// Finds the world position of the given cell.
+        /// </summary>
+        /// <param name="cellPosition"> The cell we want to find the world position for.</param>
+        /// <returns> The world position of the cell.</returns>
+        public Vector2 CellToScreenPosition(Vector2Int cellPosition)
+        {
+            // Find the position relative to our origin.
+            Vector2 screenPosition = (cellPosition*cellSize) + (Vector2)this.transform.position;
+            return screenPosition;
+        }
+
+        /// <summary>
+        /// Adds an Item to the inventory at the given position.
+        /// </summary>
+        /// <param name="itemIcon"> The ItemIcon we want to source the Item from..</param>
+        /// <param name="position"> The position we want to add the item to.</param>
+        public void AddItem(ItemIcon itemIcon, Vector2Int position)
         {
             // Add the item to the backing data model.
-            Inventory.AddItem(itemIcon.Item, inventorySlot.position);
+            Inventory.AddItem(itemIcon.Item, position);
+            this.itemIcons.Add(itemIcon);
         }
 
         /// <summary>
         /// Removes an ItemIcon from the inventory.
         /// </summary>
-        /// <param name="itemIcon"> The ItemIcon we want to remove from this inventoryUI.</param>
-        public void RemoveItemIcon(ItemIcon itemIcon)
+        /// <param name="itemIcon"> The ItemIcon we want to remove from.</param>
+        public void RemoveItem(ItemIcon itemIcon)
         {
             // Remove the item from the backing data model.
             Inventory.RemoveItem(itemIcon.Item);
-        }
-
-        /// <summary>
-        /// Finds the <see cref="InventorySlot"/> closest to the given position.
-        /// </summary>
-        /// <param name="position"> The position we want to find the closest inventory slot to.</param>
-        /// <returns> The <see cref="InventorySlot"/> closest to the given position. Returns null if there are no inventory slots.</returns>
-        public InventorySlot FindInventorySlotClosestToPosition(Vector3 position)
-        {
-            if (inventorySlots == null || !inventorySlots.Any())
-            {
-                Debug.LogError(this.gameObject.name + " InventoryUI has no InventorySlots.");
-                return null; 
-            }
-
-            //InventorySlot closestInventorySlot = inventorySlots.First();
-            return inventorySlots.Aggregate((closestInventorySlot, nextInventorySlot) => (position - nextInventorySlot.transform.position).magnitude < (position - closestInventorySlot.transform.position).magnitude ? nextInventorySlot : closestInventorySlot);
+            this.itemIcons.Remove(itemIcon);
         }
 
         /// <summary>
@@ -168,7 +148,7 @@ namespace SimpleRPG.UI
         public void SetInventory(Inventory inventory)
         {
             this.Inventory = inventory;
-            CreateBackingGrid();
+            UpdateGridSize(inventory);
             CreateItemIcons(inventory);
         }
 
@@ -188,41 +168,13 @@ namespace SimpleRPG.UI
             // Get all items from the inventory
             foreach (var (item, position) in inventory.GetItems())
             {
+                Vector3 itemPosition = this.transform.position + (Vector3)(position*cellSize);
+
                 // Create a new inventory icon for each item
-                GameObject icon = Instantiate(ItemIconPrefab, this.transform);
+                GameObject icon = Instantiate(ItemIconPrefab, this.transform.position, this.transform.rotation);
                 ItemIcon itemIcon = icon.GetComponent<ItemIcon>();
                 itemIcon.SetItem(item);
                 itemIcon.SetParentInventory(this);
-                
-                //// Find the corresponding inventory slot
-                InventorySlot slot = inventorySlots.FirstOrDefault(s => s.position == position);
-                if (slot != null)
-                {
-                    // Move the ItemIcon to the target slots position and make the itemIcon a child of the target inventor sloty.
-                    itemIcon.transform.SetParent(this.transform);
-                    itemIcon.transform.position = slot.transform.position;
-
-                    //icon.transform.position = slot.transform.position;
-                    //RectTransform iconRectTransform = icon.GetComponent<RectTransform>();
-                    //RectTransform slotRectTransform = slot.GetComponent<RectTransform>();
-                    //iconRectTransform.anchoredPosition = slotRectTransform.anchoredPosition;
-                    //iconRectTransform.position = slotRectTransform.position;
-
-                    // Move the ItemIcon to the target slot's position without changing its parent
-                    RectTransform slotRectTransform = slot.GetComponent<RectTransform>();
-                    RectTransform itemIconRectTransform = itemIcon.GetComponent<RectTransform>();
-
-                    // Set the anchored position of the itemIcon relative to the slot
-                    itemIconRectTransform.SetParent(this.transform, false);
-                    itemIconRectTransform.position = slotRectTransform.position;
-                    itemIconRectTransform.anchoredPosition = slotRectTransform.anchoredPosition;
-                }
-                else
-                {
-                    Debug.LogError("Could not find slot for " + item.ItemName + " at position " + position + ".");
-                }
-
-                itemIcons.Add(itemIcon);
             }
         }
     }

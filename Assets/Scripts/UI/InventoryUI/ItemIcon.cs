@@ -37,6 +37,7 @@ namespace SimpleRPG.UI
 
         /// <summary>
         /// The offset relative to the world origin from the mouse position when this ItemIcon is dragged.
+        /// This is used to ensure that grabbed items maintain their offset as they're dragged around.
         /// </summary>
         private Vector3 dragOffset;
 
@@ -55,7 +56,7 @@ namespace SimpleRPG.UI
             transform.SetParent(transform.root);
             iconImage.raycastTarget = false;
 
-            // Calculate the offset from the mouse position to the icon's top-left corner
+            // Calculate the offset from the mouse position from the items origin.
             dragOffset = transform.position - Input.mousePosition;
 
             //Ensure that the target slot is rendered ontop of all of the other slots, this ensures that the item is always visible.
@@ -76,41 +77,38 @@ namespace SimpleRPG.UI
         public void OnEndDrag(PointerEventData eventData)
         {
             InventoryUI targetInventory = null;
-            InventorySlot targetSlot = null;
 
-            // Iterate over all inventory views
+            // The position we want this ItemIcon to snap to.
+            Vector3 snapPosition = originalPosition;
+
+            //Allow the ItemIcon to be hit by raycasts again.
+            iconImage.raycastTarget = true;
+
+
+            //Iterate over all of the inventory views and find the one that the user dropped the item on if any.
             foreach (InventoryUI inventory in FindObjectsByType<InventoryUI>(FindObjectsSortMode.None))
             {
                 RectTransform inventoryRectTransform = inventory.GetComponent<RectTransform>();
                 if (RectTransformUtility.RectangleContainsScreenPoint(inventoryRectTransform, Input.mousePosition, null))
                 {
-                    // Find the InventorySlot underneath this ItemIcon
-                    targetSlot = inventory.FindInventorySlotClosestToPosition(this.transform.position);
+                    // The cell position the ItemIcon was dropped on.
+                    var targetCellPosition = inventory.ScreenToCellPosition(Vector2Int.RoundToInt(Input.mousePosition));
 
-                    if (targetSlot != null)
-                    {
-                        targetInventory = inventory;
-                        break;
-                    }
+                    targetInventory = inventory;
+
+                    // Move the ItemIcon to the target slots position and make the itemIcon a child of the target inventor sloty.
+                    this.transform.position = snapPosition;
+                    this.transform.SetParent(targetInventory.transform);
+                    inventoryUI.RemoveItem(this);
+                    targetInventory.AddItem(this, targetCellPosition);
+
+                    return;
                 }
             }
 
-            //If the user dropped the ItemIcon on a valid slot and the Icon can be added there add it.
-            if (targetSlot != null && targetInventory.Inventory.ValidateItemPlacement(Item, targetSlot.position))
-            {
-                // Move the ItemIcon to the target slots position and make the itemIcon a child of the target inventor sloty.
-                this.transform.position = targetSlot.transform.position;
-                this.transform.SetParent(targetInventory.transform);
-                inventoryUI.RemoveItemIcon(this);
-                targetInventory.AddItemIcon(this, targetSlot);
-            }
-            //Otherwise send the item icon back to where it started from.
-            else
-            {
-                transform.SetParent(originalParent);
-                transform.localPosition = originalPosition;
-            }
-            iconImage.raycastTarget = true;
+            // If it wasn't dragged and dropped onto an inventory send it back to where it started.
+            transform.SetParent(originalParent);
+            transform.localPosition = originalPosition;
         }
 
         void OnEnable()
