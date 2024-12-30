@@ -68,7 +68,7 @@ namespace SimpleRPG.ObjectInteractions
                 var loot = lootTable.GetResult();
                 foreach (LootableItem item in loot)
                 {
-                    inventory.AddItem(item.Item);
+                    inventory.AddItemInstance(item.Item);
                 }
             }
         }

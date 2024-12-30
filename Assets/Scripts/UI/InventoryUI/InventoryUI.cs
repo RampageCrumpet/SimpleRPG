@@ -195,7 +195,7 @@ namespace SimpleRPG.UI
                 itemIcon.SetParentInventory(this);
                 itemIcon.SetItem(item);
                 itemIcon.transform.SetParent(this.transform);
-                itemIcon.transform.position = itemPosition;
+                itemIcon.transform.localPosition = itemPosition;
 
                 itemIcons.Add(itemIcon);
             }
