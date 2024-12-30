@@ -33,11 +33,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 312.08167, y: 114.28076}
-  m_SizeDelta: {x: 25, y: 25}
-  m_Pivot: {x: 0, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 362.08167, y: 139.28076}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5285696249345018145
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -90,3 +90,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Item: {fileID: 0}
   inventoryUI: {fileID: 0}
+  <Padding>k__BackingField:
+    m_Left: 4
+    m_Right: 4
+    m_Top: 4
+    m_Bottom: 4

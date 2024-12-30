@@ -5,6 +5,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Graphs;
+using static UnityEngine.GraphicsBuffer;
 
 namespace SimpleRPG.UI
 {
@@ -59,23 +60,24 @@ namespace SimpleRPG.UI
         /// <summary>
         /// The RectTransform of the inventory grid backdrop image.
         /// </summary>
-        private RectTransform inventoryGridBackdropTransform;
+        private RectTransform inventoryGridBackdropRectTransform;
+
+        /// <summary>
+        /// This InventoryUI's RectTransform.
+        /// </summary>
+        private RectTransform inventoryUIRectTransform;
 
         /// <summary>
         /// The size of an individual cell on our screen.
         /// </summary>
-        private Vector2 cellSize;
+        [Tooltip("The size of an individual cell on our screen.")]
+        public Vector2 CellSize { get; private set; }
 
         void Start()
         {
             inventoryGridRectTransform = inventoryGridImage.gameObject.GetComponent<RectTransform>();
-            inventoryGridBackdropTransform = inventoryGridBackdrop.gameObject.GetComponent<RectTransform>();
-
-            // Finds the size in pixels of a 1 unity unit object.
-            float canvasScaleFactor = this.GetComponentsInParent<Canvas>().Select(x =>  x.referencePixelsPerUnit/ x.scaleFactor).Aggregate(1f, (acc, value) => acc * value);
-           
-            // CellSize is equal to the ratio between the sprite and it's pixels per unit, scaled by the canvas and image's scale factors, then scaled byt
-            cellSize = (inventoryGridImage.sprite.rect.size/inventoryGridImage.sprite.pixelsPerUnit) * canvasScaleFactor / inventoryGridImage.pixelsPerUnitMultiplier;
+            inventoryGridBackdropRectTransform = inventoryGridBackdrop.gameObject.GetComponent<RectTransform>();
+            inventoryUIRectTransform = this.gameObject.GetComponent<RectTransform>();
 
             // Hide this InventoryUI until it's needed.
             this.gameObject.SetActive(false);
@@ -87,8 +89,18 @@ namespace SimpleRPG.UI
         /// <param name="inventory"> The inventory we want to update our grid size to match.</param>
         private void UpdateGridSize(Inventory inventory)
         {
-            inventoryGridRectTransform.sizeDelta = (Vector2)inventory.InventorySize * cellSize;
-            inventoryGridBackdropTransform.sizeDelta = (Vector2)inventory.InventorySize * cellSize;
+            // Finds the size in pixels of a 1 unity unit object.
+            float canvasScaleFactor = this.GetComponentsInParent<Canvas>().Select(x => x.referencePixelsPerUnit / x.scaleFactor).Aggregate(1f, (acc, value) => acc * value);
+
+            // CellSize is equal to the ratio between the sprite and it's pixels per unit, scaled by the canvas and image's scale factors, then scaled byt
+            CellSize = (inventoryGridImage.sprite.rect.size / inventoryGridImage.sprite.pixelsPerUnit) * canvasScaleFactor / inventoryGridImage.pixelsPerUnitMultiplier;
+
+            // The size of the inventory we want to display.
+            Vector2 gridInventorySize = (Vector2)inventory.InventorySize * CellSize;
+
+            inventoryGridRectTransform.sizeDelta = gridInventorySize;
+            inventoryGridBackdropRectTransform.sizeDelta = gridInventorySize;
+            inventoryUIRectTransform.sizeDelta = gridInventorySize;
         }
 
         /// <summary>
@@ -96,25 +108,28 @@ namespace SimpleRPG.UI
         /// </summary>
         /// <param name="screenPosition"> The screen position we want to find the cel position of.</param>
         /// <returns> The X/Y position of the cell at the given screen position.</returns>
-        public Vector2Int ScreenToCellPosition(Vector2Int screenPosition)
+        public Vector2Int ScreenToCellPosition(Vector2 screenPosition, InventoryUI targetUI)
         {
+            Vector2 localPosition = new Vector2();
             // Find the position relative to our origin.
-            Vector2 localPosition = new Vector2(screenPosition.x - this.transform.position.x, screenPosition.y - this.transform.position.y);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(targetUI.inventoryGridRectTransform, screenPosition, null,out localPosition);
+            //Vector2 localPosition = new Vector2(screenPosition.x - this.transform.position.x, screenPosition.y - this.transform.position.y);
 
             // Divide by the cellSize to find the cell position and round to an int to discard any remainders.
-            Vector2Int cellPosition = Vector2Int.RoundToInt(localPosition / cellSize);
+            Vector2Int cellPosition = Vector2Int.FloorToInt(localPosition / CellSize);
             return cellPosition;
         }
 
         /// <summary>
-        /// Finds the world position of the given cell.
+        /// Finds the location relative to the given InventoryUI's origin where we'd want to place an item to have it match up with the given cell position.
         /// </summary>
-        /// <param name="cellPosition"> The cell we want to find the world position for.</param>
-        /// <returns> The world position of the cell.</returns>
-        public Vector2 CellToScreenPosition(Vector2Int cellPosition)
+        /// <param name="cellPosition"> The location we want to place the item in inventory cells.</param>
+        /// <param name="itemSize"> The size in inventory cells we want to place the item into.</param>
+        /// <returns>A vector2 telling us where the item should be placed relative to the given <see cref="InventoryUI"/> to match the cell position.</returns>
+        public Vector2 FindItemPlacementLocation(Vector2Int cellPosition, Vector2Int itemSize)
         {
             // Find the position relative to our origin.
-            Vector2 screenPosition = (cellPosition*cellSize) + (Vector2)this.transform.position;
+            Vector2 screenPosition = (((Vector2)cellPosition + ((Vector2)itemSize / 2)) * CellSize);
             return screenPosition;
         }
 
@@ -128,6 +143,9 @@ namespace SimpleRPG.UI
             // Add the item to the backing data model.
             Inventory.AddItem(itemIcon.Item, position);
             this.itemIcons.Add(itemIcon);
+
+            // Update the visuals so the item is displayed properly.
+            itemIcon.transform.SetParent(inventoryGridBackdropRectTransform);
         }
 
         /// <summary>
@@ -161,20 +179,25 @@ namespace SimpleRPG.UI
             // Clear out all existing inventory icons
             foreach (var icon in itemIcons)
             {
-                Destroy(icon);
+                Destroy(icon.gameObject);
             }
             itemIcons.Clear();
 
             // Get all items from the inventory
             foreach (var (item, position) in inventory.GetItems())
             {
-                Vector3 itemPosition = this.transform.position + (Vector3)(position*cellSize);
+                Vector3 itemPosition = FindItemPlacementLocation(position, item.ItemSize);
 
                 // Create a new inventory icon for each item
-                GameObject icon = Instantiate(ItemIconPrefab, this.transform.position, this.transform.rotation);
+                GameObject icon = Instantiate(ItemIconPrefab, this.transform);
+                icon.transform.localPosition = itemPosition;
                 ItemIcon itemIcon = icon.GetComponent<ItemIcon>();
-                itemIcon.SetItem(item);
                 itemIcon.SetParentInventory(this);
+                itemIcon.SetItem(item);
+                itemIcon.transform.SetParent(this.transform);
+                itemIcon.transform.position = itemPosition;
+
+                itemIcons.Add(itemIcon);
             }
         }
     }

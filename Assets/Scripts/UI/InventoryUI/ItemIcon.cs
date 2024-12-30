@@ -41,11 +41,19 @@ namespace SimpleRPG.UI
         /// </summary>
         private Vector3 dragOffset;
 
-        [SerializeField]
         /// <summary>
         /// The InventoryUI that owns this <see cref="ItemIcon"/>.
         /// </summary>
+        [SerializeField]
+        [Tooltip("The InventoryUI that owns this ItemIcon.")]
         private InventoryUI inventoryUI;
+
+        /// <summary>
+        /// The padding around the item icon.
+        /// </summary>
+        [field: SerializeField]
+        [Tooltip("The padding around the item icon.")]
+        RectOffset Padding { get; set; }
 
         ///<inheritdoc/>
         public void OnBeginDrag(PointerEventData eventData)
@@ -76,7 +84,7 @@ namespace SimpleRPG.UI
         ///<inheritdoc/>
         public void OnEndDrag(PointerEventData eventData)
         {
-            InventoryUI targetInventory = null;
+            InventoryUI targetInventoryUI = null;
 
             // The position we want this ItemIcon to snap to.
             Vector3 snapPosition = originalPosition;
@@ -92,15 +100,16 @@ namespace SimpleRPG.UI
                 if (RectTransformUtility.RectangleContainsScreenPoint(inventoryRectTransform, Input.mousePosition, null))
                 {
                     // The cell position the ItemIcon was dropped on.
-                    var targetCellPosition = inventory.ScreenToCellPosition(Vector2Int.RoundToInt(Input.mousePosition));
+                    Vector2Int targetCellPosition = inventory.ScreenToCellPosition(Vector2Int.RoundToInt(Input.mousePosition), inventory);
+                    Vector3 relativeLocalPosition = inventory.FindItemPlacementLocation(targetCellPosition, Item.ItemSize);
 
-                    targetInventory = inventory;
+                    targetInventoryUI = inventory;
 
                     // Move the ItemIcon to the target slots position and make the itemIcon a child of the target inventor sloty.
-                    this.transform.position = snapPosition;
-                    this.transform.SetParent(targetInventory.transform);
                     inventoryUI.RemoveItem(this);
-                    targetInventory.AddItem(this, targetCellPosition);
+                    targetInventoryUI.AddItem(this, targetCellPosition);
+
+                    this.transform.localPosition = relativeLocalPosition;
 
                     return;
                 }
@@ -143,7 +152,14 @@ namespace SimpleRPG.UI
                 this.iconImage = GetComponent<Image>();
             }
 
+            //Set the sprite.
             iconImage.sprite = Item.Icon;
+
+            // The items scale in Unity units.
+            Vector2 itemScale = (iconImage.sprite.rect.size / iconImage.sprite.pixelsPerUnit);
+
+            //Update the Icons size to properly reflect it's new item.
+            this.GetComponent<RectTransform>().sizeDelta = (inventoryUI.CellSize * item.ItemSize * itemScale) - new Vector2(Padding.horizontal, Padding.vertical);
         }
     }
 }
