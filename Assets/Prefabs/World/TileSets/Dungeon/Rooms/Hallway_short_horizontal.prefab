@@ -62,6 +62,7 @@ MeshRenderer:
   m_RayTraceProcedural: 0
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -283,6 +284,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SpiderNest
       objectReference: {fileID: 0}
+    - target: {fileID: 8424035458116654349, guid: ab4369bcdedab214e9a20450bb3e54b3, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
     - target: {fileID: 9161309015393310211, guid: ab4369bcdedab214e9a20450bb3e54b3, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2

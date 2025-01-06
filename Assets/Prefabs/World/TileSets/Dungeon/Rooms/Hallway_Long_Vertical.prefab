@@ -2749,6 +2749,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1652329947766146665, guid: f534a23331c958d49bd5df35f5332634, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 1325666941
+      objectReference: {fileID: 0}
     - target: {fileID: 4298618282150699528, guid: f534a23331c958d49bd5df35f5332634, type: 3}
       propertyPath: m_Name
       value: Chest

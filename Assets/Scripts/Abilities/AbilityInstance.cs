@@ -72,7 +72,7 @@ namespace SimpleRPG.Abilities
             {
                 LastActivationTime = Time.time;
                 invokeableAbility.Invoke(this);
-                OnAbilityActivated.Invoke(this);
+                OnAbilityActivated?.Invoke(this);
             }
         }
 

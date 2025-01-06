@@ -33,7 +33,11 @@ namespace SimpleRPG
 
         public delegate void NotifyDamageTaken();
 
-        public event NotifyDamageTaken TakeDamage;
+        public event NotifyDamageTaken OnTakeDamage;
+
+        public delegate void NotifyDeath();
+
+        public event NotifyDeath OnDeath;
 
         /// <summary>
         /// The current health of this character.
@@ -79,7 +83,16 @@ namespace SimpleRPG
                 Debug.Log(this.gameObject.name + " has died.");
             }
 
-            TakeDamage.Invoke();
+            OnTakeDamage?.Invoke();
+        }
+
+        
+        /// <summary>
+        /// Handles the death of our character.
+        /// </summary>
+        public void Die()
+        {
+            OnDeath?.Invoke();
         }
     }
 }

@@ -15,11 +15,6 @@ public class MeleeAttackAbilityBehaviour : NetworkBehaviour, IInvokeableAbilityB
     /// </summary>
     private Character character;
 
-    /// <summary>
-    /// The animator.
-    /// </summary>
-    private Animator animator;
-
     private Weapon weapon;
 
     private WeaponData weaponData;

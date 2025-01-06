@@ -25,7 +25,7 @@ namespace SimpleRPG.Animations
         {
             character = this.gameObject.GetComponent<Character>();
             animator = character.gameObject.GetComponentsInChildren<Animator>();
-            character.TakeDamage += new Character.NotifyDamageTaken(UpdateTakeDamage);
+            character.OnTakeDamage += new Character.NotifyDamageTaken(UpdateTakeDamage);
             characterController = character.gameObject.GetComponent<CharacterController>();
             meleeAttackAbility = character.gameObject.GetComponent<MeleeAttackAbilityBehaviour>();
             meleeAttackAbility.MeleeAttackStarted += new MeleeAttackAbilityBehaviour.NotifyMeleeAttackStarted(MeleeAttack);
