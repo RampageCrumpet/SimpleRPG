@@ -5,6 +5,15 @@ using UnityEngine;
 public class Connection : MonoBehaviour
 {
     /// <summary>
+    /// The thickness of the connection in unity units.
+    /// </summary>
+    [field: SerializeField]
+    public float ConnectionThickness { get; set; }
+
+    [field:SerializeField]
+    public float ConnectionWidth { get; set; }
+
+    /// <summary>
     /// Gets a <see cref="Vector2Int"/> representing which direction this connection is pointing.
     /// </summary>
     public Vector2Int Forward

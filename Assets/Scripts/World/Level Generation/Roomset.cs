@@ -12,5 +12,5 @@ public class Roomset : ScriptableObject
 
     [SerializeField]
     [Tooltip("The size of each world cell in unity units.")]
-    public int cellSize;
+    public float cellSize;
 }

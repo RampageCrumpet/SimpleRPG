@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 7114351616676367594}
   - component: {fileID: 8424035458116654349}
   - component: {fileID: 6367434068301259697}
-  - component: {fileID: 4535232101944550847}
   m_Layer: 7
   m_Name: SpiderNest
   m_TagString: Untagged
@@ -109,16 +108,3 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &4535232101944550847
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2936866829018773392}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e4f3fe43e2a51834a8dc692499e0dd76, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <NestSuitability>k__BackingField: 0

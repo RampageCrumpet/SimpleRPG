@@ -12,10 +12,8 @@ GameObject:
   - component: {fileID: 2888655003301023288}
   - component: {fileID: 6106674382849312149}
   - component: {fileID: 4089088830053621185}
-  - component: {fileID: 7841627658283463788}
   - component: {fileID: 4234841099918416903}
   - component: {fileID: 3269854842581446769}
-  - component: {fileID: 797074881473809301}
   m_Layer: 0
   m_Name: Spider
   m_TagString: Untagged
@@ -88,7 +86,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 1898939607
+  GlobalObjectIdHash: 1080869209
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
@@ -96,25 +97,8 @@ MonoBehaviour:
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
---- !u!114 &7841627658283463788
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 911588237967542624}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87db986972887094e87bacd0893b3ee7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maxHealth: 100
-  abilities: []
-  <MaximumFollowDistance>k__BackingField: 15
-  <VisionDistance>k__BackingField: 15
-  <SpiderwebPrefab>k__BackingField: {fileID: 2111955454086692304, guid: 3bb4d480bac96384695cd84875ffabef, type: 3}
-  <MinimumNumberOfSpiderWebs>k__BackingField: 8
-  spiderwebs: []
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!135 &4234841099918416903
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -158,18 +142,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 0}
---- !u!114 &797074881473809301
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 911588237967542624}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ba09a32cc3f1d6f44a8448e4399a8054, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &8369794290660205026
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -265,6 +237,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   TransitionStateInfoList:
   - IsCrossFadeExit: 0
     Layer: 0

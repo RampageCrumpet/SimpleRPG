@@ -57,23 +57,18 @@ namespace UnityEditor
                 }
 
                 // Calculate the x/y position of the connection. The Z direction in the 3d worldspace maps to the Y direction in the 2d room space.
-                int xPos = Mathf.FloorToInt(connection.transform.position.x / ((Roomset)target).cellSize) - (1 - Mathf.CeilToInt((connection.transform.position.x % ((Roomset)target).cellSize / ((Roomset)target).cellSize)));
-                int yPos = Mathf.FloorToInt(connection.transform.position.z / ((Roomset)target).cellSize) - (1 - Mathf.CeilToInt((connection.transform.position.z % ((Roomset)target).cellSize / ((Roomset)target).cellSize)));
-
-                // Ensure connections at the bottom of the room are placed inside the room.
-                if(connection.transform.position.x == 0)
-                {
-                    xPos += 1;
-                }
-                if(connection.transform.position.z == 0)
-                {
-                    yPos += 1;
-                }
+                int xPos = Mathf.RoundToInt(connection.transform.position.x / ((Roomset)target).cellSize);
+                int yPos = Mathf.RoundToInt(connection.transform.position.z / ((Roomset)target).cellSize);
 
                 connection.location = new Vector2Int(xPos, yPos);
             }
         }
 
+        /// <summary>
+        /// Calculates the size of the room and returns it.
+        /// </summary>
+        /// <param name="room"> The room who's size we want to calculate.</param>
+        /// <returns> The width and height of the room.</returns>
         private Vector2Int CalculateRoomSize(Room room)
         {
             var objectsInRoom = room.gameObject.GetComponentsInChildren<Transform>();
@@ -83,12 +78,11 @@ namespace UnityEditor
                 Debug.LogWarning(room.name + " contains objects with negative position values that are not currently supported by the level generator.");
             }
 
-            Vector2Int originLocation = new Vector2Int(Mathf.RoundToInt(objectsInRoom.Min(x => x.position.x)), Mathf.RoundToInt(objectsInRoom.Min(y => y.position.z)));
-            Vector2Int farCornerLocation = new Vector2Int(Mathf.RoundToInt(objectsInRoom.Max(x => x.position.x)), Mathf.RoundToInt(objectsInRoom.Max(y => y.position.z)));
+            Vector2 minimumCorner = new Vector2(Mathf.RoundToInt(objectsInRoom.Min(x => x.position.x)), Mathf.RoundToInt(objectsInRoom.Min(y => y.position.z)));
+            Vector2 MaxCorner = new Vector2(Mathf.RoundToInt(objectsInRoom.Max(x => x.position.x)), Mathf.RoundToInt(objectsInRoom.Max(y => y.position.z)));
 
             // Find the distance between the corners and divide it by the cell size to get the rooms size in cells.
-            // Because the origin is in the middle of the tile we lose 1 tile's width in each direction and have to add that back.
-            return (farCornerLocation - originLocation + new Vector2Int(1, 1)) / ((Roomset)target).cellSize;
+            return Vector2Int.FloorToInt(((MaxCorner - minimumCorner) / ((Roomset)target).cellSize));
         }
     }
     #endif
