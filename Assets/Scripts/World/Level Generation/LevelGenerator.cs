@@ -57,6 +57,11 @@ public class LevelGenerator
         this.roomBlueprints = roomBlueprints;
     }
 
+    /// <summary>
+    /// Generates a level.
+    /// </summary>
+    /// <param name="minimumNumberOfRooms"> The minimum number of rooms this level will contain.</param>
+    /// <param name="parentTransform"> The parent transform we want to attach the newly generated level to.</param>
     public void GenerateLevel(int minimumNumberOfRooms, Transform parentTransform)
     {
         //Place a starting room to seed our dungeon.
@@ -175,9 +180,11 @@ public class LevelGenerator
         // Remove the recently closed connections.
         for (int x = openConnections.Count - 1; x >= 0;  x--) 
         {
-            Connection connection = openConnections[x];
 
-            Vector2Int connectionTarget = connection.location + connection.Forward;
+            Connection connection = openConnections[x];
+            int connectionTileThickness = Mathf.CeilToInt(connection.ConnectionThickness / cellSize);
+
+            Vector2Int connectionTarget = connection.location + (connection.Forward * (1 + connectionTileThickness));
             if (worldGrid.ContainsKey(connectionTarget))
             {
                 closedConnections.Add(connection);
@@ -219,8 +226,6 @@ public class LevelGenerator
         // Rotate the room's size based on the provided rotation
         Vector2Int rotatedSize = RotateSize(room.Size, roomPlacementLocation.Rotation);
 
-
-
         // Ensure that none of the placement locations are already occupied.
         for (int x = 0; x < rotatedSize.x; x++)
         {
@@ -237,25 +242,24 @@ public class LevelGenerator
         // Ensure that no new connection will be closed off by pointing at a wall.
         foreach (Connection connection in room.connections)
         {
-
-
-            // Rotate the connection's position and forward direction
+            // Rotate the connection's position and forward direction around the rooms origin.
             Vector2Int rotatedConnectionLocation = RotatePoint(connection.location, Vector2Int.zero, roomPlacementLocation.Rotation);
             Vector2Int rotatedForward = RotatePoint(connection.Forward, Vector2Int.zero, roomPlacementLocation.Rotation);
 
-
             // Calculate the number of tiles away we'd need to check to see if we hit another room using our given connection thickness.
-            int connectionTileThickness = Mathf.CeilToInt(connection.ConnectionThickness / cellSize);
-            Vector2Int rotatedThickenedForward = Vector2Int.one * (connectionTileThickness + 1);
-
+            int connectionTileThickness = Mathf.RoundToInt(connection.ConnectionThickness / cellSize);
+            Vector2Int rotatedThickenedForward = rotatedForward * (connectionTileThickness + 1);
 
             // Find the location in the world our connection is pointing at.
-            Vector2Int connectionTarget = roomPlacementLocation.Location + rotatedConnectionLocation + rotatedForward;
+            Vector2Int connectionTarget = roomPlacementLocation.Location + rotatedConnectionLocation + rotatedThickenedForward;
 
             // If the target position has no connection pointing out of it in the opposite direction as our connection AND it's occupied the position must be filled by a wall.
-            if (!openConnections.Any(x => x.location == connectionTarget && x.Forward * -1 == rotatedForward) && worldGrid.ContainsKey(connectionTarget))
+            if (!openConnections.Any(x => x.location == connectionTarget && x.Forward * -1 == rotatedForward))
             {
-                return false;
+                if (worldGrid.ContainsKey(connectionTarget))
+                {
+                    return false;
+                }
             }
         }
 
@@ -265,8 +269,11 @@ public class LevelGenerator
         // Ensure that no existing connection will be closed off by hitting a wall.
         foreach (Connection connection in openConnections)
         {
+            // Calculate the number of tiles away we'd need to check to see if we hit another room using our given connection thickness.
+            int connectionTileThickness = Mathf.CeilToInt(connection.ConnectionThickness / cellSize);
+
             // Find our connections target cell relative to our room origin .
-            Vector2Int roomRelativeTarget =roomPlacementLocation.Location + connection.location + connection.Forward;
+            Vector2Int roomRelativeTarget =roomPlacementLocation.Location + connection.location + (connection.Forward * (connectionTileThickness + 1));
 
             // If the connection points into our room
             if (roomRelativeTarget.x >= 0 && roomRelativeTarget.x < rotatedSize.x && roomRelativeTarget.y >= 0 && roomRelativeTarget.y < rotatedSize.y)
@@ -341,7 +348,11 @@ public class LevelGenerator
     private List<GridLocation> FindRoomPlacementLocations(Room room, Connection connection)
     {
         List<GridLocation> placementLocations = new List<GridLocation>();
-        Quaternion[] rotations = { Quaternion.identity, Quaternion.Euler(0, 90, 0), Quaternion.Euler(0, 180, 0), Quaternion.Euler(0, 270, 0) };
+        //Quaternion[] rotations = { Quaternion.identity, Quaternion.Euler(0, 90, 0), Quaternion.Euler(0, 180, 0), Quaternion.Euler(0, 270, 0) };
+        Quaternion[] rotations = { Quaternion.identity}; // Just for testing purposes. //TODO: Delete me
+
+        // Randomize the order of the rotations array
+        rotations = rotations.OrderBy(x => randomNumberGenerator.Next()).ToArray();
 
         foreach (Quaternion rotation in rotations)
         {
@@ -351,11 +362,13 @@ public class LevelGenerator
                 Vector3 rotatedForward = rotation * new Vector3(placedRoomConnection.Forward.x, 0, placedRoomConnection.Forward.y);
                 Vector2Int rotatedForwardInt = new Vector2Int(Mathf.RoundToInt(rotatedForward.x), Mathf.RoundToInt(rotatedForward.z));
 
+
                 // If the connections are facing in opposite directions they can be linked up.
                 if (-1 * rotatedForwardInt == connection.Forward)
                 {
                     // Find the location in cells the room should be placed at if the given connections want to be lined up.
-                    Vector2Int targetLocation = connection.location + connection.Forward - RotatePoint(placedRoomConnection.location, Vector2Int.zero, rotation);
+                    int connectionTileThickness = Mathf.RoundToInt(connection.ConnectionThickness / cellSize);
+                    Vector2Int targetLocation = connection.location + (connection.Forward * (connectionTileThickness + 1)) - RotatePoint(placedRoomConnection.location, Vector2Int.zero, rotation);
 
                     GridLocation placementLocation = new GridLocation()
                     {
@@ -380,12 +393,12 @@ public class LevelGenerator
     /// <returns>The rotated point as a Vector2Int.</returns>
     private Vector2Int RotatePoint(Vector2Int point, Vector2Int origin, Quaternion rotation)
     {
-        // Convert the point to a Vector3 for rotation
-        Vector3 point3D = new Vector3(point.x - origin.x, 0, point.y - origin.y);
+        // Find the relative position to the origin.
+        Vector3 relaitvePosition = new Vector3(point.x - origin.x, 0, point.y - origin.y);
         // Rotate the point around the origin
-        Vector3 rotatedPoint3D = rotation * point3D;
+        Vector3 rotatedRelativePosition = rotation * relaitvePosition;
         // Convert back to Vector2Int and translate back to the original position
-        return new Vector2Int(Mathf.RoundToInt(rotatedPoint3D.x + origin.x), Mathf.RoundToInt(rotatedPoint3D.z + origin.y));
+        return new Vector2Int(Mathf.RoundToInt(rotatedRelativePosition.x + origin.x), Mathf.RoundToInt(rotatedRelativePosition.z + origin.y));
     }
 
     /// <summary>

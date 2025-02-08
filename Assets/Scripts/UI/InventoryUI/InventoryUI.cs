@@ -45,7 +45,7 @@ namespace SimpleRPG.UI
         private List<ItemIcon> itemIcons = new List<ItemIcon>();
 
         [field: SerializeField]
-        [Tooltip("The inventory gird image.")]
+        [Tooltip("The inventory grid image.")]
         private Image inventoryGridImage;
 
         [field: SerializeField]
