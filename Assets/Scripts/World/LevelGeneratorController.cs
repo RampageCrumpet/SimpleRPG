@@ -1,3 +1,4 @@
+using LevelGeneration;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
@@ -22,7 +23,7 @@ public class LevelGeneratorController : NetworkBehaviour
     /// <summary>
     /// The level generator we're using to generate our level.
     /// </summary>
-    private LevelGenerator levelGenerator;
+    private DungeonGenerator levelGenerator;
 
     /// <summary>
     /// Call the level generator across the network.
@@ -71,7 +72,7 @@ public class LevelGeneratorController : NetworkBehaviour
     /// <param name="seed">The seed we want to use to generate a level.</param>
     private void GenerateLevel(int seed)
     {
-        levelGenerator = new LevelGenerator(seed, Roomset.RoomCollection, Roomset.cellSize);
+        levelGenerator = new DungeonGenerator(seed, Roomset.RoomCollection, Roomset.cellSize);
         levelGenerator.GenerateLevel(MinimumNumberOfRooms, this.transform);
     }
 }

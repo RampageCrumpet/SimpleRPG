@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Dungeon
   m_EditorClassIdentifier: 
   RoomCollection:
-  - {fileID: 2333848880402453733, guid: 0933800aa51096740bd48fc6c6fc69ef, type: 3}
-  - {fileID: -7650627890982240631, guid: 03cf95584d42f904ca02343c1f14bacb, type: 3}
-  - {fileID: 7205448170980067535, guid: c6fc7277df0db3f4880df649c12c7b36, type: 3}
-  - {fileID: -8156930237920616752, guid: e9658fd718bb0f948a83a47698bd0af7, type: 3}
+  - {fileID: 5954456646722309202, guid: 0933800aa51096740bd48fc6c6fc69ef, type: 3}
+  - {fileID: 1106968486412931136, guid: 03cf95584d42f904ca02343c1f14bacb, type: 3}
+  - {fileID: 1479325360569981172, guid: c6fc7277df0db3f4880df649c12c7b36, type: 3}
+  - {fileID: 2497901174761679655, guid: e9658fd718bb0f948a83a47698bd0af7, type: 3}
   cellSize: 0.5

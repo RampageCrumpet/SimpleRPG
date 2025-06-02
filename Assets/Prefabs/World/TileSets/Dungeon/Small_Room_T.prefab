@@ -571,7 +571,7 @@ Transform:
   m_GameObject: {fileID: 1475142332059264913}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: -0, w: -0.7071068}
-  m_LocalPosition: {x: 0.000000029802322, y: 0, z: 3}
+  m_LocalPosition: {x: 0.00000047683716, y: 0, z: 2.999998}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -665,8 +665,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbfaabab38af4ec41a2dcf01aebf1b71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <ConnectionThickness>k__BackingField: 0.5
-  <ConnectionWidth>k__BackingField: 0
+  <ConnectionLength>k__BackingField: 0.5
+  <ConnectionWidth>k__BackingField: 2
   location: {x: 0, y: 6}
 --- !u!1 &1584614605389040503
 GameObject:
@@ -1180,8 +1180,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbfaabab38af4ec41a2dcf01aebf1b71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <ConnectionThickness>k__BackingField: 0.5
-  <ConnectionWidth>k__BackingField: 0
+  <ConnectionLength>k__BackingField: 0.5
+  <ConnectionWidth>k__BackingField: 2
   location: {x: 6, y: 0}
 --- !u!1 &3382740226067048806
 GameObject:
@@ -2166,7 +2166,7 @@ Transform:
   m_GameObject: {fileID: 6670642534727700160}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3, y: 0, z: 6}
+  m_LocalPosition: {x: 2.9999971, y: 0, z: 5.999998}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2260,8 +2260,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbfaabab38af4ec41a2dcf01aebf1b71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <ConnectionThickness>k__BackingField: 0.5
-  <ConnectionWidth>k__BackingField: 0
+  <ConnectionLength>k__BackingField: 0.5
+  <ConnectionWidth>k__BackingField: 2
   location: {x: 6, y: 12}
 --- !u!1 &6716390159468557969
 GameObject:
@@ -2575,7 +2575,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7197745213109852008}
-  - component: {fileID: -8156930237920616752}
+  - component: {fileID: 2497901174761679655}
   m_Layer: 0
   m_Name: Small_Room_T
   m_TagString: Untagged
@@ -2628,7 +2628,7 @@ Transform:
   - {fileID: 6390876179477701478}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &-8156930237920616752
+--- !u!114 &2497901174761679655
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2637,7 +2637,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 8628384971948001136}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b770db24705ce1f43b8dd297c37d5f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: 380a3b099680d644eb69e4f422ef8300, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Size: {x: 12, y: 12}

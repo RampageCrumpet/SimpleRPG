@@ -8,7 +8,7 @@ public class Roomset : ScriptableObject
 {
     [SerializeField]
     [Tooltip("The collection of rooms we want to use for our world generation.")]
-    public List<Room> RoomCollection;
+    public List<RoomBlueprint> RoomCollection;
 
     [SerializeField]
     [Tooltip("The size of each world cell in unity units.")]

@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 803797507538594245}
-  - component: {fileID: 7205448170980067535}
+  - component: {fileID: 1479325360569981172}
   m_Layer: 0
   m_Name: Small_Room_EndCap
   m_TagString: Untagged
@@ -62,7 +62,7 @@ Transform:
   - {fileID: 3491656093825162699}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7205448170980067535
+--- !u!114 &1479325360569981172
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -71,7 +71,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2268126304698595805}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b770db24705ce1f43b8dd297c37d5f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: 380a3b099680d644eb69e4f422ef8300, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Size: {x: 12, y: 12}
@@ -1214,6 +1214,14 @@ PrefabInstance:
     - target: {fileID: 5436863384925867593, guid: bbb56793664e79843a0016624ce2ce4c, type: 3}
       propertyPath: location.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5436863384925867593, guid: bbb56793664e79843a0016624ce2ce4c, type: 3}
+      propertyPath: <ConnectionWidth>k__BackingField
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5436863384925867593, guid: bbb56793664e79843a0016624ce2ce4c, type: 3}
+      propertyPath: <ConnectionLength>k__BackingField
+      value: 0.5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

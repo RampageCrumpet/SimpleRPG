@@ -1,64 +1,88 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class Connection : MonoBehaviour
+namespace LevelGeneration
 {
     /// <summary>
-    /// The thickness of the connection in unity units.
+    /// This class represents a connection between two <see cref="Room"/>'s.
     /// </summary>
-    [field: SerializeField]
-    public float ConnectionThickness { get; set; }
-
-    [field:SerializeField]
-    public float ConnectionWidth { get; set; }
-
-    /// <summary>
-    /// Gets a <see cref="Vector2Int"/> representing which direction this connection is pointing.
-    /// </summary>
-    public Vector2Int Forward
+    public class Connection
     {
-        get
+        /// <summary>
+        /// The room this connection is a part of.
+        /// </summary>
+        private Room room;
+
+        /// <summary>
+        /// The location in tile space of this <see cref="Connection"/> relative to our parent.
+        /// </summary>
+        public Vector2Int LocalTilePosition;
+
+        private Vector2Int forward;
+
+        /// <summary>
+        /// Finds this connections Foward in global tile space.
+        /// </summary>
+        public Vector2Int Forward
         {
-            return new Vector2Int((int)this.gameObject.transform.forward.x, (int)this.gameObject.transform.forward.z);
+            get
+            {
+                Vector3 forwardVector3 = new Vector3(forward.x, 0, forward.y);
+                forwardVector3 = room.Rotation * forwardVector3;
+                return new Vector2Int(Mathf.RoundToInt(forwardVector3.x), Mathf.RoundToInt(forwardVector3.z));
+            }
         }
-    }
 
-    /// <summary>
-    /// The location of the connection relative to it's parent.
-    /// </summary>
-    public Vector2Int location;
+        /// <summary>
+        ///  How many tiles long our connection is.
+        /// </summary>
+        public float ConnectionLength { get; private set; }
 
-    /// <summary>
-    /// Seal the connection with a wall.
-    /// </summary>
-    public void Seal()
-    {
-    }
+        public float ConnectionWidth { get; private set; }
 
-    void OnDrawGizmosSelected()
-    {
-        // Draws a 5 unit long red line in front of the object
-        Gizmos.color = Color.red;
-        Vector3 direction = transform.TransformDirection(Vector3.forward) * 5;
-
-        Gizmos.DrawRay(transform.position, direction);
-    }
-
-    /// <summary>
-    /// Returns true if a connection is facing in the opposite direction as another connection.
-    /// </summary>
-    /// <param name="otherConnection"> The connection we want to see if we can connect to.</param>
-    /// <returns> True if the connections are facing opposite directions, false otherwise.</returns>
-    public bool CanConnect(Connection otherConnection)
-    {
-        if (this.Forward * -1 == otherConnection.Forward)
+        public Connection(ConnectionBlueprint connectionBlueprint, Room room)
         {
-            return true;
+            ConnectionLength = connectionBlueprint.ConnectionLength;
+            ConnectionWidth = connectionBlueprint.ConnectionWidth;
+
+            forward = connectionBlueprint.Forward;
+            LocalTilePosition = connectionBlueprint.location;
+            this.room = room;
         }
-        else
+
+        /// <summary>
+        /// The location in tile space of this <see cref="Connection"/> relative to the origin of tile space.
+        /// </summary>
+        public Vector2Int GlobalTilePosition
         {
-            return false;
+            get
+            {
+                // Get the room's rotation and position (in tile space)
+                Quaternion roomRotation = room.Rotation;
+                Vector2Int roomTilePosition = room.Position;
+
+                // Rotate the connection's local tile position
+                Vector3 rotatedLocal = roomRotation * new Vector3(LocalTilePosition.x, 0, LocalTilePosition.y);
+
+                // Add the room's tile position
+                Vector2Int globalTile = roomTilePosition + new Vector2Int(
+                    Mathf.RoundToInt(rotatedLocal.x),
+                    Mathf.RoundToInt(rotatedLocal.z)
+                );
+
+                return globalTile;
+            }
+        }
+
+
+
+        /// <summary>
+        /// Returns true if a connection is facing in the opposite direction as another connection.
+        /// </summary>
+        /// <param name="otherConnection"> The connection we want to see if we can connect to.</param>
+        /// <returns> True if the connections are facing opposite directions, false otherwise.</returns>
+        public bool CanConnect(Connection otherConnection)
+        {
+            return Forward == -otherConnection.Forward;
         }
     }
 }

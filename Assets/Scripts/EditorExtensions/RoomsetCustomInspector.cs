@@ -5,6 +5,7 @@ using System.Linq;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using System.Reflection;
 
 namespace UnityEditor
 {
@@ -19,7 +20,7 @@ namespace UnityEditor
             if (GUILayout.Button("Package Rooms"))
             {
                 Roomset roomset = (Roomset)target;
-                foreach (Room room in roomset.RoomCollection)
+                foreach (RoomBlueprint room in roomset.RoomCollection)
                 {
                     this.PackageRoom(room);
                 }
@@ -30,7 +31,7 @@ namespace UnityEditor
         /// <summary>
         /// Packages a room up for world generation by setting connection positions and the room size.
         /// </summary>
-        private void PackageRoom(Room room)
+        private void PackageRoom(RoomBlueprint room)
         {
             PackageConnections(room);
 
@@ -45,11 +46,12 @@ namespace UnityEditor
         /// Package up all of the connections by setting their position and replacing the given rooms connection list with them.
         /// </summary>
         /// <param name="room"> The room we want to set connections for.</param>
-        private void PackageConnections(Room room)
+        private void PackageConnections(RoomBlueprint room)
         {
-            room.connections = room.gameObject.GetComponentsInChildren<Connection>().ToList();
+            PropertyInfo connectionsProperty = typeof(RoomBlueprint).GetProperty(nameof(room.Connections));
+            connectionsProperty.SetValue(room, room.gameObject.GetComponentsInChildren<ConnectionBlueprint>().ToList());
 
-            foreach (Connection connection in room.connections)
+            foreach (ConnectionBlueprint connection in room.Connections)
             {
                 if (connection.transform.position.x < 0 || connection.transform.position.z < 0)
                 {
@@ -57,8 +59,8 @@ namespace UnityEditor
                 }
 
                 // Calculate the x/y position of the connection. The Z direction in the 3d worldspace maps to the Y direction in the 2d room space.
-                int xPos = Mathf.RoundToInt(connection.transform.position.x / ((Roomset)target).cellSize);
-                int yPos = Mathf.RoundToInt(connection.transform.position.z / ((Roomset)target).cellSize);
+                int xPos = Mathf.RoundToInt(connection.transform.localPosition.x / ((Roomset)target).cellSize);
+                int yPos = Mathf.RoundToInt(connection.transform.localPosition.z / ((Roomset)target).cellSize);
 
                 connection.location = new Vector2Int(xPos, yPos);
             }
@@ -69,7 +71,7 @@ namespace UnityEditor
         /// </summary>
         /// <param name="room"> The room who's size we want to calculate.</param>
         /// <returns> The width and height of the room.</returns>
-        private Vector2Int CalculateRoomSize(Room room)
+        private Vector2Int CalculateRoomSize(RoomBlueprint room)
         {
             var objectsInRoom = room.gameObject.GetComponentsInChildren<Transform>();
 

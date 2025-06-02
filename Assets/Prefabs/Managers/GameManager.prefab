@@ -9,8 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2074495730849626818}
-  - component: {fileID: 2074495730849626821}
   - component: {fileID: 1018091445}
+  - component: {fileID: 2074495730849626821}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -34,18 +34,6 @@ Transform:
   - {fileID: 2074495731175748181}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2074495730849626821
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2074495730849626819}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ebaaf624b29d9cd4eb7594d1c2b61942, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1018091445
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -58,7 +46,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 318510109
+  GlobalObjectIdHash: 2815214066
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
@@ -66,6 +57,21 @@ MonoBehaviour:
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &2074495730849626821
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2074495730849626819}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebaaf624b29d9cd4eb7594d1c2b61942, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &2074495731175748179
 GameObject:
   m_ObjectHideFlags: 0
@@ -111,6 +117,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c694c9c0cefbdfc46bae18c0b68dabfa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   <Roomset>k__BackingField: {fileID: 11400000, guid: 5f0b03b4687a9a547ab314c25fe6b225, type: 2}
   <MinimumNumberOfRooms>k__BackingField: 250
 --- !u!114 &5082288297274321634
@@ -125,6 +132,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_SerializedVersion: 0
   m_AgentTypeID: 0
   m_CollectObjects: 0
   m_Size: {x: 10, y: 10, z: 10}

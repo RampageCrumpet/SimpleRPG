@@ -141,7 +141,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8535391240936516193}
-  - component: {fileID: -6051398298509623112}
+  - component: {fileID: 1798395449800982494}
   m_Layer: 6
   m_Name: Cap_open_bottom
   m_TagString: Untagged
@@ -171,7 +171,7 @@ Transform:
   - {fileID: 2363581324443961431}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &-6051398298509623112
+--- !u!114 &1798395449800982494
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -180,7 +180,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4092855192704956606}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b770db24705ce1f43b8dd297c37d5f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: 380a3b099680d644eb69e4f422ef8300, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Size: {x: 1, y: 1}
