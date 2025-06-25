@@ -70,7 +70,7 @@ namespace AI
         // Update is called once per frame
         protected virtual void Update()
         {
-            if (this.IsServer || this.IsHost)
+            if (IsServer)
             {
                 AIStateMachine.Update();
             }

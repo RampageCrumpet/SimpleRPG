@@ -7,11 +7,17 @@ public class ConnectionBlueprint : MonoBehaviour
     /// <summary>
     /// The length of the connection in unity units away from the room it exists on..
     /// </summary>
+    [Tooltip("The length of the connection in unity units away from the room it exists on.")]
     [field: SerializeField]
     public float ConnectionLength { get; set; }
 
+    [Tooltip("The width of the connection in unity units.")]
     [field:SerializeField]
     public float ConnectionWidth { get; set; }
+
+    [Tooltip("The object that will be used to seal the connection when it is closed.")]
+    [field: SerializeField]
+    public GameObject SealingObject;
 
     /// <summary>
     /// Gets a <see cref="Vector2Int"/> representing which direction this connection is pointing.
@@ -37,6 +43,7 @@ public class ConnectionBlueprint : MonoBehaviour
     /// </summary>
     public void Seal()
     {
+        SealingObject.SetActive(true);  
     }
 
     void OnDrawGizmosSelected()

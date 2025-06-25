@@ -24,9 +24,9 @@ namespace SimpleRPG
         [Tooltip("Our player's character")]
         public Character character;
 
-        // Start is called before the first frame update
-        void Start()
+        public override void OnNetworkSpawn()
         {
+            base.OnNetworkSpawn();
             SpawnCharacter();
         }
 

@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace SimpleRPG.InventorySystem.LootGeneration
 {
-    public class LootValue<T> : LootableObject
+    public class LootValue<T> : WeightedRandomEntry
     {
-        public override IEnumerable<LootableObject> GetResult()
+        public override IEnumerable<WeightedRandomEntry> GetResult()
         {
             throw new NotImplementedException();
         }

@@ -1,7 +1,4 @@
 using SimpleRPG.ObjectInteractions;
-using System.Linq;
-using TMPro;
-using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEngine;
 
 namespace SimpleRPG.UI

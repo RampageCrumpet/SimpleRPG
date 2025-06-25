@@ -7,16 +7,25 @@ namespace LevelGeneration
     /// </summary>
     public class Connection
     {
-        /// <summary>
-        /// The room this connection is a part of.
-        /// </summary>
-        private Room room;
 
         /// <summary>
         /// The location in tile space of this <see cref="Connection"/> relative to our parent.
         /// </summary>
         public Vector2Int LocalTilePosition;
 
+        /// <summary>
+        /// The <see cref="ConnectionBlueprint"> this connection represents.
+        /// </summary>
+        public ConnectionBlueprint ConnectionBlueprint;
+
+        /// <summary>
+        /// The room this connection is a part of.
+        /// </summary>
+        private Room room;
+
+        /// <summary>
+        /// The direction this connection is facing in tile space.
+        /// </summary>
         private Vector2Int forward;
 
         /// <summary>
@@ -33,14 +42,21 @@ namespace LevelGeneration
         }
 
         /// <summary>
-        ///  How many tiles long our connection is.
+        ///  How many unity units long our connection is.
         /// </summary>
+        [Tooltip("The length of the connection in unity units away from the room it exists on.")]
         public float ConnectionLength { get; private set; }
 
+        /// <summary>
+        /// How many unity units wide our connection is.
+        /// </summary>
+        [Tooltip("The width of the connection in unity units.")]
         public float ConnectionWidth { get; private set; }
 
         public Connection(ConnectionBlueprint connectionBlueprint, Room room)
         {
+            this.ConnectionBlueprint = connectionBlueprint;
+
             ConnectionLength = connectionBlueprint.ConnectionLength;
             ConnectionWidth = connectionBlueprint.ConnectionWidth;
 
@@ -83,6 +99,11 @@ namespace LevelGeneration
         public bool CanConnect(Connection otherConnection)
         {
             return Forward == -otherConnection.Forward;
+        }
+
+        public void Seal()
+        {
+            ConnectionBlueprint.Seal();
         }
     }
 }

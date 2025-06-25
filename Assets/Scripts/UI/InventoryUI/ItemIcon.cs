@@ -1,8 +1,4 @@
-using GluonGui.WorkspaceWindow.Views.WorkspaceExplorer;
 using SimpleRPG.InventorySystem;
-using Unity.VisualScripting;
-using Unity.VisualScripting.YamlDotNet.Core.Tokens;
-using UnityEditor.Graphs;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;

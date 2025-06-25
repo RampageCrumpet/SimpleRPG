@@ -13,7 +13,7 @@
       "dependencies": {}
     },
     "com.unity.ai.navigation": {
-      "version": "2.0.5",
+      "version": "2.0.8",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -87,7 +87,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.visualstudio": {
-      "version": "2.0.22",
+      "version": "2.0.23",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -111,7 +111,7 @@
       }
     },
     "com.unity.multiplayer.tools": {
-      "version": "2.2.3",
+      "version": "2.2.4",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -126,11 +126,11 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.netcode.gameobjects": {
-      "version": "2.1.1",
+      "version": "2.4.2",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.unity.transport": "2.3.0",
+        "com.unity.transport": "2.4.0",
         "com.unity.nuget.mono-cecil": "1.11.4"
       },
       "url": "https://packages.unity.com"
@@ -291,16 +291,6 @@
         "com.unity.modules.ui": "1.0.0",
         "com.unity.modules.imgui": "1.0.0"
       }
-    },
-    "com.unity.visualscripting": {
-      "version": "1.9.5",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.ugui": "1.0.0",
-        "com.unity.modules.jsonserialize": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",

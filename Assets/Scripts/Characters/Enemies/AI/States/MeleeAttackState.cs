@@ -39,9 +39,9 @@ namespace AI
         /// Initialize the melee attack state.
         /// </summary>
         /// <param name="aiController"> The AIController in charge of driving this state.</param>
-        /// <param name="outsideRange"> The state we want to go to when the target is outside of our range.</param>
         /// <param name="dead"> The state we want to go to when the target is dead.</param>
-        public void Initialize(AIController aiController, IState outsideRange, IState dead)
+        /// <param name="outsideRange"> The state we want to go to when the target is outside of our range.</param>
+        public void Initialize(AIController aiController, IState dead, IState outsideRange)
         {
             this.aiController = aiController;
             this.chase = outsideRange;

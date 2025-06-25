@@ -219,6 +219,10 @@ PrefabInstance:
       value: 2293034751
       objectReference: {fileID: 0}
     - target: {fileID: 1018091445, guid: 7b0f09f5f82c1b44cb45cca45daa6c31, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1018091445, guid: 7b0f09f5f82c1b44cb45cca45daa6c31, type: 3}
       propertyPath: InScenePlacedSourceGlobalObjectIdHash
       value: 2815214066
       objectReference: {fileID: 0}
@@ -269,10 +273,22 @@ PrefabInstance:
     - target: {fileID: 2074495731175748178, guid: 7b0f09f5f82c1b44cb45cca45daa6c31, type: 3}
       propertyPath: <Roomset>k__BackingField
       value: 
-      objectReference: {fileID: 11400000, guid: cfff3595bff276c4ea32a93491922eca, type: 2}
+      objectReference: {fileID: 11400000, guid: ddf295e8e0446e945ae20ee508b3727e, type: 2}
     - target: {fileID: 2074495731175748178, guid: 7b0f09f5f82c1b44cb45cca45daa6c31, type: 3}
       propertyPath: <MinimumNumberOfRooms>k__BackingField
-      value: 5
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 5082288297274321634, guid: 7b0f09f5f82c1b44cb45cca45daa6c31, type: 3}
+      propertyPath: m_VoxelSize
+      value: 0.0625
+      objectReference: {fileID: 0}
+    - target: {fileID: 5082288297274321634, guid: 7b0f09f5f82c1b44cb45cca45daa6c31, type: 3}
+      propertyPath: m_UseGeometry
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5082288297274321634, guid: 7b0f09f5f82c1b44cb45cca45daa6c31, type: 3}
+      propertyPath: m_LayerMask.m_Bits
+      value: 1024
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -359,7 +375,7 @@ MonoBehaviour:
     NetworkIdRecycleDelay: 120
     RpcHashSize: 0
     LoadSceneTimeOut: 120
-    SpawnTimeout: 1
+    SpawnTimeout: 10
     EnableNetworkLogs: 1
     NetworkTopology: 0
     UseCMBService: 0

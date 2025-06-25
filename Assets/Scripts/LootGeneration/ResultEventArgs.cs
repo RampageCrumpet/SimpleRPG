@@ -4,10 +4,10 @@ namespace SimpleRPG.InventorySystem.LootGeneration
 {
     public class ResultEventArgs : System.EventArgs
     {
-        public ResultEventArgs(IEnumerable<LootableObject> lootResult)
+        public ResultEventArgs(IEnumerable<WeightedRandomEntry> lootResult)
         {
             LootResult = lootResult;
         }
-        public IEnumerable<LootableObject> LootResult { get; }
+        public IEnumerable<WeightedRandomEntry> LootResult { get; }
     }
 }

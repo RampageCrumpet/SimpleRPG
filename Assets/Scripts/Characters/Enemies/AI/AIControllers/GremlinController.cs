@@ -10,7 +10,6 @@ namespace SimpleRPG
         protected override void Start() 
         {
             base.Start();
-            this.GetComponent<NetworkObject>().Spawn();
         }
 
         // Update is called once per frame
@@ -28,7 +27,7 @@ namespace SimpleRPG
             IdleState idleState = new IdleState();
 
             chaseState.Initialize(this, deadState, attackState, idleState);
-            attackState.Initialize(this, deadState, idleState);
+            attackState.Initialize(this, idleState, idleState);
             deadState.Initialize(this);
             idleState.Initialize(this, deadState, chaseState);
 

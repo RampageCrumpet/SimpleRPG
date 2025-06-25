@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: daf5e34a2873be74dbf59d39272f81e1, type: 3}
+  m_Name: ModularDungeon
+  m_EditorClassIdentifier: 
+  RoomCollection:
+  - {fileID: -5436701326941925415, guid: a156c1cefc938244a968f02a96f8f489, type: 3}
+  - {fileID: -5436701326941925415, guid: 03f461aeb49cb2a4baba840472511499, type: 3}
+  - {fileID: -5436701326941925415, guid: 97041a1c77554d541b83e62d1758ba34, type: 3}
+  - {fileID: -5436701326941925415, guid: f135e49e508e61c4daea32d8cd0688c2, type: 3}
+  - {fileID: -5436701326941925415, guid: 39b626f7e7539294eac75fdf07b8b2cb, type: 3}
+  - {fileID: -5436701326941925415, guid: 172be85bcfb66a64b8d1648682bd2da8, type: 3}
+  - {fileID: -5436701326941925415, guid: 63e7239f665dd3c47a0b854c1bd65095, type: 3}
+  cellSize: 5

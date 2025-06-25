@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.UIElements;
 using static UnityEditor.FilePathAttribute;
 
 namespace LevelGeneration
@@ -93,21 +91,6 @@ namespace LevelGeneration
                     }
                 }
             }
-
-            //// Ensure that none of the placement locations are already occupied.
-            //for (int x = room.RoomOrigin.x; x < room.RoomOrigin.x + room.Size.x; x++)
-            //{
-            //    for (int y = room.RoomOrigin.y; y < room.RoomOrigin.y + room.Size.y; y++)
-            //    {
-            //        Vector2Int localTile = new Vector2Int(x, y);
-            //        Vector2Int worldTile = localTile + location;
-
-            //        if (worldGrid.ContainsKey(worldTile))
-            //        {
-            //               return false;
-            //        }
-            //    }
-            //}
 
             // If the new connections are not valid the room placement is not valid.
             if(!ValidateNewConnections(room))
@@ -217,12 +200,6 @@ namespace LevelGeneration
                 {
                     changeInConnections++;
                 }
-
-                ////If the new connection is not pointing into the world grid it'll be an open connection we can build off of so our number of connectiosn will increase.
-                //if (!worldGrid.ContainsKey(connection.GlobalTilePosition + (connection.Forward * connectionTileSize)))
-                //{
-                //    changeInConnections++;
-                //}
             }
 
             // Find the count of all of the existing connections that will be closed off by pointing at a space occupied by the new room.
@@ -277,7 +254,7 @@ namespace LevelGeneration
                 Connection matchingConnection = openConnections.FirstOrDefault(openConnection =>
                 {
                     //TODO: Ensure the connections are facing the opposite way.
-                    return openConnection.GlobalTilePosition + openConnection.Forward == connection.GlobalTilePosition;
+                    return openConnection.GlobalTilePosition + (openConnection.Forward * Mathf.RoundToInt(openConnection.ConnectionLength / cellSize)) == connection.GlobalTilePosition;
                 });
 
                 if (matchingConnection != null)
@@ -293,16 +270,19 @@ namespace LevelGeneration
             }
 
             placedRooms.Add(room);
-            InstantiateRoom(room, position);
+            InstantiateRoom(room);
         }
-
-        private void InstantiateRoom(Room room, Vector2Int position)
+        /// <summary>
+        /// Instantiates a room in world space.
+        /// </summary>
+        /// <param name="room"> The room we want to instantiate.</param>
+        private void InstantiateRoom(Room room)
         {
             // Instantiate the room at the correct world position and rotation
             Vector3 worldPlacementLocation = new Vector3(
-                position.x * cellSize,
+                room.Position.x * cellSize,
                 room.RoomBlueprint.transform.position.y,
-                position.y * cellSize
+                room.Position.y * cellSize
             );
 
             RoomBlueprint placedRoom = GameObject.Instantiate(
@@ -310,6 +290,12 @@ namespace LevelGeneration
                 worldPlacementLocation,
                 room.Rotation
             ).GetComponent<RoomBlueprint>();
+
+            //Update the connections on the room to match the instantiated copy of the room blueprint rather than the prefab.
+            foreach(ConnectionBlueprint connectionBlueprint in placedRoom.Connections)
+            {
+                room.Connections.Single(x => x.LocalTilePosition == connectionBlueprint.location).ConnectionBlueprint = connectionBlueprint;
+            }
         }
 
         /// <summary>
@@ -352,7 +338,6 @@ namespace LevelGeneration
                         if (ValidateRoomPlacement(newRoom, placementInformation.Position))
                         {
                             roomPlacementsAttempted = 0;
-                            Debug.Log("Placing room at " + placementInformation.Position);
                             PlaceRoom(newRoom, placementInformation.Position, parentTransform);
                             break;
                         }
@@ -362,6 +347,12 @@ namespace LevelGeneration
                 // If we're just absolutely failing to place rooms we have something terribly wrong.
                 if (roomPlacementsAttempted >= roomBlueprints.Count * 4 * 10)
                 {
+                    //Seal all of the open connections to prevent players from falling off the map.
+                    foreach(Connection connection in openConnections)
+                    {
+                        connection.Seal();
+                    }
+
                     Debug.LogError("Level generation is failing to place a room");
                     return;
                 }

@@ -6,7 +6,7 @@ namespace SimpleRPG.InventorySystem.LootGeneration
 {
     [CreateAssetMenu(fileName = "LootableItem", menuName = "Scriptable Objects/Lootable Item")]
     [Serializable]
-    public class LootableItem  : LootableObject
+    public class LootableItem  : WeightedRandomEntry
     {
         /// <summary>
         /// The item to be dropped.
@@ -16,9 +16,9 @@ namespace SimpleRPG.InventorySystem.LootGeneration
         public Item Item { get; set; }
 
         /// <inheritdoc/>
-        public override IEnumerable<LootableObject> GetResult()
+        public override IEnumerable<WeightedRandomEntry> GetResult()
         {
-            List<LootableObject> result = new List<LootableObject>();
+            List<WeightedRandomEntry> result = new List<WeightedRandomEntry>();
             result.Add(this);
             return result;
         }

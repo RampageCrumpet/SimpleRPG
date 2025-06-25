@@ -8,13 +8,13 @@ namespace SimpleRPG.InventorySystem.LootGeneration
     /// This class is used to represent the chance that no item will drop.
     /// </summary>
     [Serializable]
-    public class NullLoot : LootableObject
+    public class NullLoot : WeightedRandomEntry
     {
         /// <inheritdoc/>
-        public override IEnumerable<LootableObject> GetResult()
+        public override IEnumerable<WeightedRandomEntry> GetResult()
         {
             // Return an empty list of lootable objects so nothing is added to the parent.
-            return new List<LootableObject>();
+            return new List<WeightedRandomEntry>();
         }
     }
 }
