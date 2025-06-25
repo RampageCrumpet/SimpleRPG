@@ -27,7 +27,7 @@ namespace SimpleRPG
             IdleState idleState = new IdleState();
 
             chaseState.Initialize(this, deadState, attackState, idleState);
-            attackState.Initialize(this, idleState, idleState);
+            attackState.Initialize(this, deadState, idleState);
             deadState.Initialize(this);
             idleState.Initialize(this, deadState, chaseState);
 
