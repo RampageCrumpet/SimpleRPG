@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "simplerpg",
+  "project_id": "c58cbb52-0345-4290-a553-108520f51c72"
+}
