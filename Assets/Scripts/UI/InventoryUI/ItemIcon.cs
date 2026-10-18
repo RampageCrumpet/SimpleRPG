@@ -97,17 +97,12 @@ namespace SimpleRPG.UI
                 {
                     // The cell position the ItemIcon was dropped on.
                     Vector2Int targetCellPosition = inventory.ScreenToCellPosition(Vector2Int.RoundToInt(Input.mousePosition), inventory);
-                    Vector3 relativeLocalPosition = inventory.FindItemPlacementLocation(targetCellPosition, Item.ItemSize);
-
                     targetInventoryUI = inventory;
 
-                    // Move the ItemIcon to the target slots position and make the itemIcon a child of the target inventor sloty.
-                    inventoryUI.RemoveItem(this);
-                    targetInventoryUI.AddItem(this, targetCellPosition);
-
-                    this.transform.localPosition = relativeLocalPosition;
-
-                    return;
+                    // Ask the inventory to move the item. The icon goes back to where it started; if the move is accepted the
+                    // inventories raise Changed and every view redraws its icons from the new contents.
+                    inventoryUI.RequestMoveItem(this, targetInventoryUI, targetCellPosition);
+                    break;
                 }
             }
 

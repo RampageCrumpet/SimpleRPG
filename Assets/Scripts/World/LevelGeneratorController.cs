@@ -1,11 +1,13 @@
 using LevelGeneration;
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
 namespace SimpleRPG.LevelGeneration
 {
+    /// <summary>
+    /// Builds the dungeon on every machine from parameters chosen by the server.
+    /// The server generates first, then tells connected clients; clients that join later ask the server for the parameters.
+    /// </summary>
     public class LevelGeneratorController : NetworkBehaviour
     {
         [field: SerializeField]
@@ -23,59 +25,75 @@ namespace SimpleRPG.LevelGeneration
         public int MinimumNumberOfRooms { get; set; }
 
         /// <summary>
-        /// The level generator we're using to generate our level.
+        /// The parameters the current level was generated with. Only valid once <see cref="IsGenerated"/> is true.
         /// </summary>
-        private DungeonGenerator levelGenerator;
+        private LevelGenerationParameters generatedParameters;
 
         /// <summary>
-        /// Call the level generator across the network.
+        /// True once this machine has generated its copy of the level.
+        /// </summary>
+        public bool IsGenerated { get; private set; }
+
+        /// <summary>
+        /// Generates the level on the server and tells every connected client to do the same. Server only.
         /// </summary>
         /// <param name="seed"> The random seed we want to use to generate our level. </param>
         public void GenerateLevelAcrossNetwork(int seed)
         {
-            // Generate the level if this is a headless server.
-            if (this.IsServer && !this.IsHost)
+            if (!IsServer)
             {
-                GenerateLevel(seed);
+                Debug.LogError("Only the server can start level generation.");
+                return;
             }
-            // Call the RPC that will generate this level on every client including non headless servers.
-            GenerateLevelClientRpc(seed);
+
+            var parameters = new LevelGenerationParameters { Seed = seed, MinimumNumberOfRooms = MinimumNumberOfRooms };
+
+            // The server (including a host) generates directly rather than relying on receiving its own RPC.
+            GenerateLevel(parameters);
+            GenerateLevelRpc(parameters, RpcTarget.NotServer);
         }
 
-
-        [ServerRpc(RequireOwnership = false)]
-        public void RequestLevelGenerationServerRpc(ServerRpcParams serverRpcParams = default)
+        /// <summary>
+        /// Called by a client that spawned after the level was generated, to receive the parameters it missed.
+        /// </summary>
+        [Rpc(SendTo.Server)]
+        public void RequestLevelGenerationRpc(RpcParams rpcParams = default)
         {
-            // Find the sending clients ID and prepare to send the message back to them.
-            ClientRpcParams clientRpcParams = new ClientRpcParams()
+            // If the server hasn't generated yet the client will receive the broadcast from GenerateLevelAcrossNetwork instead.
+            if (!IsGenerated)
             {
-                Send = new ClientRpcSendParams()
-                {
-                    TargetClientIds = new ulong[] { serverRpcParams.Receive.SenderClientId }
-                }
-            };
-            GenerateLevelClientRpc(levelGenerator.Seed, clientRpcParams);
+                return;
+            }
+
+            GenerateLevelRpc(generatedParameters, RpcTarget.Single(rpcParams.Receive.SenderClientId, RpcTargetUse.Temp));
         }
 
         /// <summary>
-        /// Invokes the generate level code on all of the connected clients.
+        /// Generates the level on the receiving clients. Sent to all clients on first generation, or to a single late joiner on request.
         /// </summary>
-        /// <param name="seed"> The seed we want to send the clients to generate the level</param>
-        /// <param name="clientRpcParams"> The clients we want to send the command to. Defaults to all clients. </param>
-        [ClientRpc]
-        private void GenerateLevelClientRpc(int seed, ClientRpcParams clientRpcParams = default)
+        [Rpc(SendTo.SpecifiedInParams)]
+        private void GenerateLevelRpc(LevelGenerationParameters parameters, RpcParams rpcParams = default)
         {
-            GenerateLevel(seed);
+            GenerateLevel(parameters);
         }
 
         /// <summary>
-        /// Call the level generator to create a level.
+        /// Call the level generator to create a level. Does nothing if this machine already has one, which also
+        /// protects a client that receives both the broadcast and a reply to its own request.
         /// </summary>
-        /// <param name="seed">The seed we want to use to generate a level.</param>
-        private void GenerateLevel(int seed)
+        private void GenerateLevel(LevelGenerationParameters parameters)
         {
-            levelGenerator = new DungeonGenerator(seed, Roomset.RoomCollection, Roomset.cellSize);
-            levelGenerator.GenerateLevel(MinimumNumberOfRooms, this.transform);
+            if (IsGenerated)
+            {
+                return;
+            }
+
+            IsGenerated = true;
+            generatedParameters = parameters;
+
+            var levelGenerator = new DungeonGenerator(parameters.Seed, Roomset.RoomCollection, Roomset.cellSize);
+            levelGenerator.RoomInstantiated = room => RoomNetworkObjects.Apply(room, IsServer);
+            levelGenerator.GenerateLevel(parameters.MinimumNumberOfRooms, this.transform);
         }
     }
 }

@@ -41,6 +41,26 @@ namespace SimpleRPG.InventorySystem
         [Tooltip("The total size of the item in the inventory grid.")]
         public Vector2Int ItemSize { private set; get; }
 
+        /// <summary>
+        /// The item asset this instance was cloned from, or null if this is the asset itself.
+        /// </summary>
+        public Item Template { get; private set; }
+
+        /// <summary>
+        /// The item asset that identifies this item: the asset itself, or the asset a clone was created from.
+        /// </summary>
+        public Item SourceAsset => Template != null ? Template : this;
+
+        /// <summary>
+        /// Creates a runtime copy of this item (for example the copy that lives in an inventory) that remembers its source asset.
+        /// </summary>
+        public Item CloneInstance()
+        {
+            Item clone = Instantiate(SourceAsset);
+            clone.Template = SourceAsset;
+            return clone;
+        }
+
         protected override void DeserializeData<T>(BufferSerializer<T> serializer)
         {
             var itemName = string.Empty;

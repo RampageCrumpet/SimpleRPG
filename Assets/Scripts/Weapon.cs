@@ -36,7 +36,7 @@ public class Weapon : NetworkBehaviour
             if (character != null)
             {
                 DamageInfo scaledDamage = new DamageInfo { Damage = ScaleDamage(weaponData.damage.Damage, damageScalar) };
-                character.TakeDamageRPC(scaledDamage, location);
+                character.TakeDamage(scaledDamage, location);
             }
         }
     }

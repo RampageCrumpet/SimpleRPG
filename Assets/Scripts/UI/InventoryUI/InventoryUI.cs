@@ -134,29 +134,16 @@ namespace SimpleRPG.UI
         }
 
         /// <summary>
-        /// Adds an Item to the inventory at the given position.
+        /// Asks for the item shown by an <see cref="ItemIcon"/> to be moved into another inventory view.
+        /// The inventory validates the move (on the server for networked inventories) and raises its Changed event when it
+        /// succeeds, at which point every view redraws. Nothing is moved on screen here, so a rejected move leaves the UI untouched.
         /// </summary>
-        /// <param name="itemIcon"> The ItemIcon we want to source the Item from..</param>
-        /// <param name="position"> The position we want to add the item to.</param>
-        public void AddItem(ItemIcon itemIcon, Vector2Int position)
+        /// <param name="itemIcon"> The ItemIcon being moved.</param>
+        /// <param name="target"> The view of the inventory the item was dropped on.</param>
+        /// <param name="position"> The cell the item was dropped on.</param>
+        public void RequestMoveItem(ItemIcon itemIcon, InventoryUI target, Vector2Int position)
         {
-            // Add the item to the backing data model.
-            Inventory.AddItem(itemIcon.Item, position);
-            this.itemIcons.Add(itemIcon);
-
-            // Update the visuals so the item is displayed properly.
-            itemIcon.transform.SetParent(inventoryGridBackdropRectTransform);
-        }
-
-        /// <summary>
-        /// Removes an ItemIcon from the inventory.
-        /// </summary>
-        /// <param name="itemIcon"> The ItemIcon we want to remove from.</param>
-        public void RemoveItem(ItemIcon itemIcon)
-        {
-            // Remove the item from the backing data model.
-            Inventory.RemoveItem(itemIcon.Item);
-            this.itemIcons.Remove(itemIcon);
+            Inventory.RequestMoveItem(itemIcon.Item, target.Inventory, position);
         }
 
         /// <summary>
@@ -165,9 +152,31 @@ namespace SimpleRPG.UI
         /// <param name="inventory"> The Inventory we want to display.</param>
         public void SetInventory(Inventory inventory)
         {
+            if (this.Inventory != null)
+            {
+                this.Inventory.Changed -= RefreshItemIcons;
+            }
+
             this.Inventory = inventory;
+            inventory.Changed += RefreshItemIcons;
             UpdateGridSize(inventory);
             CreateItemIcons(inventory);
+        }
+
+        /// <summary>
+        /// Redraws the item icons after the inventory's contents changed.
+        /// </summary>
+        private void RefreshItemIcons()
+        {
+            CreateItemIcons(Inventory);
+        }
+
+        private void OnDestroy()
+        {
+            if (Inventory != null)
+            {
+                Inventory.Changed -= RefreshItemIcons;
+            }
         }
 
         /// <summary>
@@ -201,4 +210,4 @@ namespace SimpleRPG.UI
             }
         }
     }
-}
+}

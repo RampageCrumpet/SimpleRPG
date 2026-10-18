@@ -2,22 +2,30 @@ using UnityEngine;
 using SimpleRPG.InventorySystem;
 using System.Linq;
 using SimpleRPG.UI;
-using Unity.Netcode;
 using SimpleRPG.InventorySystem.LootGeneration;
-using System.Collections.Generic;
 
 namespace SimpleRPG.ObjectInteractions
 {
+    /// <summary>
+    /// A container the player can loot. The server spawns the chest (see <c>RoomNetworkObjects</c>), rolls its contents
+    /// and owns them; clients see the contents through the chest's replicated <see cref="Inventory"/>.
+    /// </summary>
     [RequireComponent(typeof(Inventory))]
     public class Chest : Interactable
     {
+        /// <summary>
+        /// How far beyond <see cref="Interactable.InteractionRange"/> the server still lets a client move items,
+        /// to absorb the difference between the client's and the server's view of the player's position.
+        /// </summary>
+        private const float ServerAccessSlack = 2f;
+
         /// <summary>
         /// The inventory of the chest.
         /// </summary>
         Inventory inventory;
 
         /// <summary>
-        /// The UI for the loot menu.
+        /// The UI for the loot menu. Looked up on first use because a dedicated server has no UI.
         /// </summary>
         LootMenuUI lootMenuUI;
 
@@ -33,15 +41,10 @@ namespace SimpleRPG.ObjectInteractions
             base.Start();
             inventory = this.GetComponent<Inventory>();
 
-            lootMenuUI = GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<LootMenuUI>()).Single(x => x != null);
-
-            if(!this.IsSpawned)
+            // Only the server owns the contents; clients receive them through the inventory's replicated state.
+            if (this.IsSpawned && this.IsServer)
             {
-                this.GetComponent<NetworkObject>().Spawn();
-            }
-
-            if (this.IsServer || this.IsHost)
-            {
+                inventory.SharedAccessRange = InteractionRange + ServerAccessSlack;
                 GenerateRandomInventory();
             }
         }
@@ -49,17 +52,27 @@ namespace SimpleRPG.ObjectInteractions
         /// <inheritdoc/>
         public override void FinishInteraction(Interactor interactor)
         {
-            lootMenuUI.SetLootMenuUIDisplayStatus(false);
+            GetLootMenuUI()?.SetLootMenuUIDisplayStatus(false);
         }
 
         /// <inheritdoc/>
         public override void ActivateInteraction(Interactor interactor)
         {
-            lootMenuUI.DisplayLootMenu(this.inventory);
+            GetLootMenuUI()?.DisplayLootMenu(this.inventory);
+        }
+
+        private LootMenuUI GetLootMenuUI()
+        {
+            if (lootMenuUI == null)
+            {
+                lootMenuUI = GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<LootMenuUI>()).SingleOrDefault(x => x != null);
+            }
+
+            return lootMenuUI;
         }
 
         /// <summary>
-        /// Populates the chest with random loot.
+        /// Populates the chest with random loot. Server only.
         /// </summary>
         private void GenerateRandomInventory()
         {

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -6,6 +7,10 @@ namespace SimpleRPG.InventorySystem
 {
     /// <summary>
     /// The datacontainer for an inventory.
+    /// Authority model: the server owns the contents. Only the server mutates the grid (the Add/Remove methods refuse to run on a client)
+    /// and it publishes the contents as a <see cref="NetworkList{T}"/> of <see cref="InventoryEntry"/>, which late joiners receive
+    /// as part of the spawn state. Clients change inventories by calling <see cref="RequestMoveItem"/>, which the server validates.
+    /// When the object isn't spawned on a network (edit mode tests, offline use) the inventory behaves as a plain local container.
     /// </summary>
     public class Inventory : NetworkBehaviour
     {
@@ -17,21 +22,114 @@ namespace SimpleRPG.InventorySystem
         public Vector2Int InventorySize {get; private set; }
 
         /// <summary>
+        /// If greater than zero, any client whose character is within this many units can move items in and out of this inventory
+        /// (a chest). If zero only the owning client can (a player's inventory). Enforced by the server.
+        /// </summary>
+        public float SharedAccessRange { get; set; }
+
+        /// <summary>
+        /// Raised on every machine after the contents of the inventory change, so views can redraw.
+        /// </summary>
+        public event Action Changed;
+
+        /// <summary>
+        /// The replicated contents. Everyone reads, only the server writes.
+        /// </summary>
+        private readonly NetworkList<InventoryEntry> entries = new NetworkList<InventoryEntry>();
+
+        /// <summary>
         /// The contents of our inventory grid.
         /// </summary>
         Item[,] inventory;
+
+        /// <summary>
+        /// The items in this inventory by the ID that identifies them across machines.
+        /// </summary>
+        private Dictionary<uint, Item> itemsById = new Dictionary<uint, Item>();
+
+        private readonly Dictionary<Item, uint> idsByItem = new Dictionary<Item, uint>();
+
+        /// <summary>
+        /// Source of unique item instance IDs. Only meaningful on the server (or offline).
+        /// </summary>
+        private static uint lastInstanceId;
+
+        /// <summary>
+        /// True if this machine may change the contents directly: it's the server, or the inventory isn't networked.
+        /// </summary>
+        private bool HasAuthority => !IsSpawned || IsServer;
 
         public void Awake()
         {
             inventory = new Item[InventorySize.x, InventorySize.y];
         }
 
+        public override void OnNetworkSpawn()
+        {
+            if (!IsServer)
+            {
+                // Late joiners receive the full list with the spawn but no change event, so build from it now.
+                entries.OnListChanged += HandleEntriesChanged;
+                RebuildFromEntries();
+            }
+        }
+
+        public override void OnNetworkDespawn()
+        {
+            entries.OnListChanged -= HandleEntriesChanged;
+        }
+
+        private void HandleEntriesChanged(NetworkListEvent<InventoryEntry> changeEvent)
+        {
+            RebuildFromEntries();
+        }
+
         /// <summary>
-        /// Add an item to the inventory at a given location.
+        /// Replaces the local contents with what the server replicated. Items that are still present keep their instance
+        /// so views holding a reference to them stay valid.
         /// </summary>
-        /// <param name="item"> The <see cref="Item"/> we want to add.</param>
-        /// <param name="location"> The location within the inventory to add the item.</param>
-        private void PlaceItem(Item item, Vector2Int location)
+        private void RebuildFromEntries()
+        {
+            Array.Clear(inventory, 0, inventory.Length);
+            var previousItems = itemsById;
+            itemsById = new Dictionary<uint, Item>();
+            idsByItem.Clear();
+
+            ItemRegistry registry = ItemRegistry.Instance;
+
+            foreach (InventoryEntry entry in entries)
+            {
+                Item item;
+                if (!previousItems.Remove(entry.InstanceId, out item) || (registry != null && registry.GetId(item) != entry.ItemId))
+                {
+                    Item template = registry != null ? registry.GetItem(entry.ItemId) : null;
+                    if (template == null)
+                    {
+                        Debug.LogError($"{gameObject.name}: no registered item with ID {entry.ItemId}; add it to the ItemRegistry.");
+                        continue;
+                    }
+
+                    item = template.CloneInstance();
+                }
+
+                itemsById[entry.InstanceId] = item;
+                idsByItem[item] = entry.InstanceId;
+                FillCells(item, entry.Position);
+            }
+
+            // Anything left over was removed or replaced by the server.
+            foreach (Item staleItem in previousItems.Values)
+            {
+                Destroy(staleItem);
+            }
+
+            Changed?.Invoke();
+        }
+
+        /// <summary>
+        /// Marks the grid cells an item covers.
+        /// </summary>
+        private void FillCells(Item item, Vector2Int location)
         {
             for(int x = location.x; x < location.x + item.ItemSize.x; x++)
             {
@@ -43,10 +141,54 @@ namespace SimpleRPG.InventorySystem
         }
 
         /// <summary>
-        /// Remove an item from the inventory.
+        /// Adds an item to the inventory at a given location and publishes it. Authority only.
+        /// </summary>
+        /// <param name="item"> The <see cref="Item"/> we want to add.</param>
+        /// <param name="location"> The location within the inventory to add the item.</param>
+        /// <param name="instanceId"> The existing ID of the item if it's moving from another inventory, 0 to assign a new one.</param>
+        private void PlaceItem(Item item, Vector2Int location, uint instanceId = 0)
+        {
+            if (instanceId == 0)
+            {
+                instanceId = ++lastInstanceId;
+            }
+
+            FillCells(item, location);
+            itemsById[instanceId] = item;
+            idsByItem[item] = instanceId;
+
+            if (IsSpawned)
+            {
+                entries.Add(new InventoryEntry
+                {
+                    InstanceId = instanceId,
+                    ItemId = ItemRegistry.Instance.GetId(item),
+                    Position = location
+                });
+            }
+
+            Changed?.Invoke();
+        }
+
+        /// <summary>
+        /// Remove an item from the inventory. Authority only.
         /// </summary>
         /// <param name="item"> The <see cref="Item"/> to remove from the inventory.</param>
         public void RemoveItem(Item item)
+        {
+            if (!HasAuthority)
+            {
+                Debug.LogError("Only the server can remove items; use RequestMoveItem from a client.");
+                return;
+            }
+
+            if (RemoveItemInternal(item))
+            {
+                Changed?.Invoke();
+            }
+        }
+
+        private bool RemoveItemInternal(Item item)
         {
             for(int x = 0; x < inventory.GetLength(0); x++)
             {
@@ -58,47 +200,57 @@ namespace SimpleRPG.InventorySystem
                     }
                 }
             }
+
+            if (!idsByItem.Remove(item, out uint instanceId))
+            {
+                return false;
+            }
+
+            itemsById.Remove(instanceId);
+
+            if (IsSpawned)
+            {
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    if (entries[i].InstanceId == instanceId)
+                    {
+                        entries.RemoveAt(i);
+                        break;
+                    }
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
-        /// Adds an item to the given location in the inventory.
+        /// Adds an item to the given location in the inventory. Authority only.
         /// </summary>
         /// <param name="item"> The item we want to place.</param>
         /// <param name="location"> The location we want to place the item.</param>
         /// <returns> Returns true if the item can be placed, false if it cant</returns>
         public bool AddItem(Item item, Vector2Int location)
         {
-            if(ValidateItemPlacement(item, location))
-            {
-                PlaceItem(item, location);
-                return true;
-            }
-            else
+            if (!CanPlaceAsAuthority(item, location))
             {
                 return false;
             }
+
+            PlaceItem(item, location);
+            return true;
         }
 
         /// <summary>
-        /// Place an item at the first available location in the inventory.
+        /// Place an item at the first available location in the inventory. Authority only.
         /// </summary>
         /// <param name="item"> The item to be placed.</param>
         /// <returns> True if we suceeded in placing the item, false otherwise.</returns>
         public bool AddItem(Item item)
         {
-            for (int x = 0; x < InventorySize.x; x++)
+            if (TryFindFreeLocation(item, out Vector2Int location) && CanPlaceAsAuthority(item, location))
             {
-                for (int y = 0; y < InventorySize.y; y++)
-                {
-                    if (inventory[x, y] == null)
-                    {
-                        if (ValidateItemPlacement(item, new Vector2Int(x, y)))
-                        {
-                            PlaceItem(item, new Vector2Int(x, y));
-                            return true;
-                        }
-                    }
-                }
+                PlaceItem(item, location);
+                return true;
             }
 
             // We were not able to place the item in the inventory.
@@ -106,30 +258,58 @@ namespace SimpleRPG.InventorySystem
         }
 
         /// <summary>
-        /// Creates a new instance of an item and places it in the inventory at the first available location.]
+        /// Creates a new instance of an item and places it in the inventory at the first available location. Authority only.
         /// This is useful for when we want to create a new item from a loot table and place it in the inventory.
         /// </summary>
         /// <param name="item"> The item to be placed.</param>
         /// <returns> True if we suceeded in placing the item, false otherwise.</returns>
         public bool AddItemInstance(Item item)
         {
+            if (TryFindFreeLocation(item, out Vector2Int location) && CanPlaceAsAuthority(item, location))
+            {
+                PlaceItem(item.CloneInstance(), location);
+                return true;
+            }
+
+            // We were not able to place the item in the inventory.
+            return false;
+        }
+
+        /// <summary>
+        /// Checks that this machine may add the item and that networked inventories know the item.
+        /// </summary>
+        private bool CanPlaceAsAuthority(Item item, Vector2Int location)
+        {
+            if (!HasAuthority)
+            {
+                Debug.LogError("Only the server can add items; use RequestMoveItem from a client.");
+                return false;
+            }
+
+            if (IsSpawned && (ItemRegistry.Instance == null || ItemRegistry.Instance.GetId(item) == 0))
+            {
+                Debug.LogError($"Item '{item.ItemName}' isn't in the ItemRegistry, so it can't be replicated. Add it to the registry.");
+                return false;
+            }
+
+            return ValidateItemPlacement(item, location);
+        }
+
+        private bool TryFindFreeLocation(Item item, out Vector2Int location)
+        {
             for (int x = 0; x < InventorySize.x; x++)
             {
                 for (int y = 0; y < InventorySize.y; y++)
                 {
-                    if (inventory[x, y] == null)
+                    if (inventory[x, y] == null && ValidateItemPlacement(item, new Vector2Int(x, y)))
                     {
-                        if (ValidateItemPlacement(item, new Vector2Int(x, y)))
-                        {
-                            Item newItemInstance = Object.Instantiate(item);
-                            PlaceItem(newItemInstance, new Vector2Int(x, y));
-                            return true;
-                        }
+                        location = new Vector2Int(x, y);
+                        return true;
                     }
                 }
             }
 
-            // We were not able to place the item in the inventory.
+            location = default;
             return false;
         }
 
@@ -157,6 +337,100 @@ namespace SimpleRPG.InventorySystem
 
             // No problems were found with the items placement. It must be a valid placement.
             return true;
+        }
+
+        /// <summary>
+        /// Moves an item that is in this inventory to a location in <paramref name="destination"/> (which may be this inventory).
+        /// Runs on whichever machine has authority; the move is validated first so a rejected move changes nothing.
+        /// </summary>
+        /// <returns>True if the item was moved.</returns>
+        public bool TryMoveItem(Item item, Inventory destination, Vector2Int location)
+        {
+            if (!HasAuthority || !destination.HasAuthority)
+            {
+                Debug.LogError("Only the server can move items; use RequestMoveItem from a client.");
+                return false;
+            }
+
+            if (item == null || !idsByItem.TryGetValue(item, out uint instanceId) || !destination.ValidateItemPlacement(item, location))
+            {
+                return false;
+            }
+
+            RemoveItemInternal(item);
+            destination.PlaceItem(item, location, instanceId);
+
+            if (destination != this)
+            {
+                Changed?.Invoke();
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Asks for an item to be moved from this inventory to <paramref name="destination"/>. On the server this happens immediately;
+        /// on a client the request is sent to the server, which validates it, and the result arrives through <see cref="Changed"/>.
+        /// </summary>
+        /// <returns>True if the move happened or the request was sent; false if it can't possibly succeed.</returns>
+        public bool RequestMoveItem(Item item, Inventory destination, Vector2Int location)
+        {
+            if (HasAuthority && destination.HasAuthority)
+            {
+                return TryMoveItem(item, destination, location);
+            }
+
+            if (item == null || !idsByItem.TryGetValue(item, out uint instanceId))
+            {
+                return false;
+            }
+
+            MoveItemRpc(instanceId, new NetworkBehaviourReference(destination), location);
+            return true;
+        }
+
+        [Rpc(SendTo.Server)]
+        private void MoveItemRpc(uint instanceId, NetworkBehaviourReference destinationReference, Vector2Int location, RpcParams rpcParams = default)
+        {
+            ulong senderClientId = rpcParams.Receive.SenderClientId;
+
+            if (!itemsById.TryGetValue(instanceId, out Item item) ||
+                !destinationReference.TryGet(out Inventory destination) ||
+                !CanBeAccessedBy(senderClientId) ||
+                !destination.CanBeAccessedBy(senderClientId))
+            {
+                return;
+            }
+
+            TryMoveItem(item, destination, location);
+        }
+
+        /// <summary>
+        /// Can the given client move items in or out of this inventory?
+        /// </summary>
+        private bool CanBeAccessedBy(ulong clientId)
+        {
+            if (OwnerClientId == clientId && SharedAccessRange <= 0f)
+            {
+                return true;
+            }
+
+            if (SharedAccessRange <= 0f)
+            {
+                return false;
+            }
+
+            // Characters are spawned with ownership rather than as player objects, so look at the characters the client owns.
+            foreach (NetworkObject owned in NetworkManager.SpawnManager.GetClientOwnedObjects(clientId))
+            {
+                if (owned.TryGetComponent(out Character _) &&
+                    Vector3.Distance(owned.transform.position, transform.position) <= SharedAccessRange)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

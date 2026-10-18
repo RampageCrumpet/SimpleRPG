@@ -19,6 +19,11 @@ public class MeleeAttackAbilityBehaviour : NetworkBehaviour, IInvokeableAbilityB
 
     private WeaponData weaponData;
 
+    /// <summary>
+    /// Server-side cooldown record used to validate incoming attack requests.
+    /// </summary>
+    private readonly ServerCooldownTracker cooldowns = new ServerCooldownTracker();
+
     public delegate void NotifyMeleeAttackStarted();
 
     public event NotifyMeleeAttackStarted MeleeAttackStarted;
@@ -44,15 +49,21 @@ public class MeleeAttackAbilityBehaviour : NetworkBehaviour, IInvokeableAbilityB
     /// Tell the player to swing their weapon across the network.
     /// </summary>
     /// <param name="abilityName"> The Ability name of the <see cref="MeleeAttackAbility"/> we want to trigger.</param>
-    [Rpc(SendTo.Server)]
+    [Rpc(SendTo.Server, RequireOwnership = true)]
     void MeleeAttackServerRpc(string abilityName)
     {
-        MeleeAttackAbility abilityInstance = (MeleeAttackAbility)this.character.PersonalAbilities.Select(x => x.Ability).Single(x => x.AbillityName == abilityName);
+        MeleeAttackAbility abilityInstance = this.character.PersonalAbilities.Select(x => x.Ability).OfType<MeleeAttackAbility>().FirstOrDefault(x => x.AbillityName == abilityName);
 
         // If we weren't able to find an ability return and log an error.
         if (abilityInstance == null)
         {
             Debug.LogError("Unable to find an ability with the name " + abilityName + " on character " + this.gameObject.name + ".");
+            return;
+        }
+
+        // The server is the authority on cooldowns, the client's own cooldown check is only a prediction.
+        if (!cooldowns.TryActivate(abilityName, abilityInstance.CooldownTime, Time.time))
+        {
             return;
         }
 

@@ -68,7 +68,7 @@ public class Projectile : NetworkBehaviour
         {
             if (character != null)
             {
-                character.TakeDamageRPC(damage, location);
+                character.TakeDamage(damage, location);
             }
 
             this.DestroyProjectile();

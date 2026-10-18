@@ -13,6 +13,11 @@ namespace LevelGeneration
         public int Seed { get; private set; }
 
         /// <summary>
+        /// Called with each room's root GameObject right after it is instantiated, before any other code can see it.
+        /// </summary>
+        public System.Action<GameObject> RoomInstantiated { get; set; }
+
+        /// <summary>
         /// The connections that have not yet had a room attached to them.
         /// </summary>
         private List<Connection> openConnections = new List<Connection>();
@@ -290,6 +295,8 @@ namespace LevelGeneration
                 worldPlacementLocation,
                 room.Rotation
             ).GetComponent<RoomBlueprint>();
+
+            RoomInstantiated?.Invoke(placedRoom.gameObject);
 
             //Update the connections on the room to match the instantiated copy of the room blueprint rather than the prefab.
             foreach(ConnectionBlueprint connectionBlueprint in placedRoom.Connections)

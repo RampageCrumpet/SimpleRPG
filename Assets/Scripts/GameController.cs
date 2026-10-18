@@ -1,10 +1,14 @@
 using SimpleRPG.LevelGeneration;
-using System.Collections;
-using System.Collections.Generic;
 using Unity.AI.Navigation;
 using Unity.Netcode;
 using UnityEngine;
 
+/// <summary>
+/// Drives session start-up.
+/// Authority model: the server owns the world. It picks a random seed, generates the dungeon, spawns its network objects
+/// (chests, enemies) and builds the only navmesh (AI runs on the server). Clients rebuild the dungeon's geometry from the
+/// seed and receive everything else through Netcode spawns and replicated state.
+/// </summary>
 public class GameController : NetworkBehaviour
 {
     /// <summary>
@@ -17,37 +21,35 @@ public class GameController : NetworkBehaviour
     /// </summary>
     private NavMeshSurface navMeshSurface;
 
-    public override void OnNetworkSpawn()
-    {
-        if (this.IsHost || this.IsServer)
-        {
-            levelGeneratorController.GenerateLevelAcrossNetwork((int)Time.time);
-            navMeshSurface.BuildNavMesh();
-        }
-        else
-        {
-            levelGeneratorController.RequestLevelGenerationServerRpc();
-            UpdateNavmeshServerRpc();
-        }
-        base.OnNetworkSpawn();
-    }
-
-    // Start is called before the first frame update
-    void Start()
+    // References are resolved in Awake because OnNetworkSpawn can run before Start.
+    private void Awake()
     {
         levelGeneratorController = this.GetComponentInChildren<LevelGeneratorController>();
         navMeshSurface = this.GetComponentInChildren<NavMeshSurface>();
     }
 
-    // Update is called once per frame
-    void Update()
+    public override void OnNetworkSpawn()
     {
-        
+        base.OnNetworkSpawn();
+
+        if (IsServer)
+        {
+            levelGeneratorController.GenerateLevelAcrossNetwork(CreateSeed());
+
+            // Only the server runs AI, so it is the only machine that needs a navmesh.
+            navMeshSurface.BuildNavMesh();
+        }
+        else
+        {
+            levelGeneratorController.RequestLevelGenerationRpc();
+        }
     }
 
-    [ServerRpc]
-    private void UpdateNavmeshServerRpc()
+    /// <summary>
+    /// Creates a seed that differs between sessions.
+    /// </summary>
+    private static int CreateSeed()
     {
-        navMeshSurface.BuildNavMesh();
+        return new System.Random().Next();
     }
 }

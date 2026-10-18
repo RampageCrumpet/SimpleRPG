@@ -14,6 +14,11 @@ namespace SimpleRPG.Abilities
         /// </summary>
         private Character character;
 
+        /// <summary>
+        /// Server-side cooldown record used to validate incoming fire requests.
+        /// </summary>
+        private readonly ServerCooldownTracker cooldowns = new ServerCooldownTracker();
+
         public void Start()
         {
             character = this.GetComponent<Character>();
@@ -32,12 +37,18 @@ namespace SimpleRPG.Abilities
         [ServerRpc]
         void FireProjectileServerRPC(string abilityName)
         {
-            FireProjectileAbility abilityInstance = (FireProjectileAbility)this.character.PersonalAbilities.Select(x => x.Ability).Single(x => x.AbillityName == abilityName);
+            FireProjectileAbility abilityInstance = this.character.PersonalAbilities.Select(x => x.Ability).OfType<FireProjectileAbility>().FirstOrDefault(x => x.AbillityName == abilityName);
 
             // If we weren't able to find an ability return and log an error.
             if (abilityInstance == null)
             {
                 Debug.LogError("Unable to find an ability with the name " + abilityName + ".");
+                return;
+            }
+
+            // The server is the authority on cooldowns, the client's own cooldown check is only a prediction.
+            if (!cooldowns.TryActivate(abilityName, abilityInstance.CooldownTime, Time.time))
+            {
                 return;
             }
 
