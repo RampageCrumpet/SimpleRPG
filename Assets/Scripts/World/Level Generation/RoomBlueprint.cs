@@ -18,6 +18,14 @@ namespace LevelGeneration
         public Vector2Int Size;
 
         /// <summary>
+        /// Where the room's lowest corner sits relative to the prefab root, in cells (never positive).
+        /// Rooms whose geometry extends below or left of the root (for example corridor stubs) have a negative offset.
+        /// Connection locations and <see cref="Size"/> are measured from this corner, and the generator moves the instance
+        /// by this offset so the corner lands on the room's tile position.
+        /// </summary>
+        public Vector2Int OriginOffset;
+
+        /// <summary>
         /// A collection of all of the connection points this room has.
         /// </summary>
         [SerializeField]

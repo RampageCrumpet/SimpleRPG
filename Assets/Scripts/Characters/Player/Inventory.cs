@@ -57,7 +57,7 @@ namespace SimpleRPG.InventorySystem
         /// <summary>
         /// True if this machine may change the contents directly: it's the server, or the inventory isn't networked.
         /// </summary>
-        private bool HasAuthority => !IsSpawned || IsServer;
+        private bool CanMutate => !IsSpawned || IsServer;
 
         public void Awake()
         {
@@ -176,7 +176,7 @@ namespace SimpleRPG.InventorySystem
         /// <param name="item"> The <see cref="Item"/> to remove from the inventory.</param>
         public void RemoveItem(Item item)
         {
-            if (!HasAuthority)
+            if (!CanMutate)
             {
                 Debug.LogError("Only the server can remove items; use RequestMoveItem from a client.");
                 return;
@@ -280,7 +280,7 @@ namespace SimpleRPG.InventorySystem
         /// </summary>
         private bool CanPlaceAsAuthority(Item item, Vector2Int location)
         {
-            if (!HasAuthority)
+            if (!CanMutate)
             {
                 Debug.LogError("Only the server can add items; use RequestMoveItem from a client.");
                 return false;
@@ -346,7 +346,7 @@ namespace SimpleRPG.InventorySystem
         /// <returns>True if the item was moved.</returns>
         public bool TryMoveItem(Item item, Inventory destination, Vector2Int location)
         {
-            if (!HasAuthority || !destination.HasAuthority)
+            if (!CanMutate || !destination.CanMutate)
             {
                 Debug.LogError("Only the server can move items; use RequestMoveItem from a client.");
                 return false;
@@ -375,7 +375,7 @@ namespace SimpleRPG.InventorySystem
         /// <returns>True if the move happened or the request was sent; false if it can't possibly succeed.</returns>
         public bool RequestMoveItem(Item item, Inventory destination, Vector2Int location)
         {
-            if (HasAuthority && destination.HasAuthority)
+            if (CanMutate && destination.CanMutate)
             {
                 return TryMoveItem(item, destination, location);
             }

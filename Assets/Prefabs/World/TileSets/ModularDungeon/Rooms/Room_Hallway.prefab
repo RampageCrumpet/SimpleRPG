@@ -116,6 +116,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Size: {x: 10, y: 7}
+  OriginOffset: {x: 0, y: 0}
   connections:
   - {fileID: 5724595389722250340}
   - {fileID: 8243226998146887589}

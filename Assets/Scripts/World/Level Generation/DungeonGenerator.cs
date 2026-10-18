@@ -18,6 +18,11 @@ namespace LevelGeneration
         public System.Action<GameObject> RoomInstantiated { get; set; }
 
         /// <summary>
+        /// All of the rooms placed so far.
+        /// </summary>
+        public IReadOnlyList<Room> PlacedRooms => placedRooms;
+
+        /// <summary>
         /// The connections that have not yet had a room attached to them.
         /// </summary>
         private List<Connection> openConnections = new List<Connection>();
@@ -122,12 +127,19 @@ namespace LevelGeneration
             // Ensure that no new connection will be closed off by pointing at a wall.
             foreach (Connection connection in room.Connections)
             {
-                //If the spot is filled and doesn't have an open connection it'll be blocked off by a wall.
-                if (worldGrid.ContainsKey(connection.GlobalTilePosition))
-                {
-                    int connectionTileSize = Mathf.RoundToInt(connection.ConnectionLength / cellSize);
+                int connectionTileSize = Mathf.RoundToInt(connection.ConnectionLength / cellSize);
+                Vector2Int targetPoint = connection.GlobalTilePosition + (connection.Forward * connectionTileSize);
 
-                    if (!openConnections.Any(x => x.GlobalTilePosition + (x.Forward * connectionTileSize) == connection.GlobalTilePosition))
+                // If the cell we're facing is filled, the room there must have an open connection that faces us and lines up with ours,
+                // otherwise our connection would open onto a wall.
+                if (worldGrid.ContainsKey(connection.FacingCell(connectionTileSize)))
+                {
+                    bool facesMatchingOpenConnection = openConnections.Any(x =>
+                        x.GlobalTilePosition == targetPoint &&
+                        x.CanConnect(connection) &&
+                        x.GlobalTilePosition + (x.Forward * connectionTileSize) == connection.GlobalTilePosition);
+
+                    if (!facesMatchingOpenConnection)
                     {
                         return false;
                     }
@@ -150,6 +162,7 @@ namespace LevelGeneration
             {
                 int connectionTileSize = Mathf.RoundToInt(connection.ConnectionLength / cellSize);
                 Vector2Int openConnectionTargetTile = connection.GlobalTilePosition + (connection.Forward * connectionTileSize);
+                Vector2Int openConnectionFacingCell = connection.FacingCell(connectionTileSize);
 
                 // Calculate the min and max bounds of the new room in tile space
                 Vector2Int min = room.Position + room.RoomOrigin;
@@ -157,14 +170,14 @@ namespace LevelGeneration
 
                 // Check if the open connection's target tile is within the new room's bounds
                 bool connectionIsWithinRoomBounds =
-                    openConnectionTargetTile.x >= min.x && openConnectionTargetTile.x < max.x &&
-                    openConnectionTargetTile.y >= min.y && openConnectionTargetTile.y < max.y;
+                    openConnectionFacingCell.x >= min.x && openConnectionFacingCell.x < max.x &&
+                    openConnectionFacingCell.y >= min.y && openConnectionFacingCell.y < max.y;
 
                 if (connectionIsWithinRoomBounds)
                 {
                     // Check if any of the new room's connections, when placed at 'location', match this open connection's global tile position
                     bool matchesNewRoomConnection = room.Connections.Any(roomConnection =>
-                        (roomConnection.GlobalTilePosition) == openConnectionTargetTile
+                        roomConnection.GlobalTilePosition == openConnectionTargetTile && roomConnection.CanConnect(connection)
                     );
 
                     if (!matchesNewRoomConnection)
@@ -211,11 +224,11 @@ namespace LevelGeneration
             foreach (Connection connection in openConnections)
             {
                 int connectionTileSize = Mathf.RoundToInt(connection.ConnectionLength / cellSize);
-                Vector2Int connectionTarget = connection.GlobalTilePosition + (connection.Forward * connectionTileSize);
+                Vector2Int connectionTarget = connection.FacingCell(connectionTileSize);
 
                 // Calculate the min and max bounds of the room in tile space
                 Vector2Int min = room.Position + room.RoomOrigin;
-                Vector2Int max = room.Position + room.Size;
+                Vector2Int max = room.Position + room.RoomOrigin + room.Size;
 
                 // Check if the target tile is within the room's bounds
                 bool connectionIsWithinRoomBounds = connectionTarget.x >= min.x && connectionTarget.x < max.x
@@ -258,8 +271,8 @@ namespace LevelGeneration
                 // Try to find a matching open connection
                 Connection matchingConnection = openConnections.FirstOrDefault(openConnection =>
                 {
-                    //TODO: Ensure the connections are facing the opposite way.
-                    return openConnection.GlobalTilePosition + (openConnection.Forward * Mathf.RoundToInt(openConnection.ConnectionLength / cellSize)) == connection.GlobalTilePosition;
+                    return openConnection.CanConnect(connection) &&
+                        openConnection.GlobalTilePosition + (openConnection.Forward * Mathf.RoundToInt(openConnection.ConnectionLength / cellSize)) == connection.GlobalTilePosition;
                 });
 
                 if (matchingConnection != null)
@@ -284,10 +297,12 @@ namespace LevelGeneration
         private void InstantiateRoom(Room room)
         {
             // Instantiate the room at the correct world position and rotation
+            // The room's lowest corner belongs on its tile position, but the prefab root may sit above/right of that corner by OriginOffset cells.
+            Vector3 rotatedOriginOffset = room.Rotation * new Vector3(room.RoomBlueprint.OriginOffset.x * cellSize, 0, room.RoomBlueprint.OriginOffset.y * cellSize);
             Vector3 worldPlacementLocation = new Vector3(
-                room.Position.x * cellSize,
+                room.Position.x * cellSize - rotatedOriginOffset.x,
                 room.RoomBlueprint.transform.position.y,
-                room.Position.y * cellSize
+                room.Position.y * cellSize - rotatedOriginOffset.z
             );
 
             RoomBlueprint placedRoom = GameObject.Instantiate(
@@ -323,7 +338,7 @@ namespace LevelGeneration
             while (placedRooms.Count < minimumNumberOfRooms || openConnections.Count > 0)
             {
                 // The connection we want to build off of.
-                Connection openConnection = openConnections[randomNumberGenerator.Next(openConnections.Count - 1)];
+                Connection openConnection = openConnections[randomNumberGenerator.Next(openConnections.Count)];
 
                 //TODO: We can pick a room using better logic than by pure chance.
                 Room newRoom = SelectRandomRoom(openConnection);

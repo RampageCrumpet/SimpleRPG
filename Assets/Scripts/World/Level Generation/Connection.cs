@@ -101,6 +101,22 @@ namespace LevelGeneration
             return Forward == -otherConnection.Forward;
         }
 
+        /// <summary>
+        /// Finds the cell a connection opens onto, <paramref name="lengthInCells"/> cells away.
+        /// A connection's position is a grid point (a cell corner), so the cell beyond that point is the one on its forward side;
+        /// for connections facing negative x or y that is the cell below/left of the point, not the cell indexed by it.
+        /// </summary>
+        /// <param name="lengthInCells"> How many cells away the target point is.</param>
+        public Vector2Int FacingCell(int lengthInCells)
+        {
+            Vector2Int forwardDirection = Forward;
+            Vector2Int target = GlobalTilePosition + (forwardDirection * lengthInCells);
+
+            return new Vector2Int(
+                forwardDirection.x < 0 ? target.x - 1 : target.x,
+                forwardDirection.y < 0 ? target.y - 1 : target.y);
+        }
+
         public void Seal()
         {
             ConnectionBlueprint.Seal();

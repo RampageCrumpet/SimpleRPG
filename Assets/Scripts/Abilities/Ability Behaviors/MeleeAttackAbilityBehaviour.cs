@@ -49,7 +49,7 @@ public class MeleeAttackAbilityBehaviour : NetworkBehaviour, IInvokeableAbilityB
     /// Tell the player to swing their weapon across the network.
     /// </summary>
     /// <param name="abilityName"> The Ability name of the <see cref="MeleeAttackAbility"/> we want to trigger.</param>
-    [Rpc(SendTo.Server, RequireOwnership = true)]
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
     void MeleeAttackServerRpc(string abilityName)
     {
         MeleeAttackAbility abilityInstance = this.character.PersonalAbilities.Select(x => x.Ability).OfType<MeleeAttackAbility>().FirstOrDefault(x => x.AbillityName == abilityName);

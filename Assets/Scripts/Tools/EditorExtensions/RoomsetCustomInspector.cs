@@ -18,23 +18,27 @@ namespace UnityEditor.EditorTools
                 Roomset roomset = (Roomset)target;
                 foreach (RoomBlueprint room in roomset.RoomCollection)
                 {
-                    this.PackageRoom(room);
+                    PackageRoom(room, roomset.cellSize);
                 }
             }
 
         }
 
         /// <summary>
-        /// Packages a room up for world generation by setting connection positions and the room size.
+        /// Packages a room up for world generation by setting the room's origin offset, connection positions and the room size.
         /// </summary>
-        private void PackageRoom(RoomBlueprint room)
+        public static void PackageRoom(RoomBlueprint room, float cellSize)
         {
-            PackageConnections(room);
-
-            //Package the room
             room.gameObject.transform.position = Vector3.zero;
-            room.Size = CalculateRoomSize(room);
 
+            // The lowest corner of the room's geometry, in cells relative to the prefab root. Everything is measured from here.
+            Vector2Int originOffset = CalculateOriginOffset(room, cellSize);
+            room.OriginOffset = originOffset;
+
+            PackageConnections(room, originOffset, cellSize);
+            room.Size = CalculateRoomSize(room, originOffset, cellSize);
+
+            EditorUtility.SetDirty(room);
             PrefabUtility.SavePrefabAsset(room.gameObject);
         }
 
@@ -42,24 +46,38 @@ namespace UnityEditor.EditorTools
         /// Package up all of the connections by setting their position and replacing the given rooms connection list with them.
         /// </summary>
         /// <param name="room"> The room we want to set connections for.</param>
-        private void PackageConnections(RoomBlueprint room)
+        /// <param name="originOffset"> The room's origin offset in cells; connection locations are relative to the room's lowest corner.</param>
+        private static void PackageConnections(RoomBlueprint room, Vector2Int originOffset, float cellSize)
         {
             PropertyInfo connectionsProperty = typeof(RoomBlueprint).GetProperty(nameof(room.Connections));
-            connectionsProperty.SetValue(room, room.gameObject.GetComponentsInChildren<ConnectionBlueprint>().ToList());
+            connectionsProperty.SetValue(room, room.gameObject.GetComponentsInChildren<ConnectionBlueprint>().Where(connection => connection.SealingObject != null).ToList());
 
             foreach (ConnectionBlueprint connection in room.Connections)
             {
-                if (connection.transform.position.x < 0 || connection.transform.position.z < 0)
-                {
-                    Debug.LogError("Room " + room.gameObject.name + " has a connection in a negative position. This isn't currently supported.");
-                }
-
                 // Calculate the x/y position of the connection. The Z direction in the 3d worldspace maps to the Y direction in the 2d room space.
-                int xPos = Mathf.RoundToInt(connection.transform.localPosition.x / ((Roomset)target).cellSize);
-                int yPos = Mathf.RoundToInt(connection.transform.localPosition.z / ((Roomset)target).cellSize);
+                int xPos = Mathf.RoundToInt(connection.transform.position.x / cellSize) - originOffset.x;
+                int yPos = Mathf.RoundToInt(connection.transform.position.z / cellSize) - originOffset.y;
 
                 connection.location = new Vector2Int(xPos, yPos);
+                EditorUtility.SetDirty(connection);
             }
+        }
+
+        /// <summary>
+        /// Finds the lowest corner of the room in cells relative to the prefab root.
+        /// A child pivot less than a full cell below the root is treated as part of the first cell rather than an extra one,
+        /// because pieces such as wall trims sit slightly off the cell edge.
+        /// </summary>
+        private static Vector2Int CalculateOriginOffset(RoomBlueprint room, float cellSize)
+        {
+            var objectsInRoom = room.gameObject.GetComponentsInChildren<Transform>();
+
+            float minX = objectsInRoom.Min(roomObject => roomObject.position.x);
+            float minZ = objectsInRoom.Min(roomObject => roomObject.position.z);
+
+            return new Vector2Int(
+                Mathf.Min(0, Mathf.CeilToInt(minX / cellSize)),
+                Mathf.Min(0, Mathf.CeilToInt(minZ / cellSize)));
         }
 
         /// <summary>
@@ -67,20 +85,17 @@ namespace UnityEditor.EditorTools
         /// </summary>
         /// <param name="room"> The room who's size we want to calculate.</param>
         /// <returns> The width and height of the room.</returns>
-        private Vector2Int CalculateRoomSize(RoomBlueprint room)
+        private static Vector2Int CalculateRoomSize(RoomBlueprint room, Vector2Int originOffset, float cellSize)
         {
             var objectsInRoom = room.gameObject.GetComponentsInChildren<Transform>();
 
-            if(objectsInRoom.Any(roomObject => roomObject.position.x < 0 || roomObject.position.y < 0))
-            {
-                Debug.LogWarning(room.name + " contains objects with negative position values that are not currently supported by the level generator.");
-            }
+            float maxX = objectsInRoom.Max(roomObject => roomObject.position.x);
+            float maxZ = objectsInRoom.Max(roomObject => roomObject.position.z);
 
-            Vector2 minimumCorner = new Vector2(Mathf.RoundToInt(objectsInRoom.Min(x => x.position.x)), Mathf.RoundToInt(objectsInRoom.Min(y => y.position.z)));
-            Vector2 MaxCorner = new Vector2(Mathf.RoundToInt(objectsInRoom.Max(x => x.position.x)), Mathf.RoundToInt(objectsInRoom.Max(y => y.position.z)));
-
-            // Find the distance between the corners and divide it by the cell size to get the rooms size in cells.
-            return Vector2Int.FloorToInt(((MaxCorner - minimumCorner) / ((Roomset)target).cellSize));
+            // Find the distance from the lowest corner to the far pivots and divide it by the cell size to get the room's size in cells.
+            return new Vector2Int(
+                Mathf.RoundToInt((maxX - originOffset.x * cellSize) / cellSize),
+                Mathf.RoundToInt((maxZ - originOffset.y * cellSize) / cellSize));
         }
     }
     #endif
