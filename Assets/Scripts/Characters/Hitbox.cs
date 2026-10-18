@@ -15,6 +15,10 @@ namespace HitDetection
         public void Start()
         {
             layerMask = LayerMask.GetMask("HurtBox");
+            if (layerMask == 0)
+            {
+                Debug.LogError($"Hitbox on '{name}' could not find the 'HurtBox' layer. Add it under Tags and Layers; hits will not register without it.", this);
+            }
         }
 
         private void OnTriggerEnter(Collider other)
