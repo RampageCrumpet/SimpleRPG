@@ -71,6 +71,23 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
+# Editor and IDE local state
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Log and crash dumps
+*.log
+*.dmp
+
 # Beads / Dolt files (added by bd init)
 .dolt/
 *.db
