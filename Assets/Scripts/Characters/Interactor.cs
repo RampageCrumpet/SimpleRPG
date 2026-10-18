@@ -1,7 +1,6 @@
 using UnityEngine;
 using SimpleRPG.ObjectInteractions;
 using SimpleRPG.Abilities;
-using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
 

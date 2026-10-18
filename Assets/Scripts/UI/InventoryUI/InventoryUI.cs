@@ -1,10 +1,8 @@
 using UnityEngine;
 using SimpleRPG.InventorySystem;
 using UnityEngine.UI;
-using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.Graphs;
 using static UnityEngine.GraphicsBuffer;
 
 namespace SimpleRPG.UI

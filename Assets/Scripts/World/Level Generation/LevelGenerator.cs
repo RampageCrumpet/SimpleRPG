@@ -3,8 +3,6 @@ using UnityEngine;
 using LevelGeneration;
 using System.Linq;
 using UnityEngine.Networking.PlayerConnection;
-using static UnityEditor.FilePathAttribute;
-using UnityEditor.MemoryProfiler;
 using JetBrains.Annotations;
 
 namespace LevelGeneration

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static Codice.Client.BaseCommands.Import.Commit;
 
 namespace SimpleRPG.InventorySystem.LootGeneration
 {

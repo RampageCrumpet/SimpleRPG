@@ -1,7 +1,6 @@
 using SimpleRPG;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Animations;
 using UnityEngine;
 
 namespace SimpleRPG.Animations
@@ -38,7 +37,7 @@ namespace SimpleRPG.Animations
         }
 
         /// <summary>
-        /// Sets the forward speed of all <see cref="AnimatorController"/>'s.
+        /// Sets the forward speed of all <see cref="Animator"/>'s.
         /// </summary>
         private void UpdateAnimationValues()
         {
@@ -50,7 +49,7 @@ namespace SimpleRPG.Animations
         }
 
         /// <summary>
-        /// Alerts all of the <see cref="AnimatorController"/>'s that we've taken damage.
+        /// Alerts all of the <see cref="Animator"/>'s that we've taken damage.
         /// </summary>
         private void UpdateTakeDamage()
         {

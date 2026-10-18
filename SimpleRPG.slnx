@@ -1,5 +1,6 @@
 ﻿<Solution>
   <Project Path="SimpleRPG.csproj" />
   <Project Path="SimpleRPG.Tests.EditMode.csproj" />
+  <Project Path="SimpleRPG.Editor.csproj" />
   <Project Path="SimpleRPG.Tests.PlayMode.csproj" />
 </Solution>

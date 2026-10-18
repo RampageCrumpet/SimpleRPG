@@ -1,5 +1,3 @@
-using NUnit.Framework;
-using PlasticPipe.PlasticProtocol.Messages;
 using SimpleRPG;
 using SimpleRPG.AI;
 using SimpleRPG.Animations;
