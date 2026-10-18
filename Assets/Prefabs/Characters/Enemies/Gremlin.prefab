@@ -208,7 +208,7 @@ MonoBehaviour:
   abilities:
   - {fileID: 11400000, guid: 39314b3f20bc29e4987f63c1b5d8d1d4, type: 2}
   - {fileID: 11400000, guid: 76b59de91a0ffdb42b941797eb301d93, type: 2}
-  - {fileID: 11400000, guid: ad82ddef38eacee43985f7cd31508d92, type: 2}
+  - {fileID: 11400000, guid: 49664e7ac941459295ad0c76109a18fe, type: 2}
   WeaponData: {fileID: 11400000, guid: fe75756d0facf1c438525ed1bb428a95, type: 2}
 --- !u!114 &3472238292836523047
 MonoBehaviour:
@@ -329,7 +329,7 @@ Animator:
   m_GameObject: {fileID: 1669218347359381997}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 35c44a97c30e4e946a0f4d3310613b95, type: 3}
-  m_Controller: {fileID: 9100000, guid: 38e8ec0c93f21d742b605e021dc90fbb, type: 2}
+  m_Controller: {fileID: 9100000, guid: 9909bcbd07194563b7ddc9011139f725, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

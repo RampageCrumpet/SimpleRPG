@@ -60,12 +60,39 @@ namespace SimpleRPG.Animations
             }
         }
 
+        /// <summary>
+        /// Starts a melee attack, or queues the next swing of the longsword combo while one is already playing.
+        /// </summary>
         private void MeleeAttack()
         {
             foreach (Animator controller in animator)
             {
-                controller.SetTrigger("Attack_OneHanded");
+                AnimatorStateInfo state = controller.GetCurrentAnimatorStateInfo(0);
+                string trigger = GetAttackTrigger(state.IsTag("Attack"), state.IsTag("Combo"));
+
+                if (trigger != null)
+                {
+                    controller.SetTrigger(trigger);
+                }
             }
+        }
+
+        /// <summary>
+        /// Chooses which animator trigger an attack press should set.
+        /// Presses during an attack clip queue the next swing; presses during a combo continuation are ignored;
+        /// any other press starts a new attack.
+        /// </summary>
+        /// <param name="inAttack">Whether the current state is an attack clip.</param>
+        /// <param name="inCombo">Whether the current state is a combo continuation.</param>
+        /// <returns>The trigger to set, or null if the press should be ignored.</returns>
+        public static string GetAttackTrigger(bool inAttack, bool inCombo)
+        {
+            if (inAttack)
+            {
+                return "ComboQueued";
+            }
+
+            return inCombo ? null : "Attack_OneHanded";
         }
     }
 }

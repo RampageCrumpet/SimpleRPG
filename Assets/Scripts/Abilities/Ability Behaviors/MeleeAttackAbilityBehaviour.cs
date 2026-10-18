@@ -71,11 +71,29 @@ public class MeleeAttackAbilityBehaviour : NetworkBehaviour, IInvokeableAbilityB
     }
 
     /// <summary>
-    /// Activates the weapons hitbox.
+    /// Damage multiplier for each attack in the longsword chain, indexed by attack number minus one.
+    /// Based on each attack clip's length relative to Attack 1 (Attack 1 = 1.0). Tune these for balance.
     /// </summary>
-    public void ActivateWeapon()
+    [Tooltip("Damage multiplier for each longsword attack. Index 0 is Attack 1. Based on clip length relative to Attack 1.")]
+    [SerializeField]
+    private float[] comboDamageScalars = { 1.00f, 0.79f, 0.84f };
+
+    /// <summary>
+    /// Activates the weapons hitbox. Called by the attack clip's animation event; the event's int parameter is the attack number.
+    /// </summary>
+    /// <param name="attackNumber">The attack in the longsword chain (1, 2 or 3).</param>
+    public void ActivateWeapon(int attackNumber)
     {
-        weapon.ActivateHitbox();
+        weapon.ActivateHitbox(GetComboDamageScalar(attackNumber));
+    }
+
+    /// <summary>
+    /// Gets the damage multiplier for an attack, defaulting to 1 if none is set.
+    /// </summary>
+    private float GetComboDamageScalar(int attackNumber)
+    {
+        int index = attackNumber - 1;
+        return index >= 0 && index < comboDamageScalars.Length ? comboDamageScalars[index] : 1f;
     }
 
     /// <summary>
