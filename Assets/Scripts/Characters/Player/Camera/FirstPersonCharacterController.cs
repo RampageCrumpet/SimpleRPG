@@ -7,7 +7,7 @@ using UnityEngine;
 /// This script turns input into player movement for a first person control scheme.
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
-public class FirstPersonCharacterController : NetworkBehaviour
+public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
 {
     /// <summary>
     /// The movement of the player in unity units per second.
@@ -52,6 +52,11 @@ public class FirstPersonCharacterController : NetworkBehaviour
     private Camera activeCamera;
 
     /// <summary>
+    /// Applies mouse look to the owner's camera. Only exists on the owner.
+    /// </summary>
+    private FirstPersonLook look;
+
+    /// <summary>
     /// Start is called before the first frame update.
     /// </summary>
     public void Start()
@@ -62,8 +67,9 @@ public class FirstPersonCharacterController : NetworkBehaviour
         if (this.IsOwner)
         {
             // Move the main camera to this character.
-            activeCamera.transform.SetParent(cameraTransform);
-            activeCamera.transform.localPosition = Vector3.zero;
+            FirstPersonLookMath.AttachCamera(activeCamera.transform, cameraTransform);
+
+            this.look = new FirstPersonLook(activeCamera.transform, this, rotationSpeed, minimumPitch, maximumPitch);
 
             // Lock the cursor so it doesn't go wiggling everywhere.
             Cursor.lockState = CursorLockMode.Locked;
@@ -71,7 +77,7 @@ public class FirstPersonCharacterController : NetworkBehaviour
     }
 
     /// <summary>
-    /// Update runs once every frame.
+    /// FixedUpdate runs on the physics step and is used for movement only.
     /// </summary>
     public void FixedUpdate()
     {
@@ -80,12 +86,18 @@ public class FirstPersonCharacterController : NetworkBehaviour
             // Calculate and enact our players movement.
             Vector3 movement = this.CalculateMovement();
             this.MoveCharacterServerRPC(movement);
+        }
+    }
 
-            // Only try to rotate the character if the camera is focused on the game.
-            if (Application.isFocused)
-            {
-                this.RotateCharacterServerRPC(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
-            }
+    /// <summary>
+    /// Update runs once every frame and is used for look input, so mouse input is not tied to the physics step.
+    /// </summary>
+    public void Update()
+    {
+        // Only the owner reads input and moves its own camera. Other clients and the server never touch it.
+        if (FirstPersonLookMath.ShouldLook(this.IsOwner, Application.isFocused))
+        {
+            this.look.Look(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"), Time.deltaTime);
         }
     }
 
@@ -95,13 +107,9 @@ public class FirstPersonCharacterController : NetworkBehaviour
     /// <returns> Returns a <see cref="Vector3"/> representing the direction we want to move.</returns>
     private Vector3 CalculateMovement()
     {
-        Vector3 movementDirection = Vector3.zero;
-        movementDirection += this.transform.forward * Input.GetAxis("Vertical");
-        movementDirection += this.transform.right * Input.GetAxis("Horizontal");
+        Vector3 movementDirection = FirstPersonLookMath.MovementDirection(this.transform.forward, this.transform.right, Input.GetAxis("Vertical"), Input.GetAxis("Horizontal"));
 
         Camera.main.transform.TransformDirection(movementDirection);
-        movementDirection.y = 0;
-        movementDirection.Normalize();
 
         return movementDirection;
     }
@@ -118,33 +126,21 @@ public class FirstPersonCharacterController : NetworkBehaviour
     }
 
     /// <summary>
-    /// Rotates the character towards the mouse position.
+    /// Turns this character by the given yaw amount on the server, so the rotation replicates to everyone.
     /// </summary>
-    /// <param name="yaw"> The horizontal movement.</param>
-    /// <param name="pitch"> The vertical movement.</param>
+    /// <param name="yaw"> The yaw in degrees to rotate by.</param>
     [ServerRpc]
-    private void RotateCharacterServerRPC(float yaw, float pitch)
+    private void RotateCharacterServerRPC(float yaw)
     {
-        // Calculate the new camera rotation and then ensure it's clamped between our minimum and maximum rotations.
-        //Find the camera's rotation relative to the horizon line.
-        float cameraPitch = activeCamera.transform.localRotation.eulerAngles.x + 180f;
-
-        // Adjust the camera's rotation by the ammount we want to rotate.
-        cameraPitch += pitch * rotationSpeed * Time.fixedDeltaTime;
-
-        // Ensure it's between 0 and 360 degrees to be a valid angle.
-        cameraPitch %= 360;
-
-        // Ensure that it's between our minimum and maximum pitch, both adjusted to be relative to our horizon line.
-        cameraPitch = Mathf.Clamp(cameraPitch, minimumPitch + 180f,maximumPitch + 180f);
-
-        // Set the angle back to Unity's usual rotational origin and assign it to our camera.
-        activeCamera.transform.localEulerAngles = new Vector3(cameraPitch - 180f, activeCamera.transform.localRotation.y, activeCamera.transform.localRotation.z);
-
-
-        // Horizontal rotation.
-        float cameraYaw = yaw * rotationSpeed * Time.fixedDeltaTime;
-        this.gameObject.transform.Rotate(0, cameraYaw, 0);
+        this.gameObject.transform.Rotate(0, yaw, 0);
     }
 
+    /// <summary>
+    /// Sends the body yaw from mouse look to the server.
+    /// </summary>
+    /// <param name="yaw"> The yaw in degrees to rotate by.</param>
+    void IBodyYawSink.Turn(float yaw)
+    {
+        this.RotateCharacterServerRPC(yaw);
+    }
 }
