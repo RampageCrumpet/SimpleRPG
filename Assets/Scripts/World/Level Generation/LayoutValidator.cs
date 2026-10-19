@@ -35,6 +35,9 @@ namespace LevelGeneration
         public const string RuleDisconnected = "rooms-disconnected";
         public const string RuleRoomOveruse = "room-overuse";
         public const string RuleStartRoomMisplaced = "start-room-misplaced";
+        public const string RuleRoomOutsideFloors = "room-outside-floors";
+        public const string RuleVerticalDoorInvalid = "vertical-door-invalid";
+        public const string RuleVerticalMismatch = "vertical-mismatch";
 
         /// <summary>
         /// Validates a layout. A sealed door is a wall whatever lies beyond it, so only unsealed doors are checked.
@@ -48,21 +51,22 @@ namespace LevelGeneration
                 return violations;
             }
 
-            Dictionary<Vector2Int, PlacedRoom> occupancy = BuildOccupancy(layout.Rooms, violations);
+            Dictionary<Vector3Int, PlacedRoom> occupancy = BuildOccupancy(layout.Rooms, violations);
             CheckRoomLimits(layout.Rooms, violations);
+            CheckFloors(layout, violations);
 
             var sealedSet = new HashSet<PlacedDoor>(layout.SealedDoors);
             var unsealed = layout.Rooms.SelectMany(room => room.Doors).Where(door => !sealedSet.Contains(door)).ToList();
-            var doorsByPosition = new Dictionary<(Vector2Int, Side), PlacedDoor>();
+            var doorsByPosition = new Dictionary<(Vector2Int, Side, int), PlacedDoor>();
             foreach (PlacedDoor door in unsealed)
             {
-                doorsByPosition[(door.Point, door.Side)] = door;
+                doorsByPosition[(door.Point, door.Side, door.Floor)] = door;
             }
 
             var links = layout.Rooms.ToDictionary(room => room, room => new HashSet<PlacedRoom>());
             foreach (PlacedDoor door in unsealed)
             {
-                CheckDoor(door, occupancy, doorsByPosition, links, violations);
+                CheckDoor(door, occupancy, doorsByPosition, unsealed, links, violations);
             }
 
             CheckConnectivity(layout.Rooms, links, violations);
@@ -86,13 +90,40 @@ namespace LevelGeneration
             }
         }
 
-        private static Dictionary<Vector2Int, PlacedRoom> BuildOccupancy(IReadOnlyList<PlacedRoom> rooms, List<LayoutViolation> violations)
+        /// <summary>
+        /// Every room has to lie within the dungeon's floors, and a vertical door has to be of a vertical type and stand on a floor its room has.
+        /// </summary>
+        private static void CheckFloors(Layout layout, List<LayoutViolation> violations)
         {
-            var occupancy = new Dictionary<Vector2Int, PlacedRoom>();
+            foreach (PlacedRoom room in layout.Rooms)
+            {
+                if (room.Floor < 0 || room.TopFloor > layout.FloorCount)
+                {
+                    violations.Add(new LayoutViolation(RuleRoomOutsideFloors,
+                        $"{room} spans floors {room.Floor} to {room.TopFloor - 1} but the dungeon has {layout.FloorCount}."));
+                }
+
+                foreach (PlacedDoor door in room.Doors)
+                {
+                    if (door.Floor < room.Floor || door.Floor >= room.TopFloor)
+                    {
+                        violations.Add(new LayoutViolation(RuleVerticalDoorInvalid, $"{door} stands outside the floors of its room."));
+                    }
+                    else if (door.FloorDelta != 0 && door.TypeId == ConnectionType.StandardId)
+                    {
+                        violations.Add(new LayoutViolation(RuleVerticalDoorInvalid, $"{door} changes floors but is a standard door; it needs a vertical connection type."));
+                    }
+                }
+            }
+        }
+
+        private static Dictionary<Vector3Int, PlacedRoom> BuildOccupancy(IReadOnlyList<PlacedRoom> rooms, List<LayoutViolation> violations)
+        {
+            var occupancy = new Dictionary<Vector3Int, PlacedRoom>();
 
             foreach (PlacedRoom room in rooms)
             {
-                foreach (Vector2Int cell in room.Cells())
+                foreach (Vector3Int cell in room.Cells3D())
                 {
                     if (occupancy.TryGetValue(cell, out PlacedRoom other))
                     {
@@ -110,18 +141,19 @@ namespace LevelGeneration
 
         private static void CheckDoor(
             PlacedDoor door,
-            Dictionary<Vector2Int, PlacedRoom> occupancy,
-            Dictionary<(Vector2Int, Side), PlacedDoor> doorsByPosition,
+            Dictionary<Vector3Int, PlacedRoom> occupancy,
+            Dictionary<(Vector2Int, Side, int), PlacedDoor> doorsByPosition,
+            List<PlacedDoor> unsealed,
             Dictionary<PlacedRoom, HashSet<PlacedRoom>> links,
             List<LayoutViolation> violations)
         {
             // The door on the other side has to stand exactly where this one ends, facing back, and be as long.
-            if (doorsByPosition.TryGetValue((door.Far, GridMath.Opposite(door.Side)), out PlacedDoor mate) && door.Mates(mate) && mate.Room != door.Room)
+            if (doorsByPosition.TryGetValue((door.Far, GridMath.Opposite(door.Side), door.FarFloor), out PlacedDoor mate) && door.Mates(mate) && mate.Room != door.Room)
             {
                 links[door.Room].Add(mate.Room);
 
                 // Whatever lies between the two doors has to be one of their rooms or empty.
-                foreach ((int slice, Vector2Int cell) in door.PassageCells())
+                foreach ((int slice, Vector3Int cell) in door.PassageCells3D())
                 {
                     if (slice < door.LengthCells && occupancy.TryGetValue(cell, out PlacedRoom blocker) && blocker != door.Room && blocker != mate.Room)
                     {
@@ -133,7 +165,17 @@ namespace LevelGeneration
                 return;
             }
 
-            foreach ((int slice, Vector2Int cell) in door.PassageCells())
+            // Something stands where the mate should be, but on the wrong floor or climbing the wrong way.
+            Side facing = GridMath.Opposite(door.Side);
+            PlacedDoor misjoined = unsealed.FirstOrDefault(other => other.Room != door.Room && other.Point == door.Far && other.Side == facing
+                && other.LengthCells == door.LengthCells && other.TypeId == door.TypeId);
+            if (misjoined != null)
+            {
+                violations.Add(new LayoutViolation(RuleVerticalMismatch, $"{door} lines up with {misjoined} but they are not on joining floors."));
+                return;
+            }
+
+            foreach ((int slice, Vector3Int cell) in door.PassageCells3D())
             {
                 if (!occupancy.TryGetValue(cell, out PlacedRoom occupant))
                 {

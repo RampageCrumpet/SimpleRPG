@@ -22,6 +22,25 @@ public class ConnectionBlueprint : MonoBehaviour
     [Tooltip("What kind of door this is. Doors only join doors of the same type. Leave empty for a standard door.")]
     public LevelGeneration.ConnectionType Type;
 
+    [Tooltip("Which floor of the room the door stands on, counted up from the room's lowest floor.")]
+    [Min(0)]
+    public int Level;
+
+    [Tooltip("For a door of a vertical type: true if the door it joins is on a higher floor, false if lower. Ignored for level doors.")]
+    public bool ClimbsUp = true;
+
+    /// <summary>
+    /// How many floors higher the door this one joins stands (negative for lower). Zero unless the door has a vertical type.
+    /// </summary>
+    public int FloorDelta
+    {
+        get
+        {
+            int climb = Type == null ? 0 : Mathf.Abs(Type.FloorDelta);
+            return ClimbsUp ? climb : -climb;
+        }
+    }
+
     /// <summary>
     /// Gets a <see cref="Vector2Int"/> representing which direction this connection is pointing.
     /// </summary>

@@ -122,6 +122,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Size: {x: 10, y: 10}
   OriginOffset: {x: 0, y: 0}
+  SelectionWeight: 1
+  MaxCount: 0
+  Role: 0
+  Floors: 1
   connections:
   - {fileID: 4971164174644698181}
   - {fileID: 3835728427947102440}

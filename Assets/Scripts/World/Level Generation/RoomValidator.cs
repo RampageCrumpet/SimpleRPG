@@ -56,6 +56,10 @@ namespace LevelGeneration
         public const string RuleRoomsetNothingPlaceable = "roomset-nothing-placeable";
         public const string RuleRoomsetDoorLengths = "roomset-door-lengths";
         public const string RuleRoomsetConnectionTypeClash = "roomset-connection-type-clash";
+        public const string RuleRoomFloors = "room-floors";
+        public const string RuleDoorLevel = "door-level";
+        public const string RuleRoomsetFloorHeight = "roomset-floor-height";
+        public const string RuleRoomsetVerticalUnpaired = "roomset-vertical-unpaired";
 
         /// <summary>How far, in cells, a door pivot may sit from a grid point. Authored pillar doors are about 0.1 cells off.</summary>
         public const float GridTolerance = 0.25f;
@@ -97,6 +101,14 @@ namespace LevelGeneration
                 errors.AddRange(CheckPackedData(room, roomset.cellSize));
             }
 
+            bool spansFloors = roomset.RoomCollection.Any(room => room != null
+                && (room.Floors > 1 || RoomPlanner.SealedDoors(room).Any(door => door.FloorDelta != 0)));
+            if (spansFloors && roomset.floorHeight <= 0)
+            {
+                errors.Add(new RoomValidationError(roomset.name, RuleRoomsetFloorHeight,
+                    $"floorHeight is {roomset.floorHeight}; a roomset with rooms or doors that span floors needs it greater than zero."));
+            }
+
             errors.AddRange(CheckRoomsetComposition(roomset));
             return errors;
         }
@@ -119,6 +131,7 @@ namespace LevelGeneration
 
             var doorLengthsByType = new Dictionary<int, HashSet<int>>();
             var typesById = new Dictionary<int, HashSet<ConnectionType>>();
+            var climbsByType = new Dictionary<int, HashSet<int>>();
             bool hasPlaceableDeadEnd = false;
             bool hasPlaceableRoom = false;
 
@@ -147,6 +160,16 @@ namespace LevelGeneration
 
                     lengths.Add(Mathf.RoundToInt(door.ConnectionLength / roomset.cellSize));
                     typesById[typeId].Add(door.Type);
+
+                    if (door.FloorDelta != 0)
+                    {
+                        if (!climbsByType.TryGetValue(typeId, out HashSet<int> climbs))
+                        {
+                            climbsByType[typeId] = climbs = new HashSet<int>();
+                        }
+
+                        climbs.Add(door.FloorDelta);
+                    }
                 }
 
                 bool placeable = room.SelectionWeight > 0 && (room.Role & RoomRole.Start) == 0 && doors.Count > 0;
@@ -170,6 +193,17 @@ namespace LevelGeneration
                 string typeName = typesById[type.Key].First()?.name ?? "standard";
                 errors.Add(new RoomValidationError(name, RuleRoomsetDoorLengths,
                     $"'{typeName}' doors have different lengths ({string.Join(", ", type.Value.OrderBy(length => length))} cells). Only doors of the same type and length join, so each type needs one length."));
+            }
+
+            foreach (KeyValuePair<int, HashSet<int>> climbs in climbsByType)
+            {
+                // A vertical door joins a door of the same type that climbs the other way by the same amount.
+                if (climbs.Value.Any(delta => !climbs.Value.Contains(-delta)))
+                {
+                    string typeName = typesById[climbs.Key].First()?.name ?? "standard";
+                    errors.Add(new RoomValidationError(name, RuleRoomsetVerticalUnpaired,
+                        $"'{typeName}' doors climb {string.Join(", ", climbs.Value.OrderBy(delta => delta))} floors, but no door climbs the opposite way, so some can never join."));
+                }
             }
 
             foreach (KeyValuePair<int, HashSet<ConnectionType>> clash in typesById.Where(pair => pair.Value.Count > 1))
@@ -199,6 +233,11 @@ namespace LevelGeneration
 
             CheckRootTransform(room, errors);
             CheckStrayPivots(room, cellSize, errors);
+
+            if (room.Floors < 1)
+            {
+                errors.Add(new RoomValidationError(roomName, RuleRoomFloors, $"Floors is {room.Floors}; a room is at least one floor high."));
+            }
 
             foreach (ConnectionBlueprint connection in room.GetComponentsInChildren<ConnectionBlueprint>())
             {
@@ -333,6 +372,12 @@ namespace LevelGeneration
             {
                 errors.Add(new RoomValidationError(roomName, RuleDoorLength,
                     $"'{connection.name}' is {connection.ConnectionLength} units long, which is {lengthInCells} cells. It must be a whole number of cells, at least one."));
+            }
+
+            if (connection.Level < 0 || connection.Level >= Mathf.Max(1, room.Floors))
+            {
+                errors.Add(new RoomValidationError(roomName, RuleDoorLevel,
+                    $"'{connection.name}' is on level {connection.Level} but the room has {room.Floors} floor(s); the level must be from 0 to {Mathf.Max(1, room.Floors) - 1}."));
             }
 
             if (connection.ConnectionWidth <= 0f)

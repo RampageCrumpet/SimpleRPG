@@ -50,7 +50,7 @@ namespace LevelGeneration
         /// <summary>
         /// Raised whenever a change to the generator would give an existing seed a different layout.
         /// </summary>
-        public const int AlgorithmVersion = 3;
+        public const int AlgorithmVersion = 4;
 
         private const int RoomStream = 1;
         private const int DoorStream = 2;
@@ -118,8 +118,11 @@ namespace LevelGeneration
         /// <param name="minimumNumberOfRooms"> The minimum number of rooms the layout will contain.</param>
         /// <param name="maximumNumberOfRooms"> The most rooms it may contain. Once reached, the doors still open are sealed.
         /// Zero or less uses <see cref="DefaultMaximumRooms"/>.</param>
-        public GenerationResult Generate(int minimumNumberOfRooms, int maximumNumberOfRooms = 0)
+        /// <param name="floorCount"> How many floors the dungeon may span. The start room is on the bottom floor (floor 0, at the world origin
+        /// where players spawn), so vertical doors lead up from it; one floor gives the flat dungeon.</param>
+        public GenerationResult Generate(int minimumNumberOfRooms, int maximumNumberOfRooms = 0, int floorCount = 1)
         {
+            floorCount = Math.Max(1, floorCount);
             int maximum = maximumNumberOfRooms > 0 ? Math.Max(maximumNumberOfRooms, minimumNumberOfRooms) : DefaultMaximumRooms(minimumNumberOfRooms);
             var rejected = new List<string>();
             LayoutBuilder last = null;
@@ -128,7 +131,7 @@ namespace LevelGeneration
 
             for (int attempt = 0; attempt < attempts; attempt++)
             {
-                var builder = new LayoutBuilder(roomDefinitions, selector, AttemptSeed(attempt));
+                var builder = new LayoutBuilder(roomDefinitions, selector, AttemptSeed(attempt), floorCount);
                 last = builder;
 
                 if (!builder.Build(minimumNumberOfRooms, maximum))
@@ -137,7 +140,7 @@ namespace LevelGeneration
                     continue;
                 }
 
-                Layout layout = builder.ToLayout(Seed, attempt);
+                Layout layout = builder.ToLayout(Seed, attempt, floorCount);
                 List<LayoutViolation> violations = LayoutValidator.Validate(layout);
                 if (violations.Count == 0)
                 {
@@ -149,7 +152,7 @@ namespace LevelGeneration
 
             // Out of attempts. Keep the last layout, closing whatever is still open, so a caller can still play it.
             last.SealAllOpenDoors();
-            return new GenerationResult(false, last.ToLayout(Seed, attempts - 1), rejected);
+            return new GenerationResult(false, last.ToLayout(Seed, attempts - 1, floorCount), rejected);
         }
 
         /// <summary>
@@ -180,22 +183,24 @@ namespace LevelGeneration
             private readonly System.Random roomRandom;
             private readonly System.Random doorRandom;
             private readonly System.Random turnRandom;
-            private readonly Dictionary<Vector2Int, PlacedRoom> grid = new Dictionary<Vector2Int, PlacedRoom>();
+            private readonly Dictionary<Vector3Int, PlacedRoom> grid = new Dictionary<Vector3Int, PlacedRoom>();
             private readonly List<PlacedRoom> rooms = new List<PlacedRoom>();
 
             // Cells between two joined rooms that neither covers. A door longer than the rooms' own reach leaves a gap that must stay clear.
-            private readonly HashSet<Vector2Int> reserved = new HashSet<Vector2Int>();
+            private readonly HashSet<Vector3Int> reserved = new HashSet<Vector3Int>();
+            private readonly int floorCount;
 
             // Open doors in the order they opened, because the random pick indexes into it. The lookup finds the door a new door would join.
             private readonly List<PlacedDoor> openDoors = new List<PlacedDoor>();
-            private readonly Dictionary<(Vector2Int point, Side side), PlacedDoor> openLookup = new Dictionary<(Vector2Int, Side), PlacedDoor>();
+            private readonly Dictionary<(Vector2Int point, Side side, int floor), PlacedDoor> openLookup = new Dictionary<(Vector2Int, Side, int), PlacedDoor>();
             private readonly List<PlacedDoor> sealedDoors = new List<PlacedDoor>();
 
             private readonly IRoomSelector selector;
             private readonly Dictionary<RoomDefinition, int> placedCounts = new Dictionary<RoomDefinition, int>();
 
-            public LayoutBuilder(IReadOnlyList<RoomDefinition> definitions, IRoomSelector selector, int attemptSeed)
+            public LayoutBuilder(IReadOnlyList<RoomDefinition> definitions, IRoomSelector selector, int attemptSeed, int floorCount)
             {
+                this.floorCount = floorCount;
                 this.definitions = definitions;
                 this.selector = selector;
                 roomRandom = new System.Random(StreamSeed(attemptSeed, RoomStream));
@@ -203,9 +208,9 @@ namespace LevelGeneration
                 turnRandom = new System.Random(StreamSeed(attemptSeed, TurnStream));
             }
 
-            public Layout ToLayout(int seed, int attempt)
+            public Layout ToLayout(int seed, int attempt, int floors)
             {
-                return new Layout(seed, attempt, rooms.ToList(), sealedDoors.ToList());
+                return new Layout(seed, attempt, rooms.ToList(), sealedDoors.ToList(), floors);
             }
 
             public void SealAllOpenDoors()
@@ -222,13 +227,14 @@ namespace LevelGeneration
             public bool Build(int minimumNumberOfRooms, int maximumNumberOfRooms)
             {
                 // Place a starting room to seed our dungeon.
-                RoomDefinition start = selector.SelectStart(roomRandom, definitions);
+                // A room taller than the whole dungeon can never stand anywhere, so it cannot begin it either.
+                RoomDefinition start = selector.SelectStart(roomRandom, definitions.Where(definition => definition.Height <= floorCount).ToList());
                 if (start == null)
                 {
                     return false;
                 }
 
-                Place(new PlacedRoom(0, start, Vector2Int.zero, 0));
+                Place(new PlacedRoom(0, start, Vector2Int.zero, 0, 0));
 
                 // Every pass either places a room or counts a miss against a door, and a door with enough misses is sealed,
                 // so this always finishes.
@@ -250,7 +256,7 @@ namespace LevelGeneration
                     }
 
                     PlacedDoor target = openDoors[doorRandom.Next(openDoors.Count)];
-                    var context = new SelectionContext(rooms.Count, minimumNumberOfRooms, openDoors.Count, placedCounts, target);
+                    var context = new SelectionContext(rooms.Count, minimumNumberOfRooms, openDoors.Count, placedCounts, target, floorCount);
                     RoomDefinition definition = selector.Select(roomRandom, definitions, context);
 
                     if (definition != null && TryPlaceAgainst(target, definition, minimumNumberOfRooms))
@@ -290,14 +296,15 @@ namespace LevelGeneration
                     {
                         if (GridMath.Rotate(door.Side, turns) != GridMath.Opposite(target.Side)
                             || door.LengthCells != target.LengthCells
-                            || door.TypeId != target.TypeId)
+                            || door.TypeId != target.TypeId
+                            || door.FloorDelta != -target.FloorDelta)
                         {
                             continue;
                         }
 
                         // The new door has to stand where the open door ends.
                         Vector2Int position = target.Far - GridMath.RotatePoint(door.Point, turns);
-                        var candidate = new PlacedRoom(rooms.Count, definition, position, turns);
+                        var candidate = new PlacedRoom(rooms.Count, definition, position, turns, target.FarFloor - door.Level);
 
                         if (!Fits(candidate, out int openAfter))
                         {
@@ -327,7 +334,12 @@ namespace LevelGeneration
             {
                 openAfter = 0;
 
-                foreach (Vector2Int cell in candidate.Cells())
+                if (candidate.Floor < 0 || candidate.TopFloor > floorCount)
+                {
+                    return false;
+                }
+
+                foreach (Vector3Int cell in candidate.Cells3D())
                 {
                     if (grid.ContainsKey(cell) || reserved.Contains(cell))
                     {
@@ -345,8 +357,13 @@ namespace LevelGeneration
                     }
 
                     // No door to join, so nothing may stand in the way beyond it and it may not open onto its own room.
-                    foreach ((int slice, Vector2Int cell) in door.PassageCells())
+                    foreach ((int slice, Vector3Int cell) in door.PassageCells3D())
                     {
+                        if (cell.z < 0 || cell.z >= floorCount)
+                        {
+                            return false;
+                        }
+
                         bool ownRoom = candidate.Contains(cell);
                         if (ownRoom ? slice == door.LengthCells : grid.ContainsKey(cell) || reserved.Contains(cell))
                         {
@@ -358,7 +375,7 @@ namespace LevelGeneration
                 // An open door must not end up facing into the new room unless the room has the door that joins it.
                 foreach (PlacedDoor open in openDoors)
                 {
-                    bool facesRoom = open.PassageCells().Any(passage => candidate.Contains(passage.cell));
+                    bool facesRoom = open.PassageCells3D().Any(passage => candidate.Contains(passage.cell));
                     if (facesRoom && !candidate.Doors.Any(open.Mates))
                     {
                         return false;
@@ -374,8 +391,9 @@ namespace LevelGeneration
             /// </summary>
             private PlacedDoor FindOpenMate(PlacedDoor door)
             {
-                if (openLookup.TryGetValue((door.Far, GridMath.Opposite(door.Side)), out PlacedDoor open)
+                if (openLookup.TryGetValue((door.Far, GridMath.Opposite(door.Side), door.FarFloor), out PlacedDoor open)
                     && open.LengthCells == door.LengthCells
+                    && open.FloorDelta == -door.FloorDelta
                     && open.TypeId == door.TypeId
                     && open.Room != door.Room)
                 {
@@ -387,7 +405,7 @@ namespace LevelGeneration
 
             private void Place(PlacedRoom room)
             {
-                foreach (Vector2Int cell in room.Cells())
+                foreach (Vector3Int cell in room.Cells3D())
                 {
                     grid.Add(cell, room);
                 }
@@ -403,7 +421,7 @@ namespace LevelGeneration
                     else
                     {
                         openDoors.Add(door);
-                        openLookup[(door.Point, door.Side)] = door;
+                        openLookup[(door.Point, door.Side, door.Floor)] = door;
                     }
                 }
 
@@ -417,7 +435,7 @@ namespace LevelGeneration
             /// </summary>
             private void ReservePassage(PlacedDoor door, PlacedDoor mate)
             {
-                foreach ((int slice, Vector2Int cell) in door.PassageCells())
+                foreach ((int slice, Vector3Int cell) in door.PassageCells3D())
                 {
                     if (slice < door.LengthCells && !door.Room.Contains(cell) && !mate.Room.Contains(cell))
                     {
@@ -429,7 +447,7 @@ namespace LevelGeneration
             private void Remove(PlacedDoor door)
             {
                 openDoors.Remove(door);
-                openLookup.Remove((door.Point, door.Side));
+                openLookup.Remove((door.Point, door.Side, door.Floor));
             }
         }
     }

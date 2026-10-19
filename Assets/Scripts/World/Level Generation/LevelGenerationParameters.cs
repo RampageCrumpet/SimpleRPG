@@ -25,6 +25,11 @@ namespace SimpleRPG.LevelGeneration
         public int MaximumNumberOfRooms;
 
         /// <summary>
+        /// How many floors the dungeon may span. Zero or one gives a single floor.
+        /// </summary>
+        public int FloorCount;
+
+        /// <summary>
         /// Fingerprint of the server's roomset and generator version (see <c>LayoutFingerprint.OfRoomset</c>). Filled in by the server;
         /// a client whose own fingerprint differs must not generate. Zero means the server did not provide one.
         /// </summary>
@@ -41,6 +46,7 @@ namespace SimpleRPG.LevelGeneration
             serializer.SerializeValue(ref Seed);
             serializer.SerializeValue(ref MinimumNumberOfRooms);
             serializer.SerializeValue(ref MaximumNumberOfRooms);
+            serializer.SerializeValue(ref FloorCount);
             serializer.SerializeValue(ref RoomsetFingerprint);
             serializer.SerializeValue(ref LayoutChecksum);
         }

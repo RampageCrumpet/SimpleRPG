@@ -123,6 +123,7 @@ MonoBehaviour:
   <Roomset>k__BackingField: {fileID: 11400000, guid: ddf295e8e0446e945ae20ee508b3727e, type: 2}
   <MinimumNumberOfRooms>k__BackingField: 250
   <MaximumNumberOfRooms>k__BackingField: 0
+  <FloorCount>k__BackingField: 3
 --- !u!114 &5082288297274321634
 MonoBehaviour:
   m_ObjectHideFlags: 0

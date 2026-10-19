@@ -8,8 +8,9 @@ namespace LevelGeneration
     /// </summary>
     public readonly struct SelectionContext
     {
-        public SelectionContext(int placedRooms, int minimumRooms, int openDoors, IReadOnlyDictionary<RoomDefinition, int> placedCounts, PlacedDoor targetDoor = null)
+        public SelectionContext(int placedRooms, int minimumRooms, int openDoors, IReadOnlyDictionary<RoomDefinition, int> placedCounts, PlacedDoor targetDoor = null, int floorCount = int.MaxValue)
         {
+            FloorCount = floorCount;
             PlacedRooms = placedRooms;
             MinimumRooms = minimumRooms;
             OpenDoors = openDoors;
@@ -21,6 +22,11 @@ namespace LevelGeneration
         /// The open door the room will be stood against, or null if there is none. A room with no door that could join it is no use.
         /// </summary>
         public PlacedDoor TargetDoor { get; }
+
+        /// <summary>
+        /// How many floors the dungeon may use. A room that would stand outside them is no use.
+        /// </summary>
+        public int FloorCount { get; }
 
         public int PlacedRooms { get; }
         public int MinimumRooms { get; }
@@ -100,14 +106,25 @@ namespace LevelGeneration
                 return false;
             }
 
-            // Only rooms with a door of the same type and length as the one being built on can join it.
+            // Only rooms with a door of the same type and length that climbs the opposite way can join it.
             PlacedDoor target = context.TargetDoor;
-            if (target != null && !room.Doors.Any(door => door.TypeId == target.TypeId && door.LengthCells == target.LengthCells))
+            if (target != null && !room.Doors.Any(door => door.TypeId == target.TypeId && door.LengthCells == target.LengthCells && door.FloorDelta == -target.FloorDelta
+                && FitsFloors(room, target.FarFloor - door.Level, context.FloorCount)))
+            {
+                return false;
+            }
+
+            if (target == null && room.Height > context.FloorCount)
             {
                 return false;
             }
 
             return true;
+        }
+
+        private static bool FitsFloors(RoomDefinition room, int lowestFloor, int floorCount)
+        {
+            return lowestFloor >= 0 && lowestFloor + room.Height <= floorCount;
         }
 
         private float Weight(RoomDefinition room, SelectionContext context)

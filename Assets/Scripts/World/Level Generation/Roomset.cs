@@ -13,4 +13,8 @@ public class Roomset : ScriptableObject
     [SerializeField]
     [Tooltip("The size of each world cell in unity units.")]
     public float cellSize;
+
+    [SerializeField]
+    [Tooltip("The height of one floor in unity units. Only needed for roomsets with rooms or doors that span floors.")]
+    public float floorHeight;
 }

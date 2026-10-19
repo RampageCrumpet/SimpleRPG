@@ -18,7 +18,7 @@ LevelSpawner                            instantiates prefabs from the Layout, se
 ```
 
 `LevelGeneratorController` runs this on the server and on every client from `LevelGenerationParameters`
-(seed, minimum/maximum rooms, plus the server's roomset fingerprint and layout checksum).
+(seed, minimum/maximum rooms, floor count, plus the server's roomset fingerprint and layout checksum).
 Only the spawner creates objects, so the server and clients reach the same `Layout` from the same inputs.
 
 ## Grid conventions
@@ -28,6 +28,15 @@ Only the spawner creates objects, so the server and clients reach the same `Layo
 - A door stands on a **grid point** (a cell corner), centred on the line between cells, so it covers an **even** number of cells across (`WidthCells`, at least 2).
 - A door is `LengthCells` long. It joins the door standing at `Far` (point + direction × length) that faces back, has the same length and the same type.
 - The **passage** is the row of cells across the door for each cell of its length, plus one more row past its end. Cells in it must be empty, or belong to the room the door joins. When two doors join, any cells between the two rooms are reserved so nothing is placed in the gap.
+
+## Floors
+
+- Cells are `(x, y, floor)`. A room is `Floors` high (`RoomBlueprint.Floors`, default 1) and occupies its footprint on every one of them, so a stairwell room is 2. Floors are world height `Roomset.floorHeight` apart (20 for ModularDungeon: two wall heights, so a vaulted room fits under the floor above); the spawner puts floor `n` at `n * floorHeight` above the prefab's own height.
+- A door stands on a floor of its room (`ConnectionBlueprint.Level`, counted up from the room's lowest floor). Joined doors must stand on the same floor, so the stairs themselves live inside a tall room: `Room_Stairwell` is a 40-long, 10-wide hall with its west door on level 0, its east door on level 1 and four flights of stairs between, 30 high under a flat roof.
+- A **vertical connection type** (`ConnectionType.FloorDelta` above zero, e.g. a ladder or shaft) makes a door join a door on another floor. Each door says which way it climbs (`ClimbsUp`); the joined pair has opposite deltas, the same type and the same length. The passage of such a door covers every floor between the two doors. A standard door may not climb (`vertical-door-invalid`), and every vertical type needs doors that climb both ways (`roomset-vertical-unpaired`).
+- `FloorCount` is a generation parameter (`LevelGenerationParameters.FloorCount`, `LevelGeneratorController.FloorCount`), not a limit baked into the code. The start room stands on the **bottom** floor (0, where players spawn), so a multi-floor dungeon climbs from it; rooms may not leave floors `0 .. FloorCount - 1`. One floor gives the flat dungeon, and rooms taller than the dungeon are never chosen.
+- One dungeon, one start: floors are reachable only through stairwells and vertical doors. `LayoutValidator` checks that every room is reachable from the start, that no two rooms share a cell on any floor, and that passages are clear on every floor they cross (`room-outside-floors`, `vertical-door-invalid`, `vertical-mismatch`).
+- One `NavMeshSurface` (collecting all geometry) spans every floor and is built on the server after generation, as before.
 
 ## Generation rules
 
@@ -49,10 +58,11 @@ Only the spawner creates objects, so the server and clients reach the same `Layo
 
 ## Tests
 
-`Assets/Tests/EditMode`: `GridMathTests`, `LayoutGeneratorTests` (hand-built and real roomset sweeps, spawner geometry), `LayoutValidatorTests`, `PassageTests`, `ConnectionTypeTests`, `RoomSelectionTests`, `LayoutFingerprintTests`, `RoomValidatorTests`, `RoomPackerTests`, `RoomsetBuildGateTests`.
+`Assets/Tests/EditMode`: `GridMathTests`, `LayoutGeneratorTests` (hand-built and real roomset sweeps, spawner geometry), `LayoutValidatorTests`, `FloorTests` (multi-floor, synthetic and real prefabs), `PassageTests`, `ConnectionTypeTests`, `RoomSelectionTests`, `LayoutFingerprintTests`, `RoomValidatorTests`, `RoomPackerTests`, `RoomsetBuildGateTests`.
 
 ## Not done yet
 
-- Multi-floor dungeons (bead `simplerpg-7du.8.8`).
+- A vertical `ConnectionType` asset and a ladder/shaft room are supported and tested with synthetic rooms but not yet authored; the only real vertical room is `Room_Stairwell`.
+- Nothing makes a multi-floor dungeon *use* its lower floors; they are reached when the dice pick a stairwell.
 - Exit and boss room roles.
 - Legacy `Dungeon` and `TestDungeon` roomsets still contain unpacked rooms; they are not referenced by a build scene, so the build gate ignores them.

@@ -33,6 +33,13 @@ namespace SimpleRPG.LevelGeneration
         public int MaximumNumberOfRooms { get; set; }
 
         /// <summary>
+        /// How many floors the dungeon may span. One gives a flat dungeon.
+        /// </summary>
+        [field: SerializeField]
+        [Tooltip("How many floors the dungeon may span. The roomset needs vertical rooms for more than one to be used.")]
+        public int FloorCount { get; set; } = 1;
+
+        /// <summary>
         /// The parameters the current level was generated with. Only valid once <see cref="IsGenerated"/> is true.
         /// </summary>
         private LevelGenerationParameters generatedParameters;
@@ -64,6 +71,7 @@ namespace SimpleRPG.LevelGeneration
                 Seed = seed,
                 MinimumNumberOfRooms = MinimumNumberOfRooms,
                 MaximumNumberOfRooms = MaximumNumberOfRooms,
+                FloorCount = Mathf.Max(1, FloorCount),
             };
 
             // The server (including a host) generates directly rather than relying on receiving its own RPC.
@@ -128,7 +136,7 @@ namespace SimpleRPG.LevelGeneration
 
                 // The layout is worked out from the seed alone, so every machine reaches the same one; only then is anything instantiated.
                 var layoutGenerator = new LayoutGenerator(parameters.Seed, definitions);
-                GenerationResult result = layoutGenerator.Generate(parameters.MinimumNumberOfRooms, parameters.MaximumNumberOfRooms);
+                GenerationResult result = layoutGenerator.Generate(parameters.MinimumNumberOfRooms, parameters.MaximumNumberOfRooms, parameters.FloorCount);
 
                 int layoutChecksum = LayoutFingerprint.OfLayout(result.Layout);
                 if (!IsServer && LayoutFingerprint.Check(parameters.LayoutChecksum, layoutChecksum) is string layoutMismatch)
@@ -153,7 +161,7 @@ namespace SimpleRPG.LevelGeneration
                     Debug.LogError(result.ToString());
                 }
 
-                var spawner = new LevelSpawner(Roomset.RoomCollection, Roomset.cellSize);
+                var spawner = new LevelSpawner(Roomset.RoomCollection, Roomset.cellSize, Roomset.floorHeight);
                 spawner.RoomInstantiated = room => RoomNetworkObjects.Apply(room, IsServer);
                 spawner.Spawn(result.Layout, this.transform);
 

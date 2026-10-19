@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -10,9 +11,10 @@ namespace LevelGeneration
     /// </summary>
     public sealed class PlacedRoom
     {
-        public PlacedRoom(int id, RoomDefinition definition, Vector2Int position, int turns)
+        public PlacedRoom(int id, RoomDefinition definition, Vector2Int position, int turns, int floor = 0)
         {
             Id = id;
+            Floor = floor;
             Definition = definition;
             Position = position;
             Turns = GridMath.Normalize(turns);
@@ -28,6 +30,16 @@ namespace LevelGeneration
         public int Id { get; }
 
         public RoomDefinition Definition { get; }
+
+        /// <summary>
+        /// The room's lowest floor. It occupies <see cref="RoomDefinition.Height"/> floors from here.
+        /// </summary>
+        public int Floor { get; }
+
+        /// <summary>
+        /// The floor above the room's highest.
+        /// </summary>
+        public int TopFloor => Floor + Definition.Height;
 
         /// <summary>
         /// The room's lowest corner before it was turned. Turning happens about this point.
@@ -56,6 +68,25 @@ namespace LevelGeneration
             return cell.x >= Min.x && cell.x < Min.x + Size.x && cell.y >= Min.y && cell.y < Min.y + Size.y;
         }
 
+        /// <summary>
+        /// True if the room occupies this cell on this floor.
+        /// </summary>
+        public bool Contains(Vector3Int cell) => cell.z >= Floor && cell.z < TopFloor && Contains(new Vector2Int(cell.x, cell.y));
+
+        /// <summary>
+        /// Every cell the room occupies, as (x, y, floor).
+        /// </summary>
+        public IEnumerable<Vector3Int> Cells3D()
+        {
+            for (int floor = Floor; floor < TopFloor; floor++)
+            {
+                foreach (Vector2Int cell in Cells())
+                {
+                    yield return new Vector3Int(cell.x, cell.y, floor);
+                }
+            }
+        }
+
         public IEnumerable<Vector2Int> Cells()
         {
             for (int x = 0; x < Size.x; x++)
@@ -67,7 +98,7 @@ namespace LevelGeneration
             }
         }
 
-        public override string ToString() => $"{Definition.Name}#{Id} at {Position} turned {Turns}";
+        public override string ToString() => Floor == 0 ? $"{Definition.Name}#{Id} at {Position} turned {Turns}" : $"{Definition.Name}#{Id} at {Position} floor {Floor} turned {Turns}";
     }
 
     /// <summary>
@@ -84,7 +115,24 @@ namespace LevelGeneration
             LengthCells = definition.LengthCells;
             WidthCells = definition.WidthCells;
             TypeId = definition.TypeId;
+            Floor = room.Floor + definition.Level;
+            FloorDelta = definition.FloorDelta;
         }
+
+        /// <summary>
+        /// The floor the door stands on.
+        /// </summary>
+        public int Floor { get; }
+
+        /// <summary>
+        /// How many floors higher the door this one joins stands. Zero for a level door.
+        /// </summary>
+        public int FloorDelta { get; }
+
+        /// <summary>
+        /// The floor the door that joins this one stands on.
+        /// </summary>
+        public int FarFloor => Floor + FloorDelta;
 
         /// <summary>
         /// What kind of door this is. Doors only join doors of the same type.
@@ -133,13 +181,40 @@ namespace LevelGeneration
         }
 
         /// <summary>
+        /// The floors the passage covers: just the door's own for a level door, and every floor from the door's to the far door's for
+        /// a vertical one, because stairs or a shaft need clear space the whole way.
+        /// </summary>
+        public IEnumerable<int> PassageFloors()
+        {
+            for (int floor = Math.Min(Floor, FarFloor); floor <= Math.Max(Floor, FarFloor); floor++)
+            {
+                yield return floor;
+            }
+        }
+
+        /// <summary>
+        /// <see cref="PassageCells"/> on every floor of <see cref="PassageFloors"/>, as (x, y, floor).
+        /// </summary>
+        public IEnumerable<(int slice, Vector3Int cell)> PassageCells3D()
+        {
+            foreach ((int slice, Vector2Int cell) in PassageCells())
+            {
+                foreach (int floor in PassageFloors())
+                {
+                    yield return (slice, new Vector3Int(cell.x, cell.y, floor));
+                }
+            }
+        }
+
+        /// <summary>
         /// True if the other door is the one this door joins: it stands where this one ends, faces back, is as long and is the same type.
         /// </summary>
         public bool Mates(PlacedDoor other)
         {
-            return other.Side == GridMath.Opposite(Side) && other.LengthCells == LengthCells && other.TypeId == TypeId && other.Point == Far;
+            return other.Side == GridMath.Opposite(Side) && other.LengthCells == LengthCells && other.TypeId == TypeId && other.Point == Far
+                && other.Floor == FarFloor && other.FloorDelta == -FloorDelta;
         }
 
-        public override string ToString() => $"door {Index} of {Room} at {Point} facing {Side}";
+        public override string ToString() => $"door {Index} of {Room} at {Point} floor {Floor} facing {Side}";
     }
 }

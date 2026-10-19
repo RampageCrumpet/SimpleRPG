@@ -9,8 +9,9 @@ namespace LevelGeneration
     /// </summary>
     public sealed class Layout
     {
-        public Layout(int seed, int attempt, IReadOnlyList<PlacedRoom> rooms, IReadOnlyList<PlacedDoor> sealedDoors)
+        public Layout(int seed, int attempt, IReadOnlyList<PlacedRoom> rooms, IReadOnlyList<PlacedDoor> sealedDoors, int floorCount = 1)
         {
+            FloorCount = floorCount;
             Seed = seed;
             Attempt = attempt;
             Rooms = rooms;
@@ -26,6 +27,11 @@ namespace LevelGeneration
         /// Which try produced this layout, starting at 0. Later tries use a seed derived from <see cref="Seed"/>.
         /// </summary>
         public int Attempt { get; }
+
+        /// <summary>
+        /// How many floors the dungeon may use. Every room lies within floors 0 to FloorCount - 1.
+        /// </summary>
+        public int FloorCount { get; }
 
         public IReadOnlyList<PlacedRoom> Rooms { get; }
 

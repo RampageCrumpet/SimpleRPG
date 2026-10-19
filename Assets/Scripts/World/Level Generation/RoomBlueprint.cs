@@ -46,6 +46,13 @@ namespace LevelGeneration
         public RoomRole Role;
 
         /// <summary>
+        /// How many floors high the room is (a stairwell room is two). Its footprint is occupied on every one of them.
+        /// </summary>
+        [Tooltip("How many floors high the room is. A room with stairs between two floors is 2.")]
+        [Min(1)]
+        public int Floors = 1;
+
+        /// <summary>
         /// A collection of all of the connection points this room has.
         /// </summary>
         [SerializeField]

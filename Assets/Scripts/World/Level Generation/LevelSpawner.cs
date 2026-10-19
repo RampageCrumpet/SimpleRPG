@@ -13,6 +13,7 @@ namespace LevelGeneration
     {
         private readonly IReadOnlyList<RoomBlueprint> prefabs;
         private readonly float cellSize;
+        private readonly float floorHeight;
 
         /// <summary>
         /// Called with each room's root GameObject right after it is instantiated, before any other code can see it.
@@ -21,8 +22,10 @@ namespace LevelGeneration
 
         /// <param name="prefabs"> The room prefabs, in the order of <see cref="RoomDefinition.Index"/>.</param>
         /// <param name="cellSize"> The size of one world cell in unity units.</param>
-        public LevelSpawner(IReadOnlyList<RoomBlueprint> prefabs, float cellSize)
+        /// <param name="floorHeight"> The height of one floor in unity units. Floor 0 is at the prefab's own height.</param>
+        public LevelSpawner(IReadOnlyList<RoomBlueprint> prefabs, float cellSize, float floorHeight = 0f)
         {
+            this.floorHeight = floorHeight;
             this.prefabs = prefabs;
             this.cellSize = cellSize;
         }
@@ -61,7 +64,7 @@ namespace LevelGeneration
             Vector3 rotatedOriginOffset = rotation * new Vector3(room.Definition.OriginOffset.x * cellSize, 0, room.Definition.OriginOffset.y * cellSize);
             Vector3 worldPosition = new Vector3(
                 room.Position.x * cellSize - rotatedOriginOffset.x,
-                prefab.transform.position.y,
+                prefab.transform.position.y + room.Floor * floorHeight,
                 room.Position.y * cellSize - rotatedOriginOffset.z);
 
             return UnityEngine.Object.Instantiate(prefab, worldPosition, rotation, parent);

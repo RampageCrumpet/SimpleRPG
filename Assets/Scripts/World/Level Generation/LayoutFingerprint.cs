@@ -43,6 +43,7 @@ namespace LevelGeneration
                 hash.Add(room.Weight);
                 hash.Add(room.MaxCount);
                 hash.Add((int)room.Role);
+                hash.Add(room.Height);
                 hash.Add(room.Doors.Count);
 
                 foreach (DoorDefinition door in room.Doors)
@@ -53,6 +54,8 @@ namespace LevelGeneration
                     hash.Add(door.LengthCells);
                     hash.Add(door.WidthCells);
                     hash.Add(door.TypeId);
+                    hash.Add(door.Level);
+                    hash.Add(door.FloorDelta);
                 }
             }
 
@@ -65,6 +68,7 @@ namespace LevelGeneration
         public static int OfLayout(Layout layout)
         {
             var hash = new Hash();
+            hash.Add(layout.FloorCount);
             hash.Add(layout.Rooms.Count);
 
             foreach (PlacedRoom room in layout.Rooms)
@@ -72,6 +76,7 @@ namespace LevelGeneration
                 hash.Add(room.Definition.Index);
                 hash.Add(room.Position.x);
                 hash.Add(room.Position.y);
+                hash.Add(room.Floor);
                 hash.Add(room.Turns);
             }
 

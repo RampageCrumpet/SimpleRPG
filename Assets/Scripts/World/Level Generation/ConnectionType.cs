@@ -15,6 +15,14 @@ namespace LevelGeneration
         public const int StandardId = 0;
 
         /// <summary>
+        /// How many floors a door of this type climbs: zero for an ordinary level door, otherwise stairs, a ladder or a shaft.
+        /// Which end goes up is set on each door, so a joined pair differs by sign.
+        /// </summary>
+        [Tooltip("How many floors a door of this type climbs. Zero for a level door; 1 for stairs or a ladder one floor up.")]
+        [Min(0)]
+        public int FloorDelta;
+
+        /// <summary>
         /// A stable id for this type, the same on every machine. Derived from the asset name, never from object identity.
         /// </summary>
         public int Id => IdFor(name);

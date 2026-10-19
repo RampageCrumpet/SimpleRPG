@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ namespace LevelGeneration
     /// </summary>
     public readonly struct DoorDefinition
     {
-        public DoorDefinition(int index, Vector2Int point, Side side, int lengthCells, int widthCells = 2, int typeId = ConnectionType.StandardId)
+        public DoorDefinition(int index, Vector2Int point, Side side, int lengthCells, int widthCells = 2, int typeId = ConnectionType.StandardId, int level = 0, int floorDelta = 0)
         {
             Index = index;
             Point = point;
@@ -17,7 +18,20 @@ namespace LevelGeneration
             LengthCells = lengthCells;
             WidthCells = widthCells;
             TypeId = typeId;
+            Level = level;
+            FloorDelta = floorDelta;
         }
+
+        /// <summary>
+        /// Which of the room's floors the door stands on, counted up from the room's lowest floor. Always below the room's height.
+        /// </summary>
+        public int Level { get; }
+
+        /// <summary>
+        /// How many floors higher the door this one joins stands (negative for lower). Zero for a level door.
+        /// A joined pair has opposite deltas; only a door of a vertical <see cref="ConnectionType"/> has one.
+        /// </summary>
+        public int FloorDelta { get; }
 
         /// <summary>
         /// What kind of door this is, as <see cref="ConnectionType.Id"/>. Doors only join doors of the same type.
@@ -69,7 +83,7 @@ namespace LevelGeneration
     public sealed class RoomDefinition
     {
         public RoomDefinition(int index, string name, Vector2Int size, Vector2Int originOffset, IReadOnlyList<DoorDefinition> doors,
-            float weight = 1f, int maxCount = 0, RoomRole role = RoomRole.None)
+            float weight = 1f, int maxCount = 0, RoomRole role = RoomRole.None, int height = 1)
         {
             Index = index;
             Name = name;
@@ -79,7 +93,13 @@ namespace LevelGeneration
             Weight = weight;
             MaxCount = maxCount;
             Role = role;
+            Height = Math.Max(1, height);
         }
+
+        /// <summary>
+        /// How many floors high the room is. Every cell of its footprint is occupied on each of them.
+        /// </summary>
+        public int Height { get; }
 
         /// <summary>
         /// How likely this room is to be picked compared with the others in the set. Zero means never.
