@@ -346,17 +346,42 @@ namespace SimpleRPG.InventorySystem
         /// <returns>True if the item was moved.</returns>
         public bool TryMoveItem(Item item, Inventory destination, Vector2Int location)
         {
-            if (!CanMutate || !destination.CanMutate)
+            MoveResult result = InventoryMoveController.TryMove(this, item, destination, location);
+            if (result == MoveResult.NotAuthority)
             {
                 Debug.LogError("Only the server can move items; use RequestMoveItem from a client.");
-                return false;
             }
 
-            if (item == null || !idsByItem.TryGetValue(item, out uint instanceId) || !destination.ValidateItemPlacement(item, location))
-            {
-                return false;
-            }
+            return result == MoveResult.Success;
+        }
 
+        /// <summary>
+        /// True if this machine may change the contents directly: it's the server, or the inventory isn't networked.
+        /// </summary>
+        public bool CanMutateContents => CanMutate;
+
+        /// <summary>
+        /// Is the item currently in this inventory?
+        /// </summary>
+        public bool Contains(Item item)
+        {
+            return item != null && idsByItem.ContainsKey(item);
+        }
+
+        /// <summary>
+        /// Can this inventory publish the item to clients? Always true when the inventory isn't networked.
+        /// </summary>
+        public bool CanReplicate(Item item)
+        {
+            return !IsSpawned || (ItemRegistry.Instance != null && ItemRegistry.Instance.GetId(item) != 0);
+        }
+
+        /// <summary>
+        /// Performs a move that <see cref="InventoryMoveController"/> has already validated.
+        /// </summary>
+        internal void CommitMove(Item item, Inventory destination, Vector2Int location)
+        {
+            uint instanceId = idsByItem[item];
             RemoveItemInternal(item);
             destination.PlaceItem(item, location, instanceId);
 
@@ -364,8 +389,6 @@ namespace SimpleRPG.InventorySystem
             {
                 Changed?.Invoke();
             }
-
-            return true;
         }
 
         /// <summary>
@@ -375,12 +398,17 @@ namespace SimpleRPG.InventorySystem
         /// <returns>True if the move happened or the request was sent; false if it can't possibly succeed.</returns>
         public bool RequestMoveItem(Item item, Inventory destination, Vector2Int location)
         {
+            if (destination == null)
+            {
+                return false;
+            }
+
             if (CanMutate && destination.CanMutate)
             {
                 return TryMoveItem(item, destination, location);
             }
 
-            if (item == null || !idsByItem.TryGetValue(item, out uint instanceId))
+            if (destination == null || item == null || !idsByItem.TryGetValue(item, out uint instanceId))
             {
                 return false;
             }

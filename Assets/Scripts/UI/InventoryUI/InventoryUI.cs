@@ -119,6 +119,16 @@ namespace SimpleRPG.UI
         }
 
         /// <summary>
+        /// Gets the cell an item's origin (its smallest x/y cell) lands on when its centre is at the given screen position,
+        /// so a drop is judged by where the item sits rather than by the cell under the cursor.
+        /// </summary>
+        public Vector2Int ScreenToItemOrigin(Vector2 itemCentreScreenPosition, Vector2Int itemSize)
+        {
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(inventoryGridRectTransform, itemCentreScreenPosition, null, out Vector2 localPosition);
+            return Vector2Int.RoundToInt((localPosition / CellSize) - ((Vector2)itemSize / 2f));
+        }
+
+        /// <summary>
         /// Finds the location relative to the given InventoryUI's origin where we'd want to place an item to have it match up with the given cell position.
         /// </summary>
         /// <param name="cellPosition"> The location we want to place the item in inventory cells.</param>

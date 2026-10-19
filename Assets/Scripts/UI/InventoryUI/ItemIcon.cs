@@ -95,8 +95,8 @@ namespace SimpleRPG.UI
                 RectTransform inventoryRectTransform = inventory.GetComponent<RectTransform>();
                 if (RectTransformUtility.RectangleContainsScreenPoint(inventoryRectTransform, Input.mousePosition, null))
                 {
-                    // The cell position the ItemIcon was dropped on.
-                    Vector2Int targetCellPosition = inventory.ScreenToCellPosition(Vector2Int.RoundToInt(Input.mousePosition), inventory);
+                    // The cell the item's origin lands on, judged from where the icon sits (it keeps its grab offset while dragging).
+                    Vector2Int targetCellPosition = inventory.ScreenToItemOrigin(transform.position, Item.ItemSize);
                     targetInventoryUI = inventory;
 
                     // Ask the inventory to move the item. The icon goes back to where it started; if the move is accepted the
