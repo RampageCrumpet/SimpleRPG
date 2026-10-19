@@ -54,6 +54,16 @@ namespace SimpleRPG.InventorySystem.LootGeneration
         /// <returns> An IEnumerable containing all of the loot drops from the object</returns>
         public abstract IEnumerable<WeightedRandomEntry> GetResult();
 
+        /// <summary>
+        /// Gets the resulting loot drop using the given random source. Entries that roll internally (such as nested tables)
+        /// override this so a seeded <see cref="System.Random"/> reaches them; everything else falls back to <see cref="GetResult()"/>.
+        /// </summary>
+        /// <param name="random">The random source, or null to use <c>UnityEngine.Random</c>.</param>
+        public virtual IEnumerable<WeightedRandomEntry> GetResult(System.Random random)
+        {
+            return GetResult();
+        }
+
         // Fires the ObjectSelected event. Called when the object is selected to be included in the loot drop.
         public void OnObjectSelected(EventArgs e)
         {

@@ -78,10 +78,19 @@ namespace SimpleRPG.ObjectInteractions
         {
             if (lootTable != null)
             {
-                var loot = lootTable.GetResult();
-                foreach (LootableItem item in loot)
+                // Only lootable items can go in a chest; other entry types and items without an Item are skipped.
+                foreach (LootableItem lootable in lootTable.GetResult().OfType<LootableItem>())
                 {
-                    inventory.AddItemInstance(item.Item);
+                    if (lootable.Item == null)
+                    {
+                        Debug.LogWarning($"Loot entry '{lootable.name}' in {lootTable.name} has no item assigned; skipping it.", this);
+                        continue;
+                    }
+
+                    if (!inventory.AddItemInstance(lootable.Item))
+                    {
+                        Debug.LogWarning($"'{lootable.Item.name}' from {lootTable.name} could not be placed in {name}.", this);
+                    }
                 }
             }
         }
