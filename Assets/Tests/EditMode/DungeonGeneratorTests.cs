@@ -43,6 +43,8 @@ namespace SimpleRPG.Tests.EditMode
             generator.RoomInstantiated = spawned.Add;
             generator.GenerateLevel(8, null);
 
+            Assert.That(generator.PlacedRooms.Count, Is.GreaterThanOrEqualTo(8), $"Seed {seed} placed too few rooms.");
+
             var occupant = new Dictionary<Vector2Int, Room>();
             foreach (Room room in generator.PlacedRooms)
             {

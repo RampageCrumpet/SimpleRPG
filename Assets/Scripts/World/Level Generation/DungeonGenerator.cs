@@ -374,7 +374,7 @@ namespace LevelGeneration
                         connection.Seal();
                     }
 
-                    Debug.LogError("Level generation is failing to place a room");
+                    Debug.LogWarning("Level generation is failing to place a room");
                     return;
                 }
             }

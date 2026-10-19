@@ -19,6 +19,12 @@ public class ConnectionBlueprint : MonoBehaviour
     [field: SerializeField]
     public GameObject SealingObject;
 
+    [Tooltip("When on, this door must sit exactly Door Inset Cells in from the edge it faces. Off lets the door be placed freely.")]
+    public bool EnforceDoorInset;
+
+    [Tooltip("How many cells in from the edge this door sits, measured from the room's lowest corner. Only checked when Enforce Door Inset is on.")]
+    public int DoorInsetCells = 2;
+
     /// <summary>
     /// Gets a <see cref="Vector2Int"/> representing which direction this connection is pointing.
     /// </summary>
