@@ -1,4 +1,5 @@
 using LevelGeneration;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -25,9 +26,21 @@ namespace SimpleRPG.LevelGeneration
         public int MinimumNumberOfRooms { get; set; }
 
         /// <summary>
+        /// The most rooms we allow in our dungeon. Zero lets the generator choose from the minimum.
+        /// </summary>
+        [field: SerializeField]
+        [Tooltip("The most rooms we allow. Zero lets the generator choose from the minimum.")]
+        public int MaximumNumberOfRooms { get; set; }
+
+        /// <summary>
         /// The parameters the current level was generated with. Only valid once <see cref="IsGenerated"/> is true.
         /// </summary>
         private LevelGenerationParameters generatedParameters;
+
+        /// <summary>
+        /// True while a level is being built, so a second request that arrives meanwhile is ignored.
+        /// </summary>
+        private bool isGenerating;
 
         /// <summary>
         /// True once this machine has generated its copy of the level.
@@ -46,11 +59,19 @@ namespace SimpleRPG.LevelGeneration
                 return;
             }
 
-            var parameters = new LevelGenerationParameters { Seed = seed, MinimumNumberOfRooms = MinimumNumberOfRooms };
+            var parameters = new LevelGenerationParameters
+            {
+                Seed = seed,
+                MinimumNumberOfRooms = MinimumNumberOfRooms,
+                MaximumNumberOfRooms = MaximumNumberOfRooms,
+            };
 
             // The server (including a host) generates directly rather than relying on receiving its own RPC.
-            GenerateLevel(parameters);
-            GenerateLevelRpc(parameters, RpcTarget.NotServer);
+            // Generating fills in the fingerprints, so clients are sent the finished parameters.
+            if (GenerateLevel(parameters, out LevelGenerationParameters finished))
+            {
+                GenerateLevelRpc(finished, RpcTarget.NotServer);
+            }
         }
 
         /// <summary>
@@ -74,26 +95,77 @@ namespace SimpleRPG.LevelGeneration
         [Rpc(SendTo.SpecifiedInParams)]
         private void GenerateLevelRpc(LevelGenerationParameters parameters, RpcParams rpcParams = default)
         {
-            GenerateLevel(parameters);
+            GenerateLevel(parameters, out _);
         }
 
         /// <summary>
         /// Call the level generator to create a level. Does nothing if this machine already has one, which also
         /// protects a client that receives both the broadcast and a reply to its own request.
+        /// On the server the returned parameters carry the fingerprints clients check; a client refuses to build a level that differs from the server's.
         /// </summary>
-        private void GenerateLevel(LevelGenerationParameters parameters)
+        /// <returns> True if the level was built here.</returns>
+        private bool GenerateLevel(LevelGenerationParameters parameters, out LevelGenerationParameters finished)
         {
-            if (IsGenerated)
+            finished = parameters;
+
+            if (IsGenerated || isGenerating)
             {
-                return;
+                return false;
             }
 
-            IsGenerated = true;
-            generatedParameters = parameters;
+            isGenerating = true;
+            try
+            {
+                List<RoomDefinition> definitions = RoomDefinitionBaker.Bake(Roomset);
 
-            var levelGenerator = new DungeonGenerator(parameters.Seed, Roomset.RoomCollection, Roomset.cellSize);
-            levelGenerator.RoomInstantiated = room => RoomNetworkObjects.Apply(room, IsServer);
-            levelGenerator.GenerateLevel(parameters.MinimumNumberOfRooms, this.transform);
+                // A client with different room data would build a different dungeon from the same seed.
+                int roomsetFingerprint = LayoutFingerprint.OfRoomset(definitions);
+                if (!IsServer && LayoutFingerprint.Check(parameters.RoomsetFingerprint, roomsetFingerprint) is string roomsetMismatch)
+                {
+                    Debug.LogError($"Not generating the dungeon: this client's roomset differs from the server's. {roomsetMismatch}");
+                    return false;
+                }
+
+                // The layout is worked out from the seed alone, so every machine reaches the same one; only then is anything instantiated.
+                var layoutGenerator = new LayoutGenerator(parameters.Seed, definitions);
+                GenerationResult result = layoutGenerator.Generate(parameters.MinimumNumberOfRooms, parameters.MaximumNumberOfRooms);
+
+                int layoutChecksum = LayoutFingerprint.OfLayout(result.Layout);
+                if (!IsServer && LayoutFingerprint.Check(parameters.LayoutChecksum, layoutChecksum) is string layoutMismatch)
+                {
+                    Debug.LogError($"Not generating the dungeon: this client reached a different layout than the server. {layoutMismatch}");
+                    return false;
+                }
+
+                if (IsServer)
+                {
+                    parameters.RoomsetFingerprint = roomsetFingerprint;
+                    parameters.LayoutChecksum = layoutChecksum;
+                }
+
+                foreach (string rejection in result.RejectedAttempts)
+                {
+                    Debug.LogWarning($"Dungeon seed {parameters.Seed}, {rejection}");
+                }
+
+                if (!result.Success)
+                {
+                    Debug.LogError(result.ToString());
+                }
+
+                var spawner = new LevelSpawner(Roomset.RoomCollection, Roomset.cellSize);
+                spawner.RoomInstantiated = room => RoomNetworkObjects.Apply(room, IsServer);
+                spawner.Spawn(result.Layout, this.transform);
+
+                generatedParameters = parameters;
+                finished = parameters;
+                IsGenerated = true;
+                return true;
+            }
+            finally
+            {
+                isGenerating = false;
+            }
         }
     }
 }

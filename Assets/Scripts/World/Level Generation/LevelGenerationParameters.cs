@@ -19,10 +19,30 @@ namespace SimpleRPG.LevelGeneration
         /// </summary>
         public int MinimumNumberOfRooms;
 
+        /// <summary>
+        /// The most rooms the dungeon may contain. Zero lets the generator choose from the minimum.
+        /// </summary>
+        public int MaximumNumberOfRooms;
+
+        /// <summary>
+        /// Fingerprint of the server's roomset and generator version (see <c>LayoutFingerprint.OfRoomset</c>). Filled in by the server;
+        /// a client whose own fingerprint differs must not generate. Zero means the server did not provide one.
+        /// </summary>
+        public int RoomsetFingerprint;
+
+        /// <summary>
+        /// Checksum of the layout the server generated (see <c>LayoutFingerprint.OfLayout</c>). A client whose layout differs has desynced.
+        /// Zero means the server did not provide one.
+        /// </summary>
+        public int LayoutChecksum;
+
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
             serializer.SerializeValue(ref Seed);
             serializer.SerializeValue(ref MinimumNumberOfRooms);
+            serializer.SerializeValue(ref MaximumNumberOfRooms);
+            serializer.SerializeValue(ref RoomsetFingerprint);
+            serializer.SerializeValue(ref LayoutChecksum);
         }
     }
 }

@@ -22,5 +22,5 @@ A host is a server that also has a local player, so it follows the server rules.
 ## Extending
 
 - Level generation inputs go in `LevelGenerationParameters` so late-join stays a single value. Both sides must also have the same `Roomset` asset.
-- `DungeonGenerator.RoomInstantiated` is the hook where the network rule is applied to a new room. When layout generation is split from spawning (D3), that hook becomes part of the spawner and the layout step stays Unity-free.
+- `LevelSpawner.RoomInstantiated` is the hook where the network rule is applied to a new room. Layout generation (`LayoutGenerator`) is Unity-free and runs identically on every machine from the seed; only the spawner creates objects.
 - Server-spawned dungeon content should be keyed off the completed layout (room and connection ids), not off scene positions, so multiple floors and connection types (stairs, gates) can be added.

@@ -39,6 +39,15 @@ namespace LevelGeneration
     /// <summary>
     /// Works out the packed values for a room without modifying it. Pure: only transforms and fields are read.
     /// </summary>
+    /// <remarks>
+    /// Rounding rules, all measured in cells:
+    /// <list type="bullet">
+    /// <item>Origin offset rounds toward zero (ceiling of a negative number), so a pivot less than a full cell below the root is part of the first cell.</item>
+    /// <item>Size rounds to the nearest cell, so a furthest pivot within half a cell of a boundary counts as sitting on it.</item>
+    /// <item>A door snaps to the nearest grid point; <see cref="RoomValidator.GridTolerance"/> is how far it may be from that point before the validator refuses it.</item>
+    /// </list>
+    /// Size is the span of all child pivots, so <see cref="RoomValidator"/> flags pivots that sit outside the drawn geometry.
+    /// </remarks>
     public static class RoomPlanner
     {
         /// <summary>

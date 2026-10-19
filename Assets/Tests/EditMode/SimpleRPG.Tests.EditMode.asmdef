@@ -3,6 +3,7 @@
     "rootNamespace": "SimpleRPG.Tests.EditMode",
     "references": [
         "SimpleRPG",
+        "SimpleRPG.Editor",
         "Unity.Netcode.Runtime"
     ],
     "includePlatforms": [

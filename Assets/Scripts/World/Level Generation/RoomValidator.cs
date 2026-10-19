@@ -27,14 +27,12 @@ namespace LevelGeneration
     /// Checks room authoring against the packing conventions, so bad data fails at pack time instead of producing
     /// doors that open onto walls. Pure: nothing is modified.
     /// Conventions come from Room_Hallway_Long: Size is the pivot span from the room's lowest corner, OriginOffset is never
-    /// positive, and door locations are measured from that corner. How far a door sits in from its edge is a per-connection
-    /// style choice, so it is only checked on doors that set <see cref="ConnectionBlueprint.EnforceDoorInset"/>.
+    /// positive, and door locations are measured from that corner.
     /// </summary>
     public static class RoomValidator
     {
         public const string RuleDoorOffGrid = "door-off-grid";
         public const string RuleDoorTargetInFootprint = "door-target-in-footprint";
-        public const string RuleDoorInset = "door-inset";
         public const string RuleDoorDuplicate = "door-duplicate";
         public const string RuleDoorMissingSeal = "door-missing-seal";
         public const string RuleDoorStrayNested = "door-stray-nested";
@@ -44,11 +42,28 @@ namespace LevelGeneration
         public const string RulePackedDoorData = "packed-door-data";
         public const string RuleRoomsetCellSize = "roomset-cell-size";
         public const string RuleRoomsetEntryNull = "roomset-entry-null";
+        public const string RuleRootTransform = "root-transform";
+        public const string RuleDoorLength = "door-length";
+        public const string RuleDoorWidth = "door-width";
+        public const string RuleSealOutsideRoom = "seal-outside-room";
+        public const string RuleSealStartsActive = "seal-starts-active";
+        public const string RuleStrayPivot = "stray-pivot";
+        public const string RuleRoomsetEmpty = "roomset-empty";
+        public const string RuleRoomsetDuplicate = "roomset-duplicate";
+        public const string RuleRoomsetRoomWeight = "roomset-room-weight";
+        public const string RuleRoomsetRoomNoDoors = "roomset-room-no-doors";
+        public const string RuleRoomsetNoDeadEnd = "roomset-no-dead-end";
+        public const string RuleRoomsetNothingPlaceable = "roomset-nothing-placeable";
+        public const string RuleRoomsetDoorLengths = "roomset-door-lengths";
+        public const string RuleRoomsetConnectionTypeClash = "roomset-connection-type-clash";
 
         /// <summary>How far, in cells, a door pivot may sit from a grid point. Authored pillar doors are about 0.1 cells off.</summary>
         public const float GridTolerance = 0.25f;
 
         private const float AxisTolerance = 0.01f;
+
+        /// <summary>How far, in cells, a door length may be from a whole number of cells.</summary>
+        private const float LengthTolerance = 0.05f;
 
         /// <summary>
         /// Validates every room in a roomset, both the authored geometry and the values already packed onto it.
@@ -64,6 +79,12 @@ namespace LevelGeneration
                 return errors;
             }
 
+            if (roomset.RoomCollection == null || roomset.RoomCollection.Count == 0)
+            {
+                errors.Add(new RoomValidationError(roomset.name, RuleRoomsetEmpty, "The roomset has no rooms."));
+                return errors;
+            }
+
             foreach (RoomBlueprint room in roomset.RoomCollection)
             {
                 if (room == null)
@@ -74,6 +95,87 @@ namespace LevelGeneration
 
                 errors.AddRange(Validate(room, roomset.cellSize));
                 errors.AddRange(CheckPackedData(room, roomset.cellSize));
+            }
+
+            errors.AddRange(CheckRoomsetComposition(roomset));
+            return errors;
+        }
+
+        /// <summary>
+        /// Checks that a roomset as a whole can build a dungeon: every room has doors, something can close a branch, and doors can join each other.
+        /// Looks only at the rooms' own doors and policy fields, so it can run before any room is packed.
+        /// </summary>
+        public static List<RoomValidationError> CheckRoomsetComposition(Roomset roomset)
+        {
+            var errors = new List<RoomValidationError>();
+            List<RoomBlueprint> rooms = roomset.RoomCollection.Where(room => room != null).ToList();
+            string name = roomset.name;
+
+            foreach (IGrouping<RoomBlueprint, RoomBlueprint> duplicate in rooms.GroupBy(room => room).Where(group => group.Count() > 1))
+            {
+                errors.Add(new RoomValidationError(name, RuleRoomsetDuplicate,
+                    $"'{duplicate.Key.name}' is in the roomset {duplicate.Count()} times, which only makes it more likely to be picked. Use its weight instead."));
+            }
+
+            var doorLengthsByType = new Dictionary<int, HashSet<int>>();
+            var typesById = new Dictionary<int, HashSet<ConnectionType>>();
+            bool hasPlaceableDeadEnd = false;
+            bool hasPlaceableRoom = false;
+
+            foreach (RoomBlueprint room in rooms)
+            {
+                if (room.SelectionWeight < 0 || room.MaxCount < 0)
+                {
+                    errors.Add(new RoomValidationError(room.name, RuleRoomsetRoomWeight,
+                        $"SelectionWeight is {room.SelectionWeight} and MaxCount is {room.MaxCount}; neither may be negative."));
+                }
+
+                List<ConnectionBlueprint> doors = RoomPlanner.SealedDoors(room).ToList();
+                if (doors.Count == 0)
+                {
+                    errors.Add(new RoomValidationError(room.name, RuleRoomsetRoomNoDoors, "The room has no doors, so nothing can be built from or onto it."));
+                }
+
+                foreach (ConnectionBlueprint door in doors)
+                {
+                    int typeId = ConnectionType.IdFor(door.Type);
+                    if (!doorLengthsByType.TryGetValue(typeId, out HashSet<int> lengths))
+                    {
+                        doorLengthsByType[typeId] = lengths = new HashSet<int>();
+                        typesById[typeId] = new HashSet<ConnectionType>();
+                    }
+
+                    lengths.Add(Mathf.RoundToInt(door.ConnectionLength / roomset.cellSize));
+                    typesById[typeId].Add(door.Type);
+                }
+
+                bool placeable = room.SelectionWeight > 0 && (room.Role & RoomRole.Start) == 0 && doors.Count > 0;
+                hasPlaceableRoom |= placeable;
+                hasPlaceableDeadEnd |= placeable && doors.Count == 1;
+            }
+
+            if (rooms.Count > 0 && !hasPlaceableRoom)
+            {
+                errors.Add(new RoomValidationError(name, RuleRoomsetNothingPlaceable,
+                    "Every room is a start room, has a weight of zero or has no doors, so no room can be added after the first."));
+            }
+            else if (rooms.Count > 0 && !hasPlaceableDeadEnd)
+            {
+                errors.Add(new RoomValidationError(name, RuleRoomsetNoDeadEnd,
+                    "No room with a single door can be placed, so branches can only be ended by sealing them."));
+            }
+
+            foreach (KeyValuePair<int, HashSet<int>> type in doorLengthsByType.Where(pair => pair.Value.Count > 1))
+            {
+                string typeName = typesById[type.Key].First()?.name ?? "standard";
+                errors.Add(new RoomValidationError(name, RuleRoomsetDoorLengths,
+                    $"'{typeName}' doors have different lengths ({string.Join(", ", type.Value.OrderBy(length => length))} cells). Only doors of the same type and length join, so each type needs one length."));
+            }
+
+            foreach (KeyValuePair<int, HashSet<ConnectionType>> clash in typesById.Where(pair => pair.Value.Count > 1))
+            {
+                errors.Add(new RoomValidationError(name, RuleRoomsetConnectionTypeClash,
+                    $"Connection types {string.Join(", ", clash.Value.Select(type => type == null ? "standard" : $"'{type.name}'"))} have the same id, so they would join each other. Rename one."));
             }
 
             return errors;
@@ -94,6 +196,9 @@ namespace LevelGeneration
             Vector2Int origin = plan.OriginOffset;
             Vector2Int size = plan.Size;
             var doorLocations = new List<Vector2Int>();
+
+            CheckRootTransform(room, errors);
+            CheckStrayPivots(room, cellSize, errors);
 
             foreach (ConnectionBlueprint connection in room.GetComponentsInChildren<ConnectionBlueprint>())
             {
@@ -124,6 +229,8 @@ namespace LevelGeneration
                     continue;
                 }
 
+                CheckDoorProperties(room, connection, cellSize, errors);
+
                 Vector2 grid = RoomPlanner.GridPosition(room, connection.transform, cellSize);
                 if (Mathf.Abs(grid.x - Mathf.Round(grid.x)) > GridTolerance || Mathf.Abs(grid.y - Mathf.Round(grid.y)) > GridTolerance)
                 {
@@ -134,12 +241,6 @@ namespace LevelGeneration
                 Vector2Int location = RoomPlanner.DoorLocation(room, connection, cellSize, origin);
                 Vector2Int forward = Forward(connection.transform.forward);
                 doorLocations.Add(location);
-
-                if (connection.EnforceDoorInset && !IsInsetCorrectly(location, forward, size, connection.DoorInsetCells))
-                {
-                    errors.Add(new RoomValidationError(roomName, RuleDoorInset,
-                        $"'{connection.name}' at {location} facing {forward} should sit {connection.DoorInsetCells} cells in from its edge of size {size}."));
-                }
 
                 // The door opens onto the cell beyond it, using the same rule as Connection.FacingCell.
                 int lengthCells = Mathf.RoundToInt(connection.ConnectionLength / cellSize);
@@ -205,12 +306,120 @@ namespace LevelGeneration
             return errors;
         }
 
-        private static bool IsInsetCorrectly(Vector2Int location, Vector2Int forward, Vector2Int size, int inset)
+        /// <summary>
+        /// The packer measures everything from the root's position and ignores its rotation and scale, so both must be neutral.
+        /// </summary>
+        private static void CheckRootTransform(RoomBlueprint room, List<RoomValidationError> errors)
         {
-            if (forward.x > 0) return location.x == size.x - inset;
-            if (forward.x < 0) return location.x == inset;
-            if (forward.y > 0) return location.y == size.y - inset;
-            return location.y == inset;
+            bool turned = Quaternion.Angle(room.transform.rotation, Quaternion.identity) > 0.01f;
+            bool scaled = (room.transform.lossyScale - Vector3.one).sqrMagnitude > 1e-6f;
+
+            if (turned || scaled)
+            {
+                errors.Add(new RoomValidationError(room.name, RuleRootTransform,
+                    $"The room root is rotated {room.transform.rotation.eulerAngles} or scaled {room.transform.lossyScale}; it must have identity rotation and scale 1."));
+            }
+        }
+
+        /// <summary>
+        /// A door's length has to be a whole number of cells, because doors join at whole-cell distances, and it needs a width and a wall to close it with.
+        /// </summary>
+        private static void CheckDoorProperties(RoomBlueprint room, ConnectionBlueprint connection, float cellSize, List<RoomValidationError> errors)
+        {
+            string roomName = room.name;
+            float lengthInCells = connection.ConnectionLength / cellSize;
+
+            if (lengthInCells < 1f - LengthTolerance || Mathf.Abs(lengthInCells - Mathf.Round(lengthInCells)) > LengthTolerance)
+            {
+                errors.Add(new RoomValidationError(roomName, RuleDoorLength,
+                    $"'{connection.name}' is {connection.ConnectionLength} units long, which is {lengthInCells} cells. It must be a whole number of cells, at least one."));
+            }
+
+            if (connection.ConnectionWidth <= 0f)
+            {
+                errors.Add(new RoomValidationError(roomName, RuleDoorWidth, $"'{connection.name}' has a width of {connection.ConnectionWidth}; it must be greater than zero."));
+            }
+
+            GameObject seal = connection.SealingObject;
+            if (!seal.transform.IsChildOf(room.transform))
+            {
+                errors.Add(new RoomValidationError(roomName, RuleSealOutsideRoom,
+                    $"The SealingObject of '{connection.name}' is not part of this room, so sealing the door would change something else."));
+            }
+            else if (seal.activeSelf)
+            {
+                errors.Add(new RoomValidationError(roomName, RuleSealStartsActive,
+                    $"The SealingObject of '{connection.name}' starts active, which would close the door before anything seals it."));
+            }
+        }
+
+        /// <summary>
+        /// Size comes from the furthest transform pivots, so a stray empty object far outside the geometry inflates the room.
+        /// Flags transforms that sit more than a cell beyond everything that is actually drawn.
+        /// </summary>
+        private static void CheckStrayPivots(RoomBlueprint room, float cellSize, List<RoomValidationError> errors)
+        {
+            if (!TryGetMeshBounds(room, out Bounds drawn))
+            {
+                return;
+            }
+
+            Vector3 root = room.transform.position;
+            Vector3 min = drawn.min - Vector3.one * cellSize;
+            Vector3 max = drawn.max + Vector3.one * cellSize;
+
+            foreach (Transform child in room.GetComponentsInChildren<Transform>())
+            {
+                Vector3 position = child.position;
+                bool outside = position.x < min.x || position.x > max.x || position.z < min.z || position.z > max.z;
+
+                if (child != room.transform && outside)
+                {
+                    errors.Add(new RoomValidationError(room.name, RuleStrayPivot,
+                        $"'{child.name}' sits at {(position - root) / cellSize} cells, more than a cell outside the room's geometry, so it stretches the room's Size."));
+                }
+            }
+        }
+
+        /// <summary>
+        /// The bounds of every mesh in the room, in the room's space. Works on prefab assets as well as instances.
+        /// </summary>
+        private static bool TryGetMeshBounds(RoomBlueprint room, out Bounds bounds)
+        {
+            bounds = default;
+            bool found = false;
+
+            foreach (MeshFilter filter in room.GetComponentsInChildren<MeshFilter>())
+            {
+                if (filter.sharedMesh == null)
+                {
+                    continue;
+                }
+
+                Bounds local = filter.sharedMesh.bounds;
+                Matrix4x4 toRoom = filter.transform.localToWorldMatrix;
+
+                for (int corner = 0; corner < 8; corner++)
+                {
+                    Vector3 point = local.center + Vector3.Scale(local.extents, new Vector3(
+                        (corner & 1) == 0 ? -1 : 1,
+                        (corner & 2) == 0 ? -1 : 1,
+                        (corner & 4) == 0 ? -1 : 1));
+                    Vector3 world = toRoom.MultiplyPoint3x4(point);
+
+                    if (!found)
+                    {
+                        bounds = new Bounds(world, Vector3.zero);
+                        found = true;
+                    }
+                    else
+                    {
+                        bounds.Encapsulate(world);
+                    }
+                }
+            }
+
+            return found;
         }
 
         private static bool IsAxisAligned(Vector3 direction)

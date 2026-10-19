@@ -26,6 +26,26 @@ namespace LevelGeneration
         public Vector2Int OriginOffset;
 
         /// <summary>
+        /// How likely this room is to be picked compared with the others in its roomset. Zero means never.
+        /// </summary>
+        [Tooltip("How likely this room is to be picked compared with the others in its roomset. Zero means never.")]
+        [Min(0f)]
+        public float SelectionWeight = 1f;
+
+        /// <summary>
+        /// The most times this room may appear in one dungeon. Zero means no limit.
+        /// </summary>
+        [Tooltip("The most times this room may appear in one dungeon. Zero means no limit.")]
+        [Min(0)]
+        public int MaxCount;
+
+        /// <summary>
+        /// What this room is for. A Start room is where the dungeon begins and is never placed anywhere else.
+        /// </summary>
+        [Tooltip("What this room is for. A Start room is where the dungeon begins and is never placed anywhere else.")]
+        public RoomRole Role;
+
+        /// <summary>
         /// A collection of all of the connection points this room has.
         /// </summary>
         [SerializeField]
@@ -35,7 +55,16 @@ namespace LevelGeneration
         /// <summary>
         /// A non modifiable collection of this <see cref="RoomBlueprint"/>'s connections.
         /// </summary>
-        public IEnumerable<ConnectionBlueprint> Connections { get => connections.AsReadOnly(); private set { connections = value.ToList(); } }
+        public IEnumerable<ConnectionBlueprint> Connections => connections.AsReadOnly();
+
+        /// <summary>
+        /// Replaces the stored connection list. Intended for the room packer, which writes the list the generator reads.
+        /// </summary>
+        /// <param name="newConnections"> The connections to store, in the order they should be read.</param>
+        public void SetConnections(IEnumerable<ConnectionBlueprint> newConnections)
+        {
+            connections = newConnections.ToList();
+        }
     }
 }
 

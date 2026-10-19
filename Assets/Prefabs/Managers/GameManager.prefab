@@ -48,10 +48,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GlobalObjectIdHash: 2815214066
   InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
+  m_InScenePlaced: 0
   ActiveSceneSynchronization: 0
   SceneMigrationSynchronization: 1
   SpawnWithObservers: 1
@@ -118,8 +120,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  <Roomset>k__BackingField: {fileID: 11400000, guid: 5f0b03b4687a9a547ab314c25fe6b225, type: 2}
+  <Roomset>k__BackingField: {fileID: 11400000, guid: ddf295e8e0446e945ae20ee508b3727e, type: 2}
   <MinimumNumberOfRooms>k__BackingField: 250
+  <MaximumNumberOfRooms>k__BackingField: 0
 --- !u!114 &5082288297274321634
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -17,10 +17,17 @@ namespace SimpleRPG.Tests.EditMode
         private const float DoorLength = 20f;
 
         private readonly List<GameObject> spawned = new List<GameObject>();
+        private readonly List<Object> createdAssets = new List<Object>();
 
         [TearDown]
         public void TearDown()
         {
+            foreach (Object asset in createdAssets)
+            {
+                Object.DestroyImmediate(asset);
+            }
+            createdAssets.Clear();
+
             foreach (GameObject room in spawned)
             {
                 if (room != null)
@@ -65,36 +72,6 @@ namespace SimpleRPG.Tests.EditMode
             AddDoor(room, new Vector3(15, 0, 25), new Vector2Int(0, -1), 5f);
 
             AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleDoorTargetInFootprint);
-        }
-
-        [Test]
-        public void DoorInset_IsReported_WhenEnforced()
-        {
-            RoomBlueprint room = CreateValidRoom();
-            // Top edge door one cell in instead of the two it asks for.
-            AddDoor(room, new Vector3(25, 0, 25), new Vector2Int(0, 1), enforceInset: true, insetCells: 2);
-
-            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleDoorInset);
-        }
-
-        [Test]
-        public void DoorInset_IsNotChecked_WhenNotEnforced()
-        {
-            RoomBlueprint room = CreateValidRoom();
-            // Same one-cell-in door, but this connection places doors freely.
-            AddDoor(room, new Vector3(25, 0, 25), new Vector2Int(0, 1));
-
-            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule == RoomValidator.RuleDoorInset), Is.Empty);
-        }
-
-        [Test]
-        public void DoorInset_PassesAtItsOwnInset()
-        {
-            RoomBlueprint room = CreateValidRoom();
-            // Styles can differ per connection: this one enforces an inset of 1 and sits exactly there.
-            AddDoor(room, new Vector3(25, 0, 25), new Vector2Int(0, 1), enforceInset: true, insetCells: 1);
-
-            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule == RoomValidator.RuleDoorInset), Is.Empty);
         }
 
         [Test]
@@ -201,6 +178,220 @@ namespace SimpleRPG.Tests.EditMode
             Assert.That(errors, Is.Empty, string.Join("\n", errors.Select(error => error.ToString())));
         }
 
+        [TestCase(-1.5f, 0)]  // 0.3 cells below the root is part of the first cell
+        [TestCase(-4.9f, 0)]  // still less than a full cell
+        [TestCase(-6f, -1)]   // 1.2 cells below needs a cell of its own
+        [TestCase(-11f, -2)]
+        public void OriginOffset_RoundsTowardZero(float pivotZ, int expectedOffset)
+        {
+            RoomBlueprint room = CreateValidRoom();
+            var low = new GameObject("Low");
+            low.transform.SetParent(room.transform, false);
+            low.transform.position = new Vector3(0, 0, pivotZ);
+
+            Assert.AreEqual(expectedOffset, RoomPlanner.CalculateOriginOffset(room, CellSize).y);
+        }
+
+        [TestCase(31f, 6)]   // 6.2 cells
+        [TestCase(32.4f, 6)] // 6.48 cells rounds down
+        [TestCase(32.6f, 7)] // 6.52 cells rounds up
+        public void Size_RoundsToTheNearestCell(float farPivotX, int expectedWidth)
+        {
+            RoomBlueprint room = CreateValidRoom();
+            room.transform.Find("Corner").position = new Vector3(farPivotX, 0, 30);
+
+            Assert.AreEqual(expectedWidth, RoomPlanner.Plan(room, CellSize).Size.x);
+        }
+
+        [Test]
+        public void RotatedRoot_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            room.transform.rotation = Quaternion.Euler(0, 90, 0);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleRootTransform);
+        }
+
+        [Test]
+        public void ScaledRoot_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            room.transform.localScale = new Vector3(2, 1, 2);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleRootTransform);
+        }
+
+        [TestCase(12f)]
+        [TestCase(2f)]
+        [TestCase(0f)]
+        public void DoorLengthNotAWholeNumberOfCells_IsReported(float length)
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddDoor(room, new Vector3(15.5f, 0, 20), new Vector2Int(0, 1), length);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleDoorLength);
+        }
+
+        [Test]
+        public void DoorWithoutWidth_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddDoor(room, new Vector3(15.5f, 0, 20), new Vector2Int(0, 1)).ConnectionWidth = 0f;
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleDoorWidth);
+        }
+
+        [Test]
+        public void SealingObjectOutsideTheRoom_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            ConnectionBlueprint door = AddDoor(room, new Vector3(15.5f, 0, 20), new Vector2Int(0, 1));
+            door.SealingObject = new GameObject("External");
+            spawned.Add(door.SealingObject);
+            door.SealingObject.SetActive(false);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleSealOutsideRoom);
+        }
+
+        [Test]
+        public void SealingObjectThatStartsActive_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddDoor(room, new Vector3(15.5f, 0, 20), new Vector2Int(0, 1)).SealingObject.SetActive(true);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleSealStartsActive);
+        }
+
+        [Test]
+        public void StrayEmptyFarFromTheGeometry_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+            Assert.That(RoomValidator.Validate(room, CellSize), Is.Empty, "A room whose pivots all sit within its geometry is fine.");
+
+            var stray = new GameObject("Stray");
+            stray.transform.SetParent(room.transform, false);
+            stray.transform.position = new Vector3(200, 0, 200);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleStrayPivot);
+        }
+
+        [Test]
+        public void Roomset_WithADeadEnd_HasNoCompositionErrors()
+        {
+            Roomset roomset = CreateRoomset(CreateValidRoom(), CreateRoomWithDoors(1));
+
+            Assert.That(RoomValidator.CheckRoomsetComposition(roomset), Is.Empty);
+        }
+
+        [Test]
+        public void Roomset_WithoutRooms_IsReported()
+        {
+            Roomset roomset = CreateRoomset();
+
+            AssertRule(RoomValidator.ValidateRoomset(roomset), RoomValidator.RuleRoomsetEmpty);
+        }
+
+        [Test]
+        public void Roomset_RoomWithoutDoors_IsReported()
+        {
+            Roomset roomset = CreateRoomset(CreateRoomWithDoors(1), CreateRoomWithDoors(0));
+
+            AssertRule(RoomValidator.CheckRoomsetComposition(roomset), RoomValidator.RuleRoomsetRoomNoDoors);
+        }
+
+        [Test]
+        public void Roomset_WithoutADeadEnd_IsReported()
+        {
+            Roomset roomset = CreateRoomset(CreateValidRoom(), CreateRoomWithDoors(2));
+
+            AssertRule(RoomValidator.CheckRoomsetComposition(roomset), RoomValidator.RuleRoomsetNoDeadEnd);
+        }
+
+        [Test]
+        public void Roomset_WithTheSameRoomTwice_IsReported()
+        {
+            RoomBlueprint deadEnd = CreateRoomWithDoors(1);
+            Roomset roomset = CreateRoomset(deadEnd, deadEnd, CreateValidRoom());
+
+            AssertRule(RoomValidator.CheckRoomsetComposition(roomset), RoomValidator.RuleRoomsetDuplicate);
+        }
+
+        [Test]
+        public void Roomset_WithDoorsOfDifferentLengths_IsReported()
+        {
+            RoomBlueprint shortDoor = CreateRoomWithDoors(1);
+            shortDoor.GetComponentInChildren<ConnectionBlueprint>().ConnectionLength = 15f;
+            Roomset roomset = CreateRoomset(CreateRoomWithDoors(1), shortDoor);
+
+            AssertRule(RoomValidator.CheckRoomsetComposition(roomset), RoomValidator.RuleRoomsetDoorLengths);
+        }
+
+        [Test]
+        public void Roomset_WhereNothingCanBePlaced_IsReported()
+        {
+            RoomBlueprint start = CreateRoomWithDoors(1);
+            start.Role = RoomRole.Start;
+            RoomBlueprint unpicked = CreateRoomWithDoors(1);
+            unpicked.SelectionWeight = 0f;
+            Roomset roomset = CreateRoomset(start, unpicked);
+
+            AssertRule(RoomValidator.CheckRoomsetComposition(roomset), RoomValidator.RuleRoomsetNothingPlaceable);
+        }
+
+        [Test]
+        public void Roomset_WithNegativeWeight_IsReported()
+        {
+            RoomBlueprint room = CreateRoomWithDoors(1);
+            room.SelectionWeight = -1f;
+            Roomset roomset = CreateRoomset(room, CreateRoomWithDoors(1));
+
+            AssertRule(RoomValidator.CheckRoomsetComposition(roomset), RoomValidator.RuleRoomsetRoomWeight);
+        }
+
+        private Roomset CreateRoomset(params RoomBlueprint[] rooms)
+        {
+            Roomset roomset = ScriptableObject.CreateInstance<Roomset>();
+            roomset.name = "TestRoomset";
+            roomset.cellSize = CellSize;
+            roomset.RoomCollection = rooms.ToList();
+            createdAssets.Add(roomset);
+            return roomset;
+        }
+
+        /// <summary>
+        /// A 6x6 cell room with the given number of correctly placed doors, taken in the order top, bottom, left, right.
+        /// </summary>
+        private RoomBlueprint CreateRoomWithDoors(int doorCount)
+        {
+            GameObject root = new GameObject("TestRoom");
+            spawned.Add(root);
+            RoomBlueprint room = root.AddComponent<RoomBlueprint>();
+
+            new GameObject("Corner").transform.SetParent(root.transform, false);
+            root.transform.Find("Corner").position = new Vector3(30, 0, 30);
+
+            Vector3[] positions = { new Vector3(15, 0, 20), new Vector3(15, 0, 10), new Vector3(10, 0, 15), new Vector3(20, 0, 15) };
+            Vector2Int[] facings = { new Vector2Int(0, 1), new Vector2Int(0, -1), new Vector2Int(-1, 0), new Vector2Int(1, 0) };
+            for (int i = 0; i < doorCount; i++)
+            {
+                AddDoor(room, positions[i], facings[i]);
+            }
+
+            return room;
+        }
+
+        /// <summary>
+        /// Gives a room a floor mesh covering its 6x6 cells, so the validator has geometry to compare pivots with.
+        /// </summary>
+        private void AddFloor(RoomBlueprint room)
+        {
+            GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            floor.transform.SetParent(room.transform, false);
+            floor.transform.position = new Vector3(15, 0, 15);
+            floor.transform.localScale = new Vector3(30, 1, 30);
+        }
+
         /// <summary>
         /// A 6x6 cell room with its lowest corner at the origin, with one correctly placed door on each edge.
         /// </summary>
@@ -222,7 +413,7 @@ namespace SimpleRPG.Tests.EditMode
             return room;
         }
 
-        private ConnectionBlueprint AddDoor(RoomBlueprint room, Vector3 position, Vector2Int facing, float length = DoorLength, bool seal = true, Transform parent = null, bool enforceInset = false, int insetCells = 2)
+        private ConnectionBlueprint AddDoor(RoomBlueprint room, Vector3 position, Vector2Int facing, float length = DoorLength, bool seal = true, Transform parent = null)
         {
             GameObject door = new GameObject("Door");
             spawned.Add(door);
@@ -233,14 +424,13 @@ namespace SimpleRPG.Tests.EditMode
             ConnectionBlueprint connection = door.AddComponent<ConnectionBlueprint>();
             connection.ConnectionLength = length;
             connection.ConnectionWidth = 1f;
-            connection.EnforceDoorInset = enforceInset;
-            connection.DoorInsetCells = insetCells;
 
             if (seal)
             {
                 connection.SealingObject = new GameObject("Seal");
                 spawned.Add(connection.SealingObject);
                 connection.SealingObject.transform.SetParent(door.transform, false);
+                connection.SealingObject.SetActive(false);
             }
 
             return connection;
