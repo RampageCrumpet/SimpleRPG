@@ -20,9 +20,30 @@ public class Weapon : NetworkBehaviour
     /// </summary>
     private float damageScalar = 1f;
 
+    /// <summary>
+    /// Tracks who the current swing has already hit.
+    /// </summary>
+    private readonly SwingHitTracker swing = new SwingHitTracker();
+
+    /// <summary>
+    /// The character swinging this weapon, who must never be damaged by it. Null for a weapon not carried by a character.
+    /// </summary>
+    private Character owner;
+
     public void Start()
     {
         hitbox = GetComponentInChildren<Hitbox>();
+        hitbox.HitboxCollisionEvent.AddListener(TargetHit);
+    }
+
+    public override void OnDestroy()
+    {
+        if (hitbox != null)
+        {
+            hitbox.HitboxCollisionEvent.RemoveListener(TargetHit);
+        }
+
+        base.OnDestroy();
     }
     public void StartSwinging(WeaponData weaponData)
     {
@@ -33,7 +54,11 @@ public class Weapon : NetworkBehaviour
     {
         if (this.IsServer)
         {
-            if (character != null)
+            // Resolved late so a weapon equipped after Start still knows its wielder.
+            if (owner == null) owner = GetComponentInParent<Character>();
+
+            // One swing damages a target once (however many of its hurtboxes the blade touches) and never its own wielder.
+            if (swing.TryRegisterHit(character, owner))
             {
                 DamageInfo scaledDamage = new DamageInfo { Damage = ScaleDamage(weaponData.damage.Damage, damageScalar) };
                 character.TakeDamage(scaledDamage, location);
@@ -59,11 +84,13 @@ public class Weapon : NetworkBehaviour
     public void ActivateHitbox(float damageScalar)
     {
         this.damageScalar = damageScalar;
+        swing.Begin();
         hitbox.enabled = true;
     }
 
     public void DeactivateHitbox()
     {
+        swing.End();
         hitbox.enabled = false;
     }
 }

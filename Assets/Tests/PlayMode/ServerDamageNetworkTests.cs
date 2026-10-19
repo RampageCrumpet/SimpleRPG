@@ -121,9 +121,47 @@ namespace SimpleRPG.Tests.PlayMode
         {
             // Attack 1 (1.00) then attack 3 (0.84): 10 + round(10 * 0.84) = 10 + 8.
             yield return HitOnServer(1f);
+            weapon.DeactivateHitbox();
             yield return HitOnServer(0.84f);
 
             Assert.AreEqual(StartingHealth - 18, character.Health);
+        }
+
+        [UnityTest]
+        public IEnumerator ServerHit_RepeatedOnTheSameTargetInOneSwing_DamagesItOnce()
+        {
+            weapon.StartSwinging(weaponData);
+            weapon.ActivateHitbox(1f);
+            weapon.TargetHit(character, BodyLocation.Torso);
+            weapon.TargetHit(character, BodyLocation.Head);
+            weapon.ActivateHitbox(1f); // a doubled animation event must not start a fresh swing
+            weapon.TargetHit(character, BodyLocation.Torso);
+            yield return null;
+
+            Assert.AreEqual(StartingHealth - BaseDamage, character.Health);
+        }
+
+        [UnityTest]
+        public IEnumerator ServerHit_ByTheWielderOnItself_DoesNothing()
+        {
+            // Parent the weapon under the character so the weapon knows who is swinging it, so it knows who is swinging it.
+            weaponObject.transform.SetParent(characterObject.transform, false);
+            weapon.StartSwinging(weaponData);
+            weapon.ActivateHitbox(1f);
+            weapon.TargetHit(character, BodyLocation.Torso);
+            yield return null;
+
+            Assert.AreEqual(StartingHealth, character.Health);
+        }
+
+        [UnityTest]
+        public IEnumerator ServerHit_WithNoSwingInProgress_DoesNothing()
+        {
+            weapon.StartSwinging(weaponData);
+            weapon.TargetHit(character, BodyLocation.Torso);
+            yield return null;
+
+            Assert.AreEqual(StartingHealth, character.Health);
         }
 
         [UnityTest]
