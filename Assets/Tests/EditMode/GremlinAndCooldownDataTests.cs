@@ -7,8 +7,7 @@ using UnityEngine;
 namespace SimpleRPG.Tests.EditMode
 {
     /// <summary>
-    /// Checks that the enemy and player attacks are wired to the right assets, and that the player's cooldown
-    /// lets a queued press land during the first swing.
+    /// Checks that the enemy and player attacks are wired to the right assets and that each has its own cooldown.
     /// </summary>
     public class GremlinAndCooldownDataTests
     {
@@ -16,7 +15,6 @@ namespace SimpleRPG.Tests.EditMode
         private const string GremlinAbility = "Assets/Abilitities/Abillities/MeleeAttackGremlin.asset";
         private const string PlayerAbility = "Assets/Abilitities/Abillities/MeleeAttack.asset";
         private const string GremlinController = "Assets/Prefabs/Characters/Enemies/GremlinAnimationController.controller";
-        private const float AttackOneHitStart = 56f / 60f;
 
         [Test]
         public void GremlinAbility_HasOneSecondCooldown()
@@ -52,14 +50,12 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
-        public void PlayerCooldown_DoesNotBlockAQueuedPressDuringAttackOne()
+        public void PlayerAbility_HasOneSecondCooldown()
         {
-            // A queued press is only accepted once the cooldown has run out. It must expire before the first hit opens,
-            // so a press anywhere in the first swing can still queue the combo.
+            // Queued combo presses bypass the cooldown, so it only limits fresh attacks and no longer needs to be short.
             Ability ability = AssetDatabase.LoadAssetAtPath<Ability>(PlayerAbility);
             Assert.IsNotNull(ability, $"Could not load {PlayerAbility}.");
-            Assert.Less(ability.CooldownTime, AttackOneHitStart,
-                "The player's melee cooldown should expire before attack 1's hitbox opens.");
+            Assert.AreEqual(1f, ability.CooldownTime, 0.001f);
         }
     }
 }

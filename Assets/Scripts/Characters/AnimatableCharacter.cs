@@ -60,38 +60,28 @@ namespace SimpleRPG.Animations
         }
 
         /// <summary>
-        /// Starts a melee attack, or queues the next swing of the longsword combo while one is already playing.
+        /// Plays the attack the server started. Attack 1 starts a new swing; attacks 2 and 3 are queued from the previous swing's combo.
         /// </summary>
-        private void MeleeAttack()
+        /// <param name="attackNumber">The attack in the chain the server started (1, 2 or 3).</param>
+        private void MeleeAttack(int attackNumber)
         {
+            string trigger = GetAttackTrigger(attackNumber);
+
             foreach (Animator controller in animator)
             {
-                AnimatorStateInfo state = controller.GetCurrentAnimatorStateInfo(0);
-                string trigger = GetAttackTrigger(state.IsTag("Attack"), state.IsTag("Combo"));
-
-                if (trigger != null)
-                {
-                    controller.SetTrigger(trigger);
-                }
+                controller.SetTrigger(trigger);
             }
         }
 
         /// <summary>
-        /// Chooses which animator trigger an attack press should set.
-        /// Presses during an attack clip queue the next swing; presses during a combo continuation are ignored;
-        /// any other press starts a new attack.
+        /// Chooses which animator trigger an attack from the server should set.
+        /// Attack 1 starts a new swing. Any later attack is the next swing of the combo, which the previous swing's animator state picks up.
         /// </summary>
-        /// <param name="inAttack">Whether the current state is an attack clip.</param>
-        /// <param name="inCombo">Whether the current state is a combo continuation.</param>
-        /// <returns>The trigger to set, or null if the press should be ignored.</returns>
-        public static string GetAttackTrigger(bool inAttack, bool inCombo)
+        /// <param name="attackNumber">The attack in the chain the server started (1, 2 or 3).</param>
+        /// <returns>The trigger to set.</returns>
+        public static string GetAttackTrigger(int attackNumber)
         {
-            if (inAttack)
-            {
-                return "ComboQueued";
-            }
-
-            return inCombo ? null : "Attack_OneHanded";
+            return attackNumber <= 1 ? "Attack_OneHanded" : "ComboQueued";
         }
     }
 }

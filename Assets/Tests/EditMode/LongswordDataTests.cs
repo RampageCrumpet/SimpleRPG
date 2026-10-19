@@ -40,6 +40,14 @@ namespace SimpleRPG.Tests.EditMode
         /// </summary>
         private static float[] GetComboDamageScalars()
         {
+            return GetPlayerFloatArray("comboDamageScalars");
+        }
+
+        /// <summary>
+        /// Reads a float array field from the player's melee behaviour.
+        /// </summary>
+        private static float[] GetPlayerFloatArray(string fieldName)
+        {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefab);
             Assert.IsNotNull(prefab, $"Could not load {PlayerPrefab}.");
 
@@ -47,14 +55,32 @@ namespace SimpleRPG.Tests.EditMode
             Assert.IsNotNull(behaviour, "The player prefab has no MeleeAttackAbilityBehaviour.");
 
             SerializedObject serialized = new SerializedObject(behaviour);
-            SerializedProperty scalars = serialized.FindProperty("comboDamageScalars");
-            float[] values = new float[scalars.arraySize];
+            SerializedProperty array = serialized.FindProperty(fieldName);
+            Assert.IsNotNull(array, $"MeleeAttackAbilityBehaviour has no {fieldName} field.");
+
+            float[] values = new float[array.arraySize];
             for (int i = 0; i < values.Length; i++)
             {
-                values[i] = scalars.GetArrayElementAtIndex(i).floatValue;
+                values[i] = array.GetArrayElementAtIndex(i).floatValue;
             }
 
             return values;
+        }
+
+        [Test]
+        public void ComboTimings_MatchClipLengths()
+        {
+            // The server schedules each attack from these, so they must match the clips and the combo gaps.
+            float[] attackLengths = GetPlayerFloatArray("attackLengths");
+            float[] comboLengths = GetPlayerFloatArray("comboLengths");
+
+            Assert.AreEqual(3, attackLengths.Length, "Expected one attack length per longsword attack.");
+            Assert.AreEqual(GetClip(Attack1Fbx, "Longsword_A1_Attack").length, attackLengths[0], FrameTolerance);
+            Assert.AreEqual(GetClip(Attack2Fbx, "Longsword_A2_Attack").length, attackLengths[1], FrameTolerance);
+            Assert.AreEqual(GetClip(Attack3Fbx, "Longsword_A3_Attack").length, attackLengths[2], FrameTolerance);
+
+            Assert.AreEqual(GetClip(Attack1Fbx, "Longsword_A1_Combo").length, comboLengths[0], FrameTolerance);
+            Assert.AreEqual(GetClip(Attack2Fbx, "Longsword_A2_Combo").length, comboLengths[1], FrameTolerance);
         }
 
         [Test]
@@ -139,11 +165,11 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
-        public void GetAttackTrigger_ChoosesTriggerForEachState()
+        public void GetAttackTrigger_StartsAttackOneAndQueuesLaterAttacks()
         {
-            Assert.AreEqual("ComboQueued", AnimatableCharacter.GetAttackTrigger(inAttack: true, inCombo: false));
-            Assert.IsNull(AnimatableCharacter.GetAttackTrigger(inAttack: false, inCombo: true));
-            Assert.AreEqual("Attack_OneHanded", AnimatableCharacter.GetAttackTrigger(inAttack: false, inCombo: false));
+            Assert.AreEqual("Attack_OneHanded", AnimatableCharacter.GetAttackTrigger(1));
+            Assert.AreEqual("ComboQueued", AnimatableCharacter.GetAttackTrigger(2));
+            Assert.AreEqual("ComboQueued", AnimatableCharacter.GetAttackTrigger(3));
         }
     }
 }

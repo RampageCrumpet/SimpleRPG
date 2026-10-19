@@ -64,6 +64,18 @@ namespace SimpleRPG.Abilities
         /// </summary>
         public void Activate()
         {
+            // An ability with no behaviour on its character can't do anything, so don't start its cooldown either.
+            if (invokeableAbility == null)
+            {
+                return;
+            }
+
+            // A queued press (e.g. the next swing of a combo) is taken even while the cooldown runs, and doesn't restart it.
+            if (invokeableAbility is IQueueableAbilityBehaviour queueable && queueable.TryQueue())
+            {
+                return;
+            }
+
             if (Time.time > LastActivationTime + this.Ability.CooldownTime)
             {
                 LastActivationTime = Time.time;
