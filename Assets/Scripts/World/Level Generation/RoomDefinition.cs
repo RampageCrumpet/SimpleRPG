@@ -74,6 +74,12 @@ namespace LevelGeneration
         /// The dungeon begins in this room, and it is never placed anywhere else.
         /// </summary>
         Start = 1,
+
+        /// <summary>
+        /// The dungeon's goal. A room with this role has a single door and is never grown from; the generator swaps it in for
+        /// the dead end farthest from the start that it fits.
+        /// </summary>
+        Exit = 2,
     }
 
     /// <summary>
@@ -83,7 +89,7 @@ namespace LevelGeneration
     public sealed class RoomDefinition
     {
         public RoomDefinition(int index, string name, Vector2Int size, Vector2Int originOffset, IReadOnlyList<DoorDefinition> doors,
-            float weight = 1f, int maxCount = 0, RoomRole role = RoomRole.None, int height = 1)
+            float weight = 1f, int maxCount = 0, RoomRole role = RoomRole.None, int height = 1, int minCount = 0)
         {
             Index = index;
             Name = name;
@@ -92,6 +98,7 @@ namespace LevelGeneration
             Doors = doors;
             Weight = weight;
             MaxCount = maxCount;
+            MinCount = Math.Max(0, minCount);
             Role = role;
             Height = Math.Max(1, height);
         }
@@ -110,6 +117,11 @@ namespace LevelGeneration
         /// The most times this room may appear in one dungeon. Zero means no limit.
         /// </summary>
         public int MaxCount { get; }
+
+        /// <summary>
+        /// The fewest times this room must appear in one dungeon. Zero means it need not appear.
+        /// </summary>
+        public int MinCount { get; }
 
         public RoomRole Role { get; }
 

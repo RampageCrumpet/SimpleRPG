@@ -9,8 +9,9 @@ namespace LevelGeneration
     /// </summary>
     public sealed class Layout
     {
-        public Layout(int seed, int attempt, IReadOnlyList<PlacedRoom> rooms, IReadOnlyList<PlacedDoor> sealedDoors, int floorCount = 1)
+        public Layout(int seed, int attempt, IReadOnlyList<PlacedRoom> rooms, IReadOnlyList<PlacedDoor> sealedDoors, int floorCount = 1, IReadOnlyList<LockedDoor> locks = null)
         {
+            Locks = locks ?? new LockedDoor[0];
             FloorCount = floorCount;
             Seed = seed;
             Attempt = attempt;
@@ -39,5 +40,10 @@ namespace LevelGeneration
         /// Doors that no room could be attached to, which the spawner closes with their sealing object.
         /// </summary>
         public IReadOnlyList<PlacedDoor> SealedDoors { get; }
+
+        /// <summary>
+        /// Joined doors that stay shut until the player finds the key lying in another room. Every room can still be reached.
+        /// </summary>
+        public IReadOnlyList<LockedDoor> Locks { get; }
     }
 }

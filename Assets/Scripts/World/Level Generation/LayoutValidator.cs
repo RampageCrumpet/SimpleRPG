@@ -35,6 +35,9 @@ namespace LevelGeneration
         public const string RuleDisconnected = "rooms-disconnected";
         public const string RuleRoomOveruse = "room-overuse";
         public const string RuleStartRoomMisplaced = "start-room-misplaced";
+        public const string RuleExitRoomMisplaced = "exit-room-misplaced";
+        public const string RuleLockInvalid = "lock-invalid";
+        public const string RuleLockUnsolvable = "lock-unsolvable";
         public const string RuleRoomOutsideFloors = "room-outside-floors";
         public const string RuleVerticalDoorInvalid = "vertical-door-invalid";
         public const string RuleVerticalMismatch = "vertical-mismatch";
@@ -70,7 +73,55 @@ namespace LevelGeneration
             }
 
             CheckConnectivity(layout.Rooms, links, violations);
+            CheckLocks(layout, violations);
             return violations;
+        }
+
+        /// <summary>
+        /// Every lock has to sit on a joined pair of doors and have a key in the dungeon, and a player who collects keys as they go
+        /// has to be able to reach every room.
+        /// </summary>
+        private static void CheckLocks(Layout layout, List<LayoutViolation> violations)
+        {
+            if (layout.Locks.Count == 0)
+            {
+                return;
+            }
+
+            List<(PlacedDoor a, PlacedDoor b)> joins = LockSolver.Joins(layout.Rooms, layout.SealedDoors);
+            var rooms = new HashSet<PlacedRoom>(layout.Rooms);
+            bool valid = true;
+
+            foreach (IGrouping<int, LockedDoor> duplicate in layout.Locks.GroupBy(locked => locked.KeyId).Where(group => group.Count() > 1))
+            {
+                violations.Add(new LayoutViolation(RuleLockInvalid, $"Key {duplicate.Key} opens {duplicate.Count()} locks; each lock needs its own key."));
+                valid = false;
+            }
+
+            foreach (LockedDoor locked in layout.Locks)
+            {
+                if (!joins.Any(join => (join.a == locked.Door && join.b == locked.Mate) || (join.a == locked.Mate && join.b == locked.Door)))
+                {
+                    violations.Add(new LayoutViolation(RuleLockInvalid, $"{locked} is not on a pair of joined doors."));
+                    valid = false;
+                }
+                else if (locked.KeyRoom == null || !rooms.Contains(locked.KeyRoom))
+                {
+                    violations.Add(new LayoutViolation(RuleLockInvalid, $"{locked} has its key in a room that is not part of the layout."));
+                    valid = false;
+                }
+            }
+
+            if (!valid)
+            {
+                return;
+            }
+
+            HashSet<PlacedRoom> reached = LockSolver.Reachable(layout.Rooms, joins, layout.Locks);
+            foreach (PlacedRoom room in layout.Rooms.Where(room => !reached.Contains(room)))
+            {
+                violations.Add(new LayoutViolation(RuleLockUnsolvable, $"{room} cannot be reached even with every key that can be found: a key lies behind its own lock."));
+            }
         }
 
         private static void CheckRoomLimits(IReadOnlyList<PlacedRoom> rooms, List<LayoutViolation> violations)
@@ -87,6 +138,11 @@ namespace LevelGeneration
             foreach (PlacedRoom room in rooms.Skip(1).Where(room => (room.Definition.Role & RoomRole.Start) != 0))
             {
                 violations.Add(new LayoutViolation(RuleStartRoomMisplaced, $"{room} is a start room but is not where the dungeon begins."));
+            }
+
+            if ((rooms[0].Definition.Role & RoomRole.Exit) != 0)
+            {
+                violations.Add(new LayoutViolation(RuleExitRoomMisplaced, $"{rooms[0]} is an exit room but the dungeon begins in it."));
             }
         }
 

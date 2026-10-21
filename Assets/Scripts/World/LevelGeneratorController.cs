@@ -1,4 +1,5 @@
 using LevelGeneration;
+using SimpleRPG.Keys;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -9,6 +10,7 @@ namespace SimpleRPG.LevelGeneration
     /// Builds the dungeon on every machine from parameters chosen by the server.
     /// The server generates first, then tells connected clients; clients that join later ask the server for the parameters.
     /// </summary>
+    [RequireComponent(typeof(DungeonKeyRing))]
     public class LevelGeneratorController : NetworkBehaviour
     {
         [field: SerializeField]
@@ -38,6 +40,37 @@ namespace SimpleRPG.LevelGeneration
         [field: SerializeField]
         [Tooltip("How many floors the dungeon may span. The roomset needs vertical rooms for more than one to be used.")]
         public int FloorCount { get; set; } = 1;
+
+        /// <summary>
+        /// How many loops the dungeon has: 0 is a tree, 0.5 leaves loops to chance, 1 closes as many as it can.
+        /// </summary>
+        [field: SerializeField]
+        [Range(0f, 1f)]
+        [Tooltip("How many loops the dungeon has: 0 is a tree, 0.5 leaves loops to chance, 1 closes as many as it can.")]
+        public float LoopRatio { get; set; } = LayoutStyle.Natural;
+
+        /// <summary>
+        /// How bushy the dungeon is: 0 favours long corridors, 0.5 leaves room weights alone, 1 favours junctions and dead ends.
+        /// </summary>
+        [field: SerializeField]
+        [Range(0f, 1f)]
+        [Tooltip("How bushy the dungeon is: 0 favours long corridors, 0.5 leaves room weights alone, 1 favours junctions and dead ends.")]
+        public float Branching { get; set; } = LayoutStyle.Natural;
+
+        /// <summary>
+        /// How many locked doors to put in the dungeon. Each has a key in a room the player can reach first.
+        /// </summary>
+        [field: SerializeField]
+        [Min(0)]
+        [Tooltip("How many locked doors to put in the dungeon. Each has a key in a room the player can reach first.")]
+        public int LockedDoors { get; set; }
+
+        /// <summary>
+        /// The networked pickup spawned in a room for each key. Needs a NetworkObject and a <see cref="KeyPickup"/>, and must be in the network prefab list.
+        /// </summary>
+        [field: SerializeField]
+        [Tooltip("The networked pickup spawned in a room for each key. Needs a NetworkObject and a KeyPickup, and must be in the network prefab list.")]
+        public GameObject KeyPickupPrefab { get; set; }
 
         /// <summary>
         /// The parameters the current level was generated with. Only valid once <see cref="IsGenerated"/> is true.
@@ -72,6 +105,9 @@ namespace SimpleRPG.LevelGeneration
                 MinimumNumberOfRooms = MinimumNumberOfRooms,
                 MaximumNumberOfRooms = MaximumNumberOfRooms,
                 FloorCount = Mathf.Max(1, FloorCount),
+                LoopRatio = LoopRatio,
+                Branching = Branching,
+                LockedDoors = LockedDoors,
             };
 
             // The server (including a host) generates directly rather than relying on receiving its own RPC.
@@ -135,7 +171,10 @@ namespace SimpleRPG.LevelGeneration
                 }
 
                 // The layout is worked out from the seed alone, so every machine reaches the same one; only then is anything instantiated.
-                var layoutGenerator = new LayoutGenerator(parameters.Seed, definitions);
+                var layoutGenerator = new LayoutGenerator(parameters.Seed, definitions)
+                {
+                    Style = new LayoutStyle { LoopRatio = parameters.LoopRatio, Branching = parameters.Branching, LockedDoors = parameters.LockedDoors },
+                };
                 GenerationResult result = layoutGenerator.Generate(parameters.MinimumNumberOfRooms, parameters.MaximumNumberOfRooms, parameters.FloorCount);
 
                 int layoutChecksum = LayoutFingerprint.OfLayout(result.Layout);
@@ -161,9 +200,39 @@ namespace SimpleRPG.LevelGeneration
                     Debug.LogError(result.ToString());
                 }
 
+                if (result.Layout.Locks.Count < parameters.LockedDoors)
+                {
+                    Debug.LogWarning($"Dungeon seed {parameters.Seed}: only {result.Layout.Locks.Count} of {parameters.LockedDoors} locked doors could be placed safely.");
+                }
+
                 var spawner = new LevelSpawner(Roomset.RoomCollection, Roomset.cellSize, Roomset.floorHeight);
                 spawner.RoomInstantiated = room => RoomNetworkObjects.Apply(room, IsServer);
-                spawner.Spawn(result.Layout, this.transform);
+
+                var appliedLocks = new List<LockedDoor>();
+                spawner.LockApplied = appliedLocks.Add;
+                spawner.KeyRoomAssigned = (keyId, room) =>
+                {
+                    // Only the server spawns the key; clients get the replica from Netcode.
+                    if (IsServer)
+                    {
+                        DungeonLocks.SpawnKey(KeyPickupPrefab, keyId, room);
+                    }
+                };
+
+                IReadOnlyList<RoomBlueprint> rooms = spawner.Spawn(result.Layout, this.transform);
+
+                if (appliedLocks.Count > 0)
+                {
+                    DungeonKeyRing keyRing = GetComponent<DungeonKeyRing>();
+                    if (keyRing != null)
+                    {
+                        DungeonLocks.Attach(keyRing, rooms, appliedLocks);
+                    }
+                    else
+                    {
+                        Debug.LogError("The dungeon has locked doors but the level generator has no DungeonKeyRing, so they can never be opened.", this);
+                    }
+                }
 
                 generatedParameters = parameters;
                 finished = parameters;

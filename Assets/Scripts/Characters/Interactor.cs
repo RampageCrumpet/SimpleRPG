@@ -141,7 +141,7 @@ namespace SimpleRPG
             {
                 foreach (var interactable in InteractableManager.Interactables)
                 {
-                    if (interactable.gameObject == hit.collider.gameObject && Vector3.Distance(transform.position, interactable.transform.position) <= interactable.InteractionRange)
+                    if (interactable.IsLookedAtVia(hit.collider) && Vector3.Distance(transform.position, interactable.transform.position) <= interactable.InteractionRange)
                     {
                         return interactable;
                     }

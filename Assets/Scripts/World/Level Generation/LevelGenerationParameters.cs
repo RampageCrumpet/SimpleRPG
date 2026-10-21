@@ -30,6 +30,21 @@ namespace SimpleRPG.LevelGeneration
         public int FloorCount;
 
         /// <summary>
+        /// See <see cref="LayoutStyle.LoopRatio"/>. Zero is a real value (no loops), so a caller building these by hand must set it.
+        /// </summary>
+        public float LoopRatio;
+
+        /// <summary>
+        /// See <see cref="LayoutStyle.Branching"/>. Zero is a real value (long corridors), so a caller building these by hand must set it.
+        /// </summary>
+        public float Branching;
+
+        /// <summary>
+        /// See <see cref="LayoutStyle.LockedDoors"/>.
+        /// </summary>
+        public int LockedDoors;
+
+        /// <summary>
         /// Fingerprint of the server's roomset and generator version (see <c>LayoutFingerprint.OfRoomset</c>). Filled in by the server;
         /// a client whose own fingerprint differs must not generate. Zero means the server did not provide one.
         /// </summary>
@@ -47,6 +62,9 @@ namespace SimpleRPG.LevelGeneration
             serializer.SerializeValue(ref MinimumNumberOfRooms);
             serializer.SerializeValue(ref MaximumNumberOfRooms);
             serializer.SerializeValue(ref FloorCount);
+            serializer.SerializeValue(ref LoopRatio);
+            serializer.SerializeValue(ref Branching);
+            serializer.SerializeValue(ref LockedDoors);
             serializer.SerializeValue(ref RoomsetFingerprint);
             serializer.SerializeValue(ref LayoutChecksum);
         }

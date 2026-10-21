@@ -42,6 +42,7 @@ namespace LevelGeneration
                 hash.Add(room.Size.y);
                 hash.Add(room.Weight);
                 hash.Add(room.MaxCount);
+                hash.Add(room.MinCount);
                 hash.Add((int)room.Role);
                 hash.Add(room.Height);
                 hash.Add(room.Doors.Count);
@@ -85,6 +86,15 @@ namespace LevelGeneration
             {
                 hash.Add(door.Room.Id);
                 hash.Add(door.Index);
+            }
+
+            hash.Add(layout.Locks.Count);
+            foreach (LockedDoor locked in layout.Locks)
+            {
+                hash.Add(locked.Door.Room.Id);
+                hash.Add(locked.Door.Index);
+                hash.Add(locked.KeyId);
+                hash.Add(locked.KeyRoom.Id);
             }
 
             return hash.Result;

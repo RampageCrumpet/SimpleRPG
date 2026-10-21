@@ -10,7 +10,14 @@ namespace SimpleRPG.Abilities
     public class FireProjectileAbillityBehaviour : NetworkBehaviour, IInvokeableAbilityBehaviour
     {
         /// <summary>
-        /// The character who owns this <see cref="FireProjectileAbillityBehaviour"/> 
+        /// Where the projectile appears relative to this character, in local space. Keeps it clear of the caster's body.
+        /// </summary>
+        [SerializeField]
+        [Tooltip("Where the projectile spawns, in this character's local space.")]
+        private Vector3 muzzleOffset = new Vector3(0f, 1.2f, 0.8f);
+
+        /// <summary>
+        /// The character who owns this <see cref="FireProjectileAbillityBehaviour"/>
         /// </summary>
         private Character character;
 
@@ -46,18 +53,36 @@ namespace SimpleRPG.Abilities
                 return;
             }
 
+            // A misconfigured spell is refused rather than throwing on the server.
+            Projectile projectilePrefab = abilityInstance.Projectile != null ? abilityInstance.Projectile.GetComponent<Projectile>() : null;
+            if (projectilePrefab == null || projectilePrefab.GetComponent<NetworkObject>() == null)
+            {
+                Debug.LogError(abilityName + " on " + this.gameObject.name + " has no Projectile prefab with a Projectile and a NetworkObject.", this);
+                return;
+            }
+
             // The server is the authority on cooldowns, the client's own cooldown check is only a prediction.
             if (!cooldowns.TryActivate(abilityName, abilityInstance.CooldownTime, Time.time))
             {
                 return;
             }
 
-            Projectile spawnedProjectile = Object.Instantiate(abilityInstance.Projectile, this.transform).GetComponent<Projectile>();
-            spawnedProjectile.gameObject.GetComponent<NetworkObject>().Spawn(true);
+            // The projectile lives in the world, not under the caster, so it doesn't inherit the caster's movement.
+            Vector3 direction = this.transform.forward;
+            Vector3 spawnPosition = this.transform.TransformPoint(muzzleOffset);
+            Projectile spawnedProjectile = Object.Instantiate(projectilePrefab, spawnPosition, Quaternion.LookRotation(direction));
+            spawnedProjectile.GetComponent<NetworkObject>().Spawn(true);
 
-            Physics.IgnoreCollision(this.GetComponent<Collider>(), spawnedProjectile.gameObject.GetComponent<Collider>());
+            // Stop the projectile colliding with any part of the caster, including hurtboxes on child objects.
+            foreach (Collider casterCollider in this.GetComponentsInChildren<Collider>())
+            {
+                foreach (Collider projectileCollider in spawnedProjectile.GetComponentsInChildren<Collider>())
+                {
+                    Physics.IgnoreCollision(casterCollider, projectileCollider);
+                }
+            }
 
-            spawnedProjectile.FireClientRPC(this.gameObject.transform.forward, abilityInstance.Damage);
+            spawnedProjectile.Launch(character, direction, abilityInstance.Damage);
         }
     }
 }

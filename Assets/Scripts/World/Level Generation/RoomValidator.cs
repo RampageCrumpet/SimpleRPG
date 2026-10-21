@@ -47,10 +47,15 @@ namespace LevelGeneration
         public const string RuleDoorWidth = "door-width";
         public const string RuleSealOutsideRoom = "seal-outside-room";
         public const string RuleSealStartsActive = "seal-starts-active";
+        public const string RuleLockOutsideRoom = "lock-outside-room";
+        public const string RuleLockStartsActive = "lock-starts-active";
+        public const string RuleRoomsetDoorNoLock = "roomset-door-no-lock";
         public const string RuleStrayPivot = "stray-pivot";
         public const string RuleRoomsetEmpty = "roomset-empty";
         public const string RuleRoomsetDuplicate = "roomset-duplicate";
         public const string RuleRoomsetRoomWeight = "roomset-room-weight";
+        public const string RuleRoomsetMinCount = "roomset-min-count";
+        public const string RuleRoomsetExitDoors = "roomset-exit-doors";
         public const string RuleRoomsetRoomNoDoors = "roomset-room-no-doors";
         public const string RuleRoomsetNoDeadEnd = "roomset-no-dead-end";
         public const string RuleRoomsetNothingPlaceable = "roomset-nothing-placeable";
@@ -114,6 +119,33 @@ namespace LevelGeneration
         }
 
         /// <summary>
+        /// Lists the doors that have no <see cref="ConnectionBlueprint.LockObject"/>. This is a warning, never an error: the dungeon
+        /// still builds, because a locked door without its own look falls back to a plain barrier. It is kept out of
+        /// <see cref="ValidateRoomset"/> so it cannot fail a build. A LockObject that is set but wrong is an error in <see cref="Validate"/>.
+        /// </summary>
+        /// <returns> One warning per room that has doors without a lock object. Empty when every door has one.</returns>
+        public static List<RoomValidationError> CheckLockWarnings(Roomset roomset)
+        {
+            var warnings = new List<RoomValidationError>();
+            if (roomset.RoomCollection == null)
+            {
+                return warnings;
+            }
+
+            foreach (RoomBlueprint room in roomset.RoomCollection.Where(room => room != null))
+            {
+                List<string> bare = RoomPlanner.SealedDoors(room).Where(door => door.LockObject == null).Select(door => $"'{door.name}'").ToList();
+                if (bare.Count > 0)
+                {
+                    warnings.Add(new RoomValidationError(room.name, RuleRoomsetDoorNoLock,
+                        $"{bare.Count} door(s) have no LockObject ({string.Join(", ", bare)}); if the generator locks one it gets a plain barrier instead of the room's own look."));
+                }
+            }
+
+            return warnings;
+        }
+
+        /// <summary>
         /// Checks that a roomset as a whole can build a dungeon: every room has doors, something can close a branch, and doors can join each other.
         /// Looks only at the rooms' own doors and policy fields, so it can run before any room is packed.
         /// </summary>
@@ -143,7 +175,19 @@ namespace LevelGeneration
                         $"SelectionWeight is {room.SelectionWeight} and MaxCount is {room.MaxCount}; neither may be negative."));
                 }
 
+                if (room.MinCount < 0 || (room.MaxCount > 0 && room.MinCount > room.MaxCount) || (room.MinCount > 0 && (room.Role & (RoomRole.Start | RoomRole.Exit)) != 0))
+                {
+                    errors.Add(new RoomValidationError(room.name, RuleRoomsetMinCount,
+                        $"MinCount is {room.MinCount} with MaxCount {room.MaxCount}; it may not be negative or above the maximum, and a start or exit room appears once by definition."));
+                }
+
                 List<ConnectionBlueprint> doors = RoomPlanner.SealedDoors(room).ToList();
+                if ((room.Role & RoomRole.Exit) != 0 && doors.Count != 1)
+                {
+                    errors.Add(new RoomValidationError(room.name, RuleRoomsetExitDoors,
+                        $"An exit room replaces a dead end, so it needs exactly one door but has {doors.Count}."));
+                }
+
                 if (doors.Count == 0)
                 {
                     errors.Add(new RoomValidationError(room.name, RuleRoomsetRoomNoDoors, "The room has no doors, so nothing can be built from or onto it."));
@@ -172,7 +216,7 @@ namespace LevelGeneration
                     }
                 }
 
-                bool placeable = room.SelectionWeight > 0 && (room.Role & RoomRole.Start) == 0 && doors.Count > 0;
+                bool placeable = room.SelectionWeight > 0 && (room.Role & (RoomRole.Start | RoomRole.Exit)) == 0 && doors.Count > 0;
                 hasPlaceableRoom |= placeable;
                 hasPlaceableDeadEnd |= placeable && doors.Count == 1;
             }
@@ -395,6 +439,21 @@ namespace LevelGeneration
             {
                 errors.Add(new RoomValidationError(roomName, RuleSealStartsActive,
                     $"The SealingObject of '{connection.name}' starts active, which would close the door before anything seals it."));
+            }
+
+            GameObject lockObject = connection.LockObject;
+            if (lockObject != null)
+            {
+                if (!lockObject.transform.IsChildOf(room.transform))
+                {
+                    errors.Add(new RoomValidationError(roomName, RuleLockOutsideRoom,
+                        $"The LockObject of '{connection.name}' is not part of this room, so locking the door would change something else."));
+                }
+                else if (lockObject.activeSelf)
+                {
+                    errors.Add(new RoomValidationError(roomName, RuleLockStartsActive,
+                        $"The LockObject of '{connection.name}' starts active, which would lock the door before the generator decides to."));
+                }
             }
         }
 

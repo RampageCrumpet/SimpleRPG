@@ -60,6 +60,24 @@ public class ConnectionBlueprint : MonoBehaviour
     /// </summary>
     public Vector2Int location;
 
+    [Tooltip("The object switched on when the generator locks this door (a gate, a padlock). Leave empty if the room has no locked look.")]
+    public GameObject LockObject;
+
+    /// <summary>
+    /// Show this door as locked.
+    /// </summary>
+    /// <returns> False if there is no lock object to activate.</returns>
+    public bool TryLock()
+    {
+        if (LockObject == null)
+        {
+            return false;
+        }
+
+        LockObject.SetActive(true);
+        return true;
+    }
+
     /// <summary>
     /// Seal the connection with a wall.
     /// </summary>

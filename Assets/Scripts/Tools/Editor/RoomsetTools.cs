@@ -21,6 +21,11 @@ namespace SimpleRPG.EditorTools
         {
             List<RoomValidationError> errors = RoomValidator.ValidateRoomset(roomset);
             LogValidation(errors);
+            foreach (RoomValidationError warning in RoomValidator.CheckLockWarnings(roomset))
+            {
+                Debug.LogWarning(warning);
+            }
+
             return errors;
         }
 

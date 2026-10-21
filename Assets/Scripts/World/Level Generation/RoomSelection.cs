@@ -8,8 +8,10 @@ namespace LevelGeneration
     /// </summary>
     public readonly struct SelectionContext
     {
-        public SelectionContext(int placedRooms, int minimumRooms, int openDoors, IReadOnlyDictionary<RoomDefinition, int> placedCounts, PlacedDoor targetDoor = null, int floorCount = int.MaxValue)
+        public SelectionContext(int placedRooms, int minimumRooms, int openDoors, IReadOnlyDictionary<RoomDefinition, int> placedCounts, PlacedDoor targetDoor = null, int floorCount = int.MaxValue, IReadOnlyList<RoomDefinition> unmetRequired = null, float junctionFactor = 1f)
         {
+            JunctionFactor = junctionFactor;
+            UnmetRequired = unmetRequired ?? new RoomDefinition[0];
             FloorCount = floorCount;
             PlacedRooms = placedRooms;
             MinimumRooms = minimumRooms;
@@ -27,6 +29,17 @@ namespace LevelGeneration
         /// How many floors the dungeon may use. A room that would stand outside them is no use.
         /// </summary>
         public int FloorCount { get; }
+
+        /// <summary>
+        /// Rooms that must still appear (their <see cref="RoomDefinition.MinCount"/> is not met yet), one entry per room still owed.
+        /// </summary>
+        public IReadOnlyList<RoomDefinition> UnmetRequired { get; }
+
+        /// <summary>
+        /// How much more (or less) likely a junction room (three or more doors) is to be picked, and how much less (or more) a dead end is
+        /// before the minimum is reached. 1 leaves the weights alone.
+        /// </summary>
+        public float JunctionFactor { get; }
 
         public int PlacedRooms { get; }
         public int MinimumRooms { get; }
@@ -72,6 +85,12 @@ namespace LevelGeneration
         /// </summary>
         public float DeadEndMultiplierAfterMinimum { get; set; } = 3f;
 
+        /// <summary>
+        /// How much more likely a room that is still owed (to meet its minimum count) is to be picked, so required rooms
+        /// tend to turn up while the dungeon still has doors to spare rather than all at the end.
+        /// </summary>
+        public float OwedRoomMultiplier { get; set; } = 5f;
+
         public RoomDefinition SelectStart(System.Random random, IReadOnlyList<RoomDefinition> rooms)
         {
             List<RoomDefinition> designated = rooms.Where(room => (room.Role & RoomRole.Start) != 0 && room.Weight > 0).ToList();
@@ -80,12 +99,19 @@ namespace LevelGeneration
                 return Pick(random, designated, room => room.Weight);
             }
 
-            return Pick(random, rooms.Where(room => room.Weight > 0).ToList(), room => room.Weight);
+            return Pick(random, rooms.Where(room => room.Weight > 0 && (room.Role & RoomRole.Exit) == 0).ToList(), room => room.Weight);
         }
 
         public RoomDefinition Select(System.Random random, IReadOnlyList<RoomDefinition> rooms, SelectionContext context)
         {
             List<RoomDefinition> allowed = rooms.Where(room => IsAllowed(room, context)).ToList();
+
+            // Once the rooms still to come are all spoken for, only rooms that are owed may be picked, so the minimum counts can be met.
+            if (context.UnmetRequired.Count > 0 && context.MinimumRooms - context.PlacedRooms <= context.UnmetRequired.Count)
+            {
+                allowed = allowed.Where(context.UnmetRequired.Contains).ToList();
+            }
+
             if (allowed.Count == 0)
             {
                 return null;
@@ -96,7 +122,7 @@ namespace LevelGeneration
 
         private static bool IsAllowed(RoomDefinition room, SelectionContext context)
         {
-            if (room.Weight <= 0 || (room.Role & RoomRole.Start) != 0)
+            if (room.Weight <= 0 || (room.Role & (RoomRole.Start | RoomRole.Exit)) != 0)
             {
                 return false;
             }
@@ -129,7 +155,17 @@ namespace LevelGeneration
 
         private float Weight(RoomDefinition room, SelectionContext context)
         {
-            return context.MinimumReached && room.IsDeadEnd ? room.Weight * DeadEndMultiplierAfterMinimum : room.Weight;
+            float weight = context.MinimumReached && room.IsDeadEnd ? room.Weight * DeadEndMultiplierAfterMinimum : room.Weight;
+            if (room.Doors.Count >= 3)
+            {
+                weight *= context.JunctionFactor;
+            }
+            else if (room.IsDeadEnd && !context.MinimumReached)
+            {
+                weight /= context.JunctionFactor;
+            }
+
+            return context.UnmetRequired.Contains(room) ? weight * OwedRoomMultiplier : weight;
         }
 
         private static RoomDefinition Pick(System.Random random, List<RoomDefinition> candidates, System.Func<RoomDefinition, float> weight)

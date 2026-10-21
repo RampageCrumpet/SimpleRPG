@@ -85,6 +85,7 @@ GameObject:
   - component: {fileID: 2074495731175748181}
   - component: {fileID: 2074495731175748178}
   - component: {fileID: 5082288297274321634}
+  - component: {fileID: 4192829544618534247}
   m_Layer: 0
   m_Name: Level
   m_TagString: Untagged
@@ -124,6 +125,10 @@ MonoBehaviour:
   <MinimumNumberOfRooms>k__BackingField: 250
   <MaximumNumberOfRooms>k__BackingField: 0
   <FloorCount>k__BackingField: 3
+  <LoopRatio>k__BackingField: 0.5
+  <Branching>k__BackingField: 0.5
+  <LockedDoors>k__BackingField: 0
+  <KeyPickupPrefab>k__BackingField: {fileID: 415883650868229320, guid: 17a4162a236cccd42aa772cb1f39443f, type: 3}
 --- !u!114 &5082288297274321634
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -156,3 +161,16 @@ MonoBehaviour:
   m_MinRegionArea: 0.25
   m_NavMeshData: {fileID: 0}
   m_BuildHeightMesh: 0
+--- !u!114 &4192829544618534247
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2074495731175748179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95cd20f28dfc627448ec7cd2fbc3ab54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Keys.DungeonKeyRing
+  ShowTopMostFoldoutHeaderGroup: 1

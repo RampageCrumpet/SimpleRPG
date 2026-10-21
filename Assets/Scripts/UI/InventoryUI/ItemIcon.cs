@@ -90,7 +90,7 @@ namespace SimpleRPG.UI
 
 
             //Iterate over all of the inventory views and find the one that the user dropped the item on if any.
-            foreach (InventoryUI inventory in FindObjectsByType<InventoryUI>(FindObjectsSortMode.None))
+            foreach (InventoryUI inventory in FindObjectsByType<InventoryUI>())
             {
                 RectTransform inventoryRectTransform = inventory.GetComponent<RectTransform>();
                 if (RectTransformUtility.RectangleContainsScreenPoint(inventoryRectTransform, Input.mousePosition, null))

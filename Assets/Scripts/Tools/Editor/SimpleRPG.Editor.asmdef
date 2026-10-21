@@ -2,7 +2,8 @@
     "name": "SimpleRPG.Editor",
     "rootNamespace": "SimpleRPG.Editor",
     "references": [
-        "SimpleRPG"
+        "SimpleRPG",
+        "Unity.Netcode.Runtime"
     ],
     "includePlatforms": [
         "Editor"

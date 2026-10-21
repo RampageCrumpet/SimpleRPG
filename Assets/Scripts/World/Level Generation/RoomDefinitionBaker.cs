@@ -41,7 +41,7 @@ namespace LevelGeneration
                 doors.Add(new DoorDefinition(doors.Count, connection.location, side, length, width, ConnectionType.IdFor(connection.Type), connection.Level, connection.FloorDelta));
             }
 
-            return new RoomDefinition(index, room.name, room.Size, room.OriginOffset, doors, room.SelectionWeight, room.MaxCount, room.Role, room.Floors);
+            return new RoomDefinition(index, room.name, room.Size, room.OriginOffset, doors, room.SelectionWeight, room.MaxCount, room.Role, room.Floors, room.MinCount);
         }
     }
 }

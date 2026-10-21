@@ -14,30 +14,39 @@ namespace SimpleRPG.ObjectInteractions
         /// </summary>
         [field: SerializeField]
         [Tooltip("The range at which the player can interact with this object.")]
-        public float InteractionRange { get; private set; }
+        public float InteractionRange { get; protected set; }
 
         /// <summary>
         /// The name of the object that will be displayed when the player can interact with it.
         /// </summary>
         [field: SerializeField]
         [Tooltip("The name of the object that will be displayed when the player can interact with it.")]
-        public string InteractionName { get; private set; }
+        public string InteractionName { get; protected set; }
 
         [field: SerializeField]
         [Tooltip("The type of interaction that will be displayed to the player when they try to interact with this object.")]
-        public string InteractionText { get; private set; }
+        public string InteractionText { get; protected set; }
 
         /// <summary>
         /// The time it takes to interact with this object in seconds.
         /// </summary>
         [field: SerializeField]
         [Tooltip("The time it takes to interact with this object in seconds.")]
-        public float InteractionTime { get; private set; }
+        public float InteractionTime { get; protected set; }
 
         public void Start()
         {
             //Register this interactable so that it can be interacted with.
             InteractableManager.RegisterInteractable(this);
+        }
+
+        /// <summary>
+        /// Whether the player looking at a collider is looking at this interactable. By default only this object's own collider counts.
+        /// </summary>
+        /// <param name="collider"> The collider under the player's crosshair.</param>
+        public virtual bool IsLookedAtVia(Collider collider)
+        {
+            return collider.gameObject == gameObject;
         }
 
         /// <summary>

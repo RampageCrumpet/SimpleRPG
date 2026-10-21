@@ -28,8 +28,7 @@ namespace SimpleRPG
         /// <summary>
         /// The rigidbody we want to move around.
         /// </summary>
-        /// <remarks> This hides the depreciated <see cref="Component.rigidbody"/> so it should be fine in this case.</remarks>
-        private new Rigidbody rigidbody;
+        private Rigidbody rigidbody;
 
         /// <summary>
         /// Start is called before the first frame update.

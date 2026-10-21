@@ -15,6 +15,7 @@ namespace SimpleRPG.Tests.EditMode
     {
         private const string ModularDungeonPath = "Assets/Prefabs/World/TileSets/ModularDungeon/ModularDungeon.asset";
         private static readonly int[] RoomCounts = { 8, 20 };
+        private static readonly int[] FloorCounts = { 1, 3 };
         private const int SeedsPerConfiguration = 300;
 
         private readonly List<GameObject> spawned = new List<GameObject>();
@@ -39,9 +40,9 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
-        public void ModularDungeon_AlwaysGivesValidLayouts([ValueSource(nameof(RoomCounts))] int roomCount)
+        public void ModularDungeon_AlwaysGivesValidLayouts([ValueSource(nameof(RoomCounts))] int roomCount, [ValueSource(nameof(FloorCounts))] int floorCount)
         {
-            AssertSweepIsValid(RoomDefinitionBaker.Bake(LoadModularDungeon()), roomCount);
+            AssertSweepIsValid(RoomDefinitionBaker.Bake(LoadModularDungeon()), roomCount, floorCount);
         }
 
         [Test]
@@ -96,6 +97,25 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
+        public void MaximumEqualToMinimum_GivesAnExactRoomCount([ValueSource(nameof(RoomCounts))] int roomCount, [ValueSource(nameof(FloorCounts))] int floorCount)
+        {
+            List<RoomDefinition> definitions = RoomDefinitionBaker.Bake(LoadModularDungeon());
+            var failures = new List<string>();
+
+            for (int seed = 0; seed < 100; seed++)
+            {
+                GenerationResult result = new LayoutGenerator(seed, definitions).Generate(roomCount, roomCount, floorCount);
+
+                if (!result.Success || result.Layout.Rooms.Count != roomCount || LayoutValidator.Validate(result.Layout).Count > 0)
+                {
+                    failures.Add($"Seed {seed}: {result.Layout.Rooms.Count} rooms, success {result.Success}");
+                }
+            }
+
+            Assert.That(failures, Is.Empty, string.Join("\n", failures.Take(20)));
+        }
+
+        [Test]
         public void GeneratorWithoutRooms_IsRejected()
         {
             Assert.Throws<System.ArgumentException>(() => new LayoutGenerator(1, new List<RoomDefinition>()));
@@ -145,13 +165,13 @@ namespace SimpleRPG.Tests.EditMode
             }
         }
 
-        private static void AssertSweepIsValid(IReadOnlyList<RoomDefinition> definitions, int roomCount)
+        private static void AssertSweepIsValid(IReadOnlyList<RoomDefinition> definitions, int roomCount, int floorCount = 1)
         {
             var failures = new List<string>();
 
             for (int seed = 0; seed < SeedsPerConfiguration; seed++)
             {
-                GenerationResult result = new LayoutGenerator(seed, definitions).Generate(roomCount);
+                GenerationResult result = new LayoutGenerator(seed, definitions).Generate(roomCount, 0, floorCount);
 
                 if (!result.Success)
                 {

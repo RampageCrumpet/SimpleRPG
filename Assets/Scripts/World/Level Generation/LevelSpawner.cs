@@ -20,6 +20,16 @@ namespace LevelGeneration
         /// </summary>
         public Action<GameObject> RoomInstantiated { get; set; }
 
+        /// <summary>
+        /// Called once for each lock after its doors have been locked, so the game can fit whatever opens it.
+        /// </summary>
+        public Action<LockedDoor> LockApplied { get; set; }
+
+        /// <summary>
+        /// Called once for each key with the room it lies in, so the game can put the key item there.
+        /// </summary>
+        public Action<int, RoomBlueprint> KeyRoomAssigned { get; set; }
+
         /// <param name="prefabs"> The room prefabs, in the order of <see cref="RoomDefinition.Index"/>.</param>
         /// <param name="cellSize"> The size of one world cell in unity units.</param>
         /// <param name="floorHeight"> The height of one floor in unity units. Floor 0 is at the prefab's own height.</param>
@@ -52,7 +62,24 @@ namespace LevelGeneration
                 Seal(door, instances[door.Room.Id]);
             }
 
+            foreach (LockedDoor locked in layout.Locks)
+            {
+                Lock(locked.Door, instances[locked.Door.Room.Id]);
+                Lock(locked.Mate, instances[locked.Mate.Room.Id]);
+                LockApplied?.Invoke(locked);
+                KeyRoomAssigned?.Invoke(locked.KeyId, instances[locked.KeyRoom.Id]);
+            }
+
             return instances;
+        }
+
+        private static void Lock(PlacedDoor door, RoomBlueprint instance)
+        {
+            ConnectionBlueprint connection = instance.Connections.ElementAtOrDefault(door.Index);
+            if (connection == null || !connection.TryLock())
+            {
+                Debug.LogWarning($"{door} is locked but '{instance.name}' has no lock object for door {door.Index}, so it will look open.", instance);
+            }
         }
 
         private RoomBlueprint Instantiate(PlacedRoom room, Transform parent)

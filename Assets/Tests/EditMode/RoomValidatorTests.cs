@@ -178,6 +178,17 @@ namespace SimpleRPG.Tests.EditMode
             Assert.That(errors, Is.Empty, string.Join("\n", errors.Select(error => error.ToString())));
         }
 
+        [Test]
+        public void ModularDungeonDoors_AllHaveALockObject()
+        {
+            Roomset roomset = AssetDatabase.LoadAssetAtPath<Roomset>("Assets/Prefabs/World/TileSets/ModularDungeon/ModularDungeon.asset");
+            Assert.IsNotNull(roomset, "Could not load ModularDungeon roomset.");
+
+            List<RoomValidationError> warnings = RoomValidator.CheckLockWarnings(roomset);
+
+            Assert.That(warnings, Is.Empty, string.Join("\n", warnings.Select(warning => warning.ToString())));
+        }
+
         [TestCase(-1.5f, 0)]  // 0.3 cells below the root is part of the first cell
         [TestCase(-4.9f, 0)]  // still less than a full cell
         [TestCase(-6f, -1)]   // 1.2 cells below needs a cell of its own
@@ -239,6 +250,73 @@ namespace SimpleRPG.Tests.EditMode
             AddDoor(room, new Vector3(15.5f, 0, 20), new Vector2Int(0, 1)).ConnectionWidth = 0f;
 
             AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleDoorWidth);
+        }
+
+        [Test]
+        public void LockObjectInsideTheRoomAndInactive_IsAccepted()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            foreach (ConnectionBlueprint door in room.GetComponentsInChildren<ConnectionBlueprint>())
+            {
+                AddLock(door);
+            }
+
+            Assert.That(RoomValidator.Validate(room, CellSize), Is.Empty);
+        }
+
+        [Test]
+        public void LockObjectOutsideTheRoom_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            ConnectionBlueprint door = room.GetComponentsInChildren<ConnectionBlueprint>().First();
+            door.LockObject = new GameObject("ExternalLock");
+            spawned.Add(door.LockObject);
+            door.LockObject.SetActive(false);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleLockOutsideRoom);
+        }
+
+        [Test]
+        public void LockObjectThatStartsActive_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddLock(room.GetComponentsInChildren<ConnectionBlueprint>().First()).SetActive(true);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleLockStartsActive);
+        }
+
+        [Test]
+        public void DoorWithoutLockObject_IsNotAnError()
+        {
+            RoomBlueprint room = CreateValidRoom();
+
+            Assert.That(RoomValidator.Validate(room, CellSize), Is.Empty);
+        }
+
+        [Test]
+        public void DoorsWithoutLockObject_AreWarnedAboutPerRoom()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            ConnectionBlueprint[] doors = room.GetComponentsInChildren<ConnectionBlueprint>();
+            AddLock(doors[0]);
+            Roomset roomset = CreateRoomset(room);
+
+            List<RoomValidationError> warnings = RoomValidator.CheckLockWarnings(roomset);
+
+            Assert.That(warnings.Select(warning => warning.Rule), Is.EqualTo(new[] { RoomValidator.RuleRoomsetDoorNoLock }));
+            StringAssert.Contains("3 door(s)", warnings.Single().Message);
+        }
+
+        [Test]
+        public void RoomWhereEveryDoorHasALock_HasNoLockWarning()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            foreach (ConnectionBlueprint door in room.GetComponentsInChildren<ConnectionBlueprint>())
+            {
+                AddLock(door);
+            }
+
+            Assert.That(RoomValidator.CheckLockWarnings(CreateRoomset(room)), Is.Empty);
         }
 
         [Test]
@@ -434,6 +512,15 @@ namespace SimpleRPG.Tests.EditMode
             }
 
             return connection;
+        }
+
+        private GameObject AddLock(ConnectionBlueprint door)
+        {
+            door.LockObject = new GameObject("Lock");
+            spawned.Add(door.LockObject);
+            door.LockObject.transform.SetParent(door.transform, false);
+            door.LockObject.SetActive(false);
+            return door.LockObject;
         }
 
         private static void AssertRule(List<RoomValidationError> errors, string rule)

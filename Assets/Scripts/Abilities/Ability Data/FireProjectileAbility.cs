@@ -27,5 +27,21 @@ namespace SimpleRPG.Abilities
         {
             get => typeof(FireProjectileAbillityBehaviour);
         }
+
+        /// <summary>
+        /// Warns in the inspector about settings that would make this spell do nothing.
+        /// </summary>
+        private void OnValidate()
+        {
+            if (Projectile == null || Projectile.GetComponent<global::Projectile>() == null)
+            {
+                Debug.LogWarning(AbillityName + " needs a Projectile prefab with a Projectile component, or it can't be fired.", this);
+            }
+
+            if (Damage == null || Damage.Damage <= 0)
+            {
+                Debug.LogWarning(AbillityName + " deals no damage. Set Damage above zero if it should hurt.", this);
+            }
+        }
     }
 }

@@ -66,6 +66,12 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
 
         if (this.IsOwner)
         {
+            if (this.activeCamera == null)
+            {
+                Debug.LogError("FirstPersonCharacterController: no active camera tagged MainCamera was found, so this character has no camera or mouse look.", this);
+                return;
+            }
+
             // Move the main camera to this character.
             FirstPersonLookMath.AttachCamera(activeCamera.transform, cameraTransform);
 
@@ -95,7 +101,7 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
     public void Update()
     {
         // Only the owner reads input and moves its own camera. Other clients and the server never touch it.
-        if (FirstPersonLookMath.ShouldLook(this.IsOwner, Application.isFocused))
+        if (this.look != null && FirstPersonLookMath.ShouldLook(this.IsOwner, Application.isFocused))
         {
             this.look.Look(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"), Time.deltaTime);
         }
@@ -108,8 +114,6 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
     private Vector3 CalculateMovement()
     {
         Vector3 movementDirection = FirstPersonLookMath.MovementDirection(this.transform.forward, this.transform.right, Input.GetAxis("Vertical"), Input.GetAxis("Horizontal"));
-
-        Camera.main.transform.TransformDirection(movementDirection);
 
         return movementDirection;
     }

@@ -40,6 +40,13 @@ namespace LevelGeneration
         public int MaxCount;
 
         /// <summary>
+        /// The fewest times this room must appear in one dungeon. Zero means it need not appear.
+        /// </summary>
+        [Tooltip("The fewest times this room must appear in one dungeon. Zero means it need not appear.")]
+        [Min(0)]
+        public int MinCount;
+
+        /// <summary>
         /// What this room is for. A Start room is where the dungeon begins and is never placed anywhere else.
         /// </summary>
         [Tooltip("What this room is for. A Start room is where the dungeon begins and is never placed anywhere else.")]
