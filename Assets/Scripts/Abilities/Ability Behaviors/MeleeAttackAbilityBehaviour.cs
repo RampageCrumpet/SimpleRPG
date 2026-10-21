@@ -99,9 +99,13 @@ public class MeleeAttackAbilityBehaviour : NetworkBehaviour, IInvokeableAbilityB
         bool inCombo = false;
         foreach (Animator animator in animators)
         {
-            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-            inAttack |= state.IsTag("Attack");
-            inCombo |= state.IsTag("Combo");
+            // Layered animators (e.g. a skeleton's weapon-attack layer) play their attack state above the base layer, so check every layer.
+            for (int layer = 0; layer < animator.layerCount; layer++)
+            {
+                AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(layer);
+                inAttack |= state.IsTag("Attack");
+                inCombo |= state.IsTag("Combo");
+            }
         }
 
         if (!inAttack && !inCombo)
