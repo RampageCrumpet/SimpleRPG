@@ -68,7 +68,7 @@ namespace AI
         /// <inheritdoc/>
         public void OnStateUpdate()
         {
-            if (aiController.Character.Health <= 0)
+            if (!aiController.Character.IsAlive)
             {
                 aiController.ChangeState(dead);
                 return;

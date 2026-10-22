@@ -1,0 +1,16 @@
+{
+    "name": "SimpleRPG.Abilities.Runtime",
+    "rootNamespace": "SimpleRPG.Abilities",
+    "references": [
+        "SimpleRPG.Gameplay.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

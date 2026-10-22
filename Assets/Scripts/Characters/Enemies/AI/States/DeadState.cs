@@ -23,7 +23,7 @@ namespace AI
         /// <inheritdoc/>
         public void OnStateEnter()
         {
-            aiController.Character.Die();
+            // Death was committed by the server's combat pipeline and is presented through Character.OnDeath, so there is nothing to start here.
         }
 
         /// <inheritdoc/>

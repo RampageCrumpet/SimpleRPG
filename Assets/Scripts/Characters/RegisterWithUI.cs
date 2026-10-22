@@ -30,7 +30,7 @@ namespace SimpleRPG.UI
             if (IsOwner)
             {
                 Character character = GetComponent<Character>();
-                GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<AbilityButtonControllerUI>()).Single(x => x != null).CreateAbilityButtons(character.PersonalAbilities);
+                GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<AbilityButtonControllerUI>()).Single(x => x != null).CreateAbilityButtons(character.AbilitySlots);
 
                 Interactor interactor = GetComponent<Interactor>();
                 GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<InteractionUI>()).Single(x => x != null).SetInteractor(interactor);

@@ -1,13 +1,15 @@
 using HitDetection;
 using SimpleRPG.Abilities;
+using SimpleRPG.Gameplay;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
+using EntityId = SimpleRPG.Gameplay.EntityId;
 
 namespace SimpleRPG
 {
-    public class Character : NetworkBehaviour
+    public class Character : NetworkBehaviour, ICombatant
     {
         /// <summary>
         /// The maximum health of this character.
@@ -17,19 +19,38 @@ namespace SimpleRPG
         private int maxHealth = 100;
 
         /// <summary>
-        /// The list of serialized abilities this player has.
-        /// These abilities act as a blueprint for the abilities this character can use but are not invokable.
+        /// The abilities this character starts with, in ability bar order. The server checks every activation request against this list.
         /// </summary>
         [SerializeField]
-        [Tooltip("The list of abilities this character starts with.")]
-        private List<Ability> abilities;
+        [Tooltip("The abilities this character can use, in ability bar order.")]
+        private List<AbilityDefinition> graphAbilities = new List<AbilityDefinition>();
+
+        private List<IAbilitySlot> abilitySlots;
 
         /// <summary>
-        /// Private backer for our <see cref="PersonalAbilities"/> collection.
+        /// The weapon this character starts with, used when nothing is equipped in the main hand.
         /// </summary>
-        private List<AbilityInstance> personalAbilityCollection = new List<AbilityInstance>();
+        [SerializeField]
+        [UnityEngine.Serialization.FormerlySerializedAs("WeaponData")]
+        [Tooltip("The weapon this character fights with when nothing is equipped in the main hand.")]
+        private WeaponData startingWeapon;
 
-        public WeaponData WeaponData;
+        private Equipment equipment;
+
+        /// <summary>
+        /// The weapon this character attacks with: the one equipped in the main hand, or the starting weapon if there is none.
+        /// </summary>
+        public WeaponData WeaponData
+        {
+            get
+            {
+                if (equipment == null) equipment = GetComponent<Equipment>();
+
+                WeaponData equipped = equipment != null ? equipment.MainHandWeapon : null;
+                return equipped != null ? equipped : startingWeapon;
+            }
+            set => startingWeapon = value;
+        }
 
         public delegate void NotifyDamageTaken();
 
@@ -38,6 +59,20 @@ namespace SimpleRPG
         public delegate void NotifyDeath();
 
         public event NotifyDeath OnDeath;
+
+        [Header("Attributes")]
+        [SerializeField] private int strength = 10;
+        [SerializeField] private int constitution = 10;
+        [SerializeField] private int dexterity = 10;
+        [SerializeField] private int agility = 10;
+        [SerializeField] private int wisdom = 10;
+        [SerializeField] private int intelligence = 10;
+
+        /// <summary>
+        /// This character's attributes: the six primaries plus whatever worn items grant. Only the server has them; they are what abilities read.
+        /// Null before the character spawns and on clients.
+        /// </summary>
+        public AttributeSet Attributes { get; private set; }
 
         /// <summary>
         /// The replicated health value. Only the server writes it; every client reads it, so late joiners receive the
@@ -51,24 +86,60 @@ namespace SimpleRPG
         private int? pendingInitialHealth;
 
         /// <summary>
+        /// True once this character's current life has ended. Replicated, so every machine sees the death and raises <see cref="OnDeath"/>.
+        /// </summary>
+        private readonly NetworkVariable<bool> networkIsDead = new NetworkVariable<bool>();
+
+        /// <summary>
+        /// How many lives have ended before the current one. The current life number is this plus one.
+        /// </summary>
+        private readonly NetworkVariable<int> networkLivesEnded = new NetworkVariable<int>();
+
+        /// <summary>
+        /// The ID this character is registered as a combatant under, on the server.
+        /// </summary>
+        private EntityId registeredId;
+
+        /// <summary>
         /// The current health of this character. Before the character spawns on the network this reports full health.
         /// </summary>
         public int Health => IsSpawned ? networkHealth.Value : (pendingInitialHealth ?? maxHealth);
 
         /// <summary>
-        /// The list of invokable abilities this <see cref="Character"/> has.
+        /// True while this character is alive. Death is committed once by the server; AI and presentation read this instead of watching health.
         /// </summary>
-        public IReadOnlyCollection<AbilityInstance> PersonalAbilities
+        public bool IsAlive => !IsSpawned || !networkIsDead.Value;
+
+        /// <summary>
+        /// The identity of this character for gameplay rules: its network object ID, or none before it spawns.
+        /// </summary>
+        public EntityId Id => IsSpawned ? new EntityId(NetworkObjectId) : default;
+
+        /// <summary>
+        /// Which life this is, starting at 1. Reviving starts the next one.
+        /// </summary>
+        public int LifeId => IsSpawned ? networkLivesEnded.Value + 1 : 1;
+
+        Position3 ICombatant.Position => new Position3(transform.position.x, transform.position.y, transform.position.z);
+
+        /// <summary>
+        /// The abilities this character can use.
+        /// </summary>
+        public IReadOnlyList<AbilityDefinition> GraphAbilities => graphAbilities;
+
+        /// <summary>
+        /// Every ability on this character's bar, in order.
+        /// </summary>
+        public IReadOnlyList<IAbilitySlot> AbilitySlots
         {
             get
             {
-                // Ensure that our personalAbilityCollection is up to date, if not repopulate it.
-                if(!personalAbilityCollection.Select(x => x.Ability).All(abilities.Contains) || personalAbilityCollection.Count != abilities.Count)
+                if (abilitySlots == null)
                 {
-                    this.personalAbilityCollection = abilities.ConvertAll(x => new AbilityInstance(x, this));
+                    abilitySlots = graphAbilities.Select(x => (IAbilitySlot)new GraphAbilitySlot(x, this)).ToList();
                 }
 
-                return personalAbilityCollection.AsReadOnly();
+                return abilitySlots;
             }
         }
 
@@ -77,14 +148,43 @@ namespace SimpleRPG
             if (IsServer)
             {
                 networkHealth.Value = pendingInitialHealth ?? maxHealth;
+                registeredId = Id;
+                GameplayServices.Current.Combatants.Register(this);
+
+                // The character's attributes live on the server, where abilities read them and worn items add their grants to them.
+                Attributes = GameplayServices.Current.Attributes.GetOrCreate(SourceHandle.FromEntity(registeredId));
+                Attributes.SetBase(PrimaryAttributes.Strength, strength);
+                Attributes.SetBase(PrimaryAttributes.Constitution, constitution);
+                Attributes.SetBase(PrimaryAttributes.Dexterity, dexterity);
+                Attributes.SetBase(PrimaryAttributes.Agility, agility);
+                Attributes.SetBase(PrimaryAttributes.Wisdom, wisdom);
+                Attributes.SetBase(PrimaryAttributes.Intelligence, intelligence);
             }
 
             networkHealth.OnValueChanged += HandleHealthChanged;
+            networkIsDead.OnValueChanged += HandleDeadChanged;
         }
 
         public override void OnNetworkDespawn()
         {
             networkHealth.OnValueChanged -= HandleHealthChanged;
+            networkIsDead.OnValueChanged -= HandleDeadChanged;
+
+            if (IsServer)
+            {
+                // The network ID is already gone by now, so unregister under the ID it was registered with.
+                GameplayServices.Current.Combatants.Unregister(registeredId, this);
+                GameplayServices.Current.Attributes.Unregister(SourceHandle.FromEntity(registeredId));
+                Attributes = null;
+
+                // Rules and state tied to this entity can be dropped.
+                GameplayEventDispatcher events = GameplayServices.Current.Events;
+                events.Enqueue(new EntityRemovedEvent(registeredId));
+                if (!events.IsDraining)
+                {
+                    events.Drain();
+                }
+            }
         }
 
         /// <summary>
@@ -107,7 +207,9 @@ namespace SimpleRPG
         /// </summary>
         /// <param name="damage">The damage to apply.</param>
         /// <param name="location">The body location that was hit.</param>
-        public void TakeDamage(DamageInfo damage, BodyLocation location)
+        /// <param name="instigator">The character credited with the damage, if any.</param>
+        /// <param name="provenance">What kind of damage this is, so rules can tell a weapon blow from a spell.</param>
+        public void TakeDamage(DamageInfo damage, BodyLocation location, Character instigator = null, DamageProvenance provenance = DamageProvenance.None)
         {
             if (!IsServer)
             {
@@ -115,14 +217,35 @@ namespace SimpleRPG
                 return;
             }
 
-            networkHealth.Value -= damage.Damage;
+            DamageRequest request = new DamageRequest(Id, damage.Damage, instigator != null ? instigator.Id : default, bodyLocation: (int)location, provenance: provenance);
+            DamageOutcome outcome = GameplayServices.Current.Combat.Apply(request);
 
-            Debug.Log(this.gameObject.name + " has taken " + damage.Damage + " damage at " + location.ToString() + ".");
+            if (outcome.WasApplied)
+            {
+                Debug.Log(this.gameObject.name + " has taken " + damage.Damage + " damage at " + location.ToString() + ".");
+            }
 
-            if (networkHealth.Value <= 0)
+            if (outcome.Result == DamageResult.Killed)
             {
                 Debug.Log(this.gameObject.name + " has died.");
             }
+        }
+
+        void ICombatant.CommitHealth(int health)
+        {
+            networkHealth.Value = health;
+        }
+
+        void ICombatant.CommitDeath()
+        {
+            networkIsDead.Value = true;
+        }
+
+        void ICombatant.CommitRevive(int health)
+        {
+            networkLivesEnded.Value++;
+            networkHealth.Value = health;
+            networkIsDead.Value = false;
         }
 
         /// <summary>
@@ -137,11 +260,14 @@ namespace SimpleRPG
         }
 
         /// <summary>
-        /// Handles the death of our character.
+        /// Raises <see cref="OnDeath"/> on every machine when the replicated dead flag turns on. This is presentation; the death itself was committed by the server.
         /// </summary>
-        public void Die()
+        private void HandleDeadChanged(bool previousValue, bool newValue)
         {
-            OnDeath?.Invoke();
+            if (newValue && !previousValue)
+            {
+                OnDeath?.Invoke();
+            }
         }
     }
 }

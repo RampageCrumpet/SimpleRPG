@@ -26,14 +26,14 @@ namespace SimpleRPG.UI
         /// <summary>
         /// Create the abillity buttons.
         /// </summary>
-        public void CreateAbilityButtons(IEnumerable<AbilityInstance> abilityInstances)
+        public void CreateAbilityButtons(IEnumerable<IAbilitySlot> abilitySlots)
         {
             // Create a button for each of our abilities.
-            for (int x = 0; x < abilityInstances.Count(); x++)
+            for (int x = 0; x < abilitySlots.Count(); x++)
             {
                 GameObject newAbilityButtonGameObject = Object.Instantiate(abilityButtonPrefab, abillityBar.transform);
                 AbilityButton newAbilityButton = newAbilityButtonGameObject.GetComponent<AbilityButton>();
-                newAbilityButton.Initialize(abilityInstances.ElementAt(x));
+                newAbilityButton.Initialize(abilitySlots.ElementAt(x));
                 newAbilityButton.abillityButtonAxisName = $"Spell{x+1}";
                 abilityButtons.Add(newAbilityButton);
             }

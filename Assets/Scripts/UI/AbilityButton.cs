@@ -28,19 +28,19 @@ namespace SimpleRPG.UI
         private Image abilityIconImage;
         private Image darkAbillityIcon;
 
-        private AbilityInstance abilityInstance;
+        private IAbilitySlot abilitySlot;
 
         /// <summary>
         /// Initialize the UI button after creation.
         /// </summary>
-        /// <param name="abilityInstance"> The <see cref="AbilityInstance"/> we want this button to gather information from.</param>
-        public void Initialize(AbilityInstance abilityInstance)
+        /// <param name="abilitySlot"> The <see cref="IAbilitySlot"/> we want this button to gather information from.</param>
+        public void Initialize(IAbilitySlot abilitySlot)
         {
             abilityIconImage = this.GetComponent<Image>();
             darkAbillityIcon = this.GetComponentsInChildren<Image>().Single(x => x.gameObject != this.gameObject);
 
-            this.abilityInstance = abilityInstance;
-            abilityIconImage.sprite = abilityInstance.Ability.AbilityIcon;
+            this.abilitySlot = abilitySlot;
+            abilityIconImage.sprite = abilitySlot.Icon;
             //darkAbillityIcon.sprite = ability.abillitySprite;
         }
 
@@ -49,7 +49,7 @@ namespace SimpleRPG.UI
         /// </summary>
         public void Activate()
         {
-            this.abilityInstance.Activate();
+            this.abilitySlot.Activate();
         }
 
         // Update is called once per frame
@@ -59,7 +59,7 @@ namespace SimpleRPG.UI
 
             if(Input.GetAxis(abillityButtonAxisName) > 0)
             {
-                this.abilityInstance.Activate();
+                this.abilitySlot.Activate();
             }
         }
 
@@ -68,15 +68,15 @@ namespace SimpleRPG.UI
         /// </summary>
         private void UpdateCooldown()
         {
-            if (abilityInstance != null)
+            if (abilitySlot != null)
             {
                 //Scale the dark mask so the abillity is properly visible behind it.
-                darkAbillityIcon.fillAmount = abilityInstance.CooldownTimeLeft / abilityInstance.Ability.CooldownTime;
+                darkAbillityIcon.fillAmount = abilitySlot.CooldownTime > 0f ? abilitySlot.CooldownTimeLeft / abilitySlot.CooldownTime : 0f;
 
                 // If the ability is cooling down we want the text to be visible.
-                if (abilityInstance.CooldownTimeLeft >= 0)
+                if (abilitySlot.CooldownTimeLeft >= 0)
                 {
-                    cooldownText.text = Mathf.Round(abilityInstance.CooldownTimeLeft).ToString();
+                    cooldownText.text = Mathf.Round(abilitySlot.CooldownTimeLeft).ToString();
                 }
                 else
                 {

@@ -4,6 +4,7 @@
     "references": [
         "SimpleRPG",
         "SimpleRPG.Editor",
+        "SimpleRPG.Abilities.Runtime",
         "Unity.Netcode.Runtime",
         "Unity.AI.Navigation"
     ],

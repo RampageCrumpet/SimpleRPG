@@ -60,18 +60,22 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 
 ## Build & Test
 
-_Add your build and test commands here_
+Unity 6000.6.6f1. Tests are Unity Test Framework tests; run them from the Test Runner window, or in batch mode when the project is not open in an editor:
 
 ```bash
-# Example:
-# npm install
-# npm test
+"C:/Program Files/Unity/Hub/Editor/6000.6.6f1/Editor/Unity.exe" -batchmode -projectPath "<project>" -runTests -testPlatform EditMode -testResults results-edit.xml -logFile unity-edit.log
+"C:/Program Files/Unity/Hub/Editor/6000.6.6f1/Editor/Unity.exe" -batchmode -projectPath "<project>" -runTests -testPlatform PlayMode -testResults results-play.xml -logFile unity-play.log
 ```
+
+A build runs a definition check (ids, registry, ability graph compile errors); run it early with SimpleRPG > Definitions > Validate Definitions.
 
 ## Architecture Overview
 
-_Add a brief overview of your project architecture_
+Server-authoritative multiplayer on Netcode for GameObjects (host or dedicated server; clients only ask). Gameplay abilities are ScriptableObject graphs compiled and run by one executor, shared by players, monsters, items and traps. See `Docs/AbilitySystem.md` (design, decisions, lifetimes), `Docs/AbilityEditor.md` (visual editor) and `Docs/NetworkAuthority.md` (who owns what).
 
 ## Conventions & Patterns
 
-_Add your project-specific conventions here_
+- Build mechanics as generic, reusable primitives; never one class per named spell or item.
+- Definitions (ScriptableObjects) are immutable at runtime; mutable state lives in runtime services.
+- No legacy shims or compatibility layers when replacing a system.
+- Gameplay randomness comes from the seeded gameplay stream, never `UnityEngine.Random`.

@@ -1,0 +1,21 @@
+{
+    "name": "SimpleRPG.Abilities.Editor",
+    "rootNamespace": "SimpleRPG.Abilities.Editor",
+    "references": [
+        "SimpleRPG.Gameplay.Core",
+        "SimpleRPG.Abilities.Runtime",
+        "SimpleRPG.Abilities.Integration",
+        "Unity.Netcode.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

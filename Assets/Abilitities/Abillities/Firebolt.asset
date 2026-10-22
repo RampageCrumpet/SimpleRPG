@@ -9,14 +9,76 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aee3e7ff7df7b4b449896d4694af8d97, type: 3}
+  m_Script: {fileID: 11500000, guid: 24a66e9a34419854b8728e7d48d58996, type: 3}
   m_Name: Firebolt
-  m_EditorClassIdentifier: 
-  <AbillityName>k__BackingField: Firebolt
-  <ToolTip>k__BackingField: 
-  <AbilityIcon>k__BackingField: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
-  <AbillitySound>k__BackingField: {fileID: 0}
-  <CooldownTime>k__BackingField: 1
-  Projectile: {fileID: 8785262167055422538, guid: 95546d9105ca9cb49ae49eaf5f212b5d, type: 3}
-  Damage:
-    Damage: 20
+  m_EditorClassIdentifier: SimpleRPG.Abilities.Runtime::SimpleRPG.Abilities.AbilityDefinition
+  definitionId: 9a6b2a3fb7aa479c886800948fb018e8
+  abilityName: Firebolt
+  toolTip: 
+  icon: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
+  sound: {fileID: 0}
+  cooldownSeconds: 1
+  nodes:
+  - NodeId: activate
+    TypeId: simplerpg.flow.activate.v1
+    Config:
+      rid: 2469572882459525201
+    EditorPosition: {x: 0, y: 0}
+  - NodeId: launch
+    TypeId: simplerpg.action.launchprojectile.v1
+    Config:
+      rid: 2469572882459525202
+    EditorPosition: {x: 0, y: 0}
+  - NodeId: victim
+    TypeId: simplerpg.data.eventvictim.v1
+    Config:
+      rid: 2469572882459525203
+    EditorPosition: {x: 0, y: 0}
+  - NodeId: damageAmount
+    TypeId: simplerpg.data.constant.v1
+    Config:
+      rid: 2469572882459525204
+    EditorPosition: {x: 0, y: 0}
+  - NodeId: damage
+    TypeId: simplerpg.action.damage.v1
+    Config:
+      rid: 2469572882459525205
+    EditorPosition: {x: 0, y: 0}
+  edges:
+  - FromNodeId: activate
+    FromPortId: Next
+    ToNodeId: launch
+    ToPortId: In
+  - FromNodeId: launch
+    FromPortId: OnImpact
+    ToNodeId: damage
+    ToPortId: In
+  - FromNodeId: victim
+    FromPortId: Value
+    ToNodeId: damage
+    ToPortId: Target
+  - FromNodeId: damageAmount
+    FromPortId: Value
+    ToNodeId: damage
+    ToPortId: Amount
+  references:
+    version: 2
+    RefIds:
+    - rid: 2469572882459525201
+      type: {class: ActivateConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data: 
+    - rid: 2469572882459525202
+      type: {class: LaunchProjectileConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data:
+        Projectile: {fileID: 8785262167055422538, guid: 95546d9105ca9cb49ae49eaf5f212b5d, type: 3}
+    - rid: 2469572882459525203
+      type: {class: EventVictimConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data: 
+    - rid: 2469572882459525204
+      type: {class: ConstantConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data:
+        Value: 20
+    - rid: 2469572882459525205
+      type: {class: DamageConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data:
+        Provenance: 2

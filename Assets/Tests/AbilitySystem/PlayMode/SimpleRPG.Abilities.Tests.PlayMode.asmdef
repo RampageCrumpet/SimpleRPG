@@ -1,0 +1,25 @@
+{
+    "name": "SimpleRPG.Abilities.Tests.PlayMode",
+    "rootNamespace": "SimpleRPG.Abilities.Tests.PlayMode",
+    "references": [
+        "SimpleRPG",
+        "SimpleRPG.Gameplay.Core",
+        "SimpleRPG.Abilities.Runtime",
+        "SimpleRPG.Abilities.Integration",
+        "Unity.Netcode.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false,
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}

@@ -1,14 +1,12 @@
 using System.Reflection;
 using NUnit.Framework;
-using SimpleRPG.Abilities;
 using SimpleRPG.InventorySystem;
 using UnityEngine;
 
 namespace SimpleRPG.Tests.EditMode
 {
     /// <summary>
-    /// Checks the pieces of the server-authority model that don't need a running network: the server cooldown record,
-    /// the item registry and the inventory's validated moves.
+    /// Checks the pieces of the server-authority model that don't need a running network: the item registry and the inventory's validated moves.
     /// </summary>
     public class NetworkAuthorityTests
     {
@@ -21,61 +19,6 @@ namespace SimpleRPG.Tests.EditMode
             {
                 Object.DestroyImmediate(host);
             }
-        }
-
-        // --- Server cooldowns ---
-
-        [Test]
-        public void Cooldown_FirstActivationIsAccepted()
-        {
-            var tracker = new ServerCooldownTracker(0f);
-            Assert.IsTrue(tracker.TryActivate("Slash", 1f, 10f));
-        }
-
-        [Test]
-        public void Cooldown_ActivationInsideTheCooldownIsRejected()
-        {
-            var tracker = new ServerCooldownTracker(0f);
-            tracker.TryActivate("Slash", 1f, 10f);
-
-            Assert.IsFalse(tracker.TryActivate("Slash", 1f, 10.5f));
-        }
-
-        [Test]
-        public void Cooldown_ActivationAfterTheCooldownIsAccepted()
-        {
-            var tracker = new ServerCooldownTracker(0f);
-            tracker.TryActivate("Slash", 1f, 10f);
-
-            Assert.IsTrue(tracker.TryActivate("Slash", 1f, 11f));
-        }
-
-        [Test]
-        public void Cooldown_RejectedActivationDoesNotRestartTheCooldown()
-        {
-            var tracker = new ServerCooldownTracker(0f);
-            tracker.TryActivate("Slash", 1f, 10f);
-            tracker.TryActivate("Slash", 1f, 10.9f);
-
-            Assert.IsTrue(tracker.TryActivate("Slash", 1f, 11f));
-        }
-
-        [Test]
-        public void Cooldown_ToleranceAllowsAPressThatIsSlightlyEarly()
-        {
-            var tracker = new ServerCooldownTracker(0.1f);
-            tracker.TryActivate("Slash", 1f, 10f);
-
-            Assert.IsTrue(tracker.TryActivate("Slash", 1f, 10.95f));
-        }
-
-        [Test]
-        public void Cooldown_AbilitiesAreTrackedSeparately()
-        {
-            var tracker = new ServerCooldownTracker(0f);
-            tracker.TryActivate("Slash", 1f, 10f);
-
-            Assert.IsTrue(tracker.TryActivate("Fireball", 1f, 10.1f));
         }
 
         // --- Item registry ---

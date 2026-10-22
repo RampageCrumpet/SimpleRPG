@@ -59,9 +59,9 @@ namespace SimpleRPG
         void Start()
         {
             // Subscribe to the ability activation event.
-            foreach (var abilityInstance in GetComponent<Character>().PersonalAbilities)
+            foreach (IAbilitySlot slot in GetComponent<Character>().AbilitySlots)
             {
-                abilityInstance.OnAbilityActivated += HandleAbilityActivated;
+                slot.Activated += HandleAbilityActivated;
             }
         } 
 
@@ -118,8 +118,8 @@ namespace SimpleRPG
         /// <summary>
         /// Stop the interaction with the interactable if the player takes any action.
         /// </summary>
-        /// <param name="abilityInstance">The abillity that was used.</param>
-        private void HandleAbilityActivated(AbilityInstance abilityInstance)
+        /// <param name="slot">The abillity that was used.</param>
+        private void HandleAbilityActivated(IAbilitySlot slot)
         {
             if(Interactable != null)
             {
@@ -154,9 +154,9 @@ namespace SimpleRPG
         private void OnDestroy()
         {
             // Unsubscribe from the ability activation event.
-            foreach (var abilityInstance in GetComponent<Character>().PersonalAbilities)
+            foreach (IAbilitySlot slot in GetComponent<Character>().AbilitySlots)
             {
-                abilityInstance.OnAbilityActivated -= HandleAbilityActivated;
+                slot.Activated -= HandleAbilityActivated;
             }
         }
 

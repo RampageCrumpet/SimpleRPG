@@ -53,7 +53,7 @@ namespace AI
         {
 
             //Check if we're dead.
-            if (aiController.Character.Health <= 0)
+            if (!aiController.Character.IsAlive)
             {
                 aiController.ChangeState(dead);
                 return;
@@ -68,13 +68,13 @@ namespace AI
                 return;
             }
 
-            IEnumerable<AbilityInstance> meleeAttackAbilities = aiController.Character.PersonalAbilities.Where(x => x.Ability is MeleeAttackAbility);
+            GraphAbilitySlot chosenSlot = aiController.Character.AbilitySlots
+                .OfType<GraphAbilitySlot>()
+                .FirstOrDefault(x => x.Definition.HasNode(NodeTypes.MeleeSwing) && x.CooldownTimeLeft <= 0);
 
-            AbilityInstance chosenInstance = meleeAttackAbilities.FirstOrDefault(x => x.CooldownTimeLeft <= 0);
-
-            if(chosenInstance != null)
+            if (chosenSlot != null)
             {
-                chosenInstance.Activate();
+                chosenSlot.Activate();
             }
         }
     }

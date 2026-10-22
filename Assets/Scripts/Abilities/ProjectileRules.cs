@@ -31,5 +31,16 @@ namespace SimpleRPG.Abilities
         {
             return hasTarget && !alreadyHit;
         }
+
+        /// <summary>
+        /// Whether a collider a projectile touched is level geometry that should stop it. Triggers are not solid, and characters are hit through
+        /// their hurtboxes, so neither counts.
+        /// </summary>
+        /// <param name="isTrigger">True if the collider is a trigger.</param>
+        /// <param name="belongsToCharacter">True if the collider is part of a character.</param>
+        public static bool IsLevelGeometry(bool isTrigger, bool belongsToCharacter)
+        {
+            return !isTrigger && !belongsToCharacter;
+        }
     }
 }

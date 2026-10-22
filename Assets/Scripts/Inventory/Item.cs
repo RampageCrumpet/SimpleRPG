@@ -1,6 +1,8 @@
 using SimpleRPG;
+using SimpleRPG.Abilities;
 using SimpleRPG.InventorySystem.LootGeneration;
 using System;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -23,7 +25,7 @@ namespace SimpleRPG.InventorySystem
     /// A serializable base class containing information about items.
     /// </summary>
     [CreateAssetMenu(fileName = "Item", menuName = "Items/Item")]
-    public class Item : NetworkSerializableScriptableObject
+    public class Item : ScriptableObject
     {
         [Header("Item Settings")]
         [field: SerializeField]
@@ -40,6 +42,59 @@ namespace SimpleRPG.InventorySystem
         [field: SerializeField]
         [Tooltip("The total size of the item in the inventory grid.")]
         public Vector2Int ItemSize { private set; get; }
+
+        /// <summary>
+        /// Rules this item brings while it is equipped, such as a chance to cast a spell when its wielder lands a blow.
+        /// Rules run on the server only, so they are not part of what is sent to clients.
+        /// </summary>
+        [SerializeField]
+        [Tooltip("Rules this item brings while it is equipped.")]
+        private List<GameplayRuleDefinition> rules = new List<GameplayRuleDefinition>();
+
+        /// <summary>
+        /// The rules this item brings while it is equipped.
+        /// </summary>
+        public IReadOnlyList<GameplayRuleDefinition> Rules => rules;
+
+        /// <summary>
+        /// Changes to the wearer's attributes this item brings while it is equipped. Applied on the server and released when the item comes off.
+        /// </summary>
+        [SerializeField]
+        [Tooltip("Changes to the wearer's attributes while this item is equipped.")]
+        private List<GrantSpec> grants = new List<GrantSpec>();
+
+        /// <summary>
+        /// The attribute grants this item brings while it is equipped.
+        /// </summary>
+        public IReadOnlyList<GrantSpec> Grants => grants;
+
+        [SerializeField]
+        [Min(0)]
+        [Tooltip("Charges each instance of this item starts with. Zero means the item has no charge pool. Charges are spent by the item's abilities and are not refilled.")]
+        private int startingCharges;
+
+        [SerializeField]
+        [Tooltip("Abilities this item lets its wielder use while it is equipped, and what each costs.")]
+        private List<ItemAbilityGrant> grantedAbilities = new List<ItemAbilityGrant>();
+
+        [SerializeField]
+        [Tooltip("Attributes this item has of its own, such as a staff's magic power. Abilities the item provides can read them whoever wields it.")]
+        private List<AttributeValueSpec> fixedAttributes = new List<AttributeValueSpec>();
+
+        /// <summary>
+        /// Charges each instance of this item starts with. Zero means no charge pool.
+        /// </summary>
+        public int StartingCharges => startingCharges;
+
+        /// <summary>
+        /// The abilities this item lets its wielder use while it is equipped.
+        /// </summary>
+        public IReadOnlyList<ItemAbilityGrant> GrantedAbilities => grantedAbilities;
+
+        /// <summary>
+        /// The attributes this item has of its own.
+        /// </summary>
+        public IReadOnlyList<AttributeValueSpec> FixedAttributes => fixedAttributes;
 
         /// <summary>
         /// The item asset this instance was cloned from, or null if this is the asset itself.
@@ -59,34 +114,6 @@ namespace SimpleRPG.InventorySystem
             Item clone = Instantiate(SourceAsset);
             clone.Template = SourceAsset;
             return clone;
-        }
-
-        protected override void DeserializeData<T>(BufferSerializer<T> serializer)
-        {
-            var itemName = string.Empty;
-            serializer.SerializeValue(ref itemName);
-            ItemName = itemName;
-
-            var iconName = string.Empty;
-            serializer.SerializeValue(ref iconName);
-            Icon = Resources.Load<Sprite>(iconName);
-
-            var itemSize = new Vector2Int();
-            serializer.SerializeValue(ref itemSize);
-            ItemSize = itemSize;
-        }
-
-        protected override void SerializeData<T>(BufferSerializer<T> serializer)
-        {
-            var itemName = ItemName;
-            serializer.SerializeValue(ref itemName);
-
-            // Serialize the icon's name instead of the icon itself so we don't have to send images across the network.
-            string iconName = Icon != null ? Icon.name : string.Empty;
-            serializer.SerializeValue(ref iconName);
-
-            var itemSize = ItemSize;
-            serializer.SerializeValue(ref itemSize);
         }
     }
 }

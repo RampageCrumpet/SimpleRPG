@@ -19,9 +19,9 @@ namespace SimpleRPG.Tests.EditMode
         [Test]
         public void GremlinAbility_HasOneSecondCooldown()
         {
-            Ability ability = AssetDatabase.LoadAssetAtPath<Ability>(GremlinAbility);
+            AbilityDefinition ability = AssetDatabase.LoadAssetAtPath<AbilityDefinition>(GremlinAbility);
             Assert.IsNotNull(ability, $"Could not load {GremlinAbility}.");
-            Assert.AreEqual(1f, ability.CooldownTime, 0.001f);
+            Assert.AreEqual(1f, ability.CooldownSeconds, 0.001f);
         }
 
         [Test]
@@ -53,9 +53,9 @@ namespace SimpleRPG.Tests.EditMode
         public void PlayerAbility_HasOneSecondCooldown()
         {
             // Queued combo presses bypass the cooldown, so it only limits fresh attacks and no longer needs to be short.
-            Ability ability = AssetDatabase.LoadAssetAtPath<Ability>(PlayerAbility);
+            AbilityDefinition ability = AssetDatabase.LoadAssetAtPath<AbilityDefinition>(PlayerAbility);
             Assert.IsNotNull(ability, $"Could not load {PlayerAbility}.");
-            Assert.AreEqual(1f, ability.CooldownTime, 0.001f);
+            Assert.AreEqual(1f, ability.CooldownSeconds, 0.001f);
         }
     }
 }

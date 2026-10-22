@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 3736388611686488690}
   - component: {fileID: 5838598996139159328}
   - component: {fileID: 3451314387634747234}
+  - component: {fileID: 2024117589843666962}
+  - component: {fileID: 3619820689415974521}
   m_Layer: 0
   m_Name: TestTarget
   m_TagString: Untagged
@@ -75,4 +77,32 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   maxHealth: 100
   abilities: []
-  WeaponData: {fileID: 0}
+  graphAbilities: []
+  startingWeapon: {fileID: 0}
+--- !u!114 &2024117589843666962
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3063479357768333819}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1a85ba78ea00fa48bd0655803c4ba0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Equipment
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &3619820689415974521
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3063479357768333819}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8e71237b13df6742a601e89ca17a213, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG.Abilities.Integration::SimpleRPG.Abilities.Integration.AbilityUser
+  ShowTopMostFoldoutHeaderGroup: 1
+  muzzleOffset: {x: 0, y: 1.2, z: 0.8}

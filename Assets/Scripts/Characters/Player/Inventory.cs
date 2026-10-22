@@ -369,6 +369,15 @@ namespace SimpleRPG.InventorySystem
         }
 
         /// <summary>
+        /// Gets the ID that identifies this item instance. It stays the same when the item moves between inventories.
+        /// </summary>
+        /// <returns>The ID, or an invalid ID if the item is not in this inventory.</returns>
+        public SimpleRPG.Gameplay.ItemInstanceId GetInstanceId(Item item)
+        {
+            return item != null && idsByItem.TryGetValue(item, out uint id) ? new SimpleRPG.Gameplay.ItemInstanceId(id) : default;
+        }
+
+        /// <summary>
         /// Can this inventory publish the item to clients? Always true when the inventory isn't networked.
         /// </summary>
         public bool CanReplicate(Item item)

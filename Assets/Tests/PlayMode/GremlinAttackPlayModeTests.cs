@@ -92,7 +92,7 @@ namespace SimpleRPG.Tests.PlayMode
 
             AdvanceTo(0.3f); // the old clip opens the hitbox at 0.17 s
             Assert.AreEqual(1, receiver.ActivationCount, "The ActivateWeapon event should open the hitbox once.");
-            // The enemy clip has no attack number, so its event passes 0. MeleeAttackAbilityBehaviour treats 0 as full damage.
+            // The enemy clip has no attack number, so its event passes 0. MeleeDelivery treats 0 as full damage.
             Assert.AreEqual(0, receiver.LastActivatedAttack, "The enemy clip's ActivateWeapon event should pass attack number 0.");
 
             AdvanceTo(0.6f); // and closes it at 0.50 s

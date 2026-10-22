@@ -51,12 +51,12 @@ namespace SimpleRPG.Tests.EditMode
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefab);
             Assert.IsNotNull(prefab, $"Could not load {PlayerPrefab}.");
 
-            MeleeAttackAbilityBehaviour behaviour = prefab.GetComponentInChildren<MeleeAttackAbilityBehaviour>(true);
-            Assert.IsNotNull(behaviour, "The player prefab has no MeleeAttackAbilityBehaviour.");
+            MeleeDelivery behaviour = prefab.GetComponentInChildren<MeleeDelivery>(true);
+            Assert.IsNotNull(behaviour, "The player prefab has no MeleeDelivery.");
 
             SerializedObject serialized = new SerializedObject(behaviour);
             SerializedProperty array = serialized.FindProperty(fieldName);
-            Assert.IsNotNull(array, $"MeleeAttackAbilityBehaviour has no {fieldName} field.");
+            Assert.IsNotNull(array, $"MeleeDelivery has no {fieldName} field.");
 
             float[] values = new float[array.arraySize];
             for (int i = 0; i < values.Length; i++)
@@ -152,16 +152,6 @@ namespace SimpleRPG.Tests.EditMode
             {
                 Assert.AreEqual(expected[i], actual[i], 0.005f, $"Damage scalar for attack {i + 1} does not match its clip-length ratio.");
             }
-        }
-
-        [Test]
-        public void ScaleDamage_RoundsToNearestWholePoint()
-        {
-            Assert.AreEqual(10, Weapon.ScaleDamage(10, 1f));
-            Assert.AreEqual(8, Weapon.ScaleDamage(10, 0.79f));
-            Assert.AreEqual(8, Weapon.ScaleDamage(10, 0.84f));
-            Assert.AreEqual(1, Weapon.ScaleDamage(1, 0.79f));
-            Assert.AreEqual(0, Weapon.ScaleDamage(0, 1.15f));
         }
 
         [Test]

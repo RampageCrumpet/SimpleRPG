@@ -16,7 +16,7 @@ namespace SimpleRPG.Animations
         private IEnumerable<Animator> animator;
         private Character character;
         private CharacterController characterController;
-        private MeleeAttackAbilityBehaviour meleeAttackAbility;
+        private MeleeDelivery meleeAttackAbility;
 
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -26,8 +26,8 @@ namespace SimpleRPG.Animations
             animator = character.gameObject.GetComponentsInChildren<Animator>();
             character.OnTakeDamage += new Character.NotifyDamageTaken(UpdateTakeDamage);
             characterController = character.gameObject.GetComponent<CharacterController>();
-            meleeAttackAbility = character.gameObject.GetComponent<MeleeAttackAbilityBehaviour>();
-            meleeAttackAbility.MeleeAttackStarted += new MeleeAttackAbilityBehaviour.NotifyMeleeAttackStarted(MeleeAttack);
+            meleeAttackAbility = character.gameObject.GetComponent<MeleeDelivery>();
+            meleeAttackAbility.MeleeAttackStarted += new MeleeDelivery.NotifyMeleeAttackStarted(MeleeAttack);
         }
 
         // Update is called once per frame

@@ -1,8 +1,8 @@
 using HitDetection;
 using SimpleRPG;
 using SimpleRPG.Abilities;
-using System.Collections;
-using System.Collections.Generic;
+using SimpleRPG.Gameplay;
+using System;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -26,17 +26,12 @@ public class Projectile : NetworkBehaviour
     float lifeSpan;
 
     /// <summary>
-    /// The total damage dealt by this projectile. Set on the server in <see cref="Launch"/> and mirrored on clients.
-    /// </summary>
-    private DamageInfo damage = new DamageInfo();
-
-    /// <summary>
     /// The character that fired this projectile. Contact with it is ignored so a shot never hurts its caster.
     /// </summary>
     private Character owner;
 
     /// <summary>
-    /// True once this projectile has damaged a target, so a second hitbox overlap in the same step can't hit again.
+    /// True once this projectile has reported what it hit, so a second overlap in the same step can't report again.
     /// </summary>
     private bool hasHit;
 
@@ -46,6 +41,17 @@ public class Projectile : NetworkBehaviour
     /// The hitbox used to determine if this projectile hit anything.
     /// </summary>
     private Hitbox hitBox;
+
+    /// <summary>
+    /// Raised on the server, once, when this projectile hits a character or level geometry. The projectile does no damage itself;
+    /// whatever launched it decides what the hit means.
+    /// </summary>
+    public event Action<ProjectileImpact> Impacted;
+
+    /// <summary>
+    /// Raised on the server when this projectile ends without hitting anything, because it ran out of lifetime.
+    /// </summary>
+    public event Action Expired;
 
     // Start is called before the first frame update
     void Start()
@@ -61,18 +67,35 @@ public class Projectile : NetworkBehaviour
         // If the projectile has outlived it's lifespan.
         if (Time.time - spawnTime > lifeSpan)
         {
+            if (IsServer && !hasHit)
+            {
+                hasHit = true;
+                Expired?.Invoke();
+            }
+
             this.DestroyProjectile();
         }
     }
 
     /// <summary>
-    /// Server only. Records who fired the projectile and how much damage it does, starts it moving, and tells clients to do the same.
+    /// Server only. Records who fired the projectile, starts it moving, and tells clients to do the same.
     /// The server must set these itself: a <see cref="ClientRpc"/> body doesn't run on a dedicated server.
     /// </summary>
-    /// <param name="shooter">The character that fired this projectile.</param>
+    /// <param name="shooter">The character that fired this projectile, or null for a projectile with no shooter.</param>
     /// <param name="direction">The direction to fire in.</param>
-    /// <param name="damageInfo">The damage this projectile does on a hit.</param>
-    public void Launch(Character shooter, Vector3 direction, DamageInfo damageInfo)
+    public override void OnNetworkDespawn()
+    {
+        // A projectile removed without hitting anything or running out of time (a scene change, a shutdown) still tells the ability that fired it.
+        if (IsServer && !hasHit)
+        {
+            hasHit = true;
+            Expired?.Invoke();
+        }
+
+        base.OnNetworkDespawn();
+    }
+
+    public void Launch(Character shooter, Vector3 direction)
     {
         if (!this.IsServer)
         {
@@ -81,28 +104,26 @@ public class Projectile : NetworkBehaviour
         }
 
         owner = shooter;
-        ApplyLaunch(direction, damageInfo);
-        FireClientRPC(direction, damageInfo);
+        ApplyLaunch(direction);
+        FireClientRPC(direction);
     }
 
     [ClientRpc]
-    public void FireClientRPC(Vector3 direction, DamageInfo damage)
+    public void FireClientRPC(Vector3 direction)
     {
-        ApplyLaunch(direction, damage);
+        ApplyLaunch(direction);
     }
 
     /// <summary>
-    /// Copies the damage and sets the velocity. Runs on the server and on every client.
+    /// Sets the velocity. Runs on the server and on every client.
     /// </summary>
-    private void ApplyLaunch(Vector3 direction, DamageInfo damageInfo)
+    private void ApplyLaunch(Vector3 direction)
     {
-        // Copy the damage so the projectile doesn't hold a reference to the ability asset's own DamageInfo.
-        this.damage = new DamageInfo { Damage = damageInfo != null ? damageInfo.Damage : 0 };
         this.GetComponent<Rigidbody>().linearVelocity = ProjectileRules.LaunchVelocity(direction, velocity);
     }
 
     /// <summary>
-    /// Server only. Damages the touched character once and then destroys the projectile. Contact with the caster is ignored.
+    /// Server only. Reports the touched character once and then destroys the projectile. Contact with the shooter is ignored.
     /// </summary>
     public void TargetHit(Character character, BodyLocation location)
     {
@@ -119,11 +140,45 @@ public class Projectile : NetworkBehaviour
         if (ProjectileRules.ShouldApplyHit(character != null, hasHit))
         {
             hasHit = true;
-            character.TakeDamage(damage, location);
+            Impacted?.Invoke(new ProjectileImpact(character.Id, (int)location, ToPosition(transform.position), false));
         }
 
         this.DestroyProjectile();
     }
+
+    /// <summary>
+    /// Server only. A projectile whose collider is a trigger reaches level geometry as a trigger overlap.
+    /// </summary>
+    private void OnTriggerEnter(Collider other)
+    {
+        ReportWorldImpact(other, transform.position);
+    }
+
+    /// <summary>
+    /// Server only. A projectile with a solid collider reaches level geometry as a collision.
+    /// </summary>
+    private void OnCollisionEnter(Collision collision)
+    {
+        ReportWorldImpact(collision.collider, collision.contactCount > 0 ? collision.GetContact(0).point : transform.position);
+    }
+
+    /// <summary>
+    /// A projectile that touches level geometry stops there and reports a world impact.
+    /// Triggers, characters (their hurtboxes report those) and the shooter's own colliders are not geometry.
+    /// </summary>
+    private void ReportWorldImpact(Collider other, Vector3 point)
+    {
+        if (!IsServer || hasHit || !ProjectileRules.IsLevelGeometry(other.isTrigger, other.GetComponentInParent<Character>() != null))
+        {
+            return;
+        }
+
+        hasHit = true;
+        Impacted?.Invoke(new ProjectileImpact(default, 0, ToPosition(point), true));
+        DestroyProjectile();
+    }
+
+    private static Position3 ToPosition(Vector3 position) => new Position3(position.x, position.y, position.z);
 
     /// <summary>
     /// Destroy the given projectile.

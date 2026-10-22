@@ -1,61 +1,14 @@
 using NUnit.Framework;
 using SimpleRPG.Abilities;
-using UnityEditor;
 using UnityEngine;
 
 namespace SimpleRPG.Tests.EditMode
 {
     /// <summary>
-    /// Checks that the Firebolt and Icebolt assets are configured to fire and deal damage, and that the projectile rules behave.
+    /// Checks the pure projectile rules. The shipped spells themselves are checked in the ability system's tests.
     /// </summary>
     public class SpellDataTests
     {
-        private const string Firebolt = "Assets/Abilitities/Abillities/Firebolt.asset";
-        private const string Icebolt = "Assets/Abilitities/Abillities/Icebolt.asset";
-
-        [TestCase(Firebolt)]
-        [TestCase(Icebolt)]
-        public void Spell_LoadsAsFireProjectileAbility(string path)
-        {
-            FireProjectileAbility spell = AssetDatabase.LoadAssetAtPath<FireProjectileAbility>(path);
-
-            Assert.IsNotNull(spell, $"Could not load {path} as a FireProjectileAbility.");
-            Assert.AreEqual(typeof(FireProjectileAbillityBehaviour), spell.AbilityBehavior);
-        }
-
-        [TestCase(Firebolt)]
-        [TestCase(Icebolt)]
-        public void Spell_DealsPositiveDamage(string path)
-        {
-            FireProjectileAbility spell = AssetDatabase.LoadAssetAtPath<FireProjectileAbility>(path);
-
-            Assert.IsNotNull(spell, $"Could not load {path}.");
-            Assert.IsNotNull(spell.Damage, $"{spell.AbillityName} has no DamageInfo.");
-            Assert.Greater(spell.Damage.Damage, 0, $"{spell.AbillityName} must deal damage to be useful.");
-        }
-
-        [TestCase(Firebolt)]
-        [TestCase(Icebolt)]
-        public void Spell_HasPositiveCooldown(string path)
-        {
-            Ability spell = AssetDatabase.LoadAssetAtPath<Ability>(path);
-
-            Assert.IsNotNull(spell, $"Could not load {path}.");
-            Assert.Greater(spell.CooldownTime, 0f, $"{spell.AbillityName} needs a cooldown so it can't be spammed.");
-        }
-
-        [TestCase(Firebolt)]
-        [TestCase(Icebolt)]
-        public void Spell_ProjectilePrefab_HasProjectileAndNetworkObject(string path)
-        {
-            FireProjectileAbility spell = AssetDatabase.LoadAssetAtPath<FireProjectileAbility>(path);
-
-            Assert.IsNotNull(spell, $"Could not load {path}.");
-            Assert.IsNotNull(spell.Projectile, $"{spell.AbillityName} has no projectile prefab.");
-            Assert.IsNotNull(spell.Projectile.GetComponent<Projectile>(), $"{spell.AbillityName}'s prefab needs a Projectile component.");
-            Assert.IsNotNull(spell.Projectile.GetComponent<Unity.Netcode.NetworkObject>(), $"{spell.AbillityName}'s prefab needs a NetworkObject to be spawned.");
-        }
-
         [Test]
         public void LaunchVelocity_PointsAlongTheDirectionAtTheGivenSpeed()
         {
@@ -90,6 +43,24 @@ namespace SimpleRPG.Tests.EditMode
         public void ShouldApplyHit_SecondContactInTheSameFlight_DoesNotApply()
         {
             Assert.IsFalse(ProjectileRules.ShouldApplyHit(hasTarget: true, alreadyHit: true));
+        }
+
+        [Test]
+        public void IsLevelGeometry_ASolidCollider_StopsTheProjectile()
+        {
+            Assert.IsTrue(ProjectileRules.IsLevelGeometry(isTrigger: false, belongsToCharacter: false));
+        }
+
+        [Test]
+        public void IsLevelGeometry_ATrigger_DoesNot()
+        {
+            Assert.IsFalse(ProjectileRules.IsLevelGeometry(isTrigger: true, belongsToCharacter: false));
+        }
+
+        [Test]
+        public void IsLevelGeometry_ACharactersCollider_DoesNot()
+        {
+            Assert.IsFalse(ProjectileRules.IsLevelGeometry(isTrigger: false, belongsToCharacter: true));
         }
     }
 }
