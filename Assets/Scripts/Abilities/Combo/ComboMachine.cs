@@ -198,6 +198,25 @@ namespace SimpleRPG.Abilities
         }
 
         /// <summary>
+        /// Says what <see cref="Press"/> would do at this time, without changing anything. Lets a caller refuse a press for a reason of its own,
+        /// such as a cooldown that only applies to starting a fresh chain, before the machine commits to it.
+        /// </summary>
+        /// <param name="now">When the press happened.</param>
+        public ComboPressOutcome PreviewPress(double now)
+        {
+            // A step that has run out by the time of the press is gone, exactly as Press would find it after catching up.
+            bool ranOut = current >= 0 && now >= processedUntil && now - stepStart >= steps[current].Duration;
+            if (current < 0 || ranOut)
+            {
+                return ComboPressOutcome.Started;
+            }
+
+            double elapsed = now - stepStart;
+            bool chains = elapsed >= 0 && current + 1 < steps.Length && steps[current].IsInChainWindow(elapsed);
+            return chains ? ComboPressOutcome.Chained : ComboPressOutcome.Rejected;
+        }
+
+        /// <summary>
         /// Stops the running step at once, for example because the character died or was stunned. Reports the hit window closing if it was open.
         /// Does nothing if no chain is running.
         /// </summary>

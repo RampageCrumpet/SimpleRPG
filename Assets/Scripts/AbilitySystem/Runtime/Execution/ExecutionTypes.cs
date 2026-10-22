@@ -241,20 +241,39 @@ namespace SimpleRPG.Abilities
     }
 
     /// <summary>
-    /// A character's melee mechanics, as the activation layer sees them: the combo chain and the press that continues it.
+    /// What a press of a melee ability does, as decided by the character's melee mechanics.
+    /// </summary>
+    public enum MeleePressOutcome
+    {
+        /// <summary>The press changes nothing: it came too early, too late, or the character may not swing.</summary>
+        Rejected,
+
+        /// <summary>The press starts a fresh use of the ability, so the ability's cooldown applies.</summary>
+        Fresh,
+
+        /// <summary>The press continues a use in progress, such as the next swing of a combo, so the cooldown was already paid.</summary>
+        Continued,
+    }
+
+    /// <summary>
+    /// A character's melee mechanics, as the activation layer sees them. Every press of a melee ability goes through
+    /// <see cref="Press"/> first; the swing itself then starts when the ability's MeleeSwing node calls <see cref="IMeleeDelivery.Begin"/>.
     /// </summary>
     public interface IMeleeSwingHost : IMeleeDelivery
     {
         /// <summary>
-        /// True if a fresh combo chain may start now. It is blocked only while a queued chain is still running.
+        /// Decides what a press does and, unless it is rejected, reserves the swing that the ability's next Begin starts. Server only.
         /// </summary>
-        bool CanStartFreshChain { get; }
+        /// <param name="pressTick">The tick the press happened at, as the presser's clock read it. The host credits at most a short, bounded
+        /// delay for network latency. Negative means the press happened now.</param>
+        /// <param name="freshAllowed">False if starting a fresh use is not allowed, such as while the ability's cooldown runs. A press that
+        /// would have to start a fresh use is then rejected, while one that continues a use in progress is not affected.</param>
+        MeleePressOutcome Press(long pressTick, bool freshAllowed);
 
         /// <summary>
-        /// A press while an attack is playing. If one is, the press is consumed here: on a client it asks the server to queue the next swing.
+        /// Gives up the swing <see cref="Press"/> reserved, because the ability did not go on to start it.
         /// </summary>
-        /// <returns>True if the press was consumed and must not start a new use.</returns>
-        bool TryQueue(AbilityDefinition ability);
+        void CancelPress();
     }
 
     /// <summary>

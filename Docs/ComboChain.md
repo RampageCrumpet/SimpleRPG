@@ -1,6 +1,6 @@
 # Combo chain (design)
 
-Status: **in progress.** Data (`ComboDefinition`) and logic (`ComboMachine`) are built; server, prediction and animation are not (bead epic simplerpg-7du.1.5). Replaces the current `MeleeComboTracker` / `ComboQueued` animator chain. Player only; enemies keep their independent attacks.
+Status: **server and animation built; owner prediction and latency tests not yet.** The player's longsword now runs on `ComboDefinition` + `ComboMachine` through `ComboMeleeDelivery`, with one clip per attack on a masked attack layer. Remaining: owner prediction, remote-client seek, latency PlayMode tests, and a human feel/visual pass on the values below (bead epic simplerpg-7du.1.5). Replaces the current `MeleeComboTracker` / `ComboQueued` animator chain. Player only; enemies keep their independent attacks.
 
 ## Target feel
 
@@ -85,6 +85,15 @@ The existing Cascadeur set (`I:\Art\Cascadeur\Longsword_Combo_ClipRanges.md`) al
 
 - Likely **no Cascadeur work is needed to start**: re-import each attack as one clip (Attack + Recovery). That is an importer range change.
 - **Pose mismatch is the main art risk.** Attack 2 and 3 were authored to start from the previous attack's *combo-end* pose, not from mid-recovery. If `ChainOpen` is placed shortly after the hit ends the poses are close; a `BlendIn` / `StartOffset` hides the rest. If it looks bad, re-author each attack's start (guard-ish pose) in Cascadeur.
+
+## As built
+
+- **Press path.** Every melee press, first or chained, is `IAbilityActivator.RequestActivate`. On a client it sends `ActivateServerRpc(shortId, pressTick)`. `AbilityUser.Run` asks the character's `IMeleeSwingHost.Press(pressTick, freshAllowed)`: `Rejected` does nothing; `Fresh` charges the ability cooldown; `Continued` does not. The host reserves the step, then the ability's MeleeSwing node calls `Begin`, which starts the swing; `CancelPress()` releases an unused reservation. `GraphAbilitySlot` no longer gates melee presses on its local cooldown, since only the server knows if a press is a continuation.
+- **Hosts.** `MeleeDeliveryBase` (shared swing tracking, weapon hits, `MeleeAttackClientRpc`) with `MeleeDelivery` (enemies, clip-event hit windows, independent attacks) and `ComboMeleeDelivery` (players, `ComboMachine`, data hit windows). `ComboMeleeDelivery` lives in the Integration assembly because it reads the network clock; tests move its `Clock` by hand.
+- **Latency credit.** The server credits a stamped press with its time, but at most `ComboMeleeDelivery.MaxRewindSeconds` (0.15 s) before now and never in the future. A shipped combo test requires each chain window to close at least that long before its step ends.
+- **Presentation.** The host describes an attack as an `AttackAnimation` (trigger for enemies, state + blend + offset for combos). `AnimatableCharacter` plays states with `CrossFadeInFixedTime`. The player controller has an `Attack` layer masked to body, head, arms and fingers (`Longsword_UpperBody.mask`) with states `Longsword_A1..A3` that exit to an empty state; locomotion keeps running underneath. The old Attack/Combo/Recovery states, `ComboQueued`, `Attack_OneHanded` and `MeleeComboTracker` are gone.
+- **Hit and clip sync.** The blade hitbox rides the animated weapon bone, so the server animator must play each step in step with the machine; data hit windows are authored from the Cascadeur hit frames. Server animators are forced to always animate.
+- **Shipped longsword combo** (`Assets/Items/Weapon Data/Longsword_Combo.asset`, assigned to the player's `TestWeaponData`): hit windows from the Cascadeur frames (A1 56-70, A2 38-55, A3 45-59); chain windows A1 1.45-2.0 s and A2 1.2-1.7 s are **first guesses** to tune by feel; blend-in 0.15 s; damage scalars 1 / 0.79 / 0.84 as before.
 
 ## Open questions
 

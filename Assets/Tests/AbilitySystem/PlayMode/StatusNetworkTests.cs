@@ -287,6 +287,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             created.Add(sword);
             sword.damage = new DamageInfo { Damage = 10 };
             typeof(Item).GetField("rules", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(sword, new List<GameplayRuleDefinition> { rule });
+            ComboDefinition swordCombo = ComboTestSupport.CreateCombo();
+            created.Add(swordCombo);
+            ComboTestSupport.GiveCombo(sword, swordCombo);
             previousRegistry = ItemRegistry.Instance;
             ItemRegistry.Instance = ItemRegistry.Create(new Item[] { sword });
 
@@ -299,8 +302,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             services.Events.Subscribe<DamageResolvedEvent>(e => { if (e.Request.Provenance == DamageProvenance.Periodic) periodic.Add(e.Request); });
 
             // The blow, the sword's rule, the projectile and the ignition.
+            ComboTestSupport.UseManualClock(wielder);
             Assert.IsTrue(wielder.GetComponent<AbilityUser>().TryActivateOnServer(AssetDatabase.LoadAssetAtPath<AbilityDefinition>(MeleeAttack)));
-            wielder.GetComponent<MeleeDelivery>().ActivateWeapon(1);
+            ComboTestSupport.Advance(wielder, ComboTestSupport.InsideHitWindow);
             wielder.GetComponentInChildren<global::Weapon>().TargetHit(victim, BodyLocation.Torso);
             yield return null;
             Object.FindObjectsByType<Projectile>().Single().TargetHit(victim, BodyLocation.Torso);

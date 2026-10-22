@@ -284,19 +284,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  independentAttacks: []
-  attackLengths:
-  - 1.1666666
-  - 0.9166667
-  - 0.98333335
-  comboLengths:
-  - 0.28333333
-  - 0.05
-  - 0
-  comboDamageScalars:
-  - 1
-  - 0.79
-  - 0.84
+  independentAttacks:
+  - Trigger: Attack_OneHanded
+    Duration: 1
+    DamageScalar: 1
 --- !u!143 &8341618812026471777
 CharacterController:
   m_ObjectHideFlags: 0
@@ -334,8 +325,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71e9c15da6f0e2147acffbfcd2dddf8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  activationTrigger:
-  deathTrigger:
+  activationTrigger: 
+  deathTrigger: 
 --- !u!95 &4761831126757766221
 Animator:
   serializedVersion: 7
@@ -448,7 +439,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0372f7b76fe52274c8f1210d478dda76, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: SimpleRPG::AI.EnemyController
   ShowTopMostFoldoutHeaderGroup: 1
   AttackRange: 1

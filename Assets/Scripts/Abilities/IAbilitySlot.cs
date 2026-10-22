@@ -64,13 +64,14 @@ namespace SimpleRPG.Abilities
                 return;
             }
 
-            // A press that continues a use in progress (the next swing of a combo) is taken even while the cooldown runs, and doesn't restart it.
-            if (activator.TryQueue(definition))
+            // A melee press may continue a combo that is already paying the cooldown, so only the server can say whether it is allowed.
+            // Every other ability is refused here while its cooldown runs, so a held button doesn't flood the server.
+            if (!definition.HasNode(NodeTypes.MeleeSwing) && Time.time <= lastActivationTime + definition.CooldownSeconds)
             {
                 return;
             }
 
-            if (Time.time <= lastActivationTime + definition.CooldownSeconds || !activator.RequestActivate(definition))
+            if (!activator.RequestActivate(definition))
             {
                 return;
             }

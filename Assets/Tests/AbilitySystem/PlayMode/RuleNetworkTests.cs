@@ -108,6 +108,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             WeaponData weapon = ScriptableObject.CreateInstance<WeaponData>();
             weapon.damage = new DamageInfo { Damage = damage };
             typeof(Item).GetField("rules", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(weapon, rules.ToList());
+            ComboDefinition combo = ComboTestSupport.CreateCombo();
+            ComboTestSupport.GiveCombo(weapon, combo);
+            created.Add(combo);
             created.Add(weapon);
             return weapon;
         }
@@ -168,10 +171,15 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         /// <summary>
         /// Lands a real blow: starts the melee ability, opens its hit window and touches the victim with the weapon.
         /// </summary>
-        private static void SwingAt(Character attacker, Character victim, int attackNumber = 1)
+        private static void SwingAt(Character attacker, Character victim)
         {
+            if (!(attacker.GetComponent<ComboMeleeDelivery>().Clock is ManualGameplayClock))
+            {
+                ComboTestSupport.UseManualClock(attacker);
+            }
+
             Assert.IsTrue(attacker.GetComponent<AbilityUser>().TryActivateOnServer(AssetDatabase.LoadAssetAtPath<AbilityDefinition>(MeleeAttack)));
-            attacker.GetComponent<MeleeDelivery>().ActivateWeapon(attackNumber);
+            ComboTestSupport.Advance(attacker, ComboTestSupport.InsideHitWindow);
             attacker.GetComponentInChildren<global::Weapon>().TargetHit(victim, BodyLocation.Torso);
         }
 
@@ -352,7 +360,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             // One real blow, then confirmed blows raised directly, so the rule, the equipment and the real projectile delivery are exercised
             // without waiting out the melee ability's cooldown for every swing.
             SwingAt(wielder, victim);
-            wielder.GetComponent<MeleeDelivery>().DeactivateWeaponH(); // the swing is over, so only Fireballs are left waiting on the executor
+            ComboTestSupport.Advance(wielder, 0.3); // the hit window closes, so only Fireballs are left waiting on the executor
             for (int i = 0; i < 199; i++)
             {
                 services.Events.Enqueue(new WeaponHitConfirmedEvent(wielder.Id, victim.Id, 1, 1, default));

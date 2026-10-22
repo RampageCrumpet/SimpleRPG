@@ -131,36 +131,18 @@ namespace SimpleRPG.Abilities.Integration
                 return false;
             }
 
-            ActivateServerRpc(shortId);
+            // The tick lets the server credit the press with the time it was made, not the later time it arrived.
+            ActivateServerRpc(shortId, NetworkManager.NetworkTickSystem.ServerTime.Tick);
             return true;
         }
 
-        /// <inheritdoc/>
-        public bool TryQueue(AbilityDefinition ability)
-        {
-            // Only melee abilities have a use that a later press can continue.
-            if (ability == null || !ability.HasNode(NodeTypes.MeleeSwing))
-            {
-                return false;
-            }
-
-            IMeleeSwingHost melee = GetComponent<IMeleeSwingHost>();
-            return melee != null && (IsServer || IsOwner) && melee.TryQueue(ability);
-        }
-
-        /// <inheritdoc/>
-        public bool ExecuteQueued(AbilityDefinition ability)
-        {
-            return Run(ability, chargeCooldown: false);
-        }
-
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
-        private void ActivateServerRpc(uint shortId)
+        private void ActivateServerRpc(uint shortId, long pressTick)
         {
-            // The client names an ability; the server looks it up and decides everything else.
+            // The client names an ability and when it pressed; the server looks the ability up and decides everything else.
             if (DefinitionRegistry.Instance != null && DefinitionRegistry.Instance.TryGetByShortId(shortId, out GameplayDefinition definition) && definition is AbilityDefinition ability)
             {
-                TryActivateOnServer(ability);
+                Run(ability, pressTick);
             }
         }
 
@@ -170,10 +152,10 @@ namespace SimpleRPG.Abilities.Integration
         /// <returns>True if the ability ran.</returns>
         public bool TryActivateOnServer(AbilityDefinition ability)
         {
-            return Run(ability, chargeCooldown: true);
+            return Run(ability, pressTick: -1);
         }
 
-        private bool Run(AbilityDefinition ability, bool chargeCooldown)
+        private bool Run(AbilityDefinition ability, long pressTick)
         {
             if (!IsServer || !IsSpawned || cooldowns == null || ability == null)
             {
@@ -204,19 +186,27 @@ namespace SimpleRPG.Abilities.Integration
                 return false;
             }
 
-            if (chargeCooldown)
+            // A melee ability's press is judged by the character's melee mechanics: it may start a use (which costs the cooldown) or continue
+            // one already paid for, such as the next swing of a combo. Other abilities are always a fresh use.
+            IMeleeSwingHost melee = ability.HasNode(NodeTypes.MeleeSwing) ? GetComponent<IMeleeSwingHost>() : null;
+            if (melee != null)
             {
-                // A new combo chain can't start while a queued one is still running.
-                if (ability.HasNode(NodeTypes.MeleeSwing) && GetComponent<IMeleeSwingHost>() is IMeleeSwingHost melee && !melee.CanStartFreshChain)
+                MeleePressOutcome press = melee.Press(pressTick, cooldowns.IsReady(ability.Id));
+                if (press == MeleePressOutcome.Rejected)
                 {
                     return false;
                 }
 
                 // The server is the authority on cooldowns; the client's own cooldown display is only a prediction.
-                if (!cooldowns.TryStart(ability.Id, ability.CooldownSeconds))
+                if (press == MeleePressOutcome.Fresh && !cooldowns.TryStart(ability.Id, ability.CooldownSeconds))
                 {
+                    melee.CancelPress();
                     return false;
                 }
+            }
+            else if (!cooldowns.TryStart(ability.Id, ability.CooldownSeconds))
+            {
+                return false;
             }
 
             Vector3 origin = transform.TransformPoint(muzzleOffset);
@@ -228,6 +218,9 @@ namespace SimpleRPG.Abilities.Integration
                 new Position3(direction.x, direction.y, direction.z));
 
             ExecutionResult result = AbilityServices.Current.Executor.Execute(compiled.Ability, request);
+
+            // If the ability never went on to start the swing it was promised, the promise is dropped.
+            melee?.CancelPress();
             return result.Completed;
         }
 

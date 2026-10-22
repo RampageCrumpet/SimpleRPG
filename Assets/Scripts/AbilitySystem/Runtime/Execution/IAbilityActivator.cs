@@ -7,22 +7,10 @@ namespace SimpleRPG.Abilities
     public interface IAbilityActivator
     {
         /// <summary>
-        /// Requests that the ability be used. On a client the request is sent to the server.
+        /// Requests that the ability be used. On a client the request is sent to the server. For a melee ability this is also how the next
+        /// swing of a combo is asked for: the server decides whether the press starts a chain, continues one, or does nothing.
         /// </summary>
         /// <returns>False if the request could not be made at all.</returns>
         bool RequestActivate(AbilityDefinition ability);
-
-        /// <summary>
-        /// A press that continues a use already in progress instead of starting a new one, such as the next swing of a combo.
-        /// It bypasses the cooldown, which was charged when the use began. On a client the request is sent to the server.
-        /// </summary>
-        /// <returns>True if the press was consumed and must not start a new use.</returns>
-        bool TryQueue(AbilityDefinition ability);
-
-        /// <summary>
-        /// Runs the ability as the continuation of a use already in progress, so its cooldown is not charged again. Server only.
-        /// </summary>
-        /// <returns>True if the ability ran.</returns>
-        bool ExecuteQueued(AbilityDefinition ability);
     }
 }

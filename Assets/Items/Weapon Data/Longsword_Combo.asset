@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4532b9a78c87c94f8ed5ff2aed9b0c0, type: 3}
+  m_Name: Longsword_Combo
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Abilities.ComboDefinition
+  steps:
+  - state: Longsword_A1
+    clip: {fileID: 8000101, guid: 07cedca516eaa8d4c93ca6279e1e3bf7, type: 3}
+    duration: 2.1666667
+    hitStart: 0.93333334
+    hitEnd: 1.1666666
+    chainOpen: 1.45
+    chainClose: 2
+    blendIn: 0.15
+    startOffset: 0
+    damageScalar: 1
+  - state: Longsword_A2
+    clip: {fileID: 8000201, guid: 8726080de97e2b5448914f71821bdb29, type: 3}
+    duration: 1.8666668
+    hitStart: 0.6333333
+    hitEnd: 0.9166667
+    chainOpen: 1.2
+    chainClose: 1.7
+    blendIn: 0.15
+    startOffset: 0
+    damageScalar: 0.79
+  - state: Longsword_A3
+    clip: {fileID: 8000301, guid: e1caad9b31d9ec34a96bf337e1758121, type: 3}
+    duration: 1.9666668
+    hitStart: 0.75
+    hitEnd: 0.98333335
+    chainOpen: 0
+    chainClose: 0
+    blendIn: 0.15
+    startOffset: 0
+    damageScalar: 0.84

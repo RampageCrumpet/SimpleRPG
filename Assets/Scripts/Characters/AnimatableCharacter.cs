@@ -1,4 +1,5 @@
 using SimpleRPG;
+using SimpleRPG.Abilities;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -14,7 +15,7 @@ namespace SimpleRPG.Animations
         private Character character;
         private CharacterController characterController;
         private NavMeshAgent agent;
-        private MeleeDelivery melee;
+        private MeleeDeliveryBase melee;
         private Vector3 lastPosition;
 
         private void Start()
@@ -23,7 +24,7 @@ namespace SimpleRPG.Animations
             animators = GetComponentsInChildren<Animator>(true);
             characterController = GetComponent<CharacterController>();
             agent = GetComponent<NavMeshAgent>();
-            melee = GetComponent<MeleeDelivery>();
+            melee = GetComponent<MeleeDeliveryBase>();
             lastPosition = transform.position;
             character.OnTakeDamage += UpdateTakeDamage;
             character.OnDeath += Die;
@@ -72,8 +73,30 @@ namespace SimpleRPG.Animations
                     if (parameter.type == AnimatorControllerParameterType.Trigger) animator.ResetTrigger(parameter.name);
             Trigger(deathTrigger);
         }
-        private void MeleeAttack(int attackNumber) { if (character.IsAlive) Trigger(melee.AnimationTrigger(attackNumber)); }
-        public static string GetAttackTrigger(int attackNumber) => attackNumber <= 1 ? "Attack_OneHanded" : "ComboQueued";
+        private void MeleeAttack(int attackNumber)
+        {
+            if (!character.IsAlive) return;
+
+            AttackAnimation attack = melee.AnimationFor(attackNumber);
+            if (attack.IsState) PlayState(attack);
+            else Trigger(attack.Trigger);
+        }
+
+        // Plays an attack state directly, blending from whatever the layer holds now, so a chained attack cuts into the next without waiting for transitions.
+        private void PlayState(AttackAnimation attack)
+        {
+            int hash = Animator.StringToHash(attack.State);
+            foreach (Animator animator in animators)
+            {
+                for (int layer = 0; layer < animator.layerCount; layer++)
+                {
+                    if (!animator.HasState(layer, hash)) continue;
+
+                    animator.CrossFadeInFixedTime(hash, attack.BlendIn, layer, attack.StartOffset);
+                    break;
+                }
+            }
+        }
 
         private void OnDestroy()
         {

@@ -91,9 +91,10 @@ namespace SimpleRPG.Abilities
             {
                 problems.Add(prefix + "has no clip.");
             }
-            else if (Mathf.Abs(step.Duration - step.Clip.length) > ClipLengthTolerance)
+            else if (Mathf.Abs(step.Duration - (step.Clip.length - step.StartOffset)) > ClipLengthTolerance)
             {
-                problems.Add(prefix + "duration " + step.Duration + " s does not match clip '" + step.Clip.name + "' (" + step.Clip.length + " s).");
+                // The clip plays from the start offset, so the step lasts what is left of it.
+                problems.Add(prefix + "duration " + step.Duration + " s does not match clip '" + step.Clip.name + "' (" + (step.Clip.length - step.StartOffset) + " s from its start offset).");
             }
 
             if (step.Duration <= 0f)

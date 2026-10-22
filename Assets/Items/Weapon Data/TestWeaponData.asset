@@ -12,5 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26bef1c1d7e1c7b429c6003714bedf29, type: 3}
   m_Name: TestWeaponData
   m_EditorClassIdentifier: 
+  <WorldPrefab>k__BackingField: {fileID: 0}
+  <Icon>k__BackingField: {fileID: 0}
+  <ItemName>k__BackingField: 
+  <ItemSize>k__BackingField: {x: 0, y: 0}
+  rules: []
+  grants: []
+  startingCharges: 0
+  grantedAbilities: []
+  fixedAttributes: []
   damage:
     Damage: 25
+  combo: {fileID: 11400000, guid: 6d0ce31f8d4f4444fb63298a603c80ee, type: 2}

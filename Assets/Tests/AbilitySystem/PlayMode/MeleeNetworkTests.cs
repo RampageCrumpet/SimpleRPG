@@ -17,9 +17,9 @@ using UnityEngine.TestTools;
 namespace SimpleRPG.Abilities.Tests.PlayMode
 {
     /// <summary>
-    /// Runs the melee ability through the real melee mechanics on a real host: real characters, the real weapon, combo tracker and melee
-    /// delivery, and the real combat pipeline. The animation is driven by hand (the animation events are called directly) so the tests do not
-    /// depend on clip timing; one test at the end lets the real animation do it.
+    /// Runs the melee ability through the real melee mechanics on a real host: real characters, the real weapon, combo machine and melee
+    /// delivery, and the real combat pipeline. The combo runs on a clock the tests move by hand, so hit windows open and close exactly when
+    /// a test says (see <see cref="ComboTestSupport"/> for the timeline), independent of frame rate and clip timing.
     /// </summary>
     public class MeleeNetworkTests
     {
@@ -36,6 +36,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private GameplayServices services;
         private WeaponData weaponData;
         private AbilityDefinition melee;
+        private ComboDefinition combo;
 
         [UnitySetUp]
         public IEnumerator SetUp()
@@ -46,6 +47,10 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             weaponData = ScriptableObject.CreateInstance<WeaponData>();
             weaponData.damage = new DamageInfo { Damage = WeaponDamage };
             created.Add(weaponData);
+
+            combo = ComboTestSupport.CreateCombo();
+            created.Add(combo);
+            ComboTestSupport.GiveCombo(weaponData, combo);
 
             melee = AssetDatabase.LoadAssetAtPath<AbilityDefinition>(MeleeAttack);
             Assert.IsNotNull(melee, $"Could not load {MeleeAttack}.");
@@ -88,10 +93,10 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         }
 
         /// <summary>
-        /// Spawns a character on the host. Player-only scripts that need a camera, input or the game's UI are removed, as are the animation scripts
-        /// unless <paramref name="withAnimation"/> is set, so the tests decide when the swing's animation events happen.
+        /// Spawns a character on the host. Player-only scripts that need a camera, input or the game's UI are removed, as are the animation scripts,
+        /// so the tests decide when the combo's hit windows happen.
         /// </summary>
-        private Character Spawn(string path, Vector3 position, bool withAnimation = false, AnimatorCullingMode? culling = null)
+        private Character Spawn(string path, Vector3 position, AnimatorCullingMode? culling = null)
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             Assert.IsNotNull(prefab, $"Could not load test prefab {path}.");
@@ -105,11 +110,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
                 if (component != null) Object.DestroyImmediate(component);
             }
 
-            if (!withAnimation)
-            {
-                AnimatableCharacter animatable = instance.GetComponent<AnimatableCharacter>();
-                if (animatable != null) Object.DestroyImmediate(animatable);
-            }
+            AnimatableCharacter animatable = instance.GetComponent<AnimatableCharacter>();
+            if (animatable != null) Object.DestroyImmediate(animatable);
 
             if (culling.HasValue)
             {
@@ -122,10 +124,11 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             return character;
         }
 
-        private Character SpawnAttacker(bool withAnimation = false, AnimatorCullingMode? culling = null)
+        private Character SpawnAttacker(AnimatorCullingMode? culling = null)
         {
-            Character attacker = Spawn(PlayerPrefab, Vector3.zero, withAnimation, culling);
+            Character attacker = Spawn(PlayerPrefab, Vector3.zero, culling);
             attacker.WeaponData = weaponData;
+            ComboTestSupport.UseManualClock(attacker);
             return attacker;
         }
 
@@ -133,19 +136,16 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
         private static AbilityUser UserOf(Character character) => character.GetComponent<AbilityUser>();
 
-        private static MeleeDelivery MeleeOf(Character character) => character.GetComponent<MeleeDelivery>();
+        private static ComboMeleeDelivery MeleeOf(Character character) => character.GetComponent<ComboMeleeDelivery>();
 
         private static Weapon WeaponOf(Character character) => character.GetComponentInChildren<Weapon>();
 
         /// <summary>
-        /// Accepts a queued press the way the server does when a client sends one inside the current attack's window.
+        /// Uses the melee ability the way a player's press does. A press is accepted if it starts a chain or lands in a chain window.
         /// </summary>
-        private static void QueueNextSwing(Character attacker, AbilityDefinition ability)
-        {
-            MethodInfo queue = typeof(MeleeDelivery).GetMethod("QueueOnServer", BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.IsNotNull(queue, "MeleeDelivery.QueueOnServer should exist.");
-            queue.Invoke(MeleeOf(attacker), new object[] { ability });
-        }
+        private bool Press(Character attacker) => UserOf(attacker).TryActivateOnServer(melee);
+
+        private static void Advance(Character attacker, double seconds) => ComboTestSupport.Advance(attacker, seconds);
 
         private static int Pending() => AbilityServices.Current.Executor.PendingContinuations;
 
@@ -158,8 +158,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character victim = SpawnVictim();
             yield return null;
 
-            Assert.IsTrue(UserOf(attacker).TryActivateOnServer(melee));
-            MeleeOf(attacker).ActivateWeapon(1);
+            Assert.IsTrue(Press(attacker));
+            Advance(attacker, ComboTestSupport.InsideHitWindow);
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Torso);
             yield return null;
 
@@ -172,44 +172,76 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character attacker = SpawnAttacker();
             Character victim = SpawnVictim();
             yield return null;
-            UserOf(attacker).TryActivateOnServer(melee);
-            MeleeOf(attacker).ActivateWeapon(1);
+            Press(attacker);
+            Advance(attacker, ComboTestSupport.InsideHitWindow);
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Torso);
-            MeleeOf(attacker).DeactivateWeaponH();
 
-            QueueNextSwing(attacker, melee);
-            MeleeOf(attacker).ActivateWeapon(2);
+            Advance(attacker, ComboTestSupport.InsideChainWindow - ComboTestSupport.InsideHitWindow);
+            Assert.IsTrue(Press(attacker), "A press inside the chain window continues the combo.");
+            Advance(attacker, ComboTestSupport.InsideHitWindow);
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Torso);
             yield return null;
 
-            // Attack 1 is 10, attack 2 is round(10 x 0.79) = 8.
+            // Attack 1 is 10, attack 2 is 10 x 0.8 = 8.
             Assert.AreEqual(StartingHealth - WeaponDamage - 8, victim.Health);
         }
 
         [UnityTest]
-        public IEnumerator TheQueuedSwing_DoesNotChargeTheCooldownAgain()
+        public IEnumerator TheContinuedSwing_DoesNotChargeTheCooldownAgain()
         {
             Character attacker = SpawnAttacker();
             yield return null;
-            UserOf(attacker).TryActivateOnServer(melee);
+            Press(attacker);
 
-            QueueNextSwing(attacker, melee);
+            Advance(attacker, ComboTestSupport.InsideChainWindow);
+            Assert.IsTrue(Press(attacker), "The combo continues even though the ability's cooldown has not passed.");
+            Assert.AreEqual(1, Pending(), "The first swing closed its hit window; only the second is open.");
 
-            Assert.IsFalse(UserOf(attacker).TryActivateOnServer(melee), "A fresh use is still inside its cooldown.");
-            Assert.AreEqual(2, Pending(), "The first swing and the queued one are both open.");
+            Advance(attacker, 1.5);
+            Assert.AreEqual(0, MeleeOf(attacker).CurrentAttack, "The chain has run out.");
+            Assert.IsFalse(Press(attacker), "A fresh use is still inside its cooldown.");
         }
 
         [UnityTest]
-        public IEnumerator AFreshChain_IsBlockedWhileAQueuedOneIsRunning()
+        public IEnumerator APressBeforeTheChainWindow_IsDiscarded_AndNotRemembered()
         {
             Character attacker = SpawnAttacker();
             yield return null;
-            UserOf(attacker).TryActivateOnServer(melee);
-            Assert.IsTrue(MeleeOf(attacker).CanStartFreshChain, "Nothing is queued yet.");
+            Press(attacker);
 
-            QueueNextSwing(attacker, melee);
+            Advance(attacker, ComboTestSupport.InsideHitWindow);
+            Assert.IsFalse(Press(attacker), "Too early to chain.");
 
-            Assert.IsFalse(MeleeOf(attacker).CanStartFreshChain);
+            Advance(attacker, ComboTestSupport.InsideChainWindow - ComboTestSupport.InsideHitWindow);
+            Assert.AreEqual(1, MeleeOf(attacker).CurrentAttack, "The early press must not chain once the window opens.");
+        }
+
+        [UnityTest]
+        public IEnumerator APressAfterTheChainWindow_IsDiscarded_AndTheSwingRunsOut()
+        {
+            Character attacker = SpawnAttacker();
+            yield return null;
+            Press(attacker);
+
+            Advance(attacker, 0.95);
+            Assert.IsFalse(Press(attacker), "The chain window has closed.");
+            Assert.AreEqual(1, MeleeOf(attacker).CurrentAttack);
+
+            Advance(attacker, 0.1);
+            Assert.AreEqual(0, MeleeOf(attacker).CurrentAttack);
+        }
+
+        [UnityTest]
+        public IEnumerator PressesInTheSameWindow_NeverSkipAnAttack()
+        {
+            Character attacker = SpawnAttacker();
+            yield return null;
+            Press(attacker);
+            Advance(attacker, ComboTestSupport.InsideChainWindow);
+
+            Assert.IsTrue(Press(attacker));
+            Assert.IsFalse(Press(attacker), "The second attack's own window has not opened.");
+            Assert.AreEqual(2, MeleeOf(attacker).CurrentAttack);
         }
 
         [UnityTest]
@@ -218,12 +250,11 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character attacker = SpawnAttacker();
             Character victim = SpawnVictim();
             yield return null;
-            UserOf(attacker).TryActivateOnServer(melee);
-            MeleeOf(attacker).ActivateWeapon(1);
+            Press(attacker);
+            Advance(attacker, ComboTestSupport.InsideHitWindow);
 
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Torso);
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Head);
-            MeleeOf(attacker).ActivateWeapon(1); // a doubled animation event must not start a fresh swing
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Torso);
             yield return null;
 
@@ -235,8 +266,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             Character attacker = SpawnAttacker();
             yield return null;
-            UserOf(attacker).TryActivateOnServer(melee);
-            MeleeOf(attacker).ActivateWeapon(1);
+            Press(attacker);
+            Advance(attacker, ComboTestSupport.InsideHitWindow);
 
             WeaponOf(attacker).TargetHit(attacker, BodyLocation.Torso);
             yield return null;
@@ -250,7 +281,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character attacker = SpawnAttacker();
             Character victim = SpawnVictim();
             yield return null;
-            UserOf(attacker).TryActivateOnServer(melee);
+            Press(attacker);
 
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Torso);
             yield return null;
@@ -259,33 +290,18 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator Window_OpenedWithNoSwingStarted_DoesNothing()
+        public IEnumerator Hit_AfterTheWindowCloses_DoesNothing()
         {
             Character attacker = SpawnAttacker();
             Character victim = SpawnVictim();
             yield return null;
+            Press(attacker);
+            Advance(attacker, 0.6);
 
-            MeleeOf(attacker).ActivateWeapon(1);
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Torso);
             yield return null;
 
-            Assert.AreEqual(StartingHealth, victim.Health, "A hit window that no ability asked for is not a hit.");
-        }
-
-        [UnityTest]
-        public IEnumerator ClipsWithNoAttackNumber_UseTheOnlySwing()
-        {
-            Character attacker = SpawnAttacker();
-            Character victim = SpawnVictim();
-            yield return null;
-            UserOf(attacker).TryActivateOnServer(melee);
-
-            // The enemy clip's event passes 0.
-            MeleeOf(attacker).ActivateWeapon(0);
-            WeaponOf(attacker).TargetHit(victim, BodyLocation.Torso);
-            yield return null;
-
-            Assert.AreEqual(StartingHealth - WeaponDamage, victim.Health);
+            Assert.AreEqual(StartingHealth, victim.Health);
         }
 
         [UnityTest]
@@ -296,8 +312,65 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             attacker.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso);
             yield return null;
 
-            Assert.IsFalse(UserOf(attacker).TryActivateOnServer(melee));
+            Assert.IsFalse(Press(attacker));
             Assert.AreEqual(0, Pending());
+        }
+
+        [UnityTest]
+        public IEnumerator AWeaponWithoutACombo_CannotSwing()
+        {
+            Character attacker = SpawnAttacker();
+            WeaponData plain = ScriptableObject.CreateInstance<WeaponData>();
+            created.Add(plain);
+            attacker.WeaponData = plain;
+            yield return null;
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("no weapon with a combo"));
+
+            Assert.IsFalse(Press(attacker));
+            Assert.AreEqual(0, Pending());
+        }
+
+        // ----- Presses stamped with a time -----
+
+        [UnityTest]
+        public IEnumerator AStampedPress_MadeInTheWindow_IsCreditedEvenIfItArrivesLate()
+        {
+            Character attacker = SpawnAttacker();
+            yield return null;
+            Press(attacker);
+            Advance(attacker, 0.95); // the window closed at 0.9 s
+
+            // The press was made at 0.7 s and took 0.25 s to arrive; the server credits up to 0.15 s of delay, which is enough here.
+            MeleePressOutcome outcome = MeleeOf(attacker).Press(pressTick: 21, freshAllowed: false);
+            MeleeOf(attacker).CancelPress();
+
+            Assert.AreEqual(MeleePressOutcome.Continued, outcome);
+        }
+
+        [UnityTest]
+        public IEnumerator AStampedPress_MadeBeforeTheWindow_IsNotCredited()
+        {
+            Character attacker = SpawnAttacker();
+            yield return null;
+            Press(attacker);
+            Advance(attacker, 0.5);
+
+            MeleePressOutcome outcome = MeleeOf(attacker).Press(pressTick: 6, freshAllowed: false);
+
+            Assert.AreEqual(MeleePressOutcome.Rejected, outcome);
+        }
+
+        [UnityTest]
+        public IEnumerator AStampedPress_FromTheFuture_IsTreatedAsNow()
+        {
+            Character attacker = SpawnAttacker();
+            yield return null;
+            Press(attacker);
+            Advance(attacker, ComboTestSupport.InsideHitWindow);
+
+            MeleePressOutcome outcome = MeleeOf(attacker).Press(pressTick: 300, freshAllowed: false);
+
+            Assert.AreEqual(MeleePressOutcome.Rejected, outcome, "A client cannot claim a time later than the server's.");
         }
 
         // ----- Weapon hit events -----
@@ -316,8 +389,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
                 healthWhenConfirmed = victim.Health;
             });
 
-            UserOf(attacker).TryActivateOnServer(melee);
-            MeleeOf(attacker).ActivateWeapon(1);
+            Press(attacker);
+            Advance(attacker, ComboTestSupport.InsideHitWindow);
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Head);
             yield return null;
 
@@ -345,8 +418,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
                 services.Combat.Apply(new DamageRequest(e.Victim, 5, e.Attacker, provenance: DamageProvenance.Spell | DamageProvenance.Proc));
             });
 
-            UserOf(attacker).TryActivateOnServer(melee);
-            MeleeOf(attacker).ActivateWeapon(1);
+            Press(attacker);
+            Advance(attacker, ComboTestSupport.InsideHitWindow);
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Torso);
             yield return null;
 
@@ -364,15 +437,15 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             int confirmed = 0;
             services.Events.Subscribe<WeaponHitConfirmedEvent>(e => confirmed++);
 
-            UserOf(attacker).TryActivateOnServer(melee);
-            MeleeOf(attacker).ActivateWeapon(1);
+            Press(attacker);
+            Advance(attacker, ComboTestSupport.InsideHitWindow);
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Torso);
             Assert.AreEqual(1, confirmed, "The killing blow is a confirmed hit.");
             Assert.IsFalse(victim.IsAlive);
 
-            MeleeOf(attacker).DeactivateWeaponH();
-            QueueNextSwing(attacker, melee);
-            MeleeOf(attacker).ActivateWeapon(2);
+            Advance(attacker, ComboTestSupport.InsideChainWindow - ComboTestSupport.InsideHitWindow);
+            Press(attacker);
+            Advance(attacker, ComboTestSupport.InsideHitWindow);
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Torso);
             yield return null;
 
@@ -386,64 +459,70 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             Character attacker = SpawnAttacker();
             yield return null;
-            UserOf(attacker).TryActivateOnServer(melee);
+            Press(attacker);
             Assert.AreEqual(1, Pending());
 
-            MeleeOf(attacker).ActivateWeapon(1);
-            MeleeOf(attacker).DeactivateWeaponH();
+            Advance(attacker, 0.6);
 
             Assert.AreEqual(0, Pending());
         }
 
         [UnityTest]
-        public IEnumerator ASwingWhoseWindowNeverCloses_IsReleasedAfterItsExpectedLength()
+        public IEnumerator TheAttackersDeath_ReleasesItsOpenSwings_AndEndsTheChain()
         {
             Character attacker = SpawnAttacker();
             yield return null;
-            UserOf(attacker).TryActivateOnServer(melee);
+            Press(attacker);
+            Advance(attacker, ComboTestSupport.InsideHitWindow);
             Assert.AreEqual(1, Pending());
-
-            // Attack 1 is about 1.17 s plus 0.28 s of combo, plus the 2 s of slack: an interrupted animation must not hold the ability forever.
-            yield return new WaitForSeconds(3.7f);
-
-            Assert.AreEqual(0, Pending());
-        }
-
-        [UnityTest]
-        public IEnumerator TheAttackersDeath_ReleasesItsOpenSwings()
-        {
-            Character attacker = SpawnAttacker();
-            yield return null;
-            UserOf(attacker).TryActivateOnServer(melee);
-            QueueNextSwing(attacker, melee);
-            Assert.AreEqual(2, Pending());
 
             attacker.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso);
             yield return null;
 
             Assert.AreEqual(0, Pending());
+            Assert.AreEqual(0, MeleeOf(attacker).CurrentAttack);
         }
 
         [UnityTest]
-        public IEnumerator ADeadAttacker_CannotQueueAnotherSwing()
+        public IEnumerator ADeadAttacker_CannotChainAnotherSwing()
         {
             Character attacker = SpawnAttacker();
             yield return null;
-            UserOf(attacker).TryActivateOnServer(melee);
+            Press(attacker);
+            Advance(attacker, ComboTestSupport.InsideChainWindow);
             attacker.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso);
             yield return null;
 
-            QueueNextSwing(attacker, melee);
-
+            Assert.IsFalse(Press(attacker));
             Assert.AreEqual(0, Pending());
+        }
+
+        [UnityTest]
+        public IEnumerator ChangingWeapons_EndsTheChain()
+        {
+            Character attacker = SpawnAttacker();
+            yield return null;
+            Press(attacker);
+            Advance(attacker, ComboTestSupport.InsideHitWindow);
+            WeaponData other = ScriptableObject.CreateInstance<WeaponData>();
+            ComboDefinition otherCombo = ComboTestSupport.CreateCombo();
+            ComboTestSupport.GiveCombo(other, otherCombo);
+            created.Add(other);
+            created.Add(otherCombo);
+            attacker.WeaponData = other;
+
+            Advance(attacker, ComboTestSupport.InsideChainWindow - ComboTestSupport.InsideHitWindow);
+            // The new weapon's combo starts fresh, so the press is a fresh use and the cooldown applies.
+            Assert.IsFalse(Press(attacker));
+            Assert.AreEqual(0, Pending(), "The old weapon's swing ended when it was put away.");
         }
 
         // ----- Dedicated servers -----
 
         [UnityTest]
-        public IEnumerator OnTheServer_AnimatorsAlwaysAnimate_SoHitWindowEventsStillFire()
+        public IEnumerator OnTheServer_AnimatorsAlwaysAnimate_SoTheBladeKeepsMoving()
         {
-            // A dedicated server has no screen, so a culled animator would never play the clips whose events open the hit window.
+            // A dedicated server has no screen, so a culled animator would never move the weapon the hitbox rides on.
             Character attacker = SpawnAttacker(culling: AnimatorCullingMode.CullCompletely);
             yield return null;
 
@@ -468,7 +547,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             slot.Activated += _ => activated = true;
 
             slot.Activate();
-            MeleeOf(attacker).ActivateWeapon(1);
+            Advance(attacker, ComboTestSupport.InsideHitWindow);
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Torso);
             yield return null;
 
@@ -477,82 +556,18 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.AreEqual(StartingHealth - WeaponDamage, victim.Health);
         }
 
-        // ----- The real animation -----
-
         [UnityTest]
-        public IEnumerator RepeatedSlotPresses_DuringEachSwing_BufferTheRealAnimatedCombo()
+        public IEnumerator TheMeleeSlot_ChainsDuringTheCooldown()
         {
-            Character attacker = SpawnAttacker(withAnimation: true);
+            Character attacker = SpawnAttacker();
             yield return null;
-            var started = new List<int>();
-            MeleeOf(attacker).MeleeAttackStarted += started.Add;
             GraphAbilitySlot slot = attacker.AbilitySlots.OfType<GraphAbilitySlot>().Single(x => x.Definition == melee);
-            Animator animator = attacker.GetComponentsInChildren<Animator>(true).Single(a => a.runtimeAnimatorController != null);
 
             slot.Activate();
-            foreach (int attack in new[] { 1, 2 })
-            {
-                float deadline = Time.time + 3f;
-                while (!animator.GetCurrentAnimatorStateInfo(0).IsName($"Longsword_A{attack}_Attack") && Time.time < deadline)
-                    yield return null;
-                Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(0).IsName($"Longsword_A{attack}_Attack"));
-                yield return new WaitForSeconds(.2f);
-                slot.Activate();
-            }
-
-            float finish = Time.time + 3f;
-            while ((started.Count < 3 || Pending() > 0) && Time.time < finish) yield return null;
-            CollectionAssert.AreEqual(new[] { 1, 2, 3 }, started);
-            Assert.AreEqual(0, Pending());
-        }
-
-        [UnityTest]
-        public IEnumerator RepeatedSlotPresses_AfterEachSwing_CompleteTheRealAnimatedCombo()
-        {
-            Character attacker = SpawnAttacker(withAnimation: true);
-            yield return null;
-            var started = new List<int>();
-            MeleeOf(attacker).MeleeAttackStarted += started.Add;
-            GraphAbilitySlot slot = attacker.AbilitySlots.OfType<GraphAbilitySlot>().Single(x => x.Definition == melee);
-            Animator animator = attacker.GetComponentsInChildren<Animator>(true).Single(a => a.runtimeAnimatorController != null);
-
+            Advance(attacker, ComboTestSupport.InsideChainWindow);
             slot.Activate();
-            foreach (int attack in new[] { 1, 2 })
-            {
-                float deadline = Time.time + 3f;
-                while (!animator.GetCurrentAnimatorStateInfo(0).IsName($"Longsword_A{attack}_Recovery") && Time.time < deadline)
-                    yield return null;
-                Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(0).IsName($"Longsword_A{attack}_Recovery"), "The actual swing must finish before the next press.");
-                yield return new WaitForSeconds(.12f);
-                slot.Activate();
-            }
 
-            float finish = Time.time + 3f;
-            while ((started.Count < 3 || Pending() > 0) && Time.time < finish) yield return null;
-            CollectionAssert.AreEqual(new[] { 1, 2, 3 }, started, "Normal ability-bar presses must advance the combo after each swing.");
-            Assert.AreEqual(0, Pending(), "All three real clip events must close their swings.");
-        }
-
-        [UnityTest]
-        public IEnumerator ARealSwing_PlaysItsAnimation_OpensAndClosesTheHitWindow_AndReleasesTheAbility()
-        {
-            Character attacker = SpawnAttacker(withAnimation: true);
-            yield return null;
-            int started = 0;
-            MeleeOf(attacker).MeleeAttackStarted += _ => started++;
-
-            Assert.IsTrue(UserOf(attacker).TryActivateOnServer(melee));
-            yield return null;
-            Assert.AreEqual(1, started, "Every machine is told which attack to play.");
-            Assert.AreEqual(1, Pending());
-
-            // The attack clip's own events open and close the window; when it has played out the swing is complete.
-            float began = Time.time;
-            float deadline = began + 4f;
-            while (Pending() > 0 && Time.time < deadline) yield return null;
-
-            Assert.AreEqual(0, Pending(), "The clip's DeactivateWeaponH event should end the swing.");
-            Assert.Less(Time.time - began, 2.5f, "It must end because the clip closed its window, not because the safety timeout (about 3.5 s) released it.");
+            Assert.AreEqual(2, MeleeOf(attacker).CurrentAttack, "The slot must not refuse a chain press while the ability's cooldown shows.");
         }
     }
 }

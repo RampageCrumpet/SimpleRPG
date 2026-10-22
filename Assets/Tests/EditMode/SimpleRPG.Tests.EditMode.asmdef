@@ -5,6 +5,7 @@
         "SimpleRPG",
         "SimpleRPG.Editor",
         "SimpleRPG.Abilities.Runtime",
+        "SimpleRPG.Abilities.Integration",
         "Unity.Netcode.Runtime",
         "Unity.AI.Navigation"
     ],

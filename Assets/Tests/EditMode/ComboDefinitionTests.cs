@@ -124,6 +124,16 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
+        public void StartOffset_ShortensTheStepToWhatIsLeftOfTheClip()
+        {
+            ComboStep step = new ComboStep("A2", Clip(1f), 0.8f, 0.3f, 0.5f, startOffset: 0.2f);
+            Assert.IsEmpty(Combo(step).Validate());
+
+            ComboStep wrong = new ComboStep("A2", Clip(1f), 1f, 0.3f, 0.5f, startOffset: 0.2f);
+            AssertProblem(Combo(wrong), "does not match clip");
+        }
+
+        [Test]
         public void ZeroDuration_IsReported()
         {
             ComboStep step = new ComboStep("A2", Clip(0.001f), 0f, 0f, 0f);

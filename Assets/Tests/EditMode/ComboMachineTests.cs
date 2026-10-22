@@ -407,6 +407,83 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
+        public void PreviewPress_NeverChangesTheMachine()
+        {
+            StartChain();
+
+            machine.PreviewPress(Start + 0.75);
+            machine.PreviewPress(Start + 5);
+
+            Assert.AreEqual(0, machine.CurrentStep);
+            Assert.AreEqual(Start, machine.CurrentStepStart);
+            Assert.IsEmpty(events);
+        }
+
+        [Test]
+        public void PreviewPress_AgreesWithPress_AtEveryMoment()
+        {
+            // Compare a fresh machine's preview with what a second, identical machine's press does, across the whole chain and a bit beyond.
+            for (double elapsed = -0.25; elapsed < 5; elapsed += 0.03125)
+            {
+                foreach (bool running in new[] { false, true })
+                {
+                    ComboMachine previewed = Build();
+                    ComboMachine pressed = Build();
+                    List<ComboEvent> sink = new List<ComboEvent>();
+                    if (running)
+                    {
+                        previewed.Press(Start, sink);
+                        pressed.Press(Start, sink);
+                    }
+
+                    // Catch both up to the press time first when it is later, as the server's per-frame update does.
+                    double at = Start + elapsed;
+                    previewed.Advance(at, sink);
+                    pressed.Advance(at, sink);
+
+                    ComboPressOutcome expected = previewed.PreviewPress(at);
+                    ComboPressOutcome actual = pressed.Press(at, sink).Outcome;
+
+                    Assert.AreEqual(actual, expected, $"running {running}, elapsed {elapsed}");
+                }
+            }
+        }
+
+        [Test]
+        public void PreviewPress_WhenIdle_SaysStarted()
+        {
+            Assert.AreEqual(ComboPressOutcome.Started, machine.PreviewPress(Start));
+        }
+
+        [Test]
+        public void PreviewPress_AfterTheStepRanOutUnadvanced_SaysStarted()
+        {
+            StartChain();
+
+            Assert.AreEqual(ComboPressOutcome.Started, machine.PreviewPress(Start + 2));
+        }
+
+        [Test]
+        public void PreviewPress_ForARewoundTime_MatchesPress()
+        {
+            StartChain();
+            machine.Advance(Start + 0.9375, events);
+
+            Assert.AreEqual(ComboPressOutcome.Chained, machine.PreviewPress(Start + 0.75));
+            Assert.AreEqual(ComboPressOutcome.Rejected, machine.PreviewPress(Start + 0.5));
+        }
+
+        private static ComboMachine Build()
+        {
+            return new ComboMachine(new[]
+            {
+                new ComboStepTiming(1f, 0.375f, 0.5f, 0.625f, 0.875f),
+                new ComboStepTiming(0.75f, 0.25f, 0.375f, 0.5f, 0.625f),
+                new ComboStepTiming(1f, 0.375f, 0.5f, 0f, 0f),
+            });
+        }
+
+        [Test]
         public void ComboDefinition_BuildsAMachineFromItsSteps()
         {
             ComboDefinition combo = ComboDefinition.Create(new[]

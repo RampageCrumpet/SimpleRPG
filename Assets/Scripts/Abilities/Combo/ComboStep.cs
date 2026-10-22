@@ -16,7 +16,7 @@ namespace SimpleRPG.Abilities
         [Tooltip("The clip that state plays. Used to check Duration; the animator still plays the state.")]
         [SerializeField] private AnimationClip clip;
 
-        [Tooltip("Full length of the step, windup to the end of recovery. The step ends here unless it is chained.")]
+        [Tooltip("Full length of the step, windup to the end of recovery, measured from where the clip starts playing (its length minus Start Offset). The step ends here unless it is chained.")]
         [SerializeField, Min(0)] private float duration;
 
         [Tooltip("When the weapon hitbox becomes live.")]
