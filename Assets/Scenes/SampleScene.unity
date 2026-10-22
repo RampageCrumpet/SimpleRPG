@@ -322,7 +322,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 002e84c36697e1d43a4961a5a1d80b0c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: SimpleRPG::SimpleRPG.LevelGeneration.DungeonPopulation
   encounters: {fileID: 11400000, guid: 1b95c4d6858b7544eb2a3843edc7a77c, type: 2}
   treasure: {fileID: 11400000, guid: 3d937cea387db30438b950150c9e10e5, type: 2}
@@ -614,7 +614,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
   m_UsePipelineSettings: 1
   m_AdditionalLightsShadowResolutionTier: 2
@@ -1868,8 +1868,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 36f61044edcbfaf4089e995bad712f09, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1875230989 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3479307613409049494, guid: b048e813960f1954eae9a3d13930a20c, type: 3}

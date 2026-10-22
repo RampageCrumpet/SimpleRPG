@@ -106,6 +106,11 @@ namespace SimpleRPG
         public int Health => IsSpawned ? networkHealth.Value : (pendingInitialHealth ?? maxHealth);
 
         /// <summary>
+        /// The maximum health of this character.
+        /// </summary>
+        public int MaxHealth => maxHealth;
+
+        /// <summary>
         /// True while this character is alive. Death is committed once by the server; AI and presentation read this instead of watching health.
         /// </summary>
         public bool IsAlive => !IsSpawned || !networkIsDead.Value;
