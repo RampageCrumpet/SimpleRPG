@@ -1,81 +1,31 @@
-using SimpleRPG;
 using SimpleRPG.Abilities;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 namespace AI
 {
-    /// <summary>
-    /// This <see cref="IState"/> handles spiders attacking prey that they've caught up to.
-    /// </summary>
-    public class MeleeAttackState : IState
+    /// <summary>Selects a ready melee ability; actual hits remain animation-driven weapon contacts.</summary>
+    public sealed class MeleeAttackState : IState
     {
-        private Character targetCharacter;
-
-        private IState chase;
-
-        private IState dead;
-
-        private AIController aiController;
-
-        public MeleeAttackState()
+        private readonly AIController controller;
+        private readonly System.Action outsideRange;
+        public MeleeAttackState(AIController controller, System.Action outsideRange)
         {
+            this.controller = controller;
+            this.outsideRange = outsideRange;
         }
-
-        /// <inheritdoc/>
-        public void OnStateEnter()
-        {
-            targetCharacter = aiController.SenseTargets().OrderByDescending(x => (aiController.transform.position - x.transform.position).magnitude).First();
-        }
-
-        /// <inheritdoc/>
-        public void OnStateExit()
-        {
-        }
-
-        /// <summary>
-        /// Initialize the melee attack state.
-        /// </summary>
-        /// <param name="aiController"> The AIController in charge of driving this state.</param>
-        /// <param name="dead"> The state we want to go to when the target is dead.</param>
-        /// <param name="outsideRange"> The state we want to go to when the target is outside of our range.</param>
-        public void Initialize(AIController aiController, IState dead, IState outsideRange)
-        {
-            this.aiController = aiController;
-            this.chase = outsideRange;
-            this.dead = dead;
-        }
-
-        /// <inheritdoc/>
+        public void OnStateEnter() => controller.StopMoving();
+        public void OnStateExit() { }
         public void OnStateUpdate()
         {
-
-            //Check if we're dead.
-            if (!aiController.Character.IsAlive)
-            {
-                aiController.ChangeState(dead);
-                return;
-            }
-
-            float distanceFromTarget = (aiController.transform.position - targetCharacter.transform.position).magnitude;
-
-            // If we're too far from our target go back to chasing it.
-            if (distanceFromTarget > aiController.AttackRange)
-            {
-                aiController.ChangeState(chase);
-                return;
-            }
-
-            GraphAbilitySlot chosenSlot = aiController.Character.AbilitySlots
-                .OfType<GraphAbilitySlot>()
-                .FirstOrDefault(x => x.Definition.HasNode(NodeTypes.MeleeSwing) && x.CooldownTimeLeft <= 0);
-
-            if (chosenSlot != null)
-            {
-                chosenSlot.Activate();
-            }
+            var delivery = controller.GetComponent<MeleeDelivery>();
+            // Commit to direction and stay planted through windup, strike and recovery.
+            if (delivery != null && !delivery.CanStartFreshChain) return;
+            if (!controller.TrackTarget() || !controller.InAttackRange) { outsideRange(); return; }
+            controller.FaceTarget();
+            if (!controller.IsFacingTarget) return;
+            var slot = controller.Character.AbilitySlots.OfType<GraphAbilitySlot>()
+                .FirstOrDefault(s => s.Definition != null && s.Definition.HasNode(NodeTypes.MeleeSwing) && s.CooldownTimeLeft <= 0);
+            slot?.Activate();
         }
     }
 }

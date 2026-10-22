@@ -1,6 +1,5 @@
 using SimpleRPG;
 using SimpleRPG.AI;
-using SimpleRPG.Animations;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
@@ -9,102 +8,116 @@ using UnityEngine.AI;
 
 namespace AI
 {
-    /// <summary>
-    /// This class represents the base class for an AI controlled by a state machine.
-    /// </summary>
-    [RequireComponent(typeof(AnimatableCharacter))]
+    /// <summary>Shared server-owned perception, target tracking, navigation and terminal lifecycle.</summary>
     [RequireComponent(typeof(Character))]
     public abstract class AIController : NetworkBehaviour
     {
-
-        /// <summary>
-        /// The <see cref="Character"/> responsible for handling our health and abilities.
-        /// </summary>
         public Character Character { get; set; }
-
-        /// <summary>
-        /// The <see cref="StateMachine"/> responsible for driving our AI.
-        /// </summary>
         protected StateMachine AIStateMachine { get; set; }
-
-        /// <summary>
-        /// The <see cref="AnimatableCharacter"/> responsible for handling our animations.
-        /// </summary>
-        protected AnimatableCharacter AnimatableCharacter { get; set; }
-
-        /// <summary>
-        /// The <see cref="NavMeshAgent"/> responsible for controlling our pathing.
-        /// </summary>
         protected NavMeshAgent NavMeshAgent { get; set; }
-
-        /// <summary>
-        /// A collection of our senses capable of actually detecting the player.
-        /// </summary>
         public IEnumerable<PrimarySense> PrimarySenses { get; set; }
-
-        /// <summary>
-        /// A collection of our senses capable of detecting the player indirectly.
-        /// </summary>
         public IEnumerable<SecondarySense> SecondarySenses { get; set; }
+        [Min(0.1f)] public float AttackRange = 1.5f;
+        public Character Target { get; private set; }
+        public bool IsDead { get; private set; }
 
-        /// <summary>
-        /// A place holder for attack range.
-        /// TODO: This should be replaced by having a collection of weapons that can be used.
-        /// </summary>
-        public float AttackRange;
-
-        // Start is called once before the first execution of Update after the MonoBehaviour is created
         protected virtual void Start()
         {
             PrimarySenses = GetComponents<PrimarySense>();
             SecondarySenses = GetComponents<SecondarySense>();
-            AnimatableCharacter = GetComponent<AnimatableCharacter>();
             NavMeshAgent = GetComponent<NavMeshAgent>();
             Character = GetComponent<Character>();
-            Character.Initialize();
+            if (!IsServer)
+            {
+                if (NavMeshAgent != null) NavMeshAgent.enabled = false;
+                return;
+            }
+            if (NavMeshAgent != null) NavMeshAgent.enabled = true;
+            Character.OnDeath += Die;
             AIStateMachine = CreateStateMachine();
+            if (!Character.IsAlive) Die();
         }
 
-        // Update is called once per frame
         protected virtual void Update()
         {
-            if (IsServer)
+            if (!IsServer || AIStateMachine == null || IsDead) return;
+            if (!Character.IsAlive) { Die(); return; }
+            AIStateMachine.Update();
+        }
+
+        public override void OnNetworkDespawn()
+        {
+            if (Character != null) Character.OnDeath -= Die;
+            StopMoving();
+        }
+
+        private void Die()
+        {
+            if (IsDead) return;
+            IsDead = true;
+            Target = null;
+            StopMoving();
+            if (NavMeshAgent != null) NavMeshAgent.enabled = false;
+            var body = GetComponent<CapsuleCollider>();
+            if (body != null) body.enabled = false;
+            AIStateMachine?.ChangeState(new DeadState());
+        }
+
+        public void ChangeState(IState state)
+        {
+            if (!IsDead) AIStateMachine.ChangeState(state);
+        }
+
+        public IEnumerable<Character> SenseTargets() => PrimarySenses
+            .SelectMany(s => s.Sense()).Where(c => c != null && c != Character && c.IsAlive).Distinct();
+
+        public bool TrackTarget()
+        {
+            var sensed = SenseTargets().ToArray();
+            if (Target == null || !Target.IsAlive || !sensed.Contains(Target))
+                Target = sensed.OrderBy(c => (c.transform.position - transform.position).sqrMagnitude).FirstOrDefault();
+            return Target != null;
+        }
+
+        public bool InAttackRange => Target != null && Vector3.Distance(transform.position, Target.transform.position) <= AttackRange;
+        public bool IsFacingTarget
+        {
+            get
             {
-                AIStateMachine.Update();
+                if (Target == null) return false;
+                Vector3 direction = Target.transform.position - transform.position;
+                direction.y = 0;
+                return direction.sqrMagnitude < 0.001f || Vector3.Dot(transform.forward, direction.normalized) > 0.95f;
             }
         }
 
-        /// <summary>
-        /// Changes the state of our state machine to the given state.
-        /// </summary>
-        /// <param name="nextState"> The state we want to change to.</param>
-        public void ChangeState(IState nextState)
-        {
-            AIStateMachine.ChangeState(nextState);
-        }
-
-        /// <summary>
-        /// Searches for targets with our primary senses.
-        /// </summary>
-        public IEnumerable<Character> SenseTargets()
-        {
-            IEnumerable<Character> sensedTargets = PrimarySenses.SelectMany(x => x.Sense());
-            return sensedTargets;
-        }
-
-        /// <summary>
-        /// Sets the destination of the navigationAgent to the targeted destination.
-        /// </summary>
-        /// <param name="position"> The location we want to go to in world space.</param>
         public void SetDestination(Vector3 position)
         {
-            NavMeshAgent.SetDestination(position);
+            if (NavMeshAgent != null && NavMeshAgent.enabled && NavMeshAgent.isOnNavMesh)
+            {
+                NavMeshAgent.isStopped = false;
+                NavMeshAgent.SetDestination(position);
+            }
         }
 
-        /// <summary>
-        /// Create's the state machine that will drive our AI.
-        /// </summary>
-        /// <returns> The state machine this controller will use to drive it's behavior.</returns>
+        public void StopMoving()
+        {
+            if (NavMeshAgent != null && NavMeshAgent.enabled && NavMeshAgent.isOnNavMesh)
+            {
+                NavMeshAgent.isStopped = true;
+                NavMeshAgent.ResetPath();
+            }
+        }
+
+        public void FaceTarget()
+        {
+            if (Target == null) return;
+            Vector3 direction = Target.transform.position - transform.position;
+            direction.y = 0;
+            if (direction.sqrMagnitude > 0.001f)
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(direction), 180f * Time.deltaTime);
+        }
+
         protected abstract StateMachine CreateStateMachine();
     }
 }

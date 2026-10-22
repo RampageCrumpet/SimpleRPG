@@ -34,17 +34,17 @@ public class NetworkManagerUI : MonoBehaviour
     {
         startServerButton.onClick.AddListener(() =>
         {
-            NetworkManager.Singleton.StartHost();
+            if (NetworkManager.Singleton.StartHost()) gameObject.SetActive(false);
         });
 
         startClientButton.onClick.AddListener(() =>
         {
-            NetworkManager.Singleton.StartClient();
+            if (NetworkManager.Singleton.StartClient()) gameObject.SetActive(false);
         });
 
         startDedicatedButton.onClick.AddListener(() =>
         {
-            NetworkManager.Singleton.StartServer();
+            if (NetworkManager.Singleton.StartServer()) gameObject.SetActive(false);
         });
     }
 

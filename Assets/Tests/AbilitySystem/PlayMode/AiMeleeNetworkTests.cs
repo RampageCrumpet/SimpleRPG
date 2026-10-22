@@ -33,10 +33,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
         protected override StateMachine CreateStateMachine()
         {
-            MeleeAttackState attack = new MeleeAttackState();
-            DeadState dead = new DeadState();
-            attack.Initialize(this, dead, new DoNothingState());
-            dead.Initialize(this);
+            var resting = new DoNothingState();
+            MeleeAttackState attack = new MeleeAttackState(this, () => ChangeState(resting));
 
             StateMachine machine = new StateMachine();
             machine.InitializeStateMachine(attack);

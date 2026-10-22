@@ -27,7 +27,14 @@ namespace SimpleRPG
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
-            SpawnCharacter();
+            if (IsServer) StartCoroutine(SpawnWhenDungeonReady());
+        }
+
+        private IEnumerator SpawnWhenDungeonReady()
+        {
+            var population = UnityEngine.Object.FindFirstObjectByType<SimpleRPG.LevelGeneration.DungeonPopulation>();
+            while (population != null && !population.IsReady) yield return null;
+            if (IsSpawned) SpawnCharacter();
         }
 
         /// <summary>
@@ -38,9 +45,9 @@ namespace SimpleRPG
             // Ensure that only the server tries to spawn a character.
             if (IsServer)
             {
-                Transform spawnTransform = playerPrefab.transform;
-                spawnTransform.position = new Vector3(0, 5, 0);
-                GameObject playerInstance = Instantiate(playerPrefab, spawnTransform.position, spawnTransform.rotation);
+                var population = UnityEngine.Object.FindFirstObjectByType<SimpleRPG.LevelGeneration.DungeonPopulation>();
+                Vector3 spawnPosition = population != null ? population.PlayerSpawnPosition + Vector3.up * 0.15f : new Vector3(0, 5, 0);
+                GameObject playerInstance = Instantiate(playerPrefab, spawnPosition, playerPrefab.transform.rotation);
                 playerInstance.GetComponent<NetworkObject>().SpawnWithOwnership(this.OwnerClientId, true);
 
                 // Ensure that the server has the connection betweeen the character and the client.

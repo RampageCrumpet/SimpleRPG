@@ -9,6 +9,10 @@ namespace HitDetection
     public class Hitbox : MonoBehaviour
     {
         LayerMask layerMask;
+        private readonly System.Collections.Generic.HashSet<Collider> contacts = new System.Collections.Generic.HashSet<Collider>();
+        private void OnEnable() => contacts.Clear();
+        private void OnDisable() => contacts.Clear();
+        private void OnTriggerExit(Collider other) => contacts.Remove(other);
 
         public UnityEvent<Character, BodyLocation> HitboxCollisionEvent { get; set; } = new UnityEvent<Character, BodyLocation>();
 
@@ -23,6 +27,7 @@ namespace HitDetection
 
         private void OnTriggerEnter(Collider other)
         {
+            if (!enabled || !contacts.Add(other)) return;
             if(layerMask == (layerMask | 1 << other.transform.gameObject.layer))
             {
                 if (other.TryGetComponent(out HurtBox hurtBox))
@@ -31,6 +36,10 @@ namespace HitDetection
                 }
             }
         }
+
+        // A weapon may already overlap a hurtbox when its active window opens.
+        // Weapon's swing tracker makes repeated contacts idempotent.
+        private void OnTriggerStay(Collider other) => OnTriggerEnter(other);
 
     }
 }

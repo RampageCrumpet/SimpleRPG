@@ -9,4 +9,5 @@
   <Project Path="SimpleRPG.Tests.PlayMode.csproj" />
   <Project Path="SimpleRPG.Abilities.Runtime.csproj" />
   <Project Path="SimpleRPG.Abilities.Integration.csproj" />
+  <Project Path="SimpleRPG.TestAutomation.Editor.csproj" />
 </Solution>

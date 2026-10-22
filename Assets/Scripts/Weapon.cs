@@ -27,10 +27,14 @@ public class Weapon : NetworkBehaviour
     /// </summary>
     public event Action<Character, BodyLocation> HitConfirmed;
 
-    public void Start()
+    public void Awake()
     {
         hitbox = GetComponentInChildren<Hitbox>();
-        hitbox.HitboxCollisionEvent.AddListener(TargetHit);
+        if (hitbox != null)
+        {
+            hitbox.HitboxCollisionEvent.AddListener(TargetHit);
+            hitbox.enabled = false;
+        }
     }
 
     public override void OnDestroy()
@@ -49,6 +53,7 @@ public class Weapon : NetworkBehaviour
         {
             // Resolved late so a weapon equipped after Start still knows its wielder.
             if (owner == null) owner = GetComponentInParent<Character>();
+            if (owner != null && !owner.IsAlive) return;
 
             // One swing hits a target once (however many of its hurtboxes the blade touches) and never its own wielder.
             if (swing.TryRegisterHit(character, owner))
@@ -64,12 +69,12 @@ public class Weapon : NetworkBehaviour
     public void ActivateHitbox()
     {
         swing.Begin();
-        hitbox.enabled = true;
+        if (hitbox != null) hitbox.enabled = true;
     }
 
     public void DeactivateHitbox()
     {
         swing.End();
-        hitbox.enabled = false;
+        if (hitbox != null) hitbox.enabled = false;
     }
 }

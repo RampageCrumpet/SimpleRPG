@@ -353,7 +353,7 @@ namespace SimpleRPG.Tests.EditMode
             RoomBlueprint stairwell = roomset.RoomCollection.Single(room => room.name == "Room_Stairwell");
 
             Assert.AreEqual(2, stairwell.Floors);
-            Assert.AreEqual(20f, roomset.floorHeight);
+            Assert.AreEqual(8f, roomset.floorHeight);
             Assert.That(stairwell.Connections.Select(door => door.Level), Is.EquivalentTo(new[] { 0, 1 }));
             Assert.That(RoomValidator.ValidateRoomset(roomset), Is.Empty);
         }
@@ -377,14 +377,14 @@ namespace SimpleRPG.Tests.EditMode
                 ConnectionBlueprint lower = room.Connections.Single(door => door.Level == 0);
                 ConnectionBlueprint upper = room.Connections.Single(door => door.Level == 1);
 
-                Assert.IsTrue(UnityEngine.AI.NavMesh.SamplePosition(lower.transform.position + lower.transform.forward * 5f, out UnityEngine.AI.NavMeshHit start, 3f, -1), "Floor outside the lower door");
-                Assert.IsTrue(UnityEngine.AI.NavMesh.SamplePosition(upper.transform.position + upper.transform.forward * 5f, out UnityEngine.AI.NavMeshHit end, 3f, -1), "Floor outside the upper door");
+                Assert.IsTrue(UnityEngine.AI.NavMesh.SamplePosition(lower.transform.position + lower.transform.forward * 2f, out UnityEngine.AI.NavMeshHit start, 1.2f, -1), "Floor outside the lower door");
+                Assert.IsTrue(UnityEngine.AI.NavMesh.SamplePosition(upper.transform.position + upper.transform.forward * 2f, out UnityEngine.AI.NavMeshHit end, 1.2f, -1), "Floor outside the upper door");
 
                 var path = new UnityEngine.AI.NavMeshPath();
                 UnityEngine.AI.NavMesh.CalculatePath(start.position, end.position, -1, path);
 
                 Assert.AreEqual(UnityEngine.AI.NavMeshPathStatus.PathComplete, path.status);
-                Assert.That(end.position.y - start.position.y, Is.GreaterThan(18f), "The stairs should climb a whole floor.");
+                Assert.That(end.position.y - start.position.y, Is.GreaterThan(7.2f), "The stairs should climb a whole floor.");
             }
             finally
             {

@@ -120,10 +120,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbfaabab38af4ec41a2dcf01aebf1b71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <ConnectionLength>k__BackingField: 1
-  <ConnectionWidth>k__BackingField: 1
+  <ConnectionLength>k__BackingField: 0.4
+  <ConnectionWidth>k__BackingField: 0.4
   SealingObject: {fileID: 7166356012213844889}
+  Type: {fileID: 0}
+  Level: 0
+  ClimbsUp: 1
   location: {x: 0, y: 0}
+  LockObject: {fileID: 0}
 --- !u!64 &-4691617244308558293
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -168,7 +172,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1952967041149564240, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -5
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 1952967041149564240, guid: 65b9067bd6b127b479ab10ed46bd7c21, type: 3}
       propertyPath: m_LocalPosition.y

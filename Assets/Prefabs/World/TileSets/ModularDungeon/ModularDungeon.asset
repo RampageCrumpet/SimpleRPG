@@ -21,5 +21,5 @@ MonoBehaviour:
   - {fileID: -5436701326941925415, guid: 172be85bcfb66a64b8d1648682bd2da8, type: 3}
   - {fileID: -5436701326941925415, guid: 63e7239f665dd3c47a0b854c1bd65095, type: 3}
   - {fileID: -5436701326941925415, guid: c3bc0ed65cfef4248a1334b51f542613, type: 3}
-  cellSize: 5
-  floorHeight: 20
+  cellSize: 2
+  floorHeight: 8

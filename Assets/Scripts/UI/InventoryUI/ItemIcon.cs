@@ -146,11 +146,10 @@ namespace SimpleRPG.UI
             //Set the sprite.
             iconImage.sprite = Item.Icon;
 
-            // The items scale in Unity units.
-            Vector2 itemScale = (iconImage.sprite.rect.size / iconImage.sprite.pixelsPerUnit);
+            iconImage.preserveAspect = true;
 
             //Update the Icons size to properly reflect it's new item.
-            this.GetComponent<RectTransform>().sizeDelta = (inventoryUI.CellSize * item.ItemSize * itemScale) - new Vector2(Padding.horizontal, Padding.vertical);
+            this.GetComponent<RectTransform>().sizeDelta = (inventoryUI.CellSize * item.ItemSize) - new Vector2(Padding.horizontal, Padding.vertical);
         }
     }
 }

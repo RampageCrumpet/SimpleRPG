@@ -6,7 +6,8 @@
         "SimpleRPG.Gameplay.Core",
         "SimpleRPG.Abilities.Runtime",
         "SimpleRPG.Abilities.Integration",
-        "Unity.Netcode.Runtime"
+        "Unity.Netcode.Runtime",
+        "Unity.AI.Navigation"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

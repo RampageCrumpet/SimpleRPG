@@ -29,6 +29,23 @@ namespace SimpleRPG.UI
             playerUIController = this.gameObject.GetComponentInParent<PlayerUIController>();
         }
 
+        private void Update()
+        {
+            if (playerUIController == null || !PlayerInventoryUI.HasInventory) return;
+            if (Input.GetKeyDown(KeyCode.I))
+            {
+                bool show = !PlayerInventoryUI.gameObject.activeSelf;
+                LootInventoryUI.gameObject.SetActive(false);
+                PlayerInventoryUI.gameObject.SetActive(show);
+                if (show) playerUIController.LockRotationAndShowMouse(this);
+                else playerUIController.UnlockRotationAndHideMouse(this);
+            }
+            else if (Input.GetKeyDown(KeyCode.Escape) && PlayerInventoryUI.gameObject.activeSelf)
+            {
+                SetLootMenuUIDisplayStatus(false);
+            }
+        }
+
         /// <summary>
         /// Display the loot menu UI.
         /// </summary>

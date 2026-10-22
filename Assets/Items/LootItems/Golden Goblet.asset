@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6511a776aa640fb469496949a9bad1b2, type: 3}
+  m_Name: Golden Goblet
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.InventorySystem.Item
+  <WorldPrefab>k__BackingField: {fileID: 3205298321413172928, guid: d88dacbf7331bfa45a2b690e42c146bc, type: 3}
+  <Icon>k__BackingField: {fileID: 5293527103206090926, guid: daf7f26dbbbeed2409173232d87b97f2, type: 3}
+  <ItemName>k__BackingField: Golden Goblet
+  <ItemSize>k__BackingField: {x: 2, y: 2}
+  rules: []
+  grants: []
+  startingCharges: 0
+  grantedAbilities: []
+  fixedAttributes: []

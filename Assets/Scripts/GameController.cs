@@ -11,6 +11,8 @@ using UnityEngine;
 /// </summary>
 public class GameController : NetworkBehaviour
 {
+    [field: SerializeField] public bool UseRandomSeed { get; set; } = true;
+    [field: SerializeField] public int Seed { get; set; } = 42;
     /// <summary>
     /// The controller for the level generator we want to use.
     /// </summary>
@@ -34,10 +36,13 @@ public class GameController : NetworkBehaviour
 
         if (IsServer)
         {
-            levelGeneratorController.GenerateLevelAcrossNetwork(CreateSeed());
+            levelGeneratorController.GenerateLevelAcrossNetwork(UseRandomSeed ? CreateSeed() : Seed);
 
             // Only the server runs AI, so it is the only machine that needs a navmesh.
             navMeshSurface.BuildNavMesh();
+            var population = GetComponentInChildren<DungeonPopulation>();
+            if (population != null)
+                population.Populate(levelGeneratorController.GeneratedRooms, levelGeneratorController.Roomset.cellSize, levelGeneratorController.GeneratedSeed);
         }
         else
         {

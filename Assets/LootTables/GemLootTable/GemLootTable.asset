@@ -15,8 +15,8 @@ MonoBehaviour:
   <DropChance>k__BackingField: 1
   <Unique>k__BackingField: 0
   <Always>k__BackingField: 0
-  <Enabled>k__BackingField: 0
-  <Count>k__BackingField: 4
+  <Enabled>k__BackingField: 1
+  <Count>k__BackingField: 1
   Contents:
   - {fileID: 11400000, guid: d585ea21304664e41aa549203b1e4cf5, type: 2}
   - {fileID: 11400000, guid: 54b3086d55cd3ae4fa1af0d3be454126, type: 2}

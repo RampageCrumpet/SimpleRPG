@@ -1,87 +1,88 @@
 using SimpleRPG;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace SimpleRPG.Animations
 {
-    /// <summary>
-    /// This script handles reading values from the player character and sending them to the animation controllers.
-    /// </summary>
+    /// <summary>Adapts character events to configured animators; gameplay and animation state remain independent.</summary>
     [RequireComponent(typeof(Character))]
-    [RequireComponent(typeof(CharacterController))]
-    [RequireComponent(typeof(Animator))]
     public class AnimatableCharacter : MonoBehaviour
     {
-        private IEnumerable<Animator> animator;
+        [SerializeField] private string activationTrigger;
+        [SerializeField] private string deathTrigger;
+        private Animator[] animators;
         private Character character;
         private CharacterController characterController;
-        private MeleeDelivery meleeAttackAbility;
+        private NavMeshAgent agent;
+        private MeleeDelivery melee;
+        private Vector3 lastPosition;
 
-
-        // Start is called once before the first execution of Update after the MonoBehaviour is created
-        void Start()
+        private void Start()
         {
-            character = this.gameObject.GetComponent<Character>();
-            animator = character.gameObject.GetComponentsInChildren<Animator>();
-            character.OnTakeDamage += new Character.NotifyDamageTaken(UpdateTakeDamage);
-            characterController = character.gameObject.GetComponent<CharacterController>();
-            meleeAttackAbility = character.gameObject.GetComponent<MeleeDelivery>();
-            meleeAttackAbility.MeleeAttackStarted += new MeleeDelivery.NotifyMeleeAttackStarted(MeleeAttack);
+            character = GetComponent<Character>();
+            animators = GetComponentsInChildren<Animator>(true);
+            characterController = GetComponent<CharacterController>();
+            agent = GetComponent<NavMeshAgent>();
+            melee = GetComponent<MeleeDelivery>();
+            lastPosition = transform.position;
+            character.OnTakeDamage += UpdateTakeDamage;
+            character.OnDeath += Die;
+            if (melee != null) melee.MeleeAttackStarted += MeleeAttack;
+            if (!character.IsAlive) Die();
+            else Trigger(activationTrigger);
         }
 
-        // Update is called once per frame
-        void Update()
+        private void Update()
         {
-            UpdateAnimationValues();
-        }
-
-        /// <summary>
-        /// Sets the forward speed of all <see cref="Animator"/>'s.
-        /// </summary>
-        private void UpdateAnimationValues()
-        {
-            foreach(Animator controller in animator)
+            Vector3 velocity = Time.deltaTime > 0 ? (transform.position - lastPosition) / Time.deltaTime : Vector3.zero;
+            if (agent != null && agent.enabled && agent.isOnNavMesh) velocity = agent.velocity;
+            else if (characterController != null && characterController.enabled) velocity = characterController.velocity;
+            lastPosition = transform.position;
+            foreach (Animator animator in animators)
             {
-                controller.SetFloat("ForwardMovementSpeed", Vector3.Dot(characterController.velocity, this.transform.TransformDirection(Vector3.forward)));
-                controller.SetFloat("HorizontalMovementSpeed", Vector3.Dot(characterController.velocity, this.transform.TransformDirection(Vector3.right)));
+                SetFloat(animator, "ForwardMovementSpeed", Vector3.Dot(velocity, transform.forward));
+                SetFloat(animator, "HorizontalMovementSpeed", Vector3.Dot(velocity, transform.right));
+                SetFloat(animator, "Speed", character.IsAlive ? velocity.magnitude : 0);
+                foreach (var parameter in animator.parameters)
+                    if (parameter.name == "Walk" && parameter.type == AnimatorControllerParameterType.Bool)
+                        animator.SetBool("Walk", character.IsAlive && velocity.sqrMagnitude > 0.0025f);
             }
         }
 
-        /// <summary>
-        /// Alerts all of the <see cref="Animator"/>'s that we've taken damage.
-        /// </summary>
-        private void UpdateTakeDamage()
+        private static void SetFloat(Animator animator, string name, float value)
         {
-            foreach (Animator controller in animator)
-            {
-                controller.SetTrigger("TakeDamage");
-            }
+            foreach (var parameter in animator.parameters)
+                if (parameter.name == name && parameter.type == AnimatorControllerParameterType.Float) animator.SetFloat(name, value);
         }
 
-        /// <summary>
-        /// Plays the attack the server started. Attack 1 starts a new swing; attacks 2 and 3 are queued from the previous swing's combo.
-        /// </summary>
-        /// <param name="attackNumber">The attack in the chain the server started (1, 2 or 3).</param>
-        private void MeleeAttack(int attackNumber)
+        private void Trigger(string name)
         {
-            string trigger = GetAttackTrigger(attackNumber);
-
-            foreach (Animator controller in animator)
-            {
-                controller.SetTrigger(trigger);
-            }
+            if (string.IsNullOrEmpty(name)) return;
+            foreach (Animator animator in animators)
+                foreach (var parameter in animator.parameters)
+                    if (parameter.name == name && parameter.type == AnimatorControllerParameterType.Trigger) animator.SetTrigger(name);
         }
 
-        /// <summary>
-        /// Chooses which animator trigger an attack from the server should set.
-        /// Attack 1 starts a new swing. Any later attack is the next swing of the combo, which the previous swing's animator state picks up.
-        /// </summary>
-        /// <param name="attackNumber">The attack in the chain the server started (1, 2 or 3).</param>
-        /// <returns>The trigger to set.</returns>
-        public static string GetAttackTrigger(int attackNumber)
+        private void UpdateTakeDamage() { if (character.IsAlive) Trigger("TakeDamage"); }
+        private void Die()
         {
-            return attackNumber <= 1 ? "Attack_OneHanded" : "ComboQueued";
+            // Discard queued attack triggers so a death blend cannot restart an attack.
+            foreach (Animator animator in animators)
+                foreach (var parameter in animator.parameters)
+                    if (parameter.type == AnimatorControllerParameterType.Trigger) animator.ResetTrigger(parameter.name);
+            Trigger(deathTrigger);
+        }
+        private void MeleeAttack(int attackNumber) { if (character.IsAlive) Trigger(melee.AnimationTrigger(attackNumber)); }
+        public static string GetAttackTrigger(int attackNumber) => attackNumber <= 1 ? "Attack_OneHanded" : "ComboQueued";
+
+        private void OnDestroy()
+        {
+            if (character != null)
+            {
+                character.OnTakeDamage -= UpdateTakeDamage;
+                character.OnDeath -= Die;
+            }
+            if (melee != null) melee.MeleeAttackStarted -= MeleeAttack;
         }
     }
 }

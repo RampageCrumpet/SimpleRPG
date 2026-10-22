@@ -17,6 +17,21 @@ using EntityId = SimpleRPG.Gameplay.EntityId;
 [RequireComponent(typeof(Animator))]
 public class MeleeDelivery : NetworkBehaviour, IMeleeSwingHost
 {
+    [System.Serializable]
+    public class IndependentAttack
+    {
+        public string Trigger;
+        [Min(0.1f)] public float Duration = 3f;
+        [Min(0)] public float DamageScalar = 1f;
+    }
+
+    [Tooltip("Optional independently selected attacks, in place of the player's combo chain. Hit windows still come from clip events.")]
+    [SerializeField] private IndependentAttack[] independentAttacks = System.Array.Empty<IndependentAttack>();
+    private float recoveryUntil;
+    public bool UsesIndependentAttacks => independentAttacks.Length > 0;
+    public string AnimationTrigger(int attackNumber) => UsesIndependentAttacks
+        ? independentAttacks[Mathf.Clamp(attackNumber - 1, 0, independentAttacks.Length - 1)].Trigger
+        : SimpleRPG.Animations.AnimatableCharacter.GetAttackTrigger(attackNumber);
     /// <summary>
     /// Seconds past a swing's expected length after which a swing whose animation never closed its hit window is released.
     /// </summary>
@@ -92,6 +107,9 @@ public class MeleeDelivery : NetworkBehaviour, IMeleeSwingHost
     [SerializeField]
     private float[] comboLengths = { 17f / 60f, 3f / 60f, 0f };
 
+    [Tooltip("Seconds after an attack finishes in which another press continues the combo instead of starting over.")]
+    [SerializeField, Min(0)] private float continuationWindow = MeleeComboTracker.DefaultContinuationWindow;
+
     /// <summary>
     /// Damage multiplier for each attack in the longsword chain, indexed by attack number minus one.
     /// Based on each attack clip's length relative to Attack 1 (Attack 1 = 1.0). Tune these for balance.
@@ -112,7 +130,7 @@ public class MeleeDelivery : NetworkBehaviour, IMeleeSwingHost
     private void Awake()
     {
         character = GetComponent<Character>();
-        combo = new MeleeComboTracker(attackLengths, comboLengths);
+        combo = new MeleeComboTracker(attackLengths, comboLengths, continuationWindow);
     }
 
     public override void OnNetworkSpawn()
@@ -170,7 +188,9 @@ public class MeleeDelivery : NetworkBehaviour, IMeleeSwingHost
     }
 
     /// <inheritdoc/>
-    public bool CanStartFreshChain => combo.CanStartAttack(Time.time);
+    public bool CanStartFreshChain => UsesIndependentAttacks
+        ? Time.time >= recoveryUntil && swings.Count == 0
+        : combo.CanStartAttack(Time.time);
 
     /// <inheritdoc/>
     /// <remarks>
@@ -185,7 +205,13 @@ public class MeleeDelivery : NetworkBehaviour, IMeleeSwingHost
         }
 
         int attackNumber;
-        if (pendingQueuedAttack > 0)
+        if (UsesIndependentAttacks)
+        {
+            if (!CanStartFreshChain) return false;
+            attackNumber = Random.Range(1, independentAttacks.Length + 1);
+            recoveryUntil = Time.time + independentAttacks[attackNumber - 1].Duration;
+        }
+        else if (pendingQueuedAttack > 0)
         {
             attackNumber = pendingQueuedAttack;
             pendingQueuedAttack = 0;
@@ -222,32 +248,38 @@ public class MeleeDelivery : NetworkBehaviour, IMeleeSwingHost
 
     /// <inheritdoc/>
     /// <remarks>
-    /// While an attack is playing, a press queues the next swing and bypasses the cooldown. During a combo continuation the press is consumed and does nothing.
-    /// Only when neither is playing does the press fall through to a fresh attack under the cooldown.
+    /// Buffers presses during a swing and accepts them in the short recovery window after attacks one and two.
+    /// While a continuation is already playing, additional presses are consumed without skipping an attack.
     /// </remarks>
     public bool TryQueue(AbilityDefinition ability)
     {
+        if (UsesIndependentAttacks) return false;
         animators ??= GetComponentsInChildren<Animator>(true);
 
         bool inAttack = false;
         bool inCombo = false;
+        bool inRecoveryWindow = false;
         foreach (Animator animator in animators)
         {
             // Layered animators (e.g. a skeleton's weapon-attack layer) play their attack state above the base layer, so check every layer.
             for (int layer = 0; layer < animator.layerCount; layer++)
             {
-                AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(layer);
+                AnimatorStateInfo state = animator.IsInTransition(layer)
+                    ? animator.GetNextAnimatorStateInfo(layer)
+                    : animator.GetCurrentAnimatorStateInfo(layer);
                 inAttack |= state.IsTag("Attack");
                 inCombo |= state.IsTag("Combo");
+                inRecoveryWindow |= (state.IsName("Longsword_A1_Recovery") || state.IsName("Longsword_A2_Recovery"))
+                    && state.normalizedTime * state.length <= continuationWindow + MeleeComboTracker.Tolerance;
             }
         }
 
-        if (!inAttack && !inCombo)
+        if (!inAttack && !inCombo && !inRecoveryWindow)
         {
             return false;
         }
 
-        if (inAttack && Time.time >= nextQueueSendTime)
+        if ((inAttack || inRecoveryWindow) && Time.time >= nextQueueSendTime)
         {
             nextQueueSendTime = Time.time + QueueResendInterval;
             RequestQueue(ability);
@@ -269,7 +301,7 @@ public class MeleeDelivery : NetworkBehaviour, IMeleeSwingHost
     }
 
     /// <summary>
-    /// Asks the server to queue the next swing of the combo. The server rejects it unless it lands inside the current attack's window.
+    /// Asks the server to queue the next swing during the attack or its short recovery window.
     /// </summary>
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
     private void QueueAttackServerRpc(uint abilityShortId)
@@ -281,12 +313,12 @@ public class MeleeDelivery : NetworkBehaviour, IMeleeSwingHost
     }
 
     /// <summary>
-    /// Server only. Accepts a queued press if the character has the ability and the press lands inside the current attack's window,
+    /// Server only. Accepts a queued press if the character has the ability and the press lands inside its continuation window,
     /// then runs the ability for the next attack without charging its cooldown again.
     /// </summary>
     private void QueueOnServer(AbilityDefinition ability)
     {
-        if (!IsServer || !character.IsAlive || ability == null || !ability.HasNode(NodeTypes.MeleeSwing) || !character.GraphAbilities.Contains(ability))
+        if (UsesIndependentAttacks || !IsServer || !character.IsAlive || ability == null || !ability.HasNode(NodeTypes.MeleeSwing) || !character.GraphAbilities.Contains(ability))
         {
             return;
         }
@@ -321,12 +353,15 @@ public class MeleeDelivery : NetworkBehaviour, IMeleeSwingHost
     /// <param name="attackNumber">The attack in the longsword chain (1, 2 or 3). Clips with no attack number pass 0, meaning the only swing.</param>
     public void ActivateWeapon(int attackNumber)
     {
-        WeaponComponent.ActivateHitbox();
+        if (!character.IsAlive || WeaponComponent == null) return;
 
         if (IsServer)
         {
-            activeSwing = FindSwing(attackNumber);
+            // Independent clips share event number 1; the server already selected the only live swing.
+            activeSwing = FindSwing(UsesIndependentAttacks ? 0 : attackNumber);
+            if (activeSwing == null) return;
         }
+        WeaponComponent.ActivateHitbox();
     }
 
     /// <summary>
@@ -334,7 +369,7 @@ public class MeleeDelivery : NetworkBehaviour, IMeleeSwingHost
     /// </summary>
     public void DeactivateWeaponH()
     {
-        WeaponComponent.DeactivateHitbox();
+        WeaponComponent?.DeactivateHitbox();
 
         if (IsServer && activeSwing != null)
         {
@@ -366,7 +401,7 @@ public class MeleeDelivery : NetworkBehaviour, IMeleeSwingHost
     private void HandleWeaponHit(Character victim, BodyLocation location)
     {
         Swing swing = activeSwing;
-        if (swing == null || victim == null)
+        if (swing == null || victim == null || !character.IsAlive)
         {
             return;
         }
@@ -410,6 +445,7 @@ public class MeleeDelivery : NetworkBehaviour, IMeleeSwingHost
 
     private void ReleaseAllSwings()
     {
+        WeaponComponent?.DeactivateHitbox();
         pendingQueuedAttack = 0;
         foreach (Swing swing in swings.Values.ToList())
         {
@@ -421,6 +457,7 @@ public class MeleeDelivery : NetworkBehaviour, IMeleeSwingHost
 
     private float SwingLength(int attackNumber)
     {
+        if (UsesIndependentAttacks) return independentAttacks[attackNumber - 1].Duration;
         int index = attackNumber - 1;
         float attack = index >= 0 && index < attackLengths.Length ? attackLengths[index] : 1f;
         float after = index >= 0 && index < comboLengths.Length ? comboLengths[index] : 0f;
@@ -432,6 +469,7 @@ public class MeleeDelivery : NetworkBehaviour, IMeleeSwingHost
     /// </summary>
     private float GetComboDamageScalar(int attackNumber)
     {
+        if (UsesIndependentAttacks) return independentAttacks[attackNumber - 1].DamageScalar;
         int index = attackNumber - 1;
         return index >= 0 && index < comboDamageScalars.Length ? comboDamageScalars[index] : 1f;
     }

@@ -86,6 +86,8 @@ namespace SimpleRPG.LevelGeneration
         /// True once this machine has generated its copy of the level.
         /// </summary>
         public bool IsGenerated { get; private set; }
+        public IReadOnlyList<RoomBlueprint> GeneratedRooms { get; private set; }
+        public int GeneratedSeed => generatedParameters.Seed;
 
         /// <summary>
         /// Generates the level on the server and tells every connected client to do the same. Server only.
@@ -220,6 +222,7 @@ namespace SimpleRPG.LevelGeneration
                 };
 
                 IReadOnlyList<RoomBlueprint> rooms = spawner.Spawn(result.Layout, this.transform);
+                GeneratedRooms = rooms;
 
                 if (appliedLocks.Count > 0)
                 {

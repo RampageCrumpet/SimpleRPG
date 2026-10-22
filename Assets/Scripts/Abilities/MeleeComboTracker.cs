@@ -11,8 +11,11 @@ namespace SimpleRPG.Abilities
         /// </summary>
         public const float Tolerance = 0.1f;
 
+        public const float DefaultContinuationWindow = 0.25f;
+
         private readonly float[] attackLengths;
         private readonly float[] comboLengths;
+        private readonly float continuationWindow;
 
         // The attack the chain is currently on (1-based), or 0 if no chain has started. Advances as soon as a press is queued.
         private int currentAttack;
@@ -28,10 +31,11 @@ namespace SimpleRPG.Abilities
         /// </summary>
         /// <param name="attackLengths">Length in seconds of each attack clip, in chain order. Its length is the number of attacks in the chain.</param>
         /// <param name="comboLengths">Length in seconds of the combo continuation after each attack. Entries past the last attack are unused.</param>
-        public MeleeComboTracker(float[] attackLengths, float[] comboLengths)
+        public MeleeComboTracker(float[] attackLengths, float[] comboLengths, float continuationWindow = DefaultContinuationWindow)
         {
             this.attackLengths = attackLengths;
             this.comboLengths = comboLengths;
+            this.continuationWindow = continuationWindow;
         }
 
         /// <summary>
@@ -61,8 +65,8 @@ namespace SimpleRPG.Abilities
         }
 
         /// <summary>
-        /// Queues the next attack in the chain if a press arrives during the current attack's clip.
-        /// Presses in the combo gap, after the last attack, or before any chain has started are rejected.
+        /// Buffers the next attack during the swing or accepts it briefly after the swing finishes.
+        /// Presses while the next attack is pending, after the last attack, or before a chain starts are rejected.
         /// Once a press is accepted the window moves to the next attack, so repeated presses in the same window are rejected.
         /// </summary>
         /// <param name="now">The current server time in seconds.</param>
@@ -79,13 +83,15 @@ namespace SimpleRPG.Abilities
             }
 
             float windowStart = currentAttackStart - Tolerance;
-            float windowEnd = currentAttackStart + attackLengths[currentAttack - 1] + Tolerance;
+            float attackEnd = currentAttackStart + attackLengths[currentAttack - 1];
+            float windowEnd = attackEnd + continuationWindow + Tolerance;
             if (now < windowStart || now >= windowEnd)
             {
                 return false;
             }
 
-            float nextStart = currentAttackStart + attackLengths[currentAttack - 1] + comboLengths[currentAttack - 1];
+            // A late press branches out of recovery now, rather than pretending the continuation already played.
+            float nextStart = System.Math.Max(attackEnd, now) + comboLengths[currentAttack - 1];
             currentAttack++;
             currentAttackStart = nextStart;
             busyUntil = nextStart + attackLengths[currentAttack - 1];

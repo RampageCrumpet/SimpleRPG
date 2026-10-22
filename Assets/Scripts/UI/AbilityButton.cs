@@ -29,6 +29,7 @@ namespace SimpleRPG.UI
         private Image darkAbillityIcon;
 
         private IAbilitySlot abilitySlot;
+        private bool requiresNewPress;
 
         /// <summary>
         /// Initialize the UI button after creation.
@@ -40,6 +41,8 @@ namespace SimpleRPG.UI
             darkAbillityIcon = this.GetComponentsInChildren<Image>().Single(x => x.gameObject != this.gameObject);
 
             this.abilitySlot = abilitySlot;
+            requiresNewPress = abilitySlot is GraphAbilitySlot graph
+                && graph.Definition.HasNode(NodeTypes.MeleeSwing);
             abilityIconImage.sprite = abilitySlot.Icon;
             //darkAbillityIcon.sprite = ability.abillitySprite;
         }
@@ -57,7 +60,7 @@ namespace SimpleRPG.UI
         {
             UpdateCooldown();
 
-            if(Input.GetAxis(abillityButtonAxisName) > 0)
+            if (requiresNewPress ? Input.GetButtonDown(abillityButtonAxisName) : Input.GetAxis(abillityButtonAxisName) > 0)
             {
                 this.abilitySlot.Activate();
             }

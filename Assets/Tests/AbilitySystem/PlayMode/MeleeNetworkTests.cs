@@ -480,6 +480,60 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         // ----- The real animation -----
 
         [UnityTest]
+        public IEnumerator RepeatedSlotPresses_DuringEachSwing_BufferTheRealAnimatedCombo()
+        {
+            Character attacker = SpawnAttacker(withAnimation: true);
+            yield return null;
+            var started = new List<int>();
+            MeleeOf(attacker).MeleeAttackStarted += started.Add;
+            GraphAbilitySlot slot = attacker.AbilitySlots.OfType<GraphAbilitySlot>().Single(x => x.Definition == melee);
+            Animator animator = attacker.GetComponentsInChildren<Animator>(true).Single(a => a.runtimeAnimatorController != null);
+
+            slot.Activate();
+            foreach (int attack in new[] { 1, 2 })
+            {
+                float deadline = Time.time + 3f;
+                while (!animator.GetCurrentAnimatorStateInfo(0).IsName($"Longsword_A{attack}_Attack") && Time.time < deadline)
+                    yield return null;
+                Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(0).IsName($"Longsword_A{attack}_Attack"));
+                yield return new WaitForSeconds(.2f);
+                slot.Activate();
+            }
+
+            float finish = Time.time + 3f;
+            while ((started.Count < 3 || Pending() > 0) && Time.time < finish) yield return null;
+            CollectionAssert.AreEqual(new[] { 1, 2, 3 }, started);
+            Assert.AreEqual(0, Pending());
+        }
+
+        [UnityTest]
+        public IEnumerator RepeatedSlotPresses_AfterEachSwing_CompleteTheRealAnimatedCombo()
+        {
+            Character attacker = SpawnAttacker(withAnimation: true);
+            yield return null;
+            var started = new List<int>();
+            MeleeOf(attacker).MeleeAttackStarted += started.Add;
+            GraphAbilitySlot slot = attacker.AbilitySlots.OfType<GraphAbilitySlot>().Single(x => x.Definition == melee);
+            Animator animator = attacker.GetComponentsInChildren<Animator>(true).Single(a => a.runtimeAnimatorController != null);
+
+            slot.Activate();
+            foreach (int attack in new[] { 1, 2 })
+            {
+                float deadline = Time.time + 3f;
+                while (!animator.GetCurrentAnimatorStateInfo(0).IsName($"Longsword_A{attack}_Recovery") && Time.time < deadline)
+                    yield return null;
+                Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(0).IsName($"Longsword_A{attack}_Recovery"), "The actual swing must finish before the next press.");
+                yield return new WaitForSeconds(.12f);
+                slot.Activate();
+            }
+
+            float finish = Time.time + 3f;
+            while ((started.Count < 3 || Pending() > 0) && Time.time < finish) yield return null;
+            CollectionAssert.AreEqual(new[] { 1, 2, 3 }, started, "Normal ability-bar presses must advance the combo after each swing.");
+            Assert.AreEqual(0, Pending(), "All three real clip events must close their swings.");
+        }
+
+        [UnityTest]
         public IEnumerator ARealSwing_PlaysItsAnimation_OpensAndClosesTheHitWindow_AndReleasesTheAbility()
         {
             Character attacker = SpawnAttacker(withAnimation: true);

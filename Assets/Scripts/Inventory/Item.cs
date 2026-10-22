@@ -27,6 +27,9 @@ namespace SimpleRPG.InventorySystem
     [CreateAssetMenu(fileName = "Item", menuName = "Items/Item")]
     public class Item : ScriptableObject
     {
+        [field: SerializeField]
+        [Tooltip("Networked world pickup for this catalog item.")]
+        public GameObject WorldPrefab { get; set; }
         [Header("Item Settings")]
         [field: SerializeField]
         [Tooltip("The image for the item to be displayed in the users Inventory.")]

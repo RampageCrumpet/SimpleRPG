@@ -30,13 +30,14 @@ namespace SimpleRPG.AI
         /// <inheritdoc cref="PrimarySense.CanSense(Character)"/>
         public override bool CanSense(Character target)
         {
-            return sensedCharacters.Contains(target);
+            return target != null && Sense().Contains(target);
         }
 
         public override IEnumerable<Character> Sense()
         {
             // Create an overlap sphere and return all of the characters within the range of this sense.
-            sensedCharacters = Physics.OverlapSphere(transform.position, Range, sensableLayers, QueryTriggerInteraction.Ignore).Select(x => x.GetComponent<Character>()).Where(x => x != null);
+            sensedCharacters = Physics.OverlapSphere(transform.position, Range, sensableLayers, QueryTriggerInteraction.Collide)
+                .Select(x => x.GetComponentInParent<Character>()).Where(x => x != null && x.IsAlive).Distinct().ToArray();
 
             if(onlySensePlayers)
             {

@@ -67,7 +67,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 5dc56671318b5e748a36c961f26302de, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 7c54191221b24c04cb99c2eb0542135d, type: 2}
+      objectReference: {fileID: 2100000, guid: 7b3d7ad31457f784c9289f548dfba489, type: 2}
     - target: {fileID: 919132149155446097, guid: 5dc56671318b5e748a36c961f26302de, type: 3}
       propertyPath: m_Name
       value: Wall_Doorway_Smooth_01 Variant
@@ -108,10 +108,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbfaabab38af4ec41a2dcf01aebf1b71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <ConnectionLength>k__BackingField: 1
-  <ConnectionWidth>k__BackingField: 1
+  <ConnectionLength>k__BackingField: 0.4
+  <ConnectionWidth>k__BackingField: 0.4
   SealingObject: {fileID: 0}
+  Type: {fileID: 0}
+  Level: 0
+  ClimbsUp: 1
   location: {x: 0, y: 0}
+  LockObject: {fileID: 0}
 --- !u!64 &9203649422983540474
 MeshCollider:
   m_ObjectHideFlags: 0

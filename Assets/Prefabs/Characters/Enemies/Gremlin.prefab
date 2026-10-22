@@ -144,11 +144,11 @@ GameObject:
   - component: {fileID: 326977853508813783}
   - component: {fileID: 4761831126757766221}
   - component: {fileID: 6973470050778234543}
-  - component: {fileID: 7049996302196918140}
   - component: {fileID: 3556815341071204683}
   - component: {fileID: 4550381927670892142}
   - component: {fileID: 3168495861873391028}
   - component: {fileID: 3659089507688104385}
+  - component: {fileID: 2522196584452215971}
   m_Layer: 9
   m_Name: Gremlin
   m_TagString: Untagged
@@ -219,6 +219,12 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 76b59de91a0ffdb42b941797eb301d93, type: 2}
   - {fileID: 11400000, guid: 49664e7ac941459295ad0c76109a18fe, type: 2}
   startingWeapon: {fileID: 11400000, guid: fe75756d0facf1c438525ed1bb428a95, type: 2}
+  strength: 10
+  constitution: 10
+  dexterity: 10
+  agility: 10
+  wisdom: 10
+  intelligence: 10
 --- !u!114 &3472238292836523047
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -278,6 +284,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  independentAttacks: []
   attackLengths:
   - 1.1666666
   - 0.9166667
@@ -327,6 +334,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71e9c15da6f0e2147acffbfcd2dddf8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  activationTrigger:
+  deathTrigger:
 --- !u!95 &4761831126757766221
 Animator:
   serializedVersion: 7
@@ -363,20 +372,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   <InventorySize>k__BackingField: {x: 15, y: 10}
---- !u!114 &7049996302196918140
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1669218347359381997}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0885bfc96085a947bcdf086541aa4ab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  AttackRange: 1
 --- !u!114 &3556815341071204683
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -401,7 +396,7 @@ NavMeshAgent:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1669218347359381997}
-  m_Enabled: 1
+  m_Enabled: 0
   m_AgentTypeID: 0
   m_Radius: 0.5
   m_Speed: 3.5
@@ -443,6 +438,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: SimpleRPG.Abilities.Integration::SimpleRPG.Abilities.Integration.AbilityUser
   ShowTopMostFoldoutHeaderGroup: 1
   muzzleOffset: {x: 0, y: 1.2, z: 0.8}
+--- !u!114 &2522196584452215971
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1669218347359381997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0372f7b76fe52274c8f1210d478dda76, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: SimpleRPG::AI.EnemyController
+  ShowTopMostFoldoutHeaderGroup: 1
+  AttackRange: 1
+  activationDuration: 0
 --- !u!1 &2840580516931018900
 GameObject:
   m_ObjectHideFlags: 0

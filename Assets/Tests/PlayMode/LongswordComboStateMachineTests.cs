@@ -175,6 +175,30 @@ namespace SimpleRPG.Tests.PlayMode
         }
 
         [Test]
+        public void PressAfterAttackOneFinishes_BranchesFromRecoveryIntoAttackTwo()
+        {
+            Press("Attack_OneHanded");
+            AdvanceTo(1.3f);
+            AssertInState("Longsword_A1_Recovery", "The unbuffered swing has finished");
+            Press("ComboQueued");
+            AdvanceTo(1.75f);
+            AssertInState("Longsword_A2_Attack", "A late continuation must play attack two, rather than restart attack one");
+        }
+
+        [Test]
+        public void PressAfterAttackTwoFinishes_BranchesFromRecoveryIntoAttackThree()
+        {
+            Press("Attack_OneHanded");
+            AdvanceTo(.6f);
+            Press("ComboQueued");
+            AdvanceTo(2.5f);
+            AssertInState("Longsword_A2_Recovery", "The second swing has finished");
+            Press("ComboQueued");
+            AdvanceTo(2.8f);
+            AssertInState("Longsword_A3_Attack", "A late continuation must reach the third attack");
+        }
+
+        [Test]
         public void AttackThree_NeverBranches_PlaysItsRecovery()
         {
             Press("Attack_OneHanded");

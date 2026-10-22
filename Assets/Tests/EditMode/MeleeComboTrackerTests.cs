@@ -116,6 +116,40 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
+        public void PressAfterAttackEnd_ContinuesWithinTheRecoveryWindow()
+        {
+            var tracker = NewTracker();
+            tracker.StartAttack(Start);
+            float press = Start + Attack1Length + .2f;
+            Assert.IsTrue(tracker.TryQueueNext(press, out int next));
+            Assert.AreEqual(2, next);
+
+            // Attack two starts after the late press and its continuation, not at the old buffered time.
+            float secondEnd = press + Combo1Length + Attack2Length;
+            Assert.IsTrue(tracker.TryQueueNext(secondEnd + .2f, out next));
+            Assert.AreEqual(3, next);
+        }
+
+        [Test]
+        public void PressAfterRecoveryWindow_ExpiresInsteadOfContinuing()
+        {
+            var tracker = NewTracker();
+            tracker.StartAttack(Start);
+            Assert.IsFalse(tracker.TryQueueNext(Start + Attack1Length
+                + MeleeComboTracker.DefaultContinuationWindow + MeleeComboTracker.Tolerance + Delta, out _));
+        }
+
+        [Test]
+        public void LatePress_CannotSkipThePendingContinuation()
+        {
+            var tracker = NewTracker();
+            tracker.StartAttack(Start);
+            float press = Start + Attack1Length + .2f;
+            Assert.IsTrue(tracker.TryQueueNext(press, out _));
+            Assert.IsFalse(tracker.TryQueueNext(press + .05f, out _));
+        }
+
+        [Test]
         public void FreshChain_IsBlockedWhileAQueuedChainRuns()
         {
             MeleeComboTracker tracker = NewTracker();

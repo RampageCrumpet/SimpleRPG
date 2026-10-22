@@ -1,0 +1,329 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!319 &31900000
+AvatarMask:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Skeleton_OffHand_Attack
+  m_Mask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000u
+  m_Elements:
+  - m_Path: 
+    m_Weight: 0
+  - m_Path: Skeleton_GameReady
+    m_Weight: 0
+  - m_Path: Skeleton_Rig
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/LeftFoot
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/LeftFoot/LeftToes
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/LeftFoot/LeftToes/LeftBigToeProximal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/LeftFoot/LeftToes/LeftBigToeProximal/LeftBigToeDistal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/LeftFoot/LeftToes/LeftFourthToeProximal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/LeftFoot/LeftToes/LeftFourthToeProximal/LeftFourthToeIntermediate
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/LeftFoot/LeftToes/LeftFourthToeProximal/LeftFourthToeIntermediate/LeftFourthToeDistal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/LeftFoot/LeftToes/LeftLittleToeProximal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/LeftFoot/LeftToes/LeftLittleToeProximal/LeftLittleToeIntermediate
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/LeftFoot/LeftToes/LeftLittleToeProximal/LeftLittleToeIntermediate/LeftLittleToeDistal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/LeftFoot/LeftToes/LeftSecondToeProximal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/LeftFoot/LeftToes/LeftSecondToeProximal/LeftSecondToeIntermediate
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/LeftFoot/LeftToes/LeftSecondToeProximal/LeftSecondToeIntermediate/LeftSecondToeDistal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/LeftFoot/LeftToes/LeftThirdToeProximal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/LeftFoot/LeftToes/LeftThirdToeProximal/LeftThirdToeIntermediate
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/LeftFoot/LeftToes/LeftThirdToeProximal/LeftThirdToeIntermediate/LeftThirdToeDistal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/Piece_Left_fibula
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/Piece_Left_patella
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/LeftLowerLeg/Piece_Left_tibia
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/LeftUpperLeg/Piece_Left_femur
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Piece_Left_hip_bone
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Piece_Right_hip_bone
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Piece_Sacrum
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/Piece_Right_femur
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/Piece_Right_fibula
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/Piece_Right_patella
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/Piece_Right_tibia
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/RightFoot
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/RightFoot/RightToes
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/RightFoot/RightToes/RightBigToeProximal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/RightFoot/RightToes/RightBigToeProximal/RightBigToeDistal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/RightFoot/RightToes/RightFourthToeProximal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/RightFoot/RightToes/RightFourthToeProximal/RightFourthToeIntermediate
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/RightFoot/RightToes/RightFourthToeProximal/RightFourthToeIntermediate/RightFourthToeDistal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/RightFoot/RightToes/RightLittleToeProximal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/RightFoot/RightToes/RightLittleToeProximal/RightLittleToeIntermediate
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/RightFoot/RightToes/RightLittleToeProximal/RightLittleToeIntermediate/RightLittleToeDistal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/RightFoot/RightToes/RightSecondToeProximal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/RightFoot/RightToes/RightSecondToeProximal/RightSecondToeIntermediate
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/RightFoot/RightToes/RightSecondToeProximal/RightSecondToeIntermediate/RightSecondToeDistal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/RightFoot/RightToes/RightThirdToeProximal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/RightFoot/RightToes/RightThirdToeProximal/RightThirdToeIntermediate
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/RightUpperLeg/RightLowerLeg/RightFoot/RightToes/RightThirdToeProximal/RightThirdToeIntermediate/RightThirdToeDistal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Eighth_thoracic_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Eleventh_thoracic_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Left_eighth_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Left_eleventh_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Left_eleventh_rib_2
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Left_seventh_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Left_sixth_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Left_tenth_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Left_twelfth_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Ninth_thoracic_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Right_eighth_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Right_eleventh_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Right_eleventh_rib_2
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Right_seventh_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Right_sixth_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Right_tenth_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Right_twelfth_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Seventh_thoracic_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Tenth_thoracic_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/Piece_Twelfth_thoracic_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/LeftHand
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/LeftHand/LeftIndexProximal
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/LeftHand/LeftIndexProximal/LeftIndexIntermediate
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/LeftHand/LeftIndexProximal/LeftIndexIntermediate/LeftIndexDistal
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/LeftHand/LeftLittleProximal
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/LeftHand/LeftLittleProximal/LeftLittleIntermediate
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/LeftHand/LeftLittleProximal/LeftLittleIntermediate/LeftLittleDistal
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/LeftHand/LeftMiddleProximal
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/LeftHand/LeftMiddleProximal/LeftMiddleIntermediate
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/LeftHand/LeftMiddleProximal/LeftMiddleIntermediate/LeftMiddleDistal
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/LeftHand/LeftRingProximal
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/LeftHand/LeftRingProximal/LeftRingIntermediate
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/LeftHand/LeftRingProximal/LeftRingIntermediate/LeftRingDistal
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/LeftHand/LeftThumbProximal
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/LeftHand/LeftThumbProximal/LeftThumbIntermediate
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/LeftHand/LeftThumbProximal/LeftThumbIntermediate/LeftThumbDistal
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/Piece_Left_radius
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/LeftLowerArm/Piece_Left_ulna
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/LeftUpperArm/Piece_Left_humerus
+    m_Weight: 1
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/Piece_Left_clavicle
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/LeftShoulder/Piece_Left_scapula
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Neck
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Neck/Head
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Neck/Head/Jaw
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Neck/Piece_Atlas
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Neck/Piece_Axis
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Neck/Piece_Fifth_cervical_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Neck/Piece_Fourth_cervical_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Neck/Piece_Seventh_cervical_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Neck/Piece_Sixth_cervical_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Neck/Piece_Third_cervical_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_Fifth_thoracic_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_First_thoracic_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_Fourth_thoracic_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_Left_fifth_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_Left_first_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_Left_fourth_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_Left_second_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_Left_third_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_Right_fifth_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_Right_first_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_Right_fourth_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_Right_second_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_Right_third_rib
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_Second_thoracic_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_Sixth_thoracic_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_Sternum_Complete
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/Piece_Third_thoracic_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/Piece_Right_clavicle
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/Piece_Right_scapula
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/Piece_Right_humerus
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/Piece_Right_radius
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/Piece_Right_ulna
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/RightIndexProximal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/RightIndexProximal/RightIndexIntermediate
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/RightIndexProximal/RightIndexIntermediate/RightIndexDistal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/RightLittleProximal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/RightLittleProximal/RightLittleIntermediate
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/RightLittleProximal/RightLittleIntermediate/RightLittleDistal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/RightMiddleProximal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/RightMiddleProximal/RightMiddleIntermediate
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/RightMiddleProximal/RightMiddleIntermediate/RightMiddleDistal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/RightRingProximal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/RightRingProximal/RightRingIntermediate
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/RightRingProximal/RightRingIntermediate/RightRingDistal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/RightThumbProximal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/RightThumbProximal/RightThumbIntermediate
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/RightThumbProximal/RightThumbIntermediate/RightThumbDistal
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/Sword_Socket
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/Sword_Socket/Shortsword_Rusty
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Chest/UpperChest/RightShoulder/RightUpperArm/RightLowerArm/RightHand/Sword_Socket/Shortsword_Rusty/BladeHitbox
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Piece_Fifth_lumbar_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Piece_First_lumbar_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Piece_Fourth_lumbar_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Piece_Second_lumbar_vertebra
+    m_Weight: 0
+  - m_Path: Skeleton_Rig/Root/Hips/Spine/Piece_Third_lumbar_vertebra
+    m_Weight: 0
+  - m_Path: TorsoHurtbox
+    m_Weight: 0

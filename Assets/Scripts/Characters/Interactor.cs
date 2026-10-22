@@ -134,6 +134,7 @@ namespace SimpleRPG
         public Interactable FindInteractionTarget()
         {
             Camera mainCamera = Camera.main;
+            if (mainCamera == null) return null;
             Ray ray = mainCamera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
             RaycastHit hit;
 

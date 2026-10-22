@@ -18,6 +18,20 @@ namespace SimpleRPG.Tests.EditMode
 
         private const float FrameTolerance = 1f / 60f;
 
+        [Test]
+        public void Player_EquipsProvidedLongswordWithBladeCollider()
+        {
+            var player = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefab);
+            var weapon = player.GetComponentInChildren<Weapon>(true);
+            Assert.AreEqual("Longsword", weapon.name);
+            var model = weapon.GetComponentInChildren<MeshFilter>(true);
+            Assert.AreEqual("Assets/Art/3d Models/Items/Longsword/Longsword.fbx", AssetDatabase.GetAssetPath(model.sharedMesh));
+            var collider = weapon.GetComponent<BoxCollider>();
+            Assert.IsTrue(collider.isTrigger);
+            Assert.Greater(collider.size.y, 1f);
+            Assert.Less(collider.size.x, .1f);
+        }
+
         /// <summary>
         /// Finds an imported animation clip by name inside one of the longsword FBX files.
         /// </summary>

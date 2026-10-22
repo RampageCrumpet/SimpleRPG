@@ -1,0 +1,10 @@
+{
+  "name": "SimpleRPG.TestAutomation.Editor",
+  "references": [
+    "UnityEditor.TestRunner",
+    "UnityEngine.TestRunner"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}
