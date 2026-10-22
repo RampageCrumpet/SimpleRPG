@@ -2,6 +2,7 @@
     "name": "SimpleRPG.Abilities.Editor",
     "rootNamespace": "SimpleRPG.Abilities.Editor",
     "references": [
+        "SimpleRPG",
         "SimpleRPG.Gameplay.Core",
         "SimpleRPG.Abilities.Runtime",
         "SimpleRPG.Abilities.Integration",

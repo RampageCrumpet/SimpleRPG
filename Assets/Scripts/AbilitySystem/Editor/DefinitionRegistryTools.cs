@@ -95,7 +95,7 @@ namespace SimpleRPG.Abilities.Editor
 
         /// <summary>
         /// The problems that would stop a build: missing or duplicate IDs, a missing registry, a registry that is out of date, or an ability
-        /// whose graph does not compile.
+        /// whose graph does not compile, or a combo whose data is unsound.
         /// </summary>
         public static List<string> ValidateForBuild()
         {
@@ -106,6 +106,7 @@ namespace SimpleRPG.Abilities.Editor
                 List<string> problems = DefinitionRegistry.Validate(all, Describe);
                 problems.Add("The definition registry asset is missing. Run SimpleRPG > Definitions > Rebuild Definition Registry.");
                 problems.AddRange(AbilityGraphProblems(all));
+                problems.AddRange(ComboProblems());
                 return problems;
             }
 
@@ -116,7 +117,32 @@ namespace SimpleRPG.Abilities.Editor
             }
 
             errors.AddRange(AbilityGraphProblems(all));
+            errors.AddRange(ComboProblems());
             return errors;
+        }
+
+        /// <summary>
+        /// Checks every combo asset in the project and returns each problem with the asset it belongs to.
+        /// </summary>
+        public static List<string> ComboProblems()
+        {
+            List<string> problems = new List<string>();
+            foreach (string guid in AssetDatabase.FindAssets("t:ComboDefinition"))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                ComboDefinition combo = AssetDatabase.LoadAssetAtPath<ComboDefinition>(path);
+                if (combo == null)
+                {
+                    continue;
+                }
+
+                foreach (string problem in combo.Validate())
+                {
+                    problems.Add(path + ": " + problem);
+                }
+            }
+
+            return problems;
         }
 
         /// <summary>

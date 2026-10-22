@@ -17,4 +17,11 @@ public class WeaponData : Item
     [SerializeField]
     public DamageInfo damage;
 
+    /// <summary>
+    /// The chain of melee attacks this weapon performs. Empty for weapons without one.
+    /// </summary>
+    [SerializeField]
+    private SimpleRPG.Abilities.ComboDefinition combo;
+
+    public SimpleRPG.Abilities.ComboDefinition Combo => combo;
 }
