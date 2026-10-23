@@ -7,7 +7,9 @@
         "SimpleRPG.Abilities.Runtime",
         "SimpleRPG.Abilities.Integration",
         "Unity.Netcode.Runtime",
-        "Unity.AI.Navigation"
+        "Unity.AI.Navigation",
+        "Unity.InputSystem",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [
         "Editor"

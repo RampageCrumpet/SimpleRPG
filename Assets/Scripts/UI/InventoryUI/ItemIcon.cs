@@ -1,3 +1,4 @@
+using SimpleRPG.Controls;
 using SimpleRPG.InventorySystem;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -61,7 +62,7 @@ namespace SimpleRPG.UI
             iconImage.raycastTarget = false;
 
             // Calculate the offset from the mouse position from the items origin.
-            dragOffset = transform.position - Input.mousePosition;
+            dragOffset = transform.position - (Vector3)GameInput.PointerPosition;
 
             //Ensure that the target slot is rendered ontop of all of the other slots, this ensures that the item is always visible.
             this.transform.SetAsLastSibling();
@@ -74,7 +75,7 @@ namespace SimpleRPG.UI
         ///<inheritdoc/>
         public void OnDrag(PointerEventData eventData)
         {
-            transform.position = Input.mousePosition + dragOffset;
+            transform.position = (Vector3)GameInput.PointerPosition + dragOffset;
         }
 
         ///<inheritdoc/>
@@ -93,7 +94,7 @@ namespace SimpleRPG.UI
             foreach (InventoryUI inventory in FindObjectsByType<InventoryUI>())
             {
                 RectTransform inventoryRectTransform = inventory.GetComponent<RectTransform>();
-                if (RectTransformUtility.RectangleContainsScreenPoint(inventoryRectTransform, Input.mousePosition, null))
+                if (RectTransformUtility.RectangleContainsScreenPoint(inventoryRectTransform, GameInput.PointerPosition, null))
                 {
                     // The cell the item's origin lands on, judged from where the icon sits (it keeps its grab offset while dragging).
                     Vector2Int targetCellPosition = inventory.ScreenToItemOrigin(transform.position, Item.ItemSize);

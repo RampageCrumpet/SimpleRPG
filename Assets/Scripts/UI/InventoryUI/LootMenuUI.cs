@@ -1,3 +1,4 @@
+using SimpleRPG.Controls;
 using SimpleRPG.InventorySystem;
 using UnityEngine;
 
@@ -32,7 +33,7 @@ namespace SimpleRPG.UI
         private void Update()
         {
             if (playerUIController == null || !PlayerInventoryUI.HasInventory) return;
-            if (Input.GetKeyDown(KeyCode.I))
+            if (GameInput.Inventory.WasPressedThisFrame())
             {
                 bool show = !PlayerInventoryUI.gameObject.activeSelf;
                 LootInventoryUI.gameObject.SetActive(false);
@@ -40,7 +41,7 @@ namespace SimpleRPG.UI
                 if (show) playerUIController.LockRotationAndShowMouse(this);
                 else playerUIController.UnlockRotationAndHideMouse(this);
             }
-            else if (Input.GetKeyDown(KeyCode.Escape) && PlayerInventoryUI.gameObject.activeSelf)
+            else if (GameInput.Cancel.WasPressedThisFrame() && PlayerInventoryUI.gameObject.activeSelf)
             {
                 SetLootMenuUIDisplayStatus(false);
             }

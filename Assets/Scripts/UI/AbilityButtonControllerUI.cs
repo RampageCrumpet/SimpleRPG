@@ -1,3 +1,4 @@
+using SimpleRPG.Controls;
 using SimpleRPG.Abilities;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,7 +35,7 @@ namespace SimpleRPG.UI
                 GameObject newAbilityButtonGameObject = Object.Instantiate(abilityButtonPrefab, abillityBar.transform);
                 AbilityButton newAbilityButton = newAbilityButtonGameObject.GetComponent<AbilityButton>();
                 newAbilityButton.Initialize(abilitySlots.ElementAt(x));
-                newAbilityButton.abillityButtonAxisName = $"Spell{x+1}";
+                newAbilityButton.abilityAction = GameInput.Ability(x + 1);
                 abilityButtons.Add(newAbilityButton);
             }
         }

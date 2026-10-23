@@ -1,3 +1,4 @@
+using SimpleRPG.Controls;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
@@ -103,7 +104,8 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
         // Only the owner reads input and moves its own camera. Other clients and the server never touch it.
         if (this.look != null && FirstPersonLookMath.ShouldLook(this.IsOwner, Application.isFocused))
         {
-            this.look.Look(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"), Time.deltaTime);
+            Vector2 lookDelta = GameInput.Look.ReadValue<Vector2>();
+            this.look.Look(lookDelta.x, lookDelta.y, Time.deltaTime);
         }
     }
 
@@ -113,7 +115,7 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
     /// <returns> Returns a <see cref="Vector3"/> representing the direction we want to move.</returns>
     private Vector3 CalculateMovement()
     {
-        Vector3 movementDirection = FirstPersonLookMath.MovementDirection(this.transform.forward, this.transform.right, Input.GetAxis("Vertical"), Input.GetAxis("Horizontal"));
+        Vector3 movementDirection = FirstPersonLookMath.MovementDirection(this.transform.forward, this.transform.right, GameInput.Move.ReadValue<Vector2>().y, GameInput.Move.ReadValue<Vector2>().x);
 
         return movementDirection;
     }

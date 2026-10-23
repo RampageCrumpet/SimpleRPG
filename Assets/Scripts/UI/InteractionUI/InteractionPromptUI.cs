@@ -1,3 +1,4 @@
+using SimpleRPG.Controls;
 using SimpleRPG.ObjectInteractions;
 using TMPro;
 using UnityEngine;
@@ -41,7 +42,16 @@ namespace SimpleRPG.UI
         public void SetInteractionPromptText(Interactable interactable)
         {
             interactionNameText.text = interactable.InteractionName;
-            interactionText.text = interactable.InteractionText;
+            interactionText.text = $"Press {GameInput.BindingDisplay(GameInput.Interact)} to {ActionPhrase(interactable.InteractionText)}";
+        }
+
+        /// <summary>
+        /// Lower-cases the first letter so "Pick up" reads naturally after "to".
+        /// </summary>
+        private static string ActionPhrase(string interactionText)
+        {
+            if (string.IsNullOrEmpty(interactionText)) return "interact";
+            return char.ToLowerInvariant(interactionText[0]) + interactionText.Substring(1);
         }
     }
 }

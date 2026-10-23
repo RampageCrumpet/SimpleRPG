@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace SimpleRPG.UI
@@ -14,10 +15,9 @@ namespace SimpleRPG.UI
     public class AbilityButton : MonoBehaviour
     {
         /// <summary>
-        /// The button axis we use to trigger the abillity associated with this AbillityCooldown.
+        /// The input action that triggers the ability associated with this button. Null if the slot has no key.
         /// </summary>
-        [Tooltip("The button axis we use to trigger the abillity associated with this AbillityCooldown.")]
-        public string abillityButtonAxisName = "Fire1";
+        public InputAction abilityAction;
 
         [Tooltip("The mask used to darken this abillity when it's cooling down.")]
         public Image darkMask;
@@ -60,7 +60,7 @@ namespace SimpleRPG.UI
         {
             UpdateCooldown();
 
-            if (requiresNewPress ? Input.GetButtonDown(abillityButtonAxisName) : Input.GetAxis(abillityButtonAxisName) > 0)
+            if (abilityAction != null && (requiresNewPress ? abilityAction.WasPressedThisFrame() : abilityAction.IsPressed()))
             {
                 this.abilitySlot.Activate();
             }

@@ -1,3 +1,4 @@
+using SimpleRPG.Controls;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
@@ -64,8 +65,8 @@ namespace SimpleRPG
         private Vector3 CalculateMovement()
         {
             Vector3 movementDirection = Vector3.zero;
-            movementDirection += Vector3.forward * Input.GetAxis("Vertical");
-            movementDirection += Vector3.right * Input.GetAxis("Horizontal");
+            movementDirection += Vector3.forward * GameInput.Move.ReadValue<Vector2>().y;
+            movementDirection += Vector3.right * GameInput.Move.ReadValue<Vector2>().x;
 
             Camera.main.transform.TransformDirection(movementDirection);
             movementDirection.y = 0;
@@ -111,7 +112,7 @@ namespace SimpleRPG
         {
             // The ray we want to draw from the mouse position on the screen through the camera.
             // It's hit location will be the location of the mouse in 3d space.
-            Ray cameraRay = Camera.main.ScreenPointToRay(Input.mousePosition);
+            Ray cameraRay = Camera.main.ScreenPointToRay(GameInput.PointerPosition);
 
             // The details about what our ray hit and where.
             if (Physics.Raycast(cameraRay, out RaycastHit hit, Mathf.Infinity))

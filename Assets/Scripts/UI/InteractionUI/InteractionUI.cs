@@ -1,4 +1,6 @@
+using SimpleRPG.Controls;
 using SimpleRPG.ObjectInteractions;
+using SimpleRPG.Rendering;
 using UnityEngine;
 
 namespace SimpleRPG.UI
@@ -40,7 +42,13 @@ namespace SimpleRPG.UI
                 Interactable interactionTarget = interactor.FindInteractionTarget();
                 HandleInteraction(interactionTarget);
                 HandleInteractionDisplay(interactionTarget);
+                InteractableOutline.SetTargets(interactionTarget != null ? interactionTarget.OutlineRenderers : null);
             }
+        }
+
+        private void OnDisable()
+        {
+            InteractableOutline.SetTargets(null);
         }
 
         public void SetInteractor(Interactor interactor)
@@ -76,7 +84,7 @@ namespace SimpleRPG.UI
         /// </summary>
         private void HandleInteraction(Interactable interactionTarget)
         {
-            if (Input.GetButtonDown("Interact") && interactionTarget != null)
+            if (GameInput.Interact.WasPressedThisFrame() && interactionTarget != null)
             {
                 if (interactor.IsInteracting)
                 {

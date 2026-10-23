@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -33,6 +35,14 @@ namespace SimpleRPG.ObjectInteractions
         [field: SerializeField]
         [Tooltip("The time it takes to interact with this object in seconds.")]
         public float InteractionTime { get; protected set; }
+
+        private Renderer[] outlineRenderers;
+
+        /// <summary>
+        /// The renderers outlined while the player can interact with this object. By default every mesh under it.
+        /// </summary>
+        public virtual IReadOnlyList<Renderer> OutlineRenderers =>
+            outlineRenderers ??= GetComponentsInChildren<Renderer>().Where(r => r is MeshRenderer || r is SkinnedMeshRenderer).ToArray();
 
         public void Start()
         {
