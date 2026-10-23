@@ -119,7 +119,15 @@ public class Projectile : NetworkBehaviour
     /// </summary>
     private void ApplyLaunch(Vector3 direction)
     {
-        this.GetComponent<Rigidbody>().linearVelocity = ProjectileRules.LaunchVelocity(direction, velocity);
+        Rigidbody body = this.GetComponent<Rigidbody>();
+
+        // A client's copy follows the server's transform and is kinematic, which cannot take a velocity.
+        if (body.isKinematic)
+        {
+            return;
+        }
+
+        body.linearVelocity = ProjectileRules.LaunchVelocity(direction, velocity);
     }
 
     /// <summary>

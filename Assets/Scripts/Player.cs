@@ -32,7 +32,7 @@ namespace SimpleRPG
 
         private IEnumerator SpawnWhenDungeonReady()
         {
-            var population = UnityEngine.Object.FindFirstObjectByType<SimpleRPG.LevelGeneration.DungeonPopulation>();
+            var population = UnityEngine.Object.FindAnyObjectByType<SimpleRPG.LevelGeneration.DungeonPopulation>();
             while (population != null && !population.IsReady) yield return null;
             if (IsSpawned) SpawnCharacter();
         }
@@ -45,7 +45,7 @@ namespace SimpleRPG
             // Ensure that only the server tries to spawn a character.
             if (IsServer)
             {
-                var population = UnityEngine.Object.FindFirstObjectByType<SimpleRPG.LevelGeneration.DungeonPopulation>();
+                var population = UnityEngine.Object.FindAnyObjectByType<SimpleRPG.LevelGeneration.DungeonPopulation>();
                 Vector3 spawnPosition = population != null ? population.PlayerSpawnPosition + Vector3.up * 0.15f : new Vector3(0, 5, 0);
                 GameObject playerInstance = Instantiate(playerPrefab, spawnPosition, playerPrefab.transform.rotation);
                 playerInstance.GetComponent<NetworkObject>().SpawnWithOwnership(this.OwnerClientId, true);

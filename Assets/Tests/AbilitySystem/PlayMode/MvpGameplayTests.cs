@@ -37,7 +37,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             AbilityServices.Reset();
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode("Assets/Scenes/SampleScene.unity", new LoadSceneParameters(LoadSceneMode.Single));
             // Netcode moves its manager into DontDestroyOnLoad during Awake, outside this scene's roots.
-            foreach (var leftover in Object.FindObjectsByType<NetworkManager>(FindObjectsSortMode.None)) Object.Destroy(leftover.gameObject);
+            foreach (var leftover in Object.FindObjectsByType<NetworkManager>()) Object.Destroy(leftover.gameObject);
             // Keep other test fixtures free of the demo scene's camera and objects.
             foreach (var root in SceneManager.GetActiveScene().GetRootGameObjects()) Object.Destroy(root);
             yield return null;
@@ -46,10 +46,10 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private IEnumerator StartDungeon(int seed, int rooms, int floors, int maximumRooms = -1)
         {
             yield return EditorSceneManager.LoadSceneAsyncInPlayMode("Assets/Scenes/SampleScene.unity", new LoadSceneParameters(LoadSceneMode.Single));
-            var game = Object.FindFirstObjectByType<GameController>();
+            var game = Object.FindAnyObjectByType<GameController>();
             game.UseRandomSeed = false;
             game.Seed = seed;
-            var generator = Object.FindFirstObjectByType<LevelGeneratorController>();
+            var generator = Object.FindAnyObjectByType<LevelGeneratorController>();
             generator.MinimumNumberOfRooms = rooms;
             generator.MaximumNumberOfRooms = maximumRooms < 0 ? rooms + 3 : maximumRooms;
             generator.FloorCount = floors;
@@ -57,7 +57,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.IsTrue(manager.StartHost());
             yield return null;
             yield return null;
-            var player = Object.FindFirstObjectByType<Player>().character;
+            var player = Object.FindAnyObjectByType<Player>().character;
             Assert.IsNotNull(player, "The player waits for dungeon population and must then spawn.");
             player.GetComponent<FirstPersonCharacterController>().enabled = false;
             player.GetComponent<CharacterController>().enabled = false;
@@ -69,9 +69,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             foreach (var config in new[] { (seed: 42, rooms: 8, floors: 1, maximum: 11), (seed: 1337, rooms: 25, floors: 3, maximum: 28), (seed: 9001, rooms: 40, floors: 3, maximum: 43), (seed: 42, rooms: 25, floors: 3, maximum: 0) })
             {
                 yield return StartDungeon(config.seed, config.rooms, config.floors, config.maximum);
-                var generator = Object.FindFirstObjectByType<LevelGeneratorController>();
-                var population = Object.FindFirstObjectByType<DungeonPopulation>();
-                var player = Object.FindFirstObjectByType<Player>().character;
+                var generator = Object.FindAnyObjectByType<LevelGeneratorController>();
+                var population = Object.FindAnyObjectByType<DungeonPopulation>();
+                var player = Object.FindAnyObjectByType<Player>().character;
                 Assert.IsTrue(generator.IsGenerated);
                 Assert.IsTrue(population.IsReady);
                 Assert.GreaterOrEqual(generator.GeneratedRooms.Count, config.rooms);
@@ -80,9 +80,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
                 Assert.GreaterOrEqual(population.TreasureCount, config.rooms);
                 foreach (var room in generator.GeneratedRooms)
                     Assert.IsTrue(population.TryFindPosition(room, generator.Roomset.cellSize, new System.Random(12), true, out _, avoidOccupied: false), $"Seed {config.seed}: no connected walkable position in {room.name}");
-                foreach (var enemy in Object.FindObjectsByType<EnemyController>(FindObjectsSortMode.None))
+                foreach (var enemy in Object.FindObjectsByType<EnemyController>())
                     Assert.IsTrue(enemy.GetComponent<NavMeshAgent>().isOnNavMesh);
-                var loot = Object.FindObjectsByType<WorldItemPickup>(FindObjectsSortMode.None);
+                var loot = Object.FindObjectsByType<WorldItemPickup>();
                 Assert.IsTrue(loot.Any(p => p.Item.ItemName.StartsWith("Golden")));
                 Assert.IsTrue(loot.Any(p => p.Item.ItemName.StartsWith("Brilliant")));
                 var inventory = player.GetComponent<Inventory>();
@@ -107,7 +107,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
                     Assert.Greater(ItemRegistry.Instance.GetId(copy), 0);
                     if (pickup != null) Assert.IsFalse(pickup.TryPickUp(player), "A pickup cannot be claimed twice.");
                 }
-                var menu = Object.FindFirstObjectByType<SimpleRPG.UI.LootMenuUI>();
+                var menu = Object.FindAnyObjectByType<SimpleRPG.UI.LootMenuUI>();
                 Assert.AreNotSame(menu.PlayerInventoryUI, menu.LootInventoryUI, "Player and container inventories need distinct views.");
                 menu.PlayerInventoryUI.gameObject.SetActive(true);
                 yield return null;
@@ -122,7 +122,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
                         menu.PlayerInventoryUI.ScreenToItemOrigin(screen, icon.Item.ItemSize), "Grid coordinates must round-trip through the displayed icon.");
                 }
                 menu.PlayerInventoryUI.gameObject.SetActive(false);
-                var remaining = Object.FindObjectsByType<WorldItemPickup>(FindObjectsSortMode.None);
+                var remaining = Object.FindObjectsByType<WorldItemPickup>();
                 var small = remaining.First(p => p.Item.ItemSize == Vector2Int.one).Item;
                 int capacityGuard = 0;
                 while (inventory.AddItemInstance(small) && capacityGuard++ < 1000) { }
@@ -144,9 +144,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         public IEnumerator Skeletons_UsePhysicalHitsAndEnterTerminalDeath()
         {
             yield return StartDungeon(42, 8, 1);
-            var player = Object.FindFirstObjectByType<Player>().character;
-            var population = Object.FindFirstObjectByType<DungeonPopulation>();
-            var enemies = Object.FindObjectsByType<EnemyController>(FindObjectsSortMode.None);
+            var player = Object.FindAnyObjectByType<Player>().character;
+            var population = Object.FindAnyObjectByType<DungeonPopulation>();
+            var enemies = Object.FindObjectsByType<EnemyController>();
             // Place the combatants on a real generated floor; the rest of the host and combat systems stay active.
             var enemy = enemies[0];
             foreach (var other in enemies.Where(e => e != enemy)) other.GetComponent<NavMeshAgent>().enabled = false;

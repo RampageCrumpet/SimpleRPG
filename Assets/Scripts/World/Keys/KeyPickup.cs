@@ -12,17 +12,20 @@ namespace SimpleRPG.Keys
     {
         private readonly NetworkVariable<int> keyId = new NetworkVariable<int>();
 
+        // The id asked for before the pickup spawned. A NetworkVariable cannot be written until its object is spawned, so it waits here.
+        private int requestedKeyId;
+
         /// <summary>
         /// Which lock this key opens.
         /// </summary>
-        public int KeyId => keyId.Value;
+        public int KeyId => IsSpawned ? keyId.Value : requestedKeyId;
 
         /// <summary>
-        /// Sets which lock the key opens. Server only, before the pickup is spawned, so clients receive it with the spawn.
+        /// Sets which lock the key opens. Server only, before the pickup is spawned; it is written when the pickup spawns, so clients receive it with the spawn.
         /// </summary>
         public void Initialize(int id)
         {
-            keyId.Value = id;
+            requestedKeyId = id;
         }
 
         private DungeonKeyRing ring;
@@ -32,6 +35,7 @@ namespace SimpleRPG.Keys
         {
             if (IsServer)
             {
+                keyId.Value = requestedKeyId;
                 ring = FindRing();
             }
         }
