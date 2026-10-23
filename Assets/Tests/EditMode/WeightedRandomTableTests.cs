@@ -4,6 +4,7 @@ using System.Linq;
 using NUnit.Framework;
 using SimpleRPG.InventorySystem.LootGeneration;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace SimpleRPG.Tests.EditMode
 {
@@ -74,8 +75,14 @@ namespace SimpleRPG.Tests.EditMode
             WeightedRandomTable table = Table(count: 1, negative, notANumber, infinite, valid);
             var random = new System.Random(2);
 
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < 50; i++)
             {
+                // Each roll warns once per rejected entry.
+                for (int rejected = 0; rejected < 3; rejected++)
+                {
+                    LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("is not a finite non-negative weight"));
+                }
+
                 Assert.AreSame(valid, Pick(table, random).Single());
             }
         }

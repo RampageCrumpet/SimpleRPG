@@ -26,7 +26,16 @@ namespace SimpleRPG.Tests.PlayMode
         private NetworkManager host;
         private readonly List<NetworkManager> clients = new List<NetworkManager>();
         private DungeonKeyRing hostRing;
-        private bool previousIgnore;
+        private GameObject mainCamera;
+
+        /// <summary>
+        /// A locally owned character registers with the scene's UI (RegisterWithUI.AttachToUI), which uses Single() and throws in
+        /// a bare test scene. It happens once for every owner spawn, so each manager started here declares it.
+        /// </summary>
+        private static void ExpectNoUiException()
+        {
+            LogAssert.Expect(LogType.Exception, new System.Text.RegularExpressions.Regex("Sequence contains no matching element"));
+        }
 
         private static NetworkManager NewManager(string name)
         {
@@ -50,13 +59,10 @@ namespace SimpleRPG.Tests.PlayMode
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            previousIgnore = LogAssert.ignoreFailingMessages;
-
-            // The player prefab spawns a character whose UI wiring (RegisterWithUI, Player.cs) uses Single() and throws in a bare test
-            // scene, and with two NetworkManagers in one process it sees both copies. Neither matters to the key tests.
-            LogAssert.ignoreFailingMessages = true;
-
+            // The first person controller of every spawned character looks for the scene's MainCamera.
+            mainCamera = new GameObject("TestCamera", typeof(Camera)) { tag = "MainCamera" };
             host = NewManager("TestHost");
+            ExpectNoUiException();
             Assert.IsTrue(host.StartHost(), "The test host should start.");
             yield return null;
 
@@ -68,6 +74,13 @@ namespace SimpleRPG.Tests.PlayMode
         [UnityTearDown]
         public IEnumerator TearDown()
         {
+            // Every owned character parents the one MainCamera to itself, so whichever is destroyed first takes the camera with it
+            // while the other is still looking through it.
+            foreach (FirstPersonCharacterController controller in Object.FindObjectsByType<FirstPersonCharacterController>(FindObjectsSortMode.None))
+            {
+                controller.enabled = false;
+            }
+
             foreach (NetworkManager client in clients)
             {
                 if (client != null && client.IsListening) client.Shutdown();
@@ -90,13 +103,21 @@ namespace SimpleRPG.Tests.PlayMode
             if (hostRing != null) Object.Destroy(hostRing.gameObject);
             if (host != null) Object.Destroy(host.gameObject);
             yield return null;
-            LogAssert.ignoreFailingMessages = previousIgnore;
+
+            // The characters read the camera until they are gone, so it goes last.
+            if (mainCamera != null) Object.Destroy(mainCamera);
+            yield return null;
         }
 
         private IEnumerator Connect(string name)
         {
-            LogAssert.ignoreFailingMessages = true;
             NetworkManager client = NewManager(name);
+            ExpectNoUiException();
+
+            // Both managers live in one process and share the spawn bookkeeping, so the client's copy of the host's objects
+            // trips Netcode's duplicate-id check. A real second process would not.
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("already in the spawned list"));
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("Size mismatch"));
             clients.Add(client);
             Assert.IsTrue(client.StartClient(), "The test client should start.");
             yield return WaitFor(() => client.IsConnectedClient && client.LocalClient.PlayerObject != null, $"{name} did not connect.");

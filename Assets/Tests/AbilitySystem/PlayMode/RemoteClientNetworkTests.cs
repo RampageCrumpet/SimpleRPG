@@ -60,6 +60,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character clientPlayer = null;
             yield return ClientCopyOf(player, c => clientPlayer = c);
 
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("which it does not have"));
             clientPlayer.GetComponent<AbilityUser>().RequestActivate(Load(Icebolt));
             yield return Wait(0.5f);
 
@@ -93,7 +94,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return ClientCopyOf(player, c => clientPlayer = c);
             yield return ClientCopyOf(target, c => clientTarget = c);
 
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("ignored a damage request on a client"));
             clientTarget.TakeDamage(new DamageInfo { Damage = 50 }, BodyLocation.Torso);
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("ignored an equip request"));
             bool equipped = clientPlayer.GetComponent<Equipment>().Equip(EquipmentSlot.mainHand, staff, 900);
             bool ran = clientPlayer.GetComponent<AbilityUser>().TryActivateOnServer(firebolt);
             ItemCastResult itemCast = clientPlayer.GetComponent<AbilityUser>().TryActivateItemOnServer(EquipmentSlot.mainHand, 0);
