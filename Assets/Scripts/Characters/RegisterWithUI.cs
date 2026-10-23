@@ -34,14 +34,18 @@ namespace SimpleRPG.UI
 
                 GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponentInChildren<HealthBarUI>(true)).Single(x => x != null).SetCharacter(character);
 
+                // The UI controller must know the character's controls before the death screen binds: a character that joined already dead shows the screen at once.
+                PlayerUIController playerUI = GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<PlayerUIController>()).Single(x => x != null);
+                playerUI.SetCharacter(character);
+                playerUI.SetCharacterController(GetComponent<FirstPersonCharacterController>());
+                playerUI.GetComponentInChildren<DeathScreenUI>(true)?.SetCharacter(character, playerUI);
+
                 Interactor interactor = GetComponent<Interactor>();
                 GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<InteractionUI>()).Single(x => x != null).SetInteractor(interactor);
 
                 Inventory inventory = GetComponent<Inventory>();
                 GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<LootMenuUI>()).Single(x => x != null).PlayerInventoryUI.SetInventory(inventory);
 
-                FirstPersonCharacterController firstPersonCharacterController = GetComponent<FirstPersonCharacterController>();
-                GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<PlayerUIController>()).Single(x => x != null).SetCharacterController(firstPersonCharacterController);
             }
         }
 

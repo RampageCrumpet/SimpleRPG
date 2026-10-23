@@ -33,6 +33,7 @@ namespace SimpleRPG.Animations
             lastPosition = transform.position;
             character.OnTakeDamage += UpdateTakeDamage;
             character.OnDeath += Die;
+            character.OnRevive += Revive;
             if (melee != null)
             {
                 melee.MeleeAttackStarted += MeleeAttack;
@@ -82,6 +83,18 @@ namespace SimpleRPG.Animations
                     if (parameter.type == AnimatorControllerParameterType.Trigger) animator.ResetTrigger(parameter.name);
             Trigger(deathTrigger);
         }
+        // A new life starts from the animators' default state, with no death pose or half-played attack left over.
+        private void Revive()
+        {
+            foreach (Animator animator in animators)
+            {
+                animator.Rebind();
+                animator.Update(0f);
+            }
+
+            Trigger(activationTrigger);
+        }
+
         private void MeleeAttack(int attackNumber, float secondsIntoAttack)
         {
             if (!character.IsAlive) return;
@@ -127,6 +140,7 @@ namespace SimpleRPG.Animations
             {
                 character.OnTakeDamage -= UpdateTakeDamage;
                 character.OnDeath -= Die;
+                character.OnRevive -= Revive;
             }
             if (melee != null)
             {

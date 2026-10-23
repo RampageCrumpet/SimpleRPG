@@ -280,6 +280,10 @@ namespace SimpleRPG.Abilities.Integration
         protected override void ReleaseAllSwings()
         {
             pendingStep = -1;
+
+            // The owner's guess about the chain is moot too; the next life starts with no chain running.
+            predictor = null;
+            predictedCombo = null;
             if (machine != null)
             {
                 machine.Interrupt(Clock.ElapsedSeconds, events);

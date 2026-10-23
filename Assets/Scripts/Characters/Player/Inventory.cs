@@ -447,6 +447,15 @@ namespace SimpleRPG.InventorySystem
         /// </summary>
         private bool CanBeAccessedBy(ulong clientId)
         {
+            // A dead character cannot handle items, whether its own or a container's.
+            foreach (NetworkObject deadCheck in NetworkManager.SpawnManager.GetClientOwnedObjects(clientId))
+            {
+                if (deadCheck.TryGetComponent(out Character dead) && !dead.IsAlive)
+                {
+                    return false;
+                }
+            }
+
             if (OwnerClientId == clientId && SharedAccessRange <= 0f)
             {
                 return true;

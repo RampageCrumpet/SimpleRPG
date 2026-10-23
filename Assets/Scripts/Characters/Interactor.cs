@@ -40,6 +40,13 @@ namespace SimpleRPG
         /// </summary>
         private bool isInteractionActive = false;
 
+        private Character character;
+
+        /// <summary>
+        /// True while the character may interact with the world. A dead character cannot.
+        /// </summary>
+        public bool CanInteract => character == null || character.IsAlive;
+
         /// <summary>
         /// Is this Interactor currently interacting with something.
         /// </summary>
@@ -58,8 +65,11 @@ namespace SimpleRPG
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
         {
+            character = GetComponent<Character>();
+            character.OnDeath += StopInteraction;
+
             // Subscribe to the ability activation event.
-            foreach (IAbilitySlot slot in GetComponent<Character>().AbilitySlots)
+            foreach (IAbilitySlot slot in character.AbilitySlots)
             {
                 slot.Activated += HandleAbilityActivated;
             }
@@ -73,7 +83,7 @@ namespace SimpleRPG
             InteractionTimeRemaining -= Time.deltaTime;
 
             // Check to see if we've completed interacting with the object.
-            if (InteractionTimeRemaining <= 0 && IsInteracting && !isInteractionActive)
+            if (InteractionTimeRemaining <= 0 && IsInteracting && !isInteractionActive && CanInteract)
             {
                 isInteractionActive = true;
                 Interactable.ActivateInteraction(this);
@@ -86,6 +96,11 @@ namespace SimpleRPG
         /// <param name="interactable"> The <see cref="ObjectInteractions.Interactable"/> we want to start interacting with.</param>
         public void StartInteraction(Interactable interactable)
         {
+            if (!CanInteract)
+            {
+                return;
+            }
+
             InteractionTimeRemaining = interactable.InteractionTime;
 
             interactionLocation = transform.position;
@@ -133,6 +148,8 @@ namespace SimpleRPG
         /// <returns> Returns the interactable object the player is looking at within range if one exists, otherwise returns null.</returns>
         public Interactable FindInteractionTarget()
         {
+            if (!CanInteract) return null;
+
             Camera mainCamera = Camera.main;
             if (mainCamera == null) return null;
             Ray ray = mainCamera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
@@ -154,8 +171,12 @@ namespace SimpleRPG
 
         private void OnDestroy()
         {
+            if (character == null) return;
+
+            character.OnDeath -= StopInteraction;
+
             // Unsubscribe from the ability activation event.
-            foreach (IAbilitySlot slot in GetComponent<Character>().AbilitySlots)
+            foreach (IAbilitySlot slot in character.AbilitySlots)
             {
                 slot.Activated -= HandleAbilityActivated;
             }

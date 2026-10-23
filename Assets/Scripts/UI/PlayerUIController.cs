@@ -15,6 +15,24 @@ namespace SimpleRPG.UI
         /// </summary>
         private FirstPersonCharacterController firstPersonCharacterController;
 
+        /// <summary>
+        /// The character this UI belongs to, if one has been set.
+        /// </summary>
+        public Character LocalCharacter { get; private set; }
+
+        /// <summary>
+        /// True while the local character is alive (or none is set yet), and so may use the world UI such as the inventory.
+        /// </summary>
+        public bool IsLocalCharacterAlive => LocalCharacter == null || LocalCharacter.IsAlive;
+
+        /// <summary>
+        /// Sets the character this UI belongs to.
+        /// </summary>
+        public void SetCharacter(Character character)
+        {
+            LocalCharacter = character;
+        }
+
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
         {
@@ -74,7 +92,7 @@ namespace SimpleRPG.UI
             }
 
             Cursor.visible = value;
-            firstPersonCharacterController.enabled = !value;
+            if (firstPersonCharacterController != null) firstPersonCharacterController.enabled = !value;
         }
     }
 }

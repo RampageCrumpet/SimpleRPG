@@ -193,7 +193,7 @@ namespace SimpleRPG.Keys
             }
 
             Player player = client.PlayerObject.GetComponent<Player>();
-            if (player == null || player.character == null)
+            if (player == null || player.character == null || !player.character.IsAlive)
             {
                 return false;
             }

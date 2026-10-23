@@ -58,6 +58,12 @@ namespace SimpleRPG.Abilities
 
         public void Activate()
         {
+            // A dead character uses nothing. The server refuses too; this keeps the client from showing a use or a cooldown.
+            if (!character.IsAlive)
+            {
+                return;
+            }
+
             IAbilityActivator activator = character.GetComponent<IAbilityActivator>();
             if (activator == null)
             {

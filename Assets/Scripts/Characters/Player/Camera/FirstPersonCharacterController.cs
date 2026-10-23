@@ -58,12 +58,18 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
     private FirstPersonLook look;
 
     /// <summary>
+    /// The character this controller moves. A dead character neither moves nor turns.
+    /// </summary>
+    private SimpleRPG.Character character;
+
+    /// <summary>
     /// Start is called before the first frame update.
     /// </summary>
     public void Start()
     {
         this.activeCamera = Camera.main;
         this.characterController = this.GetComponent<CharacterController>();
+        this.character = this.GetComponent<SimpleRPG.Character>();
 
         if (this.IsOwner)
         {
@@ -94,6 +100,11 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
             Vector3 movement = this.CalculateMovement();
             this.MoveCharacterServerRPC(movement);
         }
+        else if (this.IsServer && !this.IsAlive && this.characterController.enabled)
+        {
+            // Nobody is steering a dead character, but gravity still applies to it.
+            this.characterController.SimpleMove(Vector3.zero);
+        }
     }
 
     /// <summary>
@@ -102,7 +113,7 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
     public void Update()
     {
         // Only the owner reads input and moves its own camera. Other clients and the server never touch it.
-        if (this.look != null && FirstPersonLookMath.ShouldLook(this.IsOwner, Application.isFocused))
+        if (this.look != null && this.IsAlive && FirstPersonLookMath.ShouldLook(this.IsOwner, Application.isFocused))
         {
             Vector2 lookDelta = GameInput.Look.ReadValue<Vector2>();
             this.look.Look(lookDelta.x, lookDelta.y, Time.deltaTime);
@@ -110,11 +121,21 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
     }
 
     /// <summary>
+    /// True while the character this controller moves is alive.
+    /// </summary>
+    private bool IsAlive => this.character == null || this.character.IsAlive;
+
+    /// <summary>
     /// Calculates the direction of the players intended movement.
     /// </summary>
     /// <returns> Returns a <see cref="Vector3"/> representing the direction we want to move.</returns>
     private Vector3 CalculateMovement()
     {
+        if (!this.IsAlive)
+        {
+            return Vector3.zero;
+        }
+
         Vector3 movementDirection = FirstPersonLookMath.MovementDirection(this.transform.forward, this.transform.right, GameInput.Move.ReadValue<Vector2>().y, GameInput.Move.ReadValue<Vector2>().x);
 
         return movementDirection;
@@ -126,6 +147,12 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
     [ServerRpc]
     private void MoveCharacterServerRPC(Vector3 direction)
     {
+        // The server decides whether the character may move, whatever the client sends.
+        if (!this.IsAlive)
+        {
+            direction = Vector3.zero;
+        }
+
         // Normalize the direction value given by the player to ensure it has no magnitude.
         direction.Normalize();
         characterController.SimpleMove((this.movementSpeed * direction));
@@ -138,6 +165,11 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
     [ServerRpc]
     private void RotateCharacterServerRPC(float yaw)
     {
+        if (!this.IsAlive)
+        {
+            return;
+        }
+
         this.gameObject.transform.Rotate(0, yaw, 0);
     }
 

@@ -33,6 +33,18 @@ namespace SimpleRPG.UI
         private void Update()
         {
             if (playerUIController == null || !PlayerInventoryUI.HasInventory) return;
+
+            // The dead handle no items: close whatever is open and ignore the inventory keys.
+            if (!playerUIController.IsLocalCharacterAlive)
+            {
+                if (PlayerInventoryUI.gameObject.activeSelf || LootInventoryUI.gameObject.activeSelf)
+                {
+                    SetLootMenuUIDisplayStatus(false);
+                }
+
+                return;
+            }
+
             if (GameInput.Inventory.WasPressedThisFrame())
             {
                 bool show = !PlayerInventoryUI.gameObject.activeSelf;

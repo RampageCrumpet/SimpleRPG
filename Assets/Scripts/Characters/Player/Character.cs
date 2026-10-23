@@ -4,6 +4,7 @@ using SimpleRPG.Gameplay;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 using EntityId = SimpleRPG.Gameplay.EntityId;
 
@@ -60,6 +61,13 @@ namespace SimpleRPG
 
         public event NotifyDeath OnDeath;
 
+        public delegate void NotifyRevive();
+
+        /// <summary>
+        /// Raised on every machine when a dead character starts its next life. Presentation and transient client state reset here.
+        /// </summary>
+        public event NotifyRevive OnRevive;
+
         [Header("Attributes")]
         [SerializeField] private int strength = 10;
         [SerializeField] private int constitution = 10;
@@ -99,6 +107,12 @@ namespace SimpleRPG
         /// The ID this character is registered as a combatant under, on the server.
         /// </summary>
         private EntityId registeredId;
+
+        /// <summary>
+        /// Where the character spawned, on the server. A respawn returns the character here.
+        /// </summary>
+        private Vector3 respawnPosition;
+        private Quaternion respawnRotation;
 
         /// <summary>
         /// The current health of this character. Before the character spawns on the network this reports full health.
@@ -154,6 +168,8 @@ namespace SimpleRPG
             {
                 networkHealth.Value = pendingInitialHealth ?? maxHealth;
                 registeredId = Id;
+                respawnPosition = transform.position;
+                respawnRotation = transform.rotation;
                 GameplayServices.Current.Combatants.Register(this);
 
                 // The character's attributes live on the server, where abilities read them and worn items add their grants to them.
@@ -254,6 +270,66 @@ namespace SimpleRPG
         }
 
         /// <summary>
+        /// Asks for a dead character to start its next life at its spawn point with full health. On the server this happens at once; the owning
+        /// client asks the server, which decides. Does nothing while the character is alive.
+        /// </summary>
+        public void RequestRespawn()
+        {
+            if (!IsSpawned || IsAlive)
+            {
+                return;
+            }
+
+            if (IsServer)
+            {
+                RespawnOnServer();
+            }
+            else if (IsOwner)
+            {
+                RespawnServerRpc();
+            }
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+        private void RespawnServerRpc()
+        {
+            RespawnOnServer();
+        }
+
+        /// <summary>
+        /// Starts the next life of a dead character: back at its spawn point, with full health. Server only.
+        /// </summary>
+        /// <returns>False if the character is alive, not spawned or not on the server.</returns>
+        public bool RespawnOnServer()
+        {
+            if (!IsServer || !IsSpawned || IsAlive)
+            {
+                return false;
+            }
+
+            Teleport(respawnPosition, respawnRotation);
+            return GameplayServices.Current.Combat.Revive(Id, maxHealth);
+        }
+
+        private void Teleport(Vector3 position, Quaternion rotation)
+        {
+            CharacterController body = GetComponent<CharacterController>();
+            bool bodyWasEnabled = body != null && body.enabled;
+            if (bodyWasEnabled) body.enabled = false;
+
+            if (TryGetComponent(out NetworkTransform networkTransform) && networkTransform.CanCommitToTransform)
+            {
+                networkTransform.Teleport(position, rotation, transform.localScale);
+            }
+            else
+            {
+                transform.SetPositionAndRotation(position, rotation);
+            }
+
+            if (bodyWasEnabled) body.enabled = true;
+        }
+
+        /// <summary>
         /// Raises <see cref="OnTakeDamage"/> on every machine whenever replicated health goes down.
         /// </summary>
         private void HandleHealthChanged(int previousValue, int newValue)
@@ -273,6 +349,10 @@ namespace SimpleRPG
             {
                 OnDeath?.Invoke();
             }
+            else if (!newValue && previousValue)
+            {
+                OnRevive?.Invoke();
+            }
         }
     }
-}
+}

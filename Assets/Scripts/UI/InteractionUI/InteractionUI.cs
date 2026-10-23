@@ -84,7 +84,7 @@ namespace SimpleRPG.UI
         /// </summary>
         private void HandleInteraction(Interactable interactionTarget)
         {
-            if (GameInput.Interact.WasPressedThisFrame() && interactionTarget != null)
+            if (GameInput.Interact.WasPressedThisFrame() && interactionTarget != null && interactor.CanInteract)
             {
                 if (interactor.IsInteracting)
                 {
