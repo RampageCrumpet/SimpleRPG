@@ -229,7 +229,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         [Test]
         public void Derived_NonFiniteResult_ReadsZero()
         {
-            AttributeSchema schema = new AttributeSchema().Define(MagicPower, a => 1.0 / a.Get(PrimaryAttributes.Wisdom));
+            AttributeSchema schema = new AttributeSchema().Define(MagicPower, a => 1.0 / a.Get(PrimaryAttributes.Willpower));
             AttributeSet set = new AttributeSet(schema);
 
             Assert.AreEqual(0d, set.Get(MagicPower));

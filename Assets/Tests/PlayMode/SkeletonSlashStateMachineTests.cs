@@ -11,7 +11,7 @@ namespace SimpleRPG.Tests.PlayMode
     /// Drives the skeleton test animator through the layered horizontal slash.
     /// The Weapon_Attack layer (torso, head, sword arm and legs) plays the Attack-tagged state; the OffHand_Attack layer carries the left arm.
     /// Time is stepped by hand (Time.timeScale is 0), so results do not depend on the frame rate.
-    /// The clip is 2.87 s long: the hitbox opens at 1.40 s and closes at 1.63 s.
+    /// The clip is 1.3 s long: the hitbox opens at 0.524389 s and closes at 0.772265 s.
     /// </summary>
     public class SkeletonSlashStateMachineTests
     {
@@ -111,15 +111,15 @@ namespace SimpleRPG.Tests.PlayMode
             TestAnimationEventReceiver receiver = owner.GetComponent<TestAnimationEventReceiver>();
 
             Press("Slash");
-            AdvanceTo(1.3f);
-            Assert.AreEqual(0, receiver.ActivationCount, "The hitbox should still be closed before 1.40 s.");
+            AdvanceTo(0.5f);
+            Assert.AreEqual(0, receiver.ActivationCount, "The hitbox should still be closed before 0.524389 s.");
 
-            AdvanceTo(1.5f);
-            Assert.AreEqual(1, receiver.ActivationCount, "The hitbox should open at 1.40 s.");
+            AdvanceTo(0.65f);
+            Assert.AreEqual(1, receiver.ActivationCount, "The hitbox should open at 0.524389 s.");
             Assert.AreEqual(1, receiver.LastActivatedAttack, "ActivateWeapon should receive attack number 1.");
 
-            AdvanceTo(1.75f);
-            Assert.AreEqual(1, receiver.DeactivationCount, "The hitbox should close at 1.63 s.");
+            AdvanceTo(0.8f);
+            Assert.AreEqual(1, receiver.DeactivationCount, "The hitbox should close at 0.772265 s.");
         }
 
         [Test]
@@ -128,7 +128,7 @@ namespace SimpleRPG.Tests.PlayMode
             int layer = Layer(WeaponAttackLayer);
 
             Press("Slash");
-            AdvanceTo(3.6f);
+            AdvanceTo(1.5f);
 
             Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(layer).IsName("Empty"), "The weapon layer should hand back to Empty after the clip.");
             Assert.IsFalse(animator.GetCurrentAnimatorStateInfo(layer).IsTag("Attack"));

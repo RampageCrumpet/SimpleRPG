@@ -137,6 +137,7 @@ namespace SimpleRPG.Abilities
             public SourceHandle Source;
             public EntityId Instigator;
             public double Potency;
+            public List<ModifierHandle> StatHandles;
         }
 
         private sealed class Group
@@ -156,13 +157,15 @@ namespace SimpleRPG.Abilities
         private readonly IGameplayClock clock;
         private readonly GameplayEventDispatcher events;
         private readonly ICombatantRegistry combatants;
+        private readonly AttributeSetRegistry attributes;
         private readonly IdCounter ids = new IdCounter();
         private readonly Dictionary<EntityId, List<Group>> byTarget = new Dictionary<EntityId, List<Group>>();
         private readonly List<SubscriptionHandle> subscriptions = new List<SubscriptionHandle>();
         private long lastProcessed = long.MinValue;
 
-        public StatusManager(IGameplayClock clock, GameplayEventDispatcher events, ICombatantRegistry combatants)
+        public StatusManager(IGameplayClock clock, GameplayEventDispatcher events, ICombatantRegistry combatants, AttributeSetRegistry attributes = null)
         {
+            this.attributes = attributes;
             this.clock = clock ?? throw new ArgumentNullException(nameof(clock));
             this.events = events ?? throw new ArgumentNullException(nameof(events));
             this.combatants = combatants ?? throw new ArgumentNullException(nameof(combatants));
@@ -184,6 +187,11 @@ namespace SimpleRPG.Abilities
 
         public void Dispose()
         {
+            foreach (List<Group> groups in byTarget.Values)
+            {
+                foreach (Group group in groups) WithdrawAllStatModifiers(group);
+            }
+
             foreach (SubscriptionHandle handle in subscriptions) events.Unsubscribe(handle);
             subscriptions.Clear();
             byTarget.Clear();
@@ -385,6 +393,7 @@ namespace SimpleRPG.Abilities
             };
 
             group.Stacks.Add(stack);
+            ReconcileStatModifiers(group);
             return stack;
         }
 
@@ -423,6 +432,69 @@ namespace SimpleRPG.Abilities
         }
 
         private static Stack Oldest(Group group) => group.Stacks.OrderBy(s => s.AppliedTick).ThenBy(s => s.Id.Value).First();
+
+        // ----- Stat modifiers -----
+
+        /// <summary>
+        /// Makes the modifiers on the holder match the stacks that should count: every stack for an additive status, only the strongest otherwise.
+        /// Each stack owns the handles of what it added, so exactly that contribution is withdrawn and nothing is added twice.
+        /// </summary>
+        private void ReconcileStatModifiers(Group group)
+        {
+            if (attributes == null || group.Definition.StatModifiers.Count == 0 || group.Removed)
+            {
+                return;
+            }
+
+            Stack strongest = group.Stacks.Count == 0 ? null : group.Stacks.OrderByDescending(s => s.Potency).ThenBy(s => s.AppliedTick).ThenBy(s => s.Id.Value).First();
+            foreach (Stack stack in group.Stacks)
+            {
+                bool counts = group.Definition.Magnitude == MagnitudePolicy.Additive || stack == strongest;
+                bool applied = stack.StatHandles != null && stack.StatHandles.Count > 0;
+                if (counts && !applied)
+                {
+                    GiveStatModifiers(group, stack);
+                }
+                else if (!counts && applied)
+                {
+                    WithdrawStatModifiers(group, stack);
+                }
+            }
+        }
+
+        private void GiveStatModifiers(Group group, Stack stack)
+        {
+            if (!attributes.TryGetSet(SourceHandle.FromEntity(group.Target), out AttributeSet set))
+            {
+                return;
+            }
+
+            stack.StatHandles = new List<ModifierHandle>();
+            foreach (StatusStatModifier spec in group.Definition.StatModifiers)
+            {
+                stack.StatHandles.Add(set.AddModifier(new AttributeModifier(new AttributeId(spec.attributeKey), spec.layer, spec.value, stack.Source)));
+            }
+        }
+
+        private void WithdrawStatModifiers(Group group, Stack stack)
+        {
+            if (stack.StatHandles == null)
+            {
+                return;
+            }
+
+            if (attributes != null && attributes.TryGetSet(SourceHandle.FromEntity(group.Target), out AttributeSet set))
+            {
+                foreach (ModifierHandle handle in stack.StatHandles) set.RemoveModifier(handle);
+            }
+
+            stack.StatHandles = null;
+        }
+
+        private void WithdrawAllStatModifiers(Group group)
+        {
+            foreach (Stack stack in group.Stacks) WithdrawStatModifiers(group, stack);
+        }
 
         // ----- Removing -----
 
@@ -485,6 +557,8 @@ namespace SimpleRPG.Abilities
         private void RemoveStack(Group group, Stack stack, RemovalReason reason)
         {
             group.Stacks.Remove(stack);
+            WithdrawStatModifiers(group, stack);
+            ReconcileStatModifiers(group);
             Raise(new StatusStackExpiredEvent(group.Target, group.DefinitionId, group.Id, stack.Id, reason, group.Stacks.Count));
 
             if (group.Stacks.Count == 0)
@@ -501,6 +575,7 @@ namespace SimpleRPG.Abilities
             }
 
             group.Removed = true;
+            WithdrawAllStatModifiers(group);
             if (byTarget.TryGetValue(group.Target, out List<Group> groups))
             {
                 groups.Remove(group);
@@ -517,7 +592,12 @@ namespace SimpleRPG.Abilities
         {
             if (byTarget.TryGetValue(entity, out List<Group> groups))
             {
-                foreach (Group group in groups) group.Removed = true;
+                foreach (Group group in groups)
+                {
+                    group.Removed = true;
+                    WithdrawAllStatModifiers(group);
+                }
+
                 byTarget.Remove(entity);
             }
         }

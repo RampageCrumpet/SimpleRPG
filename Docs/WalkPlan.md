@@ -79,3 +79,17 @@ I will extend the helper scripts for these and check them on a dry run (no scene
 - **Sparse keys instead of a key on every frame.** 49 keys over frames 0-162 (3 cycles) on a regular 3-4 frame grid (cycle frames 0,3,6,10,14,18,21,24,28,31,34,37,41,44,47,50) with clamped Bezier sections; Cascadeur interpolates everything in between. Baked per-frame keys were removed.
 - **Other smoothing:** swing foot path is a C1 Hermite curve that matches the stance exit and entry velocities, the ground clamp is smooth, and the heel-strike nod is wider and smaller (2.5 deg).
 - Measured in the scene (frames 50-115): jerk hips 0.18, head 0.46, feet 0.24-0.26, knees 0.43-0.57; ankle drift 0.000; loop closure 0.000 cm. Use frames 54-108 as the loop.
+
+## Approved source refinement and Unity installation (2026-10-23)
+
+The user approved the source-refined 1.2-second cycle. This supersedes the old 1.8-second cycle and the intermediate multiplier-only proposal. The source is authored at 60 fps, frames 1-73, covering 0.8m at 0.667m/s. Both gameplay and preview Walk states play at speed 1, and SkeletonFootman's NavMeshAgent speed is 2/3 m/s.
+
+The approved source is archived at `I:/Art/Cascadeur/Skeleton/Approved_Walk/Skeleton_Walk_Approved.blend`. It retains both the Forward and InPlace actions. The forward source carries 0.8m in Hips, matching the existing root-motion convention; the gameplay adapter removes only linear travel, retaining sway. The metre-valued export does not use the older 100x conversion or the old second-cycle 0.8m initial offset. Import take Scene, frames 1-73; compression/resampling/loop-pose retargeting are off, Loop Time on. The original native `Skeleton_Walk.casc` remains historical; the approved FBX is available for importing into Cascadeur.
+
+Changes follow measured baseline issues: swing-knee recovery now reaches about 53-56deg rather than39-43deg; heel recovery folds under the body without marching. Stance feet and forefoot push-off are locked, toe roll is compensated, and clearance is evaluated against skinned geometry. Existing4.3cm vertical/5.7cm lateral pelvis movement is retained with earlier support shift, small loading dip and restrained pelvis/rib counter-rotation. Skull and sword orientation are controlled rather than adding arm swing. Source curves have periodic pose/tangent closure.
+
+`RebuildApprovedWalk()` regenerates the gameplay clip and configures the existing Weapon_Arm layer to transition between Ready and Walk on the existing Walk boolean. The Walk arm uses the authored clip so the standing Ready pose cannot erase its stabilization. Fixed0.25s blends match the base layer. Higher attack layers and existing death/rise hiding continue to work normally.
+
+Dense source validation across289 poses: no floor penetration; maximum stance gap1.22mm; flat contact drift<0.003mm and forefoot drift<0.04mm; minimum knee bend18deg; exact loop pose closure. FBX re-import confirms82 bones/noPieces,1.2s/.8m. Direct imported gameplay clip comparison with Blender across289 poses/82bone heads found maximum position error0.00193mm.
+
+Installation validation passed:11 EditMode gameplay animation cases and21 distinct PlayMode skeleton/dungeon cases. Dungeon travel is checked using horizontal velocity so floor-grounding corrections do not inflate the measured stride speed.

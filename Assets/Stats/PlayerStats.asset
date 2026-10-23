@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f11c5ca55d2dc44d8557839cbf802db, type: 3}
+  m_Name: PlayerStats
+  m_EditorClassIdentifier: SimpleRPG.Abilities.Runtime::SimpleRPG.Abilities.StatProfile
+  ownership: 0
+  rules:
+  - statKey: simplerpg.stat.max_health
+    baseValue: 0
+    contributions:
+    - sourceKey: simplerpg.attr.constitution
+      curve: 0
+      scale: 10
+      halfPoint: 0
+  - statKey: simplerpg.stat.movement_speed
+    baseValue: 0
+    contributions:
+    - sourceKey: simplerpg.attr.agility
+      curve: 0
+      scale: 0.4
+      halfPoint: 0
+  - statKey: simplerpg.stat.physical_power
+    baseValue: 0
+    contributions:
+    - sourceKey: simplerpg.attr.strength
+      curve: 0
+      scale: 1
+      halfPoint: 0
+  - statKey: simplerpg.stat.magical_power
+    baseValue: 0
+    contributions:
+    - sourceKey: simplerpg.attr.intelligence
+      curve: 0
+      scale: 1
+      halfPoint: 0
+  - statKey: simplerpg.stat.physical_damage_reduction
+    baseValue: 0
+    contributions:
+    - sourceKey: simplerpg.attr.constitution
+      curve: 1
+      scale: 0.9
+      halfPoint: 100
+  - statKey: simplerpg.stat.magical_damage_reduction
+    baseValue: 0
+    contributions:
+    - sourceKey: simplerpg.attr.willpower
+      curve: 1
+      scale: 0.9
+      halfPoint: 100

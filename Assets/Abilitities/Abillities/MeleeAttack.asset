@@ -54,6 +54,36 @@ MonoBehaviour:
     Config:
       rid: 2469572882459525217
     EditorPosition: {x: 0, y: 0}
+  - NodeId: physicalPower
+    TypeId: simplerpg.data.attribute.v1
+    Config:
+      rid: 1000
+    EditorPosition: {x: 0, y: 0}
+  - NodeId: physicalPowerCoefficient
+    TypeId: simplerpg.data.constant.v1
+    Config:
+      rid: 1001
+    EditorPosition: {x: 0, y: 0}
+  - NodeId: powerBonus
+    TypeId: simplerpg.data.multiply.v1
+    Config:
+      rid: 1002
+    EditorPosition: {x: 0, y: 0}
+  - NodeId: one
+    TypeId: simplerpg.data.constant.v1
+    Config:
+      rid: 1003
+    EditorPosition: {x: 0, y: 0}
+  - NodeId: powerMultiplier
+    TypeId: simplerpg.data.add.v1
+    Config:
+      rid: 1004
+    EditorPosition: {x: 0, y: 0}
+  - NodeId: finalDamage
+    TypeId: simplerpg.data.multiply.v1
+    Config:
+      rid: 1005
+    EditorPosition: {x: 0, y: 0}
   edges:
   - FromNodeId: activate
     FromPortId: Next
@@ -75,13 +105,61 @@ MonoBehaviour:
     FromPortId: Value
     ToNodeId: scaledDamage
     ToPortId: B
+  - FromNodeId: physicalPower
+    FromPortId: Value
+    ToNodeId: powerBonus
+    ToPortId: A
+  - FromNodeId: physicalPowerCoefficient
+    FromPortId: Value
+    ToNodeId: powerBonus
+    ToPortId: B
+  - FromNodeId: one
+    FromPortId: Value
+    ToNodeId: powerMultiplier
+    ToPortId: A
+  - FromNodeId: powerBonus
+    FromPortId: Result
+    ToNodeId: powerMultiplier
+    ToPortId: B
   - FromNodeId: scaledDamage
+    FromPortId: Result
+    ToNodeId: finalDamage
+    ToPortId: A
+  - FromNodeId: powerMultiplier
+    FromPortId: Result
+    ToNodeId: finalDamage
+    ToPortId: B
+  - FromNodeId: finalDamage
     FromPortId: Result
     ToNodeId: damage
     ToPortId: Amount
   references:
     version: 2
     RefIds:
+    - rid: 1000
+      type: {class: AttributeConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data:
+        Kind: 1
+        AttributeKey: simplerpg.stat.physical_power
+        Fallback: 0
+        Policy: 1
+    - rid: 1001
+      type: {class: ConstantConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data:
+        Value: 0.05
+    - rid: 1002
+      type: {class: MathConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data: 
+    - rid: 1003
+      type: {class: ConstantConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data:
+        Value: 1
+    - rid: 1004
+      type: {class: MathConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data: 
+    - rid: 1005
+      type: {class: MathConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data: 
     - rid: 2469572882459525211
       type: {class: ActivateConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
       data: 

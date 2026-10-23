@@ -183,7 +183,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 100
+  fallbackMaxHealth: 100
   graphAbilities:
   - {fileID: 11400000, guid: 39314b3f20bc29e4987f63c1b5d8d1d4, type: 2}
   - {fileID: 11400000, guid: 76b59de91a0ffdb42b941797eb301d93, type: 2}
@@ -193,8 +193,9 @@ MonoBehaviour:
   constitution: 10
   dexterity: 10
   agility: 10
-  wisdom: 10
+  willpower: 10
   intelligence: 10
+  statProfile: {fileID: 11400000, guid: ee9d6330a67e5ad4582eaa60f22d8a8b, type: 2}
 --- !u!114 &3472238292836523047
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -279,7 +280,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  movementSpeed: 4
   rotationSpeed: 360
   maximumPitch: 60
   minimumPitch: -60

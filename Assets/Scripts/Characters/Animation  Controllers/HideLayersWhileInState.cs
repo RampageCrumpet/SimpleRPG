@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Switches animator layers off while this state plays and fades them back in when the state hands over to a state that is not tagged "Dead".
+/// Fades animator layers out on entry, keeps them off while dead, and fades them back in on return to a living state.
 /// Put it on the skeleton's Die and Rise states so the weapon and off-hand layers do not hold the arms in the ready pose while the bones fall apart.
 /// </summary>
 public class HideLayersWhileInState : StateMachineBehaviour
@@ -14,17 +14,13 @@ public class HideLayersWhileInState : StateMachineBehaviour
     /// <inheritdoc/>
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        SetWeights(animator, 0f);
+        UpdateWeights(animator, layerIndex);
     }
 
     /// <inheritdoc/>
     public override void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        // While this state blends out into a living state, bring the layers back in step with the blend.
-        if (animator.IsInTransition(layerIndex) && !animator.GetNextAnimatorStateInfo(layerIndex).IsTag(DeadTag))
-        {
-            SetWeights(animator, animator.GetAnimatorTransitionInfo(layerIndex).normalizedTime);
-        }
+        UpdateWeights(animator, layerIndex);
     }
 
     /// <inheritdoc/>
@@ -47,5 +43,19 @@ public class HideLayersWhileInState : StateMachineBehaviour
                 animator.SetLayerWeight(index, weight);
             }
         }
+    }
+
+    private void UpdateWeights(Animator animator, int layerIndex)
+    {
+        float weight = 0f;
+        if (animator.IsInTransition(layerIndex))
+        {
+            float progress = Mathf.Clamp01(animator.GetAnimatorTransitionInfo(layerIndex).normalizedTime);
+            if (!animator.GetNextAnimatorStateInfo(layerIndex).IsTag(DeadTag))
+                weight = progress;
+            else if (!animator.GetCurrentAnimatorStateInfo(layerIndex).IsTag(DeadTag))
+                weight = 1f - progress;
+        }
+        SetWeights(animator, weight);
     }
 }

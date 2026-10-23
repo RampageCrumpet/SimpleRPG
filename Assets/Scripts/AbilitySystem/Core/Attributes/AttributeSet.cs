@@ -32,6 +32,11 @@ namespace SimpleRPG.Gameplay
         public int Version { get; private set; }
 
         /// <summary>
+        /// Raised after any base value or modifier changes. Holders of a resolved value (such as a replicated maximum health) refresh on it.
+        /// </summary>
+        public event Action Modified;
+
+        /// <summary>
         /// Sets the base value of an attribute. For a derived attribute the base is ignored; its formula supplies the starting value.
         /// </summary>
         public void SetBase(AttributeId attribute, double value)
@@ -146,6 +151,7 @@ namespace SimpleRPG.Gameplay
         {
             cache.Clear();
             Version++;
+            Modified?.Invoke();
         }
 
         private readonly struct Entry

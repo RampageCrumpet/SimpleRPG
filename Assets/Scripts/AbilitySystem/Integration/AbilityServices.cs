@@ -31,7 +31,7 @@ namespace SimpleRPG.Abilities.Integration
             Execution.Random = random;
 
             // Statuses and the executor refer to each other: abilities apply statuses, and statuses run abilities when they tick.
-            Statuses = new StatusManager(Clock, gameplay.Events, gameplay.Combatants);
+            Statuses = new StatusManager(Clock, gameplay.Events, gameplay.Combatants, gameplay.Attributes);
             Statuses.Diagnostic += message => Debug.LogWarning(message);
             Execution.Statuses = Statuses;
             Executor = new AbilityExecutor(Execution);

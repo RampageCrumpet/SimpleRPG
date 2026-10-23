@@ -79,3 +79,7 @@ Server-authoritative multiplayer on Netcode for GameObjects (host or dedicated s
 - Definitions (ScriptableObjects) are immutable at runtime; mutable state lives in runtime services.
 - No legacy shims or compatibility layers when replacing a system.
 - Gameplay randomness comes from the seeded gameplay stream, never `UnityEngine.Random`.
+
+## Asset workflow documentation
+
+For procedural models, UVs, Painter MCP, PBR textures and Unity equipment setup, read [Docs/AssetCreationWorkflow.md](Docs/AssetCreationWorkflow.md). [Docs/README.md](Docs/README.md) indexes project documentation.

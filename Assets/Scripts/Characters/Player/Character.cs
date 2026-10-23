@@ -13,11 +13,12 @@ namespace SimpleRPG
     public class Character : NetworkBehaviour, ICombatant
     {
         /// <summary>
-        /// The maximum health of this character.
+        /// The maximum health of a character with no stat profile defining Maximum Health. Otherwise the resolved Maximum Health is used.
         /// </summary>
         [SerializeField]
-        [Tooltip("The maximum health of this character.")]
-        private int maxHealth = 100;
+        [UnityEngine.Serialization.FormerlySerializedAs("maxHealth")]
+        [Tooltip("Maximum health for a character whose stat profile does not define Maximum Health. Ignored when it does.")]
+        private int fallbackMaxHealth = 100;
 
         /// <summary>
         /// The abilities this character starts with, in ability bar order. The server checks every activation request against this list.
@@ -73,7 +74,8 @@ namespace SimpleRPG
         [SerializeField] private int constitution = 10;
         [SerializeField] private int dexterity = 10;
         [SerializeField] private int agility = 10;
-        [SerializeField] private int wisdom = 10;
+        [UnityEngine.Serialization.FormerlySerializedAs("wisdom")]
+        [SerializeField] private int willpower = 10;
         [SerializeField] private int intelligence = 10;
 
         /// <summary>
@@ -81,6 +83,14 @@ namespace SimpleRPG
         /// Null before the character spawns and on clients.
         /// </summary>
         public AttributeSet Attributes { get; private set; }
+
+        /// <summary>
+        /// How this character's derived stats (maximum health, movement speed and so on) are resolved: from the core attributes for a player,
+        /// or authored directly for an enemy. With none, the character has only its core attributes and nothing derived.
+        /// </summary>
+        [SerializeField]
+        [Tooltip("How this character's derived stats are resolved. Leave empty for a character that has none.")]
+        private StatProfile statProfile;
 
         /// <summary>
         /// The replicated health value. Only the server writes it; every client reads it, so late joiners receive the
@@ -92,6 +102,11 @@ namespace SimpleRPG
         /// Health to apply when the character spawns, set if <see cref="Initialize"/> is called before the network object is spawned.
         /// </summary>
         private int? pendingInitialHealth;
+
+        /// <summary>
+        /// The server-resolved Maximum Health, replicated so every machine can show health as a fraction of it.
+        /// </summary>
+        private readonly NetworkVariable<int> networkMaxHealth = new NetworkVariable<int>();
 
         /// <summary>
         /// True once this character's current life has ended. Replicated, so every machine sees the death and raises <see cref="OnDeath"/>.
@@ -117,12 +132,49 @@ namespace SimpleRPG
         /// <summary>
         /// The current health of this character. Before the character spawns on the network this reports full health.
         /// </summary>
-        public int Health => IsSpawned ? networkHealth.Value : (pendingInitialHealth ?? maxHealth);
+        public int Health => IsSpawned ? networkHealth.Value : (pendingInitialHealth ?? MaxHealth);
 
         /// <summary>
         /// The maximum health of this character.
         /// </summary>
-        public int MaxHealth => maxHealth;
+        public int MaxHealth => IsSpawned ? networkMaxHealth.Value : ResolveMaxHealth();
+
+        /// <summary>
+        /// The movement speed the server moves this character at: its resolved Movement Speed, in units per second. Zero on a character with no Movement Speed stat
+        /// and on clients, which never decide it.
+        /// </summary>
+        public float MovementSpeed => Attributes != null ? (float)Mathf.Max(0f, (float)Attributes.Get(DerivedStats.MovementSpeed)) : 0f;
+
+        /// <summary>
+        /// Maximum Health as the server resolves it: the stat rounded to a whole number and at least 1, or the fallback if the character has no such stat.
+        /// </summary>
+        private int ResolveMaxHealth()
+        {
+            if (Attributes != null && statProfile != null && statProfile.Sheet.Rules.Any(x => x.Stat == DerivedStats.MaximumHealth))
+            {
+                return Mathf.Max(1, Mathf.RoundToInt((float)Attributes.Get(DerivedStats.MaximumHealth)));
+            }
+
+            return fallbackMaxHealth;
+        }
+
+        /// <summary>
+        /// Brings the replicated maximum up to date after a stat change. Current health never rises because the maximum did,
+        /// but it comes down with a lower maximum. A living character is never killed by the clamp.
+        /// </summary>
+        private void RefreshMaxHealth()
+        {
+            if (!IsServer || !IsSpawned)
+            {
+                return;
+            }
+
+            int max = ResolveMaxHealth();
+            if (networkMaxHealth.Value != max) networkMaxHealth.Value = max;
+
+            int clamped = networkIsDead.Value ? 0 : Mathf.Clamp(networkHealth.Value, 1, max);
+            if (!networkIsDead.Value && networkHealth.Value != clamped) networkHealth.Value = clamped;
+        }
 
         /// <summary>
         /// True while this character is alive. Death is committed once by the server; AI and presentation read this instead of watching health.
@@ -166,20 +218,29 @@ namespace SimpleRPG
         {
             if (IsServer)
             {
-                networkHealth.Value = pendingInitialHealth ?? maxHealth;
                 registeredId = Id;
                 respawnPosition = transform.position;
                 respawnRotation = transform.rotation;
                 GameplayServices.Current.Combatants.Register(this);
 
                 // The character's attributes live on the server, where abilities read them and worn items add their grants to them.
-                Attributes = GameplayServices.Current.Attributes.GetOrCreate(SourceHandle.FromEntity(registeredId));
-                Attributes.SetBase(PrimaryAttributes.Strength, strength);
-                Attributes.SetBase(PrimaryAttributes.Constitution, constitution);
-                Attributes.SetBase(PrimaryAttributes.Dexterity, dexterity);
-                Attributes.SetBase(PrimaryAttributes.Agility, agility);
-                Attributes.SetBase(PrimaryAttributes.Wisdom, wisdom);
-                Attributes.SetBase(PrimaryAttributes.Intelligence, intelligence);
+                Attributes = statProfile != null ? statProfile.CreateSet() : new AttributeSet();
+                GameplayServices.Current.Attributes.Register(SourceHandle.FromEntity(registeredId), Attributes);
+
+                // A character whose stats are authored directly has no core attributes to set.
+                if (statProfile == null || statProfile.Ownership == StatOwnership.Derived)
+                {
+                    Attributes.SetBase(PrimaryAttributes.Strength, strength);
+                    Attributes.SetBase(PrimaryAttributes.Constitution, constitution);
+                    Attributes.SetBase(PrimaryAttributes.Dexterity, dexterity);
+                    Attributes.SetBase(PrimaryAttributes.Agility, agility);
+                    Attributes.SetBase(PrimaryAttributes.Willpower, willpower);
+                    Attributes.SetBase(PrimaryAttributes.Intelligence, intelligence);
+                }
+
+                networkMaxHealth.Value = ResolveMaxHealth();
+                networkHealth.Value = Mathf.Min(pendingInitialHealth ?? networkMaxHealth.Value, networkMaxHealth.Value);
+                Attributes.Modified += RefreshMaxHealth;
             }
 
             networkHealth.OnValueChanged += HandleHealthChanged;
@@ -196,6 +257,7 @@ namespace SimpleRPG
                 // The network ID is already gone by now, so unregister under the ID it was registered with.
                 GameplayServices.Current.Combatants.Unregister(registeredId, this);
                 GameplayServices.Current.Attributes.Unregister(SourceHandle.FromEntity(registeredId));
+                if (Attributes != null) Attributes.Modified -= RefreshMaxHealth;
                 Attributes = null;
 
                 // Rules and state tied to this entity can be dropped.
@@ -215,11 +277,11 @@ namespace SimpleRPG
         {
             if (!IsSpawned)
             {
-                pendingInitialHealth = maxHealth;
+                pendingInitialHealth = ResolveMaxHealth();
             }
             else if (IsServer)
             {
-                networkHealth.Value = maxHealth;
+                networkHealth.Value = networkMaxHealth.Value;
             }
         }
 
@@ -308,7 +370,7 @@ namespace SimpleRPG
             }
 
             Teleport(respawnPosition, respawnRotation);
-            return GameplayServices.Current.Combat.Revive(Id, maxHealth);
+            return GameplayServices.Current.Combat.Revive(Id, networkMaxHealth.Value);
         }
 
         private void Teleport(Vector3 position, Quaternion rotation)

@@ -108,6 +108,22 @@ namespace SimpleRPG.Abilities
     }
 
     /// <summary>
+    /// A change a status makes to one stat of its holder while it is active, for example a movement speed factor of 0.5 for a slow.
+    /// </summary>
+    [System.Serializable]
+    public struct StatusStatModifier
+    {
+        [Tooltip("The stat or attribute to change, by key (for example simplerpg.stat.movement_speed).")]
+        public string attributeKey;
+
+        [Tooltip("Where in the calculation the change applies: flat add, shared percentage, or final multiplier.")]
+        public SimpleRPG.Gameplay.ModifierLayer layer;
+
+        [Tooltip("Add: the amount. PercentAdd: a fraction (-0.3 is -30%). Multiply: a factor (0.5 halves it).")]
+        public double value;
+    }
+
+    /// <summary>
     /// A status effect such as Burning or Poison: how it stacks, how long it lasts and what it does each tick. The status is the same asset for
     /// every target; what is on a target at the moment lives in that target's status record. Nothing here is code: a new status is new data.
     /// </summary>
@@ -172,7 +188,14 @@ namespace SimpleRPG.Abilities
         [Tooltip("The ability that runs on each tick. It starts from a Status Tick node and knows the holder, the strength and the stack count.")]
         private AbilityDefinition tickAbility;
 
+        [Header("Stat modifiers")]
+        [SerializeField]
+        [Tooltip("Changes to the holder's stats while a stack of this status is active. How stacks combine follows the Magnitude setting: all stacks apply, or only the strongest.")]
+        private System.Collections.Generic.List<StatusStatModifier> statModifiers = new System.Collections.Generic.List<StatusStatModifier>();
+
         public string StatusName => statusName;
+
+        public System.Collections.Generic.IReadOnlyList<StatusStatModifier> StatModifiers => statModifiers;
 
         public Sprite Icon => icon;
 
@@ -213,8 +236,10 @@ namespace SimpleRPG.Abilities
             DurationPolicy duration = DurationPolicy.SharedDuration,
             RefreshPolicy refresh = RefreshPolicy.All,
             MagnitudePolicy magnitude = MagnitudePolicy.Additive,
-            PeriodicMode periodic = PeriodicMode.Combined)
+            PeriodicMode periodic = PeriodicMode.Combined,
+            System.Collections.Generic.IEnumerable<StatusStatModifier> statModifiers = null)
         {
+            this.statModifiers = statModifiers != null ? new System.Collections.Generic.List<StatusStatModifier>(statModifiers) : new System.Collections.Generic.List<StatusStatModifier>();
             statusName = name;
             this.durationSeconds = durationSeconds;
             this.tickIntervalSeconds = tickIntervalSeconds;

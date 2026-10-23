@@ -141,6 +141,65 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator SkeletonWalk_UsesRefinedSpeedAndGroundedGaitInGeneratedDungeon()
+        {
+            yield return StartDungeon(42, 8, 1);
+            var population = Object.FindAnyObjectByType<DungeonPopulation>();
+            var enemies = Object.FindObjectsByType<EnemyController>();
+            var enemy = enemies[0];
+            var agent = enemy.GetComponent<NavMeshAgent>();
+            var path = new NavMeshPath();
+            Assert.IsTrue(agent.CalculatePath(population.PlayerSpawnPosition, path));
+            Assert.AreEqual(NavMeshPathStatus.PathComplete, path.status);
+            Vector3 start = default, finish = default;
+            bool found = false;
+            for (int i = 0; i < path.corners.Length - 1; i++)
+            {
+                Vector3 delta = path.corners[i + 1] - path.corners[i];
+                if (delta.magnitude < 3 || Mathf.Abs(delta.y) > .05f) continue;
+                start = path.corners[i] + delta.normalized * .2f;
+                finish = path.corners[i + 1] - delta.normalized * .2f;
+                found = true;
+                break;
+            }
+            Assert.IsTrue(found, "The generated route must offer a straight floor segment for measuring gait speed.");
+            foreach (var other in enemies)
+            {
+                other.enabled = false; // Measure navigation without attacks redirecting the destination.
+                if (other != enemy) other.GetComponent<NavMeshAgent>().enabled = false;
+            }
+            Assert.IsTrue(agent.Warp(start));
+            enemy.transform.rotation = Quaternion.LookRotation((finish - start).normalized);
+            agent.stoppingDistance = .05f; // Keep the measurement away from the combat stopping radius.
+            Assert.That(agent.speed, Is.EqualTo(2f / 3).Within(.0001f));
+            agent.isStopped = false;
+            Assert.IsTrue(agent.SetDestination(finish));
+            float maximumSpeed = 0;
+            bool walked = false;
+            float deadline = Time.time + 4;
+            var animator = enemy.GetComponent<Animator>();
+            while (Time.time < deadline)
+            {
+                // Grounding can contribute vertical correction to agent velocity;
+                // stride speed describes travel along the level floor.
+                maximumSpeed = Mathf.Max(maximumSpeed, Vector3.ProjectOnPlane(agent.velocity, Vector3.up).magnitude);
+                walked |= animator.GetCurrentAnimatorStateInfo(0).IsName("Walk");
+                yield return null;
+            }
+            Assert.That(maximumSpeed, Is.InRange(.62f, .68f), "The installed prefab must actually move at the refined stride speed.");
+            Assert.Greater(Vector3.Distance(start, enemy.transform.position), 1);
+            Assert.IsTrue(walked, "The real movement bridge must activate the walk state.");
+            Assert.IsTrue(Physics.Raycast(enemy.transform.position + Vector3.up * .5f, Vector3.down,
+                out RaycastHit floor, 1, LayerMask.GetMask("World", "Walkable"), QueryTriggerInteraction.Ignore));
+            var renderer = enemy.GetComponentInChildren<SkinnedMeshRenderer>();
+            var mesh = new Mesh();
+            renderer.BakeMesh(mesh);
+            float lowest = mesh.vertices.Min(v => renderer.transform.TransformPoint(v).y);
+            Object.Destroy(mesh);
+            Assert.That(lowest - floor.point.y, Is.InRange(-.015f, .025f), "The animated feet must follow the visible dungeon floor.");
+        }
+
+        [UnityTest]
         public IEnumerator Skeletons_UsePhysicalHitsAndEnterTerminalDeath()
         {
             yield return StartDungeon(42, 8, 1);

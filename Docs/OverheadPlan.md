@@ -188,3 +188,33 @@ Scripts: `Scripts/overhead2_rig.py` (arm solver, anchors plus secondary-motion g
 ## Toe fix (2026-10-21)
 The toe phalange joints are not driven by any point, so they kept rest rotations while the foot moved: the right little toe distal bone drifted 1-3 cm relative to the foot in the v13 export. `Scripts/overhead_key3.py` (same IK, `ik14.json`) now sets every toe phalange rotation to follow the foot at each key. Re-keyed `Skeleton_Overhead.casc` (backup `Skeleton_Overhead_v13_backup.casc`), re-exported at 60 fps to `Final_60fps/Skeleton_Overhead.fbx` and the Unity project. Verified: the toe stays fixed in foot space on every frame, the arm numbers are unchanged (elbow 15 degrees through the swing, max hand rotation 31 degrees per frame), the Unity clip is 3 s at 60 fps with the hit events at 1.6 s and 1.8 s, and a Play Mode check shows the hitbox opening once and closing once.
 Check of the other clips (2026-10-21): Idle, Walk and Ready show no toe drift when measured in their parent Toes bone frame (spread 0.00 cm; 0.17 cm in Ready), so they were left as they were. The Toes bone itself bends with the heel lift in Walk, which only looks like drift when measured in the Foot frame.
+
+
+## Gameplay retiming (2026-10-23)
+
+The user requested an overhead lasting 0.8-1.3 seconds. The current gameplay version is **66 frame intervals / 1.1 seconds at 60 fps**, played at Animator speed 1.
+
+| Phase | Original export frames | Current export frames | Duration |
+|---|---|---|---|
+| Wind-up and coil | 0-90 | 0-27 | 0.45 s |
+| Strike and follow-through | 90-114 | 27-51 | 0.40 s |
+| Recovery | 114-180 | 51-66 | 0.25 s |
+
+The strike retains the original samples and speed. ActivateWeapon(1) moves from frame 96 to 33 (0.55 s); DeactivateWeaponH moves from frame 108 to 45 (0.75 s). Both Overhead and Overhead_OffHand import ranges end at 66; the off-hand clip has no damage events. Both the test and gameplay controllers blend back to Empty over 0.1 s after clip completion (about 1.2 s including this final blend).
+
+Retiming is applied at the export stage. The editable Cascadeur master `I:/Art/Cascadeur/Skeleton/Skeleton_Overhead.casc` retains its original 30 fps, 3-second timeline. The current 60 fps FBX in `Final_60fps` and the Unity source/gameplay clips contain the shortened timing. Before replacing a fresh original-length export, run `I:/Art/Cascadeur/Skeleton/Scripts/retime_overhead.py input_3s_60fps.fbx output_1p1s_60fps.fbx`. The script checks the original 181-sample input and preserves strike samples. It must not be run on an already shortened export. The original export is preserved in `Final_60fps/Backups/Overhead_3s_20261023/Skeleton_Overhead.fbx`.
+
+
+## Approved motion and Unity installation (2026-10-23)
+
+The user approved the final overhead after scrubbing, including the elbow path and the corrected left thumb. The installed clip is **1.3 seconds / 78 intervals at 60 fps**, with the damage window still at **0.55-0.75 seconds**. The earlier 1.1-second export-stage retiming above is superseded.
+
+The approved source is `I:/Art/Blender/Skeleton/Exports/Skeleton_Overhead_Approved.blend`. It includes the larger continuing cross-body follow-through, eased recovery, planted left foot, outward elbow throughout the raise/backswing/return, and stable modest left-thumb curl. The older Cascadeur `.casc` remains historical; the current animation FBX at `I:/Art/Cascadeur/Skeleton/Final_60fps/Skeleton_Overhead.fbx` and `Assets/Art/Animations/Skeleton/Skeleton_Overhead.fbx` is exported directly from this approved Blender source, with 82 humanoid bones and no Piece bones.
+
+This FBX has metre-valued translation curves. `SkeletonGameplayClips` therefore does not apply the legacy Cascadeur 100x translation correction to Overhead. Curve resampling and compression are disabled for this asset to preserve the approved motion between displayed frames. Import take is `Scene`, source frames 1-79; both gameplay clips are 1.3 seconds. The off-hand clip has no damage events. Animator speed remains 1 and the return blend remains 0.1 seconds.
+
+The gameplay Ready arm is aligned to the approved overhead entry by applying the approved rotation offset to its upper arm, forearm and hand curves. Its existing small looping motion is retained. This alignment runs as part of rebuilding clips, so a rebuild cannot restore the old inward elbow at the transition. Idle and the other animation exports are unchanged.
+
+Direct comparison of all 82 humanoid bone heads across 157 time samples in Unity and the approved Blender source found maximum position error 0.0083 mm. Regression checks cover outward elbow, planted left foot, stable hand-relative thumb, matching Ready entry, and hit events.
+
+Validation completed: all 6 SkeletonGameplayAnimationTests (EditMode) and all 5 SkeletonOverheadStateMachineTests (PlayMode) pass. PlayMode tests use the gameplay hierarchy/controller, omit network behaviours, and allow the spawn/rise state to finish before attacking. The hitbox activates once at 0.55 s and deactivates once at 0.75 s; both attack layers return correctly.

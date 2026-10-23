@@ -126,3 +126,7 @@ bd prime                # Refresh Beads context
 
 **Architecture in one line:** issues live in a local Dolt DB; sync uses `refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export. See https://github.com/gastownhall/beads/blob/main/docs/core-concepts/sync-concepts.md for details and anti-patterns.
 <!-- END BEADS CODEX SETUP -->
+
+## Asset workflow documentation
+
+For procedural models, UVs, Painter MCP, PBR textures and Unity equipment setup, read [Docs/AssetCreationWorkflow.md](Docs/AssetCreationWorkflow.md). [Docs/README.md](Docs/README.md) indexes project documentation.

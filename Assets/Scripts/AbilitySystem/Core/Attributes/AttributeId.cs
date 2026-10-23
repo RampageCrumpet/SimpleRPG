@@ -11,7 +11,8 @@ namespace SimpleRPG.Gameplay
         {
             if (string.IsNullOrWhiteSpace(key)) throw new ArgumentException("An attribute needs a key.", nameof(key));
 
-            Key = key;
+            // Content saved before Wisdom became Willpower still names the old key; it is the same attribute.
+            Key = key == PrimaryAttributes.LegacyWisdomKey ? PrimaryAttributes.WillpowerKey : key;
         }
 
         /// <summary>
@@ -39,16 +40,23 @@ namespace SimpleRPG.Gameplay
     /// </summary>
     public static class PrimaryAttributes
     {
+        public const string WillpowerKey = "simplerpg.attr.willpower";
+
+        /// <summary>
+        /// The key Willpower had when it was called Wisdom. <see cref="AttributeId"/> maps it to Willpower so saved content keeps working.
+        /// </summary>
+        public const string LegacyWisdomKey = "simplerpg.attr.wisdom";
+
         public static readonly AttributeId Strength = new AttributeId("simplerpg.attr.strength");
         public static readonly AttributeId Constitution = new AttributeId("simplerpg.attr.constitution");
         public static readonly AttributeId Dexterity = new AttributeId("simplerpg.attr.dexterity");
         public static readonly AttributeId Agility = new AttributeId("simplerpg.attr.agility");
-        public static readonly AttributeId Wisdom = new AttributeId("simplerpg.attr.wisdom");
+        public static readonly AttributeId Willpower = new AttributeId(WillpowerKey);
         public static readonly AttributeId Intelligence = new AttributeId("simplerpg.attr.intelligence");
 
         /// <summary>
         /// All six, in a fixed order.
         /// </summary>
-        public static readonly AttributeId[] All = { Strength, Constitution, Dexterity, Agility, Wisdom, Intelligence };
+        public static readonly AttributeId[] All = { Strength, Constitution, Dexterity, Agility, Willpower, Intelligence };
     }
 }

@@ -8,14 +8,14 @@ using UnityEditor;
 namespace SimpleRPG.Tests.PlayMode
 {
     /// <summary>
-    /// Drives the skeleton test animator through the layered overhead strike.
+    /// Drives the skeleton test animator through the layered overhead and horizontal strikes.
     /// The Weapon_Attack layer (torso, head, sword arm and legs) plays the Attack-tagged state; the OffHand_Attack layer carries the left arm.
     /// Time is stepped by hand (Time.timeScale is 0), so results do not depend on the frame rate.
-    /// The clip is 3.0 s long: the hitbox opens at 1.6 s and closes at 1.8 s.
+    /// Both clips are 1.3 s long, with independently retimed damage windows.
     /// </summary>
     public class SkeletonOverheadStateMachineTests
     {
-        private const string PrefabPath = "Assets/Art/3d Models/Skeleton/Skeleton_Test.prefab";
+        private const string PrefabPath = "Assets/Prefabs/Characters/Enemies/SkeletonFootman.prefab";
         private const string WeaponAttackLayer = "Weapon_Attack";
         private const string OffHandLayer = "OffHand_Attack";
         private const float StepSize = 1f / 120f;
@@ -32,13 +32,21 @@ namespace SimpleRPG.Tests.PlayMode
 #if UNITY_EDITOR
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
             Assert.IsNotNull(prefab, $"Could not load {PrefabPath}.");
-            owner = Object.Instantiate(prefab);
+            // Copy the gameplay hierarchy without starting network or combat behaviours.
+            owner = new GameObject("SkeletonOverheadTest");
+            foreach (Transform child in prefab.transform) Object.Instantiate(child.gameObject, owner.transform, false);
 #else
             Assert.Ignore("The skeleton prefab can only be loaded in the editor.");
 #endif
             owner.AddComponent<TestAnimationEventReceiver>();
-            animator = owner.GetComponentInChildren<Animator>();
+            animator = owner.AddComponent<Animator>();
+#if UNITY_EDITOR
+            animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>("Assets/Prefabs/Characters/Enemies/SkeletonFootman.controller");
+#endif
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            animator.Rebind();
             animator.Update(0f);
+            for (int i = 0; i < 420; i++) animator.Update(StepSize); // Finish the spawn/rise state.
             elapsed = 0f;
         }
 
@@ -72,63 +80,68 @@ namespace SimpleRPG.Tests.PlayMode
             return index;
         }
 
-        [Test]
-        public void OverheadPress_PlaysTheAttackTaggedStateOnTheWeaponLayer()
+        [TestCase("Overhead")]
+        [TestCase("Slash")]
+        public void AttackPress_PlaysTheAttackTaggedStateOnTheWeaponLayer(string attack)
         {
             int layer = Layer(WeaponAttackLayer);
             Assert.IsFalse(animator.GetCurrentAnimatorStateInfo(layer).IsTag("Attack"), "The weapon layer should be idle before the press.");
 
-            Press("Overhead");
+            Press(attack);
             AdvanceTo(0.5f);
 
-            Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(layer).IsName("Overhead"), "The weapon layer should be playing Overhead.");
-            Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(layer).IsTag("Attack"), "The Overhead state should carry the Attack tag.");
+            Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(layer).IsName(attack), "The weapon layer should be playing the requested attack.");
+            Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(layer).IsTag("Attack"), "The requested state should carry the Attack tag.");
         }
 
-        [Test]
-        public void OverheadPress_AlsoPlaysTheLeftArmLayer()
+        [TestCase("Overhead")]
+        [TestCase("Slash")]
+        public void AttackPress_AlsoPlaysTheLeftArmLayer(string attack)
         {
-            Press("Overhead");
+            Press(attack);
             AdvanceTo(0.5f);
 
-            Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(Layer(OffHandLayer)).IsName("Overhead"), "The off-hand layer should play the same clip.");
+            Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(Layer(OffHandLayer)).IsName(attack), "The off-hand layer should play the same clip.");
         }
 
-        [Test]
-        public void OffHandLayerAtWeightZero_LeavesTheWeaponLayerSwinging()
+        [TestCase("Overhead")]
+        [TestCase("Slash")]
+        public void OffHandLayerAtWeightZero_LeavesTheWeaponLayerSwinging(string attack)
         {
             animator.SetLayerWeight(Layer(OffHandLayer), 0f);
 
-            Press("Overhead");
+            Press(attack);
             AdvanceTo(0.5f);
 
             Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(Layer(WeaponAttackLayer)).IsTag("Attack"), "A shield variant (off-hand weight 0) must still swing.");
         }
 
-        [Test]
-        public void HitboxEvents_OpenAndCloseOncePerSwing()
+        [TestCase("Overhead", .55f, .75f)]
+        [TestCase("Slash", .524389f, .772265f)]
+        public void HitboxEvents_OpenAndCloseOncePerSwing(string attack, float opens, float closes)
         {
             TestAnimationEventReceiver receiver = owner.GetComponent<TestAnimationEventReceiver>();
 
-            Press("Overhead");
-            AdvanceTo(1.5f);
-            Assert.AreEqual(0, receiver.ActivationCount, "The hitbox should still be closed before 1.6 s.");
+            Press(attack);
+            AdvanceTo(opens - .02f);
+            Assert.AreEqual(0, receiver.ActivationCount, "The hitbox should be closed before the damage window.");
 
-            AdvanceTo(1.7f);
-            Assert.AreEqual(1, receiver.ActivationCount, "The hitbox should open at 1.6 s.");
+            AdvanceTo(opens + .02f);
+            Assert.AreEqual(1, receiver.ActivationCount, "The hitbox should open at the retimed event.");
             Assert.AreEqual(1, receiver.LastActivatedAttack, "ActivateWeapon should receive attack number 1.");
 
-            AdvanceTo(1.9f);
-            Assert.AreEqual(1, receiver.DeactivationCount, "The hitbox should close at 1.8 s.");
+            AdvanceTo(closes + .02f);
+            Assert.AreEqual(1, receiver.DeactivationCount, "The hitbox should close at the retimed event.");
         }
 
-        [Test]
-        public void Overhead_ReturnsToTheEmptyStateAfterTheClip()
+        [TestCase("Overhead")]
+        [TestCase("Slash")]
+        public void Attack_ReturnsToTheEmptyStateAfterTheClip(string attack)
         {
             int layer = Layer(WeaponAttackLayer);
 
-            Press("Overhead");
-            AdvanceTo(3.6f);
+            Press(attack);
+            AdvanceTo(1.5f);
 
             Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(layer).IsName("Empty"), "The weapon layer should hand back to Empty after the clip.");
             Assert.IsFalse(animator.GetCurrentAnimatorStateInfo(layer).IsTag("Attack"));

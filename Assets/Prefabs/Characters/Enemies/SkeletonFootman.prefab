@@ -2037,7 +2037,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Character
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 75
+  fallbackMaxHealth: 75
   graphAbilities:
   - {fileID: 11400000, guid: 49664e7ac941459295ad0c76109a18fe, type: 2}
   startingWeapon: {fileID: 11400000, guid: a148d8a79ce5f394aa7989dd779fda64, type: 2}
@@ -2045,8 +2045,9 @@ MonoBehaviour:
   constitution: 10
   dexterity: 10
   agility: 10
-  wisdom: 10
+  willpower: 10
   intelligence: 10
+  statProfile: {fileID: 11400000, guid: a1d6395f416f97148af49902836892fb, type: 2}
 --- !u!195 &3687092634510867613
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -2057,7 +2058,7 @@ NavMeshAgent:
   m_Enabled: 0
   m_AgentTypeID: 0
   m_Radius: 0.3
-  m_Speed: 0.44444448
+  m_Speed: 0.6666667
   m_Acceleration: 4
   avoidancePriority: 50
   m_AngularSpeed: 180
@@ -2112,18 +2113,6 @@ MonoBehaviour:
   - Trigger: Slash
     Duration: 2.97
     DamageScalar: 1
-  attackLengths:
-  - 1.1666666
-  - 0.9166667
-  - 0.98333335
-  comboLengths:
-  - 0.28333333
-  - 0.05
-  - 0
-  comboDamageScalars:
-  - 1
-  - 0.79
-  - 0.84
 --- !u!114 &7472379501187272634
 MonoBehaviour:
   m_ObjectHideFlags: 0

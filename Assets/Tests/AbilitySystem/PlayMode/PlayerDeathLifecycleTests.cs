@@ -146,8 +146,6 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             player.gameObject.tag = "Player";
             player.WeaponData = weaponData;
             ComboTestSupport.UseManualClock(player);
-            typeof(FirstPersonCharacterController).GetField("movementSpeed", BindingFlags.Instance | BindingFlags.NonPublic)
-                .SetValue(player.GetComponent<FirstPersonCharacterController>(), 5f);
             return player;
         }
 

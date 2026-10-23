@@ -11,13 +11,6 @@ using UnityEngine;
 public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
 {
     /// <summary>
-    /// The movement of the player in unity units per second.
-    /// </summary>
-    [SerializeField]
-    [Tooltip("The movment of the Player in unity units/second.")]
-    private float movementSpeed;
-
-    /// <summary>
     /// The rotation of the player in degrees per second.
     /// </summary>
     [SerializeField]
@@ -155,7 +148,10 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
 
         // Normalize the direction value given by the player to ensure it has no magnitude.
         direction.Normalize();
-        characterController.SimpleMove((this.movementSpeed * direction));
+        
+        // How fast the character moves is the server's resolved Movement Speed; the client only ever supplies a direction.
+        float speed = this.character != null ? this.character.MovementSpeed : 0f;
+        characterController.SimpleMove(speed * direction);
     }
 
     /// <summary>
