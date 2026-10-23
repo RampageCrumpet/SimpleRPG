@@ -64,14 +64,16 @@ namespace SimpleRPG.Abilities
                 return;
             }
 
-            // A melee press may continue a combo that is already paying the cooldown, so only the server can say whether it is allowed.
-            // Every other ability is refused here while its cooldown runs, so a held button doesn't flood the server.
-            if (!definition.HasNode(NodeTypes.MeleeSwing) && Time.time <= lastActivationTime + definition.CooldownSeconds)
+            // A melee press may continue a combo that is already paying the cooldown, so only the server can say whether it is allowed; the
+            // cooldown shown here only tells the melee mechanics whether a fresh chain would be allowed. Every other ability is refused here
+            // while its cooldown runs, so a held button does not flood the server.
+            bool cooledDown = Time.time > lastActivationTime + definition.CooldownSeconds;
+            if (!cooledDown && !definition.HasNode(NodeTypes.MeleeSwing))
             {
                 return;
             }
 
-            if (!activator.RequestActivate(definition))
+            if (!activator.RequestActivate(definition, cooledDown))
             {
                 return;
             }

@@ -18,6 +18,11 @@ namespace SimpleRPG.Animations
         private MeleeDeliveryBase melee;
         private Vector3 lastPosition;
 
+        /// <summary>The state an attack layer rests in when no attack is playing.</summary>
+        private const string AttackLayerEmptyState = "Empty";
+
+        private const float CancelBlendSeconds = 0.15f;
+
         private void Start()
         {
             character = GetComponent<Character>();
@@ -28,7 +33,11 @@ namespace SimpleRPG.Animations
             lastPosition = transform.position;
             character.OnTakeDamage += UpdateTakeDamage;
             character.OnDeath += Die;
-            if (melee != null) melee.MeleeAttackStarted += MeleeAttack;
+            if (melee != null)
+            {
+                melee.MeleeAttackStarted += MeleeAttack;
+                melee.MeleeAttackCancelled += CancelAttack;
+            }
             if (!character.IsAlive) Die();
             else Trigger(activationTrigger);
         }
@@ -73,17 +82,18 @@ namespace SimpleRPG.Animations
                     if (parameter.type == AnimatorControllerParameterType.Trigger) animator.ResetTrigger(parameter.name);
             Trigger(deathTrigger);
         }
-        private void MeleeAttack(int attackNumber)
+        private void MeleeAttack(int attackNumber, float secondsIntoAttack)
         {
             if (!character.IsAlive) return;
 
             AttackAnimation attack = melee.AnimationFor(attackNumber);
-            if (attack.IsState) PlayState(attack);
+            if (attack.IsState) PlayState(attack, secondsIntoAttack);
             else Trigger(attack.Trigger);
         }
 
-        // Plays an attack state directly, blending from whatever the layer holds now, so a chained attack cuts into the next without waiting for transitions.
-        private void PlayState(AttackAnimation attack)
+        // Plays an attack state directly, blending from whatever the layer holds now, so a chained attack cuts into the next without waiting for
+        // transitions. An attack that is already part-way through (the news was late) joins the clip that far in.
+        private void PlayState(AttackAnimation attack, float secondsIntoAttack)
         {
             int hash = Animator.StringToHash(attack.State);
             foreach (Animator animator in animators)
@@ -92,8 +102,21 @@ namespace SimpleRPG.Animations
                 {
                     if (!animator.HasState(layer, hash)) continue;
 
-                    animator.CrossFadeInFixedTime(hash, attack.BlendIn, layer, attack.StartOffset);
+                    animator.CrossFadeInFixedTime(hash, attack.BlendIn, layer, attack.StartOffset + secondsIntoAttack);
                     break;
+                }
+            }
+        }
+
+        // An attack shown ahead of the server's word did not happen: fade the layer that was playing it back to its empty state.
+        private void CancelAttack()
+        {
+            int empty = Animator.StringToHash(AttackLayerEmptyState);
+            foreach (Animator animator in animators)
+            {
+                for (int layer = 0; layer < animator.layerCount; layer++)
+                {
+                    if (animator.HasState(layer, empty)) animator.CrossFadeInFixedTime(empty, CancelBlendSeconds, layer);
                 }
             }
         }
@@ -105,7 +128,11 @@ namespace SimpleRPG.Animations
                 character.OnTakeDamage -= UpdateTakeDamage;
                 character.OnDeath -= Die;
             }
-            if (melee != null) melee.MeleeAttackStarted -= MeleeAttack;
+            if (melee != null)
+            {
+                melee.MeleeAttackStarted -= MeleeAttack;
+                melee.MeleeAttackCancelled -= CancelAttack;
+            }
         }
     }
 }

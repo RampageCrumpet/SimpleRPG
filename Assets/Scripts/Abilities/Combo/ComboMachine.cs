@@ -229,6 +229,28 @@ namespace SimpleRPG.Abilities
             }
         }
 
+        /// <summary>
+        /// Puts the machine on a step as though that step had started at the given time, ending whatever was running. Used by a client to follow
+        /// the server when the server reports an attack the client did not predict, or predicted differently.
+        /// </summary>
+        /// <param name="step">The step (counting from 0) now running.</param>
+        /// <param name="stepStartTime">When that step started.</param>
+        /// <param name="events">Receives the old step ending and the new one starting.</param>
+        public void Resync(int step, double stepStartTime, List<ComboEvent> events)
+        {
+            if (step < 0 || step >= steps.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(step), "The combo has no such step.");
+            }
+
+            if (current >= 0)
+            {
+                EndStep(stepStartTime, chained: false, events);
+            }
+
+            Begin(step, stepStartTime, events);
+        }
+
         private void Begin(int step, double time, List<ComboEvent> events)
         {
             current = step;

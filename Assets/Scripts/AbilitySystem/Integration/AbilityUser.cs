@@ -114,7 +114,7 @@ namespace SimpleRPG.Abilities.Integration
         }
 
         /// <inheritdoc/>
-        public bool RequestActivate(AbilityDefinition ability)
+        public bool RequestActivate(AbilityDefinition ability, bool freshAllowed = true)
         {
             if (ability == null)
             {
@@ -131,18 +131,28 @@ namespace SimpleRPG.Abilities.Integration
                 return false;
             }
 
+            // A melee press is shown at once, guessing what the server will do, and carries an id so the server answer can be matched to the guess.
+            IMeleeSwingHost melee = ability.HasNode(NodeTypes.MeleeSwing) ? GetComponent<IMeleeSwingHost>() : null;
+            int pressId = melee != null ? melee.BeginClientPress(freshAllowed) : 0;
+
             // The tick lets the server credit the press with the time it was made, not the later time it arrived.
-            ActivateServerRpc(shortId, NetworkManager.NetworkTickSystem.ServerTime.Tick);
+            ActivateServerRpc(shortId, NetworkManager.NetworkTickSystem.ServerTime.Tick, pressId);
             return true;
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
-        private void ActivateServerRpc(uint shortId, long pressTick)
+        private void ActivateServerRpc(uint shortId, long pressTick, int pressId)
         {
-            // The client names an ability and when it pressed; the server looks the ability up and decides everything else.
+            // The client names an ability, when it pressed and which press it was; the server looks the ability up and decides everything else.
             if (DefinitionRegistry.Instance != null && DefinitionRegistry.Instance.TryGetByShortId(shortId, out GameplayDefinition definition) && definition is AbilityDefinition ability)
             {
-                Run(ability, pressTick);
+                bool ran = Run(ability, pressTick, pressId);
+
+                // The client may be showing a swing for a press that did nothing; tell it to take that back.
+                if (!ran && pressId != 0 && ability.HasNode(NodeTypes.MeleeSwing))
+                {
+                    GetComponent<IMeleeSwingHost>()?.RejectClientPress(pressId);
+                }
             }
         }
 
@@ -152,10 +162,10 @@ namespace SimpleRPG.Abilities.Integration
         /// <returns>True if the ability ran.</returns>
         public bool TryActivateOnServer(AbilityDefinition ability)
         {
-            return Run(ability, pressTick: -1);
+            return Run(ability, pressTick: -1, pressId: 0);
         }
 
-        private bool Run(AbilityDefinition ability, long pressTick)
+        private bool Run(AbilityDefinition ability, long pressTick, int pressId)
         {
             if (!IsServer || !IsSpawned || cooldowns == null || ability == null)
             {
@@ -191,7 +201,7 @@ namespace SimpleRPG.Abilities.Integration
             IMeleeSwingHost melee = ability.HasNode(NodeTypes.MeleeSwing) ? GetComponent<IMeleeSwingHost>() : null;
             if (melee != null)
             {
-                MeleePressOutcome press = melee.Press(pressTick, cooldowns.IsReady(ability.Id));
+                MeleePressOutcome press = melee.Press(pressTick, cooldowns.IsReady(ability.Id), pressId);
                 if (press == MeleePressOutcome.Rejected)
                 {
                     return false;

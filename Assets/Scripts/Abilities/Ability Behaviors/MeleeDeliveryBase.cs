@@ -50,11 +50,17 @@ public abstract class MeleeDeliveryBase : NetworkBehaviour, IMeleeSwingHost
     protected Weapon WeaponComponent => weapon != null ? weapon : (weapon = GetComponentInChildren<Weapon>());
 
     /// <summary>
-    /// Raised on every client when the server starts an attack. The int is the attack number (1 for the first attack of a chain).
+    /// Raised on every client when an attack should start showing. The int is the attack number (1 for the first attack of a chain) and the
+    /// float how many seconds into the attack it already is, because the news took time to arrive.
     /// </summary>
-    public delegate void NotifyMeleeAttackStarted(int attackNumber);
+    public delegate void NotifyMeleeAttackStarted(int attackNumber, float secondsIntoAttack);
 
     public event NotifyMeleeAttackStarted MeleeAttackStarted;
+
+    /// <summary>
+    /// Raised on a client when an attack it started showing before the server had spoken turned out not to have happened.
+    /// </summary>
+    public event System.Action MeleeAttackCancelled;
 
     /// <summary>
     /// How an attack is shown on every machine.
@@ -67,13 +73,21 @@ public abstract class MeleeDeliveryBase : NetworkBehaviour, IMeleeSwingHost
     protected abstract float DamageScalar(int attackNumber);
 
     /// <inheritdoc/>
-    public abstract MeleePressOutcome Press(long pressTick, bool freshAllowed);
+    public abstract MeleePressOutcome Press(long pressTick, bool freshAllowed, int pressId = 0);
 
     /// <inheritdoc/>
     public abstract void CancelPress();
 
     /// <inheritdoc/>
     public abstract bool Begin(in MeleeSwingLaunch launch, IMeleeEvents events);
+
+    /// <inheritdoc/>
+    public virtual int BeginClientPress(bool freshAllowed) => 0;
+
+    /// <inheritdoc/>
+    public virtual void RejectClientPress(int pressId)
+    {
+    }
 
     protected virtual void Awake()
     {
@@ -123,7 +137,9 @@ public abstract class MeleeDeliveryBase : NetworkBehaviour, IMeleeSwingHost
     /// <summary>
     /// Starts tracking a swing and tells every machine which attack to play. Server only.
     /// </summary>
-    protected void StartSwing(int attackNumber, in MeleeSwingLaunch launch, IMeleeEvents events)
+    /// <param name="startTime">When the attack started, on the server clock, so a machine that hears late can join it part-way through.</param>
+    /// <param name="pressId">The id of the client press that started it, or zero.</param>
+    protected void StartSwing(int attackNumber, in MeleeSwingLaunch launch, IMeleeEvents events, double startTime, int pressId)
     {
         if (Swings.TryGetValue(attackNumber, out Swing stale))
         {
@@ -139,17 +155,38 @@ public abstract class MeleeDeliveryBase : NetworkBehaviour, IMeleeSwingHost
             StartedAt = Time.time,
         };
 
-        MeleeAttackClientRpc(attackNumber);
+        MeleeAttackClientRpc(attackNumber, startTime, pressId);
     }
 
     /// <summary>
     /// Triggers a melee attack on all clients.
     /// </summary>
     /// <param name="attackNumber">The attack the server has started. Every client plays the same one.</param>
+    /// <param name="startTime">When the server started it, on the server clock.</param>
+    /// <param name="pressId">The press that started it, which only the pressing client uses.</param>
     [Rpc(SendTo.Everyone)]
-    public void MeleeAttackClientRpc(int attackNumber)
+    public void MeleeAttackClientRpc(int attackNumber, double startTime, int pressId)
     {
-        MeleeAttackStarted?.Invoke(attackNumber);
+        float secondsIn = (float)System.Math.Max(0d, NetworkManager.ServerTime.Time - startTime);
+        OnAttackStarted(attackNumber, secondsIn, pressId);
+    }
+
+    /// <summary>
+    /// The server word that an attack has started reached this machine. Shows it unless it is already showing.
+    /// </summary>
+    protected virtual void OnAttackStarted(int attackNumber, float secondsIntoAttack, int pressId)
+    {
+        RaiseAttackStarted(attackNumber, secondsIntoAttack);
+    }
+
+    protected void RaiseAttackStarted(int attackNumber, float secondsIntoAttack)
+    {
+        MeleeAttackStarted?.Invoke(attackNumber, secondsIntoAttack);
+    }
+
+    protected void RaiseAttackCancelled()
+    {
+        MeleeAttackCancelled?.Invoke();
     }
 
     /// <summary>

@@ -28,6 +28,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
     {
         private const string Firebolt = "Assets/Abilitities/Abillities/Firebolt.asset";
         private const string Icebolt = "Assets/Abilitities/Abillities/Icebolt.asset";
+        private const string MeleeAttack = "Assets/Abilitities/Abillities/MeleeAttack.asset";
         private const string PlayerPrefab = "Assets/Prefabs/Characters/Player/TestCharacter.prefab";
         private const string TargetPrefab = "Assets/Tests/PlayMode/Prefabs/TestTarget.prefab";
         private const int StartingHealth = 100;
@@ -405,6 +406,79 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             Assert.AreEqual(3, hostsPlayer.GetComponent<Equipment>().GetCharges(EquipmentSlot.mainHand), "The server knows.");
             Assert.AreEqual(-1, clientCopyOfHosts.GetComponent<Equipment>().GetCharges(EquipmentSlot.mainHand), "A client that does not control the staff is not told its charges.");
+        }
+
+        // ----- A melee combo, from the owning client's side -----
+
+        private sealed class AttackLog
+        {
+            public readonly List<(int Attack, float SecondsIn)> Started = new List<(int, float)>();
+            public int Cancelled;
+
+            public AttackLog(MeleeDeliveryBase melee)
+            {
+                melee.MeleeAttackStarted += (attack, seconds) => Started.Add((attack, seconds));
+                melee.MeleeAttackCancelled += () => Cancelled++;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator AnOwnersMeleePress_ShowsTheSwingAtOnce_AndTheServerConfirmsItWithoutReplaying()
+        {
+            AbilityDefinition melee = Load(MeleeAttack);
+            Character player = SpawnOnServer(PlayerPrefab, Vector3.zero, ClientId, melee);
+            Character clientPlayer = null;
+            yield return ClientCopyOf(player, c => clientPlayer = c);
+            AttackLog log = new AttackLog(clientPlayer.GetComponent<ComboMeleeDelivery>());
+
+            Assert.IsTrue(clientPlayer.GetComponent<AbilityUser>().RequestActivate(melee));
+
+            Assert.AreEqual(1, log.Started.Count, "The swing shows on the press, before the server has answered.");
+            Assert.AreEqual(1, log.Started[0].Attack);
+            Assert.AreEqual(0f, log.Started[0].SecondsIn);
+
+            yield return Until(() => player.GetComponent<ComboMeleeDelivery>().CurrentAttack == 1, 5f, "the server to start the attack");
+            yield return Wait(0.5f);
+            Assert.AreEqual(1, log.Started.Count, "The server's confirmation must not start the swing a second time.");
+            Assert.AreEqual(0, log.Cancelled);
+        }
+
+        [UnityTest]
+        public IEnumerator APressTheServerRefuses_IsTakenBackByTheOwner()
+        {
+            AbilityDefinition melee = Load(MeleeAttack);
+            Character player = SpawnOnServer(PlayerPrefab, Vector3.zero, ClientId, melee);
+            Character clientPlayer = null;
+            yield return ClientCopyOf(player, c => clientPlayer = c);
+            yield return Wait(0.3f);
+            AttackLog log = new AttackLog(clientPlayer.GetComponent<ComboMeleeDelivery>());
+
+            // The owner has not heard of the death yet, so it predicts a swing that the server will refuse.
+            player.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso);
+            clientPlayer.GetComponent<AbilityUser>().RequestActivate(melee);
+            Assert.AreEqual(1, log.Started.Count, "The owner showed the swing it guessed.");
+
+            yield return Until(() => log.Cancelled == 1, 5f, "the server's refusal to take the swing back");
+            Assert.AreEqual(0, player.GetComponent<ComboMeleeDelivery>().CurrentAttack);
+        }
+
+        [UnityTest]
+        public IEnumerator AnotherPlayersSwing_ReachesTheClient_WithTheSecondsAlreadyElapsed()
+        {
+            AbilityDefinition melee = Load(MeleeAttack);
+            Character hostsPlayer = SpawnOnServer(PlayerPrefab, Vector3.zero, host.LocalClientId, melee);
+            Character clientCopyOfHosts = null;
+            yield return ClientCopyOf(hostsPlayer, c => clientCopyOfHosts = c);
+            yield return Wait(0.3f);
+            AttackLog log = new AttackLog(clientCopyOfHosts.GetComponent<ComboMeleeDelivery>());
+
+            Assert.IsTrue(hostsPlayer.GetComponent<AbilityUser>().TryActivateOnServer(melee));
+
+            yield return Until(() => log.Started.Count == 1, 5f, "the client to hear about the swing");
+            Assert.AreEqual(1, log.Started[0].Attack);
+            Assert.GreaterOrEqual(log.Started[0].SecondsIn, 0f);
+            Assert.Less(log.Started[0].SecondsIn, 1f, "The news is a little late, not a whole swing late.");
+            Assert.AreEqual(0, log.Cancelled);
         }
     }
 }

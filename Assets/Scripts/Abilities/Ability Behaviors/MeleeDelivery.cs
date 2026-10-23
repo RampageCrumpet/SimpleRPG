@@ -58,7 +58,7 @@ public sealed class MeleeDelivery : MeleeDeliveryBase
     }
 
     /// <inheritdoc/>
-    public override MeleePressOutcome Press(long pressTick, bool freshAllowed)
+    public override MeleePressOutcome Press(long pressTick, bool freshAllowed, int pressId = 0)
     {
         bool mayStart = IsServer && Character.IsAlive && freshAllowed && independentAttacks.Length > 0 && CanStartFreshChain;
         return mayStart ? MeleePressOutcome.Fresh : MeleePressOutcome.Rejected;
@@ -97,7 +97,7 @@ public sealed class MeleeDelivery : MeleeDeliveryBase
         int attackNumber = chosen + 1;
         recoveryUntil = Time.time + independentAttacks[chosen].Duration;
 
-        StartSwing(attackNumber, launch, events);
+        StartSwing(attackNumber, launch, events, NetworkManager.ServerTime.Time, 0);
         return true;
     }
 

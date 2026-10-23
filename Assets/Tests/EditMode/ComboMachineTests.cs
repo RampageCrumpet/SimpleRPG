@@ -473,6 +473,45 @@ namespace SimpleRPG.Tests.EditMode
             Assert.AreEqual(ComboPressOutcome.Rejected, machine.PreviewPress(Start + 0.5));
         }
 
+        [Test]
+        public void Resync_WhenIdle_StartsTheStepAtTheGivenTime()
+        {
+            machine.Resync(1, Start - 0.25, events);
+
+            Assert.AreEqual(1, machine.CurrentStep);
+            Assert.AreEqual(Start - 0.25, machine.CurrentStepStart);
+            CollectionAssert.AreEqual(new[] { "StepStarted:1@9.75" }, Events());
+        }
+
+        [Test]
+        public void Resync_EndsTheRunningStepFirst()
+        {
+            StartChain();
+
+            machine.Resync(2, Start + 0.5, events);
+
+            CollectionAssert.AreEqual(new[] { "StepEnded:0@10.5", "StepStarted:2@10.5" }, Events());
+            Assert.AreEqual(2, machine.CurrentStep);
+        }
+
+        [Test]
+        public void Resync_JudgesLaterPressesAgainstTheNewStep()
+        {
+            machine.Resync(1, Start, events);
+
+            // Step 1's chain window is 0.5-0.625 s after it started; step 0's would have been 0.625-0.875.
+            Assert.AreEqual(ComboPressOutcome.Rejected, Press(Start + 0.4375).Outcome);
+            Assert.AreEqual(ComboPressOutcome.Chained, Press(Start + 0.5625).Outcome);
+            Assert.AreEqual(2, machine.CurrentStep);
+        }
+
+        [Test]
+        public void Resync_ToAStepThatDoesNotExist_Throws()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => machine.Resync(3, Start, events));
+            Assert.Throws<ArgumentOutOfRangeException>(() => machine.Resync(-1, Start, events));
+        }
+
         private static ComboMachine Build()
         {
             return new ComboMachine(new[]

@@ -268,12 +268,27 @@ namespace SimpleRPG.Abilities
         /// delay for network latency. Negative means the press happened now.</param>
         /// <param name="freshAllowed">False if starting a fresh use is not allowed, such as while the ability's cooldown runs. A press that
         /// would have to start a fresh use is then rejected, while one that continues a use in progress is not affected.</param>
-        MeleePressOutcome Press(long pressTick, bool freshAllowed);
+        /// <param name="pressId">The id the pressing client gave this press, which the swing it starts carries back to that client so it can
+        /// match the answer to its prediction. Zero for a press with no client behind it.</param>
+        MeleePressOutcome Press(long pressTick, bool freshAllowed, int pressId = 0);
 
         /// <summary>
         /// Gives up the swing <see cref="Press"/> reserved, because the ability did not go on to start it.
         /// </summary>
         void CancelPress();
+
+        /// <summary>
+        /// A press made on this client by its owner. Predicts what the server will do with it and, if the server is likely to start an attack,
+        /// shows that attack at once. Client only; the server is not asked to wait.
+        /// </summary>
+        /// <param name="freshAllowed">False if starting a fresh use is not allowed, such as while the ability cooldown shows.</param>
+        /// <returns>The id to send with the request, so the server answer can be matched to this prediction. Zero if nothing was tracked.</returns>
+        int BeginClientPress(bool freshAllowed);
+
+        /// <summary>
+        /// Tells the client that made a press that the server did not start an attack for it, so any attack it predicted must be taken back. Server only.
+        /// </summary>
+        void RejectClientPress(int pressId);
     }
 
     /// <summary>

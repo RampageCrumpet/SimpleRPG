@@ -141,7 +141,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return null;
             Character gremlin = SpawnGremlin(Vector3.zero);
             int attacks = 0;
-            gremlin.GetComponent<MeleeDelivery>().MeleeAttackStarted += _ => attacks++;
+            gremlin.GetComponent<MeleeDelivery>().MeleeAttackStarted += (_, __) => attacks++;
 
             float deadline = Time.time + 3f;
             while (attacks == 0 && Time.time < deadline) yield return null;
@@ -164,7 +164,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return null;
             Character gremlin = SpawnGremlin(Vector3.zero);
             int attacks = 0;
-            gremlin.GetComponent<MeleeDelivery>().MeleeAttackStarted += _ => attacks++;
+            gremlin.GetComponent<MeleeDelivery>().MeleeAttackStarted += (_, __) => attacks++;
 
             yield return new WaitForSeconds(0.8f);
 
