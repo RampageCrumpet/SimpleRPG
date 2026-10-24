@@ -11,7 +11,8 @@ Written for agents that **cannot hear**. Every rule here exists because a sound 
 | Longsword A1, right diagonal | `SFX_Longsword_A1_RightDiagonal.wav` | 0.397 s | heaviest swing |
 | Longsword A2, left diagonal | `SFX_Longsword_A2_LeftDiagonal.wav` | 0.295 s | lighter, quicker |
 | Longsword A3, centerline thrust | `SFX_Longsword_A3_Thrust.wav` | 0.248 s | tight air puff, no scrape |
-| Skeleton struck (standard hit) | `SFX_Skeleton_Hit_Strike_01.wav` | 0.420 s | crack, snap, delayed rattle |
+| Skeleton struck, body/arm/leg hit | `SFX_Skeleton_Hit_Strike_01.wav` | 0.420 s | crack, snap, delayed rattle |
+| Skeleton struck, head hit | `SFX_Skeleton_Hit_Head_01.wav` | 0.420 s | the strike plus a body layer, a second snap and an egg-crack click at the start |
 
 All are mono, 44.1 kHz, 16-bit, no reverb (Unity handles room acoustics), approved by the user by ear. Nothing plays them yet: the MVP gap assessment notes there is no gameplay audio path (`MvpGapAssessment.md`). Unity import settings are untouched defaults.
 
@@ -81,6 +82,8 @@ Run the tool on every file you produce or are considering:
 | 20 ms RMS | the real envelope | compare it to the shape you intended |
 | energy before/after a split | which part dominates | rattle or tail well below the strike |
 
+**When you add a layer, prove it is audible.** Export before and after, subtract the two (`after - before`) and look at the difference by time. The first egg-crack layer added only about 1 dB to the first 5 ms: a single 15 ms click contributes almost no energy at a sensible level. The tool's RMS numbers barely moved, which was the clue. Raise the layer, then lower the whole mix to keep the peak consistent.
+
 Always compare **energy**, not peaks. The first strike candidate had the rattle at an acceptable peak but it overlapped the strike and lasted too long, so it dominated by energy. Estimate gain from the actual events in the slice you chose, not from the file's loudest peak: the rattle slice was about 18 dB quieter than the file peak suggested.
 
 ## What failed and why
@@ -122,7 +125,7 @@ Import the source, `select_region` and `edit_delete` the end, then the front (le
 
 ## Open work
 
-- Head (×1.75) and limb (×0.75) variants of the skeleton strike, then skeleton **get up** and **death**. Candidate sources are already chosen: `falling-bones` (collapse), `rattling-bones` (get up), `bones.wav` ticks, `bone-break-ver-2` (brighter crack).
+- The user chose to reuse the standard strike for body, arm and leg hits, with a chunkier head hit only, so no separate limb variant is planned. Next: skeleton **get up** and **death**. Candidate sources are already chosen: `falling-bones` (collapse), `rattling-bones` (get up), `bones.wav` ticks, `bone-break-ver-2` (brighter crack).
 - A hollow body "knock" under the crack was left out. Add it only if the strike is judged thin.
 - Rebuild the three longsword swings with true fade-outs, if the user wants to compare.
 - Verify the Freesound licenses behind the longsword swings (IDs 422513, 420626, 109432) and record them in `I:/Art/Sounds/Whoosh/SOURCES.md`.
