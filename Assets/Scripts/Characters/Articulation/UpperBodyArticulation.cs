@@ -87,6 +87,12 @@ namespace SimpleRPG.Articulation
 
         public float AppliedPitch { get; private set; }
 
+        /// <summary>The head bone, or null if the rig has none.</summary>
+        public Transform Head { get; private set; }
+
+        /// <summary>Where the head was (its local-to-world matrix, so any rig scale is included) this frame after the animator and before the spine was bent, so the bend alone can be measured.</summary>
+        public Matrix4x4 HeadToWorldBeforeBend { get; private set; }
+
         /// <summary>
         /// Raised on the owning client when the server moves the view, such as on respawn, so the camera can follow. The float is the new yaw.
         /// </summary>
@@ -112,7 +118,9 @@ namespace SimpleRPG.Articulation
 
         private void Start()
         {
-            rig = new SpineRig(GetComponent<Animator>(), settings);
+            Animator animator = GetComponent<Animator>();
+            rig = new SpineRig(animator, settings);
+            Head = animator.isHuman ? animator.GetBoneTransform(HumanBodyBones.Head) : null;
             if (!rig.IsUsable)
             {
                 Debug.LogWarning(name + " has no humanoid spine bones, so its upper body will not follow the view.", this);
@@ -314,6 +322,13 @@ namespace SimpleRPG.Articulation
 
             AppliedTwist = twist * poseWeight;
             AppliedPitch = pitch * poseWeight;
+            if (Head != null)
+            {
+                // Measured before Apply, with the previous frame's bend undone first, so the difference is only this frame's bend.
+                rig.Restore();
+                HeadToWorldBeforeBend = Head.localToWorldMatrix;
+            }
+
             rig.Apply(transform, AppliedTwist, AppliedPitch);
         }
     }

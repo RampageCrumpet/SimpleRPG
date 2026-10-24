@@ -269,5 +269,29 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.AreEqual(heldOpened, turnedOpened, 0.1, "the authored timing is untouched: the window opens when it always does");
             Assert.Greater(Vector3.Distance(held, turned), 0.3f, "but the blade is somewhere else in the world: the swing was dragged");
         }
+
+        [UnityTest]
+        public IEnumerator Eye_LeansForwardAndDownWhenLookingDown_AndBackWhenLookingUp()
+        {
+            yield return Frames(3);
+            Vector3 rest = playerObject.transform.InverseTransformPoint(cameraObject.transform.position);
+            Assert.AreEqual(0f, Vector3.Distance(cameraObject.transform.position, cameraObject.transform.parent.position), 0.05f, "with the view level the eye sits on its mount, whatever the rig's scale");
+
+            // Mouse look as the owner does it: the controller keeps the pitch it was given on every later frame.
+            var look = (FirstPersonLook)typeof(FirstPersonCharacterController)
+                .GetField("look", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                .GetValue(playerObject.GetComponent<FirstPersonCharacterController>());
+            look.Look(0f, 1f, 0.15f);
+            yield return Seconds(0.4f);
+            Vector3 down = playerObject.transform.InverseTransformPoint(cameraObject.transform.position);
+
+            look.Look(0f, -2f, 0.15f);
+            yield return Seconds(0.4f);
+            Vector3 up = playerObject.transform.InverseTransformPoint(cameraObject.transform.position);
+
+            Assert.Greater(down.z, rest.z + 0.03f, "looking down, the eye moves forward");
+            Assert.Less(down.y, rest.y - 0.01f, "and lower");
+            Assert.Less(up.z, rest.z - 0.01f, "looking up, the eye moves back");
+        }
     }
 }

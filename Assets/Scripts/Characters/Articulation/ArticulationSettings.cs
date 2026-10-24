@@ -87,13 +87,13 @@ namespace SimpleRPG.Articulation
         public float maxTwist = 70f;
 
         [Tooltip("The most the torso may tilt forward when the view looks down.")]
-        public float maxPitchDown = 45f;
+        public float maxPitchDown = 90f;
 
         [Tooltip("The most the torso may tilt backward when the view looks up.")]
-        public float maxPitchUp = 35f;
+        public float maxPitchUp = 90f;
 
         [Tooltip("How much of the view's pitch the torso takes on. The camera is limited by its own range; this scales it into the torso.")]
-        public float pitchGain = 0.8f;
+        public float pitchGain = 1.5f;
 
         [Header("Pelvis follow")]
         [Tooltip("Twist inside which the pelvis only drifts toward the torso slowly.")]

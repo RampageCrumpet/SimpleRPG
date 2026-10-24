@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Articulation.ArticulationProfile
   settings:
     maxTwist: 70
-    maxPitchDown: 45
-    maxPitchUp: 35
-    pitchGain: 0.8
+    maxPitchDown: 90
+    maxPitchUp: 90
+    pitchGain: 1.5
     pelvisDeadZone: 15
     pelvisRecenterSpeed: 90
     pelvisFollowSpeed: 300

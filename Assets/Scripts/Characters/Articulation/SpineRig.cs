@@ -64,6 +64,22 @@ namespace SimpleRPG.Articulation
         }
 
         /// <summary>
+        /// Undoes this rig's offset on every bone the animator has not rewritten since, leaving the animated pose. <see cref="Apply"/> does this
+        /// itself; call it first to read the animated pose.
+        /// </summary>
+        public void Restore()
+        {
+            for (int i = 0; i < bones.Length; i++)
+            {
+                if (bones[i] != null && hasApplied[i] && Same(bones[i].localRotation, appliedLocal[i]))
+                {
+                    bones[i].localRotation = animatedLocal[i];
+                    hasApplied[i] = false;
+                }
+            }
+        }
+
+        /// <summary>
         /// Adds a twist and tilt to the spine.
         /// </summary>
         /// <param name="frame">The character's root. Its up axis is the twist axis and its right axis, turned by the twist, the tilt axis.</param>

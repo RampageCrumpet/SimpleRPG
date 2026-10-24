@@ -37,7 +37,7 @@ Initial values (all in `ArticulationSettings`, to be playtested):
 | Setting | Value |
 |---|---|
 | `maxTwist` | 70 deg either way |
-| `maxPitchDown` / `maxPitchUp` / `pitchGain` | 45 / 35 / 0.8 |
+| `maxPitchDown` / `maxPitchUp` / `pitchGain` | 90 / 90 / 1.5 (the camera's 60 deg range reaches the full 90 deg bend) |
 | `pelvisDeadZone` / `pelvisRecenterSpeed` / `pelvisFollowSpeed` | 15 deg / 90 / 300 deg/s |
 | Yaw / pitch speed, Free | 20000 / 20000 deg/s (effectively unlimited) |
 | Windup | 540 / 360 |

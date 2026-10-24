@@ -9,6 +9,7 @@ using UnityEngine;
 /// This script turns input into player movement for a first person control scheme.
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
+[DefaultExecutionOrder(100)]
 [RequireComponent(typeof(UpperBodyArticulation))]
 public class FirstPersonCharacterController : NetworkBehaviour, IViewSink
 {
@@ -63,6 +64,11 @@ public class FirstPersonCharacterController : NetworkBehaviour, IViewSink
     private UpperBodyArticulation articulation;
 
     /// <summary>
+    /// The head bone the eye rides on, and where the camera mount sits in that bone's space, so the eye leans with the body.
+    /// </summary>
+    private Vector3 eyeInHead;
+
+    /// <summary>
     /// Start is called before the first frame update.
     /// </summary>
     public void Start()
@@ -82,6 +88,11 @@ public class FirstPersonCharacterController : NetworkBehaviour, IViewSink
 
             // Move the main camera to this character.
             FirstPersonLookMath.AttachCamera(activeCamera.transform, cameraTransform);
+
+            if (this.articulation.Head != null)
+            {
+                this.eyeInHead = this.articulation.Head.InverseTransformPoint(cameraTransform.position);
+            }
 
             this.look = new FirstPersonLook(activeCamera.transform, this, rotationSpeed, minimumPitch, maximumPitch, this.transform.eulerAngles.y);
             this.articulation.ViewReset += this.look.ResetYaw;
@@ -128,6 +139,16 @@ public class FirstPersonCharacterController : NetworkBehaviour, IViewSink
     public void LateUpdate()
     {
         this.look?.ApplyCamera();
+
+        // Runs after the articulation has posed the spine this frame. The eye stays on its mount and moves only by how far the bend carried the
+        // head, so leaning forward or back moves the view without the head's idle sway or the rig's rest pose shifting where the eye sits.
+        Transform head = this.articulation.Head;
+        if (this.look != null && head != null)
+        {
+            Vector3 before = this.articulation.HeadToWorldBeforeBend.MultiplyPoint3x4(this.eyeInHead);
+            Vector3 after = head.TransformPoint(this.eyeInHead);
+            this.activeCamera.transform.position = this.cameraTransform.position + (after - before);
+        }
     }
 
     public override void OnDestroy()
