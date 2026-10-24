@@ -1,3 +1,4 @@
+using SimpleRPG.Articulation;
 using SimpleRPG.Controls;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,7 +9,8 @@ using UnityEngine;
 /// This script turns input into player movement for a first person control scheme.
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
-public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
+[RequireComponent(typeof(UpperBodyArticulation))]
+public class FirstPersonCharacterController : NetworkBehaviour, IViewSink
 {
     /// <summary>
     /// The rotation of the player in degrees per second.
@@ -56,6 +58,11 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
     private SimpleRPG.Character character;
 
     /// <summary>
+    /// Turns the player's view into the pose of the character's upper body, and the pelvis that follows it. The server owns that pose.
+    /// </summary>
+    private UpperBodyArticulation articulation;
+
+    /// <summary>
     /// Start is called before the first frame update.
     /// </summary>
     public void Start()
@@ -63,6 +70,7 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
         this.activeCamera = Camera.main;
         this.characterController = this.GetComponent<CharacterController>();
         this.character = this.GetComponent<SimpleRPG.Character>();
+        this.articulation = this.GetComponent<UpperBodyArticulation>();
 
         if (this.IsOwner)
         {
@@ -75,7 +83,8 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
             // Move the main camera to this character.
             FirstPersonLookMath.AttachCamera(activeCamera.transform, cameraTransform);
 
-            this.look = new FirstPersonLook(activeCamera.transform, this, rotationSpeed, minimumPitch, maximumPitch);
+            this.look = new FirstPersonLook(activeCamera.transform, this, rotationSpeed, minimumPitch, maximumPitch, this.transform.eulerAngles.y);
+            this.articulation.ViewReset += this.look.ResetYaw;
 
             // Lock the cursor so it doesn't go wiggling everywhere.
             Cursor.lockState = CursorLockMode.Locked;
@@ -114,6 +123,24 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
     }
 
     /// <summary>
+    /// The camera follows the view, not the body, so it is aimed again after everything that could have moved its parent this frame.
+    /// </summary>
+    public void LateUpdate()
+    {
+        this.look?.ApplyCamera();
+    }
+
+    public override void OnDestroy()
+    {
+        if (this.look != null && this.articulation != null)
+        {
+            this.articulation.ViewReset -= this.look.ResetYaw;
+        }
+
+        base.OnDestroy();
+    }
+
+    /// <summary>
     /// True while the character this controller moves is alive.
     /// </summary>
     private bool IsAlive => this.character == null || this.character.IsAlive;
@@ -129,7 +156,11 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
             return Vector3.zero;
         }
 
-        Vector3 movementDirection = FirstPersonLookMath.MovementDirection(this.transform.forward, this.transform.right, GameInput.Move.ReadValue<Vector2>().y, GameInput.Move.ReadValue<Vector2>().x);
+        // Movement is relative to where the player looks. The body trails the view, so its own axes would steer the wrong way mid-turn.
+        float viewYaw = this.look != null ? this.look.Yaw : this.transform.eulerAngles.y;
+        FirstPersonLookMath.ViewAxes(viewYaw, out Vector3 forward, out Vector3 right);
+        Vector2 move = GameInput.Move.ReadValue<Vector2>();
+        Vector3 movementDirection = FirstPersonLookMath.MovementDirection(forward, right, move.y, move.x);
 
         return movementDirection;
     }
@@ -155,26 +186,12 @@ public class FirstPersonCharacterController : NetworkBehaviour, IBodyYawSink
     }
 
     /// <summary>
-    /// Turns this character by the given yaw amount on the server, so the rotation replicates to everyone.
+    /// Tells the character's upper body where the view points. The articulation component sends it to the server.
     /// </summary>
-    /// <param name="yaw"> The yaw in degrees to rotate by.</param>
-    [ServerRpc]
-    private void RotateCharacterServerRPC(float yaw)
+    /// <param name="yawDelta"> Degrees the view turned this frame.</param>
+    /// <param name="pitch"> Where the view now points vertically in degrees.</param>
+    void IViewSink.Look(float yawDelta, float pitch)
     {
-        if (!this.IsAlive)
-        {
-            return;
-        }
-
-        this.gameObject.transform.Rotate(0, yaw, 0);
-    }
-
-    /// <summary>
-    /// Sends the body yaw from mouse look to the server.
-    /// </summary>
-    /// <param name="yaw"> The yaw in degrees to rotate by.</param>
-    void IBodyYawSink.Turn(float yaw)
-    {
-        this.RotateCharacterServerRPC(yaw);
+        this.articulation.SubmitLook(yawDelta, pitch);
     }
 }

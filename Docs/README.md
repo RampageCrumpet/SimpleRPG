@@ -8,3 +8,4 @@ For procedural equipment models, UVs, Substance Painter MCP, PBR maps and Unity 
 - [Dungeon generation](DungeonGeneration.md)
 - [Skeleton animation](SkeletonAnimationPlan.md)
 - [Network authority](NetworkAuthority.md)
+- [Upper-body articulation](UpperBodyArticulation.md)

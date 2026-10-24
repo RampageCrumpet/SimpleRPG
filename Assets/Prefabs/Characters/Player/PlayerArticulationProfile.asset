@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abb623400510aa4458a91b93f9f3359f, type: 3}
+  m_Name: PlayerArticulationProfile
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Articulation.ArticulationProfile
+  settings:
+    maxTwist: 70
+    maxPitchDown: 45
+    maxPitchUp: 35
+    pitchGain: 0.8
+    pelvisDeadZone: 15
+    pelvisRecenterSpeed: 90
+    pelvisFollowSpeed: 300
+    free:
+      yawSpeed: 20000
+      pitchSpeed: 20000
+    windup:
+      yawSpeed: 540
+      pitchSpeed: 360
+    active:
+      yawSpeed: 180
+      pitchSpeed: 120
+    recovery:
+      yawSpeed: 360
+      pitchSpeed: 240
+    limitBlendSeconds: 0.12
+    bones:
+    - bone: 7
+      yaw: 0.2
+      pitch: 0.2
+    - bone: 8
+      yaw: 0.3
+      pitch: 0.3
+    - bone: 54
+      yaw: 0.3
+      pitch: 0.3
+    - bone: 9
+      yaw: 0.1
+      pitch: 0.1
+    - bone: 10
+      yaw: 0.1
+      pitch: 0.1
+    deathFadeSeconds: 0.25
+    remoteSmoothingSeconds: 0.06
+    replicationThreshold: 0.25
+    maxYawPerMessage: 180

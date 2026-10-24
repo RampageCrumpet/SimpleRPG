@@ -37,6 +37,24 @@ namespace SimpleRPG.Abilities
         public bool Accepted => Outcome != ComboPressOutcome.Rejected;
     }
 
+    /// <summary>
+    /// Where a running step is in its swing, by its hit window.
+    /// </summary>
+    public enum ComboPhase
+    {
+        /// <summary>No step is running (or it has run out).</summary>
+        None,
+
+        /// <summary>The step has started and its hit window has not opened.</summary>
+        Windup,
+
+        /// <summary>The hit window is open.</summary>
+        Active,
+
+        /// <summary>The hit window has closed and the step has not ended.</summary>
+        Recovery,
+    }
+
     public enum ComboEventKind
     {
         StepStarted,
@@ -130,6 +148,33 @@ namespace SimpleRPG.Abilities
         /// When the running step started. Only meaningful while <see cref="IsRunning"/>.
         /// </summary>
         public double CurrentStepStart => stepStart;
+
+        /// <summary>
+        /// Says where the running step is in its swing at a time, without changing anything. Lets presentation (such as how freely the body may
+        /// turn) follow the swing without reading clips or hearing events.
+        /// </summary>
+        /// <param name="now">The time to look at, on the clock the machine is driven by.</param>
+        public ComboPhase PhaseAt(double now)
+        {
+            if (current < 0)
+            {
+                return ComboPhase.None;
+            }
+
+            ComboStepTiming step = steps[current];
+            double elapsed = now - stepStart;
+            if (elapsed >= step.Duration)
+            {
+                return ComboPhase.None;
+            }
+
+            if (elapsed < step.HitStart)
+            {
+                return ComboPhase.Windup;
+            }
+
+            return elapsed < step.HitEnd ? ComboPhase.Active : ComboPhase.Recovery;
+        }
 
         /// <summary>
         /// Catches the machine up to a time: reports hit windows that opened or closed, and the step ending if it ran out.

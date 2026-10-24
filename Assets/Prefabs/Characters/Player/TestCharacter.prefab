@@ -119,6 +119,7 @@ GameObject:
   - component: {fileID: 1002941924275506353}
   - component: {fileID: 6971755754855986808}
   - component: {fileID: 5346200342057443795}
+  - component: {fileID: 1280965052588903103}
   m_Layer: 9
   m_Name: TestCharacter
   m_TagString: Player
@@ -399,6 +400,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SimpleRPG.Abilities.Integration::SimpleRPG.Abilities.Integration.ComboMeleeDelivery
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &1280965052588903103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1669218347359381997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9b9179e60348024b9e4a0613f970188, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Articulation.UpperBodyArticulation
+  ShowTopMostFoldoutHeaderGroup: 1
+  profile: {fileID: 11400000, guid: 492ff5fd5d45cb04b90f82060905af62, type: 2}
 --- !u!1 &2840580516931018900
 GameObject:
   m_ObjectHideFlags: 0

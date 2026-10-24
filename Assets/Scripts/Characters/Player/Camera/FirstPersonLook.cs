@@ -1,22 +1,24 @@
 /// <summary>
-/// Receives the body yaw produced by mouse look. The network-backed implementation sends it to the server; tests use a fake.
+/// Receives where the owner's view points. The network-backed implementation sends it to the server; tests use a fake.
 /// </summary>
-public interface IBodyYawSink
+public interface IViewSink
 {
     /// <summary>
-    /// Turns the character body by the given amount.
+    /// The view moved this frame.
     /// </summary>
-    /// <param name="yaw"> The yaw in degrees to rotate by.</param>
-    void Turn(float yaw);
+    /// <param name="yawDelta"> Degrees the view turned horizontally this frame.</param>
+    /// <param name="pitch"> Where the view now points vertically in degrees, positive downward.</param>
+    void Look(float yawDelta, float pitch);
 }
 
 /// <summary>
-/// Applies mouse look to a camera. Holds the owner's pitch and sends yaw to an <see cref="IBodyYawSink"/>. Has no network dependency.
+/// Applies mouse look to a camera. Holds the owner's view yaw and pitch and tells an <see cref="IViewSink"/> what changed. The camera is
+/// aimed in world space, so it never inherits the body's rotation: the body follows the view, not the other way round. Has no network dependency.
 /// </summary>
 public sealed class FirstPersonLook
 {
     private readonly UnityEngine.Transform camera;
-    private readonly IBodyYawSink yawSink;
+    private readonly IViewSink viewSink;
     private readonly float rotationSpeed;
     private readonly float minimumPitch;
     private readonly float maximumPitch;
@@ -27,20 +29,27 @@ public sealed class FirstPersonLook
     public float Pitch { get; private set; }
 
     /// <summary>
+    /// The current camera yaw in degrees, in world space.
+    /// </summary>
+    public float Yaw { get; private set; }
+
+    /// <summary>
     /// Creates a look controller for one camera.
     /// </summary>
-    /// <param name="camera"> The camera transform whose pitch is controlled.</param>
-    /// <param name="yawSink"> Receives the body yaw each frame.</param>
+    /// <param name="camera"> The camera transform that is aimed.</param>
+    /// <param name="viewSink"> Receives the view change each frame.</param>
     /// <param name="rotationSpeed"> The rotation speed in degrees per second.</param>
     /// <param name="minimumPitch"> The lowest allowed pitch in degrees.</param>
     /// <param name="maximumPitch"> The highest allowed pitch in degrees.</param>
-    public FirstPersonLook(UnityEngine.Transform camera, IBodyYawSink yawSink, float rotationSpeed, float minimumPitch, float maximumPitch)
+    /// <param name="initialYaw"> The world yaw the view starts at.</param>
+    public FirstPersonLook(UnityEngine.Transform camera, IViewSink viewSink, float rotationSpeed, float minimumPitch, float maximumPitch, float initialYaw = 0f)
     {
         this.camera = camera;
-        this.yawSink = yawSink;
+        this.viewSink = viewSink;
         this.rotationSpeed = rotationSpeed;
         this.minimumPitch = minimumPitch;
         this.maximumPitch = maximumPitch;
+        this.Yaw = initialYaw;
     }
 
     /// <summary>
@@ -52,8 +61,28 @@ public sealed class FirstPersonLook
     public void Look(float mouseX, float mouseY, float deltaTime)
     {
         this.Pitch = FirstPersonLookMath.StepPitch(this.Pitch, mouseY, this.rotationSpeed, deltaTime, this.minimumPitch, this.maximumPitch);
-        this.camera.localEulerAngles = new UnityEngine.Vector3(this.Pitch, 0f, 0f);
+        float yawStep = FirstPersonLookMath.YawStep(mouseX, this.rotationSpeed, deltaTime);
+        this.Yaw = UnityEngine.Mathf.Repeat(this.Yaw + yawStep + 180f, 360f) - 180f;
+        this.ApplyCamera();
 
-        this.yawSink.Turn(FirstPersonLookMath.YawStep(mouseX, this.rotationSpeed, deltaTime));
+        this.viewSink.Look(yawStep, this.Pitch);
+    }
+
+    /// <summary>
+    /// Points the view somewhere without reporting it, because the server moved it (a respawn).
+    /// </summary>
+    public void ResetYaw(float yaw)
+    {
+        this.Yaw = yaw;
+        this.Pitch = 0f;
+        this.ApplyCamera();
+    }
+
+    /// <summary>
+    /// Aims the camera at the view. Called again late in the frame, after anything that moved its parent.
+    /// </summary>
+    public void ApplyCamera()
+    {
+        this.camera.rotation = UnityEngine.Quaternion.Euler(this.Pitch, this.Yaw, 0f);
     }
 }

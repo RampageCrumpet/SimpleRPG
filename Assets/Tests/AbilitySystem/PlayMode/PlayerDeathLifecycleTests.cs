@@ -3,6 +3,7 @@ using HitDetection;
 using NUnit.Framework;
 using SimpleRPG.AI;
 using SimpleRPG.Abilities.Integration;
+using SimpleRPG.Articulation;
 using SimpleRPG.Animations;
 using SimpleRPG.Gameplay;
 using SimpleRPG.InventorySystem;
@@ -181,10 +182,11 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
         private static float SendTurn(Character player, float yaw)
         {
-            FirstPersonCharacterController controller = player.GetComponent<FirstPersonCharacterController>();
-            MethodInfo rotate = typeof(FirstPersonCharacterController).GetMethod("RotateCharacterServerRPC", BindingFlags.Instance | BindingFlags.NonPublic);
+            // The view change the owner sends; the server turns the body toward it over the next frames.
+            UpperBodyArticulation articulation = player.GetComponent<UpperBodyArticulation>();
+            MethodInfo look = typeof(UpperBodyArticulation).GetMethod("SubmitLookServerRpc", BindingFlags.Instance | BindingFlags.NonPublic);
             float before = player.transform.eulerAngles.y;
-            rotate.Invoke(controller, new object[] { yaw });
+            look.Invoke(articulation, new object[] { yaw, 0f });
             return before;
         }
 

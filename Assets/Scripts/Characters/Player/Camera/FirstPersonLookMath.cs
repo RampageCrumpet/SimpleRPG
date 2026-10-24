@@ -56,12 +56,26 @@ public static class FirstPersonLookMath
     }
 
     /// <summary>
-    /// Converts one frame of horizontal mouse movement into a body yaw amount.
+    /// The flat forward and right axes of a view yaw. Movement is relative to where the player looks, not to which way the body currently faces,
+    /// because the body trails the view.
+    /// </summary>
+    /// <param name="yaw"> The view yaw in degrees.</param>
+    /// <param name="forward"> The horizontal forward axis.</param>
+    /// <param name="right"> The horizontal right axis.</param>
+    public static void ViewAxes(float yaw, out UnityEngine.Vector3 forward, out UnityEngine.Vector3 right)
+    {
+        UnityEngine.Quaternion turn = UnityEngine.Quaternion.Euler(0f, yaw, 0f);
+        forward = turn * UnityEngine.Vector3.forward;
+        right = turn * UnityEngine.Vector3.right;
+    }
+
+    /// <summary>
+    /// Converts one frame of horizontal mouse movement into a view yaw amount.
     /// </summary>
     /// <param name="mouseX"> The horizontal mouse movement for this frame.</param>
     /// <param name="rotationSpeed"> The rotation speed in degrees per second.</param>
     /// <param name="deltaTime"> The time since the last frame in seconds.</param>
-    /// <returns> The yaw in degrees to rotate the body by.</returns>
+    /// <returns> The yaw in degrees to turn the view by.</returns>
     public static float YawStep(float mouseX, float rotationSpeed, float deltaTime)
     {
         return mouseX * rotationSpeed * deltaTime;

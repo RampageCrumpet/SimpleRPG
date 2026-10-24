@@ -6,7 +6,7 @@ namespace SimpleRPG.Tests.EditMode
 {
     /// <summary>
     /// Checks first-person look without a network: pitch limits, time scaling, direction, yaw routing, camera attachment,
-    /// movement direction and who is allowed to look. The network-backed yaw is replaced by <see cref="FakeYawSink"/>.
+    /// movement direction and who is allowed to look. The network-backed yaw is replaced by <see cref="FakeViewSink"/>.
     /// </summary>
     public class FirstPersonLookTests
     {
@@ -17,7 +17,7 @@ namespace SimpleRPG.Tests.EditMode
         private GameObject cameraObject;
         private GameObject bodyObject;
         private GameObject anchorObject;
-        private FakeYawSink yawSink;
+        private FakeViewSink viewSink;
         private FirstPersonLook look;
 
         [SetUp]
@@ -26,8 +26,8 @@ namespace SimpleRPG.Tests.EditMode
             cameraObject = new GameObject("Camera");
             bodyObject = new GameObject("Body");
             anchorObject = new GameObject("Anchor");
-            yawSink = new FakeYawSink();
-            look = new FirstPersonLook(cameraObject.transform, yawSink, RotationSpeed, MinimumPitch, MaximumPitch);
+            viewSink = new FakeViewSink();
+            look = new FirstPersonLook(cameraObject.transform, viewSink, RotationSpeed, MinimumPitch, MaximumPitch);
         }
 
         [TearDown]
@@ -49,7 +49,7 @@ namespace SimpleRPG.Tests.EditMode
             }
 
             Assert.AreEqual(MaximumPitch, look.Pitch, 0.0001f);
-            Assert.AreEqual(MaximumPitch, Mathf.DeltaAngle(0f, cameraObject.transform.localEulerAngles.x), 0.01f);
+            Assert.AreEqual(MaximumPitch, Mathf.DeltaAngle(0f, cameraObject.transform.eulerAngles.x), 0.01f);
         }
 
         [Test]
@@ -61,7 +61,7 @@ namespace SimpleRPG.Tests.EditMode
             }
 
             Assert.AreEqual(MinimumPitch, look.Pitch, 0.0001f);
-            Assert.AreEqual(MinimumPitch, Mathf.DeltaAngle(0f, cameraObject.transform.localEulerAngles.x), 0.01f);
+            Assert.AreEqual(MinimumPitch, Mathf.DeltaAngle(0f, cameraObject.transform.eulerAngles.x), 0.01f);
         }
 
         [Test]
@@ -81,8 +81,8 @@ namespace SimpleRPG.Tests.EditMode
             var fiveFramesObject = new GameObject("FiveFrames");
             try
             {
-                var tenFrames = new FirstPersonLook(tenFramesObject.transform, new FakeYawSink(), RotationSpeed, MinimumPitch, MaximumPitch);
-                var fiveFrames = new FirstPersonLook(fiveFramesObject.transform, new FakeYawSink(), RotationSpeed, MinimumPitch, MaximumPitch);
+                var tenFrames = new FirstPersonLook(tenFramesObject.transform, new FakeViewSink(), RotationSpeed, MinimumPitch, MaximumPitch);
+                var fiveFrames = new FirstPersonLook(fiveFramesObject.transform, new FakeViewSink(), RotationSpeed, MinimumPitch, MaximumPitch);
 
                 for (int i = 0; i < 10; i++) tenFrames.Look(0f, 1f, 0.01f);
                 for (int i = 0; i < 5; i++) fiveFrames.Look(0f, 1f, 0.02f);
@@ -114,8 +114,8 @@ namespace SimpleRPG.Tests.EditMode
             look.Look(0f, 1f, 0.1f);
 
             Assert.AreEqual(bodyBefore, bodyObject.transform.rotation);
-            Assert.AreEqual(0f, cameraObject.transform.localEulerAngles.y, 0.0001f);
-            Assert.AreEqual(0f, cameraObject.transform.localEulerAngles.z, 0.0001f);
+            Assert.AreEqual(0f, cameraObject.transform.eulerAngles.y, 0.0001f);
+            Assert.AreEqual(0f, cameraObject.transform.eulerAngles.z, 0.0001f);
         }
 
         // --- Yaw routing ---
@@ -125,8 +125,8 @@ namespace SimpleRPG.Tests.EditMode
         {
             look.Look(2f, 0f, 0.05f);
 
-            Assert.AreEqual(1, yawSink.Turns.Count);
-            Assert.AreEqual(10f, yawSink.Turns[0], 0.0001f);
+            Assert.AreEqual(1, viewSink.Looks.Count);
+            Assert.AreEqual(10f, viewSink.Looks[0].YawDelta, 0.0001f);
         }
 
         [Test]
@@ -142,7 +142,52 @@ namespace SimpleRPG.Tests.EditMode
         {
             look.Look(0f, 0f, 0.1f);
 
-            Assert.AreEqual(0f, yawSink.Turns[0], 0.0001f);
+            Assert.AreEqual(0f, viewSink.Looks[0].YawDelta, 0.0001f);
+        }
+
+        [Test]
+        public void Yaw_TurnsTheCameraInWorldSpaceWhateverItsParentDoes()
+        {
+            // The body trails the view, so a parent that has turned elsewhere must not show up in where the camera points.
+            anchorObject.transform.rotation = Quaternion.Euler(0f, 100f, 0f);
+            cameraObject.transform.SetParent(anchorObject.transform);
+
+            look.Look(2f, 0f, 0.05f);
+            anchorObject.transform.rotation = Quaternion.Euler(0f, -40f, 0f);
+            look.ApplyCamera();
+
+            Assert.AreEqual(10f, Mathf.DeltaAngle(0f, cameraObject.transform.eulerAngles.y), 0.01f);
+        }
+
+        [Test]
+        public void Yaw_AccumulatesAndStartsFromTheInitialYaw()
+        {
+            var turned = new FirstPersonLook(cameraObject.transform, new FakeViewSink(), RotationSpeed, MinimumPitch, MaximumPitch, 90f);
+
+            turned.Look(2f, 0f, 0.05f);
+
+            Assert.AreEqual(100f, turned.Yaw, 0.0001f);
+        }
+
+        [Test]
+        public void View_ReportsThePitchAlongWithTheYaw()
+        {
+            look.Look(0f, 2f, 0.05f);
+
+            Assert.AreEqual(10f, viewSink.Looks[0].Pitch, 0.0001f);
+        }
+
+        [Test]
+        public void ResetYaw_AimsTheCameraWithoutReportingAndClearsThePitch()
+        {
+            look.Look(0f, 2f, 0.05f);
+            viewSink.Looks.Clear();
+
+            look.ResetYaw(75f);
+
+            Assert.AreEqual(0, viewSink.Looks.Count);
+            Assert.AreEqual(0f, look.Pitch);
+            Assert.AreEqual(75f, Mathf.DeltaAngle(0f, cameraObject.transform.eulerAngles.y), 0.01f);
         }
 
         // --- Gating ---
@@ -218,6 +263,16 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
+        public void ViewAxes_AreFlatAndFollowTheViewYawNotTheBody()
+        {
+            FirstPersonLookMath.ViewAxes(90f, out Vector3 forward, out Vector3 right);
+
+            Assert.AreEqual(Vector3.right.x, forward.x, 0.0001f);
+            Assert.AreEqual(0f, forward.y, 0.0001f);
+            Assert.AreEqual(-1f, right.z, 0.0001f);
+        }
+
+        [Test]
         public void MovementDirection_NoInputGivesZero()
         {
             Vector3 direction = FirstPersonLookMath.MovementDirection(Vector3.forward, Vector3.right, 0f, 0f);
@@ -226,15 +281,15 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         /// <summary>
-        /// Records every yaw the look controller sends, in place of the server RPC.
+        /// Records every view change the look controller sends, in place of the server RPC.
         /// </summary>
-        private sealed class FakeYawSink : IBodyYawSink
+        private sealed class FakeViewSink : IViewSink
         {
-            public readonly List<float> Turns = new List<float>();
+            public readonly List<(float YawDelta, float Pitch)> Looks = new List<(float YawDelta, float Pitch)>();
 
-            public void Turn(float yaw)
+            public void Look(float yawDelta, float pitch)
             {
-                Turns.Add(yaw);
+                Looks.Add((yawDelta, pitch));
             }
         }
     }

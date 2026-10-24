@@ -34,7 +34,8 @@ namespace SimpleRPG.TestAutomation
             string path = Path.GetFullPath("Library/Mvp" + (playMode ? "PlayMode" : "EditMode") + "Results.xml");
             SessionState.SetString("SimpleRPG.TestResultPath", path);
             var tests = new Filter { testMode = playMode ? TestMode.PlayMode : TestMode.EditMode };
-            if (!string.IsNullOrEmpty(filter)) tests.testNames = filter.Split(';');
+            if (!string.IsNullOrEmpty(filter) && filter.StartsWith("assembly:")) tests.assemblyNames = filter.Substring("assembly:".Length).Split(';');
+            else if (!string.IsNullOrEmpty(filter)) tests.testNames = filter.Split(';');
             api.Execute(new ExecutionSettings(tests));
             return path;
         }

@@ -1,3 +1,4 @@
+using SimpleRPG.Articulation;
 using SimpleRPG.Gameplay;
 using System.Collections.Generic;
 using Unity.Netcode;
@@ -18,7 +19,7 @@ namespace SimpleRPG.Abilities.Integration
     /// The weapon's hitbox still rides the animated blade, so the server must play each step's animation in step with the machine.
     /// </para>
     /// </summary>
-    public sealed class ComboMeleeDelivery : MeleeDeliveryBase
+    public sealed class ComboMeleeDelivery : MeleeDeliveryBase, IArticulationPhaseSource
     {
         /// <summary>
         /// The most network delay the server credits to a press, in seconds. A press stamped earlier than this is treated as made this long ago,
@@ -74,6 +75,31 @@ namespace SimpleRPG.Abilities.Integration
 
         // True on the client of the player who owns this character, which guesses the server's answers. A host already is the server.
         private bool Predicts => IsSpawned && IsOwner && !IsServer;
+
+        /// <inheritdoc/>
+        public ArticulationPhase CurrentPhase
+        {
+            get
+            {
+                ComboPhase phase = ComboPhase.None;
+                if (IsServer)
+                {
+                    phase = machine != null ? machine.PhaseAt(Clock.ElapsedSeconds) : ComboPhase.None;
+                }
+                else if (Predicts && predictor != null)
+                {
+                    phase = predictor.Machine.PhaseAt(NetworkManager.LocalTime.Time);
+                }
+
+                switch (phase)
+                {
+                    case ComboPhase.Windup: return ArticulationPhase.Windup;
+                    case ComboPhase.Active: return ArticulationPhase.Active;
+                    case ComboPhase.Recovery: return ArticulationPhase.Recovery;
+                    default: return ArticulationPhase.Free;
+                }
+            }
+        }
 
         public override AttackAnimation AnimationFor(int attackNumber)
         {

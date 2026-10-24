@@ -1,0 +1,273 @@
+using HitDetection;
+using SimpleRPG.Abilities.Integration;
+using SimpleRPG.Gameplay;
+using NUnit.Framework;
+using SimpleRPG.Articulation;
+using SimpleRPG.Animations;
+using SimpleRPG.UI;
+using System.Collections;
+using Unity.Netcode;
+using Unity.Netcode.Transports.UTP;
+using UnityEngine;
+using UnityEngine.TestTools;
+
+namespace SimpleRPG.Abilities.Tests.PlayMode
+{
+    /// <summary>
+    /// Runs the real player prefab on a host with its real rig and animator and checks that the view moves the body, the sword and the hurtboxes,
+    /// that nothing drifts, and that the camera stays on the view whatever the body does.
+    /// </summary>
+    public class UpperBodyArticulationPlayModeTests
+    {
+        private const string PlayerPrefab = "Assets/Prefabs/Characters/Player/TestCharacter.prefab";
+        private const string MeleeAttackPath = "Assets/Abilitities/Abillities/MeleeAttack.asset";
+        private const string WeaponPath = "Assets/Items/Weapon Data/TestWeaponData.asset";
+
+        private GameObject managerObject;
+        private GameObject cameraObject;
+        private GameObject floorObject;
+        private GameObject playerObject;
+        private NetworkManager manager;
+        private UpperBodyArticulation articulation;
+        private Hitbox sword;
+        private HurtBox head;
+        private Transform spineTop;
+
+        [UnitySetUp]
+        public IEnumerator SetUp()
+        {
+            GameplayServices.Reset();
+            AbilityServices.Reset();
+            floorObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            floorObject.transform.position = new Vector3(0f, -1.13f, 0f);
+            floorObject.transform.localScale = new Vector3(200f, 1f, 200f);
+            cameraObject = new GameObject("TestMainCamera", typeof(Camera)) { tag = "MainCamera" };
+
+            managerObject = new GameObject("TestNetworkManager");
+            UnityTransport transport = managerObject.AddComponent<UnityTransport>();
+            manager = managerObject.AddComponent<NetworkManager>();
+            manager.NetworkConfig = new NetworkConfig { NetworkTransport = transport };
+            Assert.IsTrue(manager.StartHost(), "The test host should start.");
+            yield return null;
+
+            GameObject prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefab);
+            Assert.IsNotNull(prefab);
+            playerObject = Object.Instantiate(prefab, Vector3.zero, Quaternion.identity);
+            foreach (System.Type type in new[] { typeof(RegisterWithUI) })
+            {
+                Component component = playerObject.GetComponent(type);
+                if (component != null) Object.DestroyImmediate(component);
+            }
+
+            Character character = playerObject.GetComponent<Character>();
+            character.Initialize();
+            character.WeaponData = UnityEditor.AssetDatabase.LoadAssetAtPath<WeaponData>(WeaponPath);
+            playerObject.GetComponent<NetworkObject>().Spawn();
+            articulation = playerObject.GetComponent<UpperBodyArticulation>();
+            sword = playerObject.GetComponentInChildren<Hitbox>(true);
+            foreach (HurtBox box in playerObject.GetComponentsInChildren<HurtBox>(true))
+            {
+                if (box.BodyLocation == BodyLocation.Head) head = box;
+            }
+
+            spineTop = playerObject.GetComponent<Animator>().GetBoneTransform(HumanBodyBones.UpperChest);
+            yield return Frames(5);
+        }
+
+        [UnityTearDown]
+        public IEnumerator TearDown()
+        {
+            if (manager != null && manager.IsListening)
+            {
+                manager.Shutdown();
+                yield return new WaitUntil(() => !manager.IsListening);
+            }
+
+            if (playerObject != null) Object.Destroy(playerObject);
+            if (cameraObject != null) Object.Destroy(cameraObject);
+            if (floorObject != null) Object.Destroy(floorObject);
+            if (managerObject != null) Object.Destroy(managerObject);
+            GameplayServices.Reset();
+            AbilityServices.Reset();
+            yield return null;
+        }
+
+        private static IEnumerator Frames(int count)
+        {
+            for (int i = 0; i < count; i++) yield return null;
+        }
+
+        private static IEnumerator Seconds(float seconds)
+        {
+            float end = Time.time + seconds;
+            while (Time.time < end) yield return null;
+        }
+
+        private Vector3 SwordInBody() => playerObject.transform.InverseTransformPoint(sword.transform.position);
+
+        private Vector3 HeadInBody() => playerObject.transform.InverseTransformPoint(head.transform.position);
+
+        // The host is its own owner, so this is the call the mouse makes. The look controller is switched off so it does not report its own
+        // (centred) view over the one the test sets.
+        private void Look(float yawDelta, float pitch)
+        {
+            playerObject.GetComponent<FirstPersonCharacterController>().enabled = false;
+            articulation.SubmitLook(yawDelta, pitch);
+        }
+
+        [UnityTest]
+        public IEnumerator LookingRight_TwistsTheTorsoAndCarriesTheSwordAcrossTheBody()
+        {
+            Vector3 before = SwordInBody();
+
+            Look(60f, 0f);
+            yield return Frames(2);
+
+            Assert.Greater(articulation.AppliedTwist, 5f, "The spine twists toward the view while the pelvis is still behind.");
+            Assert.Greater((SwordInBody() - before).magnitude, 0.02f, "The sword hangs below the spine, so it moves with the twist.");
+        }
+
+        [UnityTest]
+        public IEnumerator Pelvis_FollowsTheViewSoTheTwistFadesAway()
+        {
+            Look(50f, 0f);
+            yield return Seconds(1.5f);
+
+            Assert.AreEqual(50f, Mathf.DeltaAngle(0f, playerObject.transform.eulerAngles.y), 1f);
+            Assert.AreEqual(0f, articulation.AppliedTwist, 1f);
+        }
+
+        [UnityTest]
+        public IEnumerator Twist_NeverPassesTheAnatomicalLimit()
+        {
+            float limit = articulation.Settings.maxTwist;
+            for (int i = 0; i < 40; i++)
+            {
+                Look(25f, 0f);
+                yield return null;
+                Assert.LessOrEqual(Mathf.Abs(articulation.AppliedTwist), limit + 0.01f);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator LookingDown_TipsTheHeadForwardAndDown()
+        {
+            Vector3 before = HeadInBody();
+
+            Look(0f, 50f);
+            yield return Seconds(0.3f);
+            Vector3 after = HeadInBody();
+
+            Assert.Greater(articulation.AppliedPitch, 10f);
+            Assert.Greater(after.z, before.z + 0.05f, "the head hurtbox moves forward");
+            Assert.Less(after.y, before.y - 0.02f, "and down, so a high blow can miss it");
+        }
+
+        [UnityTest]
+        public IEnumerator LookingUp_LeansTheHeadBack()
+        {
+            Vector3 before = HeadInBody();
+
+            Look(0f, -50f);
+            yield return Seconds(0.3f);
+
+            Assert.Less(articulation.AppliedPitch, -10f);
+            Assert.Less(HeadInBody().z, before.z - 0.02f);
+        }
+
+        [UnityTest]
+        public IEnumerator ReturningTheViewToCentre_LeavesNoOffsetBehind()
+        {
+            // Idle animations vary, so bones are not compared with an earlier pose; what must hold is that the added twist and tilt are gone,
+            // so nothing the rig added in the earlier rounds is still in the spine.
+            for (int round = 0; round < 3; round++)
+            {
+                Look(70f, 40f);
+                yield return Seconds(0.3f);
+                Look(-70f, 0f);
+                yield return Seconds(1.2f);
+            }
+
+            Assert.AreEqual(0f, articulation.AppliedTwist, 0.5f);
+            Assert.AreEqual(0f, articulation.AppliedPitch, 0.5f);
+            Assert.AreEqual(0f, articulation.Solver.Twist, 0.5f);
+            Assert.AreEqual(0f, articulation.Solver.TorsoPitch, 0.5f);
+        }
+
+        [UnityTest]
+        public IEnumerator TheBladeHitboxStaysOnTheRenderedSword()
+        {
+            Transform model = sword.transform.Find("Longsword Model");
+            Assert.IsNotNull(model);
+
+            Look(60f, 30f);
+            yield return Frames(3);
+
+            Assert.AreEqual(0f, Vector3.Distance(sword.transform.position, model.position), 0.001f, "the collider's object and the mesh share one transform chain");
+            Assert.AreEqual(0f, Quaternion.Angle(sword.transform.rotation, model.rotation), 0.01f);
+        }
+
+        [UnityTest]
+        public IEnumerator Camera_FollowsTheViewNotTheBody()
+        {
+            yield return Frames(2);
+            Assert.IsNotNull(cameraObject.transform.parent, "the owner's camera is attached to the character");
+            float startYaw = cameraObject.transform.eulerAngles.y;
+
+            // Turn the camera's parent chain without telling the look controller: the camera must not inherit it.
+            cameraObject.transform.parent.parent.rotation = Quaternion.Euler(0f, 120f, 0f);
+            yield return Frames(2);
+
+            Assert.AreEqual(0f, Mathf.DeltaAngle(startYaw, cameraObject.transform.eulerAngles.y), 0.5f, "the camera does not inherit the body's rotation");
+        }
+
+        /// <summary>
+        /// Plays the shipped first attack on the real rig and animator. The view is either held or swung hard during the windup; the sample is the
+        /// blade's world position and whether the hit window is open a fixed time after the blade went live.
+        /// </summary>
+        private IEnumerator Swing(float viewTurnDuringWindup, System.Action<Vector3, double, bool> result)
+        {
+            AbilityDefinition melee = UnityEditor.AssetDatabase.LoadAssetAtPath<AbilityDefinition>(MeleeAttackPath);
+            Assert.IsNotNull(melee);
+            yield return Seconds(0.3f);
+            float pressedAt = Time.time;
+            Assert.IsTrue(playerObject.GetComponent<AbilityUser>().TryActivateOnServer(melee), "the attack starts");
+
+            // Let the windup get going, then turn.
+            yield return Seconds(0.5f);
+            if (viewTurnDuringWindup != 0f) Look(viewTurnDuringWindup, 0f);
+
+            float opened = -1f;
+            float deadline = Time.time + 5f;
+            while (opened < 0f && Time.time < deadline)
+            {
+                if (sword.enabled) opened = Time.time - pressedAt;
+                yield return null;
+            }
+
+            Assert.GreaterOrEqual(opened, 0f, "the hit window opens");
+            yield return Seconds(0.12f);
+            result(sword.transform.position - playerObject.transform.position, opened, sword.enabled);
+        }
+
+        [UnityTest]
+        public IEnumerator TurningDuringTheSwing_ChangesTheBladesWorldPath_NotWhenTheWindowOpens()
+        {
+            Vector3 held = default;
+            double heldOpened = 0;
+            bool heldLive = false;
+            yield return Swing(0f, (p, t, live) => { held = p; heldOpened = t; heldLive = live; });
+            yield return Seconds(3f);
+
+            // A second, identical swing with the view swung 80 degrees.
+            Vector3 turned = default;
+            double turnedOpened = 0;
+            bool turnedLive = false;
+            yield return Swing(80f, (p, t, live) => { turned = p; turnedOpened = t; turnedLive = live; });
+
+            Assert.IsTrue(heldLive && turnedLive, "the blade is live in both");
+            Assert.AreEqual(heldOpened, turnedOpened, 0.1, "the authored timing is untouched: the window opens when it always does");
+            Assert.Greater(Vector3.Distance(held, turned), 0.3f, "but the blade is somewhere else in the world: the swing was dragged");
+        }
+    }
+}
