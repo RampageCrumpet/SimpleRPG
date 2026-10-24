@@ -35,6 +35,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private const string BloodMaterial = "Assets/Art/Material/UIBloodBar.mat";
         private const int StartingHealth = 100;
         private const int WeaponDamage = 10;
+        // Melee Power multiplies a weapon's damage by 1.5 at the default attributes, so a weapon of 10 deals 15.
+        private const int Blow = 15;
 
         private GameObject managerObject;
         private GameObject cameraObject;
@@ -297,7 +299,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.IsTrue(Press(attacker));
             ComboTestSupport.Advance(attacker, ComboTestSupport.InsideHitWindow);
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Torso);
-            Assert.AreEqual(StartingHealth - WeaponDamage, victim.Health, "Control: the open hit window deals damage.");
+            Assert.AreEqual(StartingHealth - Blow, victim.Health, "Control: the open hit window deals damage.");
 
             Kill(attacker);
             yield return null;
@@ -305,7 +307,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Head);
             yield return null;
 
-            Assert.AreEqual(StartingHealth - WeaponDamage, victim.Health, "The swing no longer hurts anyone.");
+            Assert.AreEqual(StartingHealth - Blow, victim.Health, "The swing no longer hurts anyone.");
             Assert.AreEqual(0, AbilityServices.Current.Executor.PendingContinuations, "The ability the swing belonged to was released.");
         }
 
@@ -446,7 +448,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.IsTrue(Press(player), "A new swing starts.");
             ComboTestSupport.Advance(player, ComboTestSupport.InsideHitWindow);
             WeaponOf(player).TargetHit(victim, BodyLocation.Torso);
-            Assert.AreEqual(StartingHealth - WeaponDamage, victim.Health, "It hurts, so no stale state survived the death.");
+            Assert.AreEqual(StartingHealth - Blow, victim.Health, "It hurts, so no stale state survived the death.");
 
             player.GetComponent<Interactor>().StartInteraction(pickup);
             yield return new WaitForSeconds(0.3f);

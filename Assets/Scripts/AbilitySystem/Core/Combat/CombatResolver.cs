@@ -116,9 +116,9 @@ namespace SimpleRPG.Gameplay
         /// Applies damage. When called outside event delivery, every event it causes has been delivered by the time it returns;
         /// when called from an event handler, the events wait their turn in the queue.
         /// </summary>
-        public DamageOutcome Apply(in DamageRequest request)
+        public DamageOutcome Apply(in DamageRequest incoming)
         {
-            if (!combatants.TryGet(request.Target, out ICombatant target))
+            if (!combatants.TryGet(incoming.Target, out ICombatant target))
             {
                 return new DamageOutcome(DamageResult.RejectedUnknownTarget, 0, 0);
             }
@@ -130,6 +130,13 @@ namespace SimpleRPG.Gameplay
                 return new DamageOutcome(DamageResult.RejectedTargetDead, before, before);
             }
 
+            if (incoming.Amount <= 0)
+            {
+                return new DamageOutcome(DamageResult.RejectedNoDamage, before, before);
+            }
+
+            // The one place a struck body region changes the damage. Everything after this, including the events, sees the final amount.
+            DamageRequest request = AdjustForRegion(target, incoming);
             if (request.Amount <= 0)
             {
                 return new DamageOutcome(DamageResult.RejectedNoDamage, before, before);
@@ -208,6 +215,32 @@ namespace SimpleRPG.Gameplay
             events.Enqueue(new DeathFinalizeEvent(context));
 
             return new DamageOutcome(DamageResult.Killed, before, 0, context);
+        }
+
+        /// <summary>
+        /// Scales a weapon blow by the factor its target gives the struck region. A spell, tick or hazard strikes no region and is untouched.
+        /// A blow that lands always does at least 1, so a low multiplier cannot turn a hit into a miss. Armour mitigation, when it exists, belongs after this.
+        /// </summary>
+        private static DamageRequest AdjustForRegion(ICombatant target, in DamageRequest request)
+        {
+            if ((request.Provenance & DamageProvenance.DirectWeaponHit) == 0 || request.BodyLocation == DamageRequest.NoBodyLocation)
+            {
+                return request;
+            }
+
+            if (!(target is IRegionDamageModifier anatomy))
+            {
+                return request;
+            }
+
+            float multiplier = anatomy.DamageMultiplier(request.BodyLocation);
+            if (multiplier == 1f || float.IsNaN(multiplier) || multiplier < 0f)
+            {
+                return request;
+            }
+
+            int scaled = (int)Math.Round(request.Amount * (double)multiplier, MidpointRounding.AwayFromZero);
+            return request.WithAmount(multiplier > 0f ? Math.Max(1, scaled) : 0);
         }
 
         private FatalDamageDecision Intercept(ICombatant target, in DamageRequest request)

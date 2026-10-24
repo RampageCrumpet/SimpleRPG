@@ -199,14 +199,14 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             SwingAt(wielder, victim);
             yield return null;
 
-            Assert.AreEqual(StartingHealth - 10, victim.Health, "The blow itself.");
+            Assert.AreEqual(StartingHealth - 15, victim.Health, "The blow itself (10 x Melee Power 1.5).");
             List<Projectile> fireballs = LiveProjectiles();
             Assert.AreEqual(1, fireballs.Count, "The sword's rule cast one Fireball.");
 
             fireballs[0].TargetHit(victim, BodyLocation.Torso);
             yield return null;
 
-            Assert.AreEqual(StartingHealth - 10 - 15, victim.Health, "The blow, then the explosion.");
+            Assert.AreEqual(StartingHealth - 15 - 15, victim.Health, "The blow, then the explosion.");
             Assert.AreEqual(StartingHealth - 15, neighbour.Health, "Everything near the explosion is hurt.");
             Assert.AreEqual(StartingHealth, farAway.Health);
             Assert.AreEqual(StartingHealth, wielder.Health, "The wielder is not hurt by their own sword's Fireball.");
@@ -267,7 +267,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             SwingAt(wielder, victim);
             yield return null;
 
-            Assert.AreEqual(StartingHealth - 6, victim.Health);
+            Assert.AreEqual(StartingHealth - 9, victim.Health); // 6 x Melee Power 1.5
             Assert.IsEmpty(LiveProjectiles());
         }
 

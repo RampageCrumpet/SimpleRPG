@@ -33,9 +33,10 @@ namespace SimpleRPG.Tests.PlayMode
             target = new GameObject("Target");
             target.layer = LayerMask.NameToLayer("HurtBox");
             target.AddComponent<BoxCollider>().size = new Vector3(0.1f, 1f, 0.1f);
+            target.AddComponent<Character>();
             target.AddComponent<HurtBox>();
 
-            // Let Start() run on the hitbox before any physics step.
+            // Let the components start before any physics step.
             yield return null;
         }
 

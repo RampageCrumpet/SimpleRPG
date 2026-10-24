@@ -8,8 +8,8 @@ using UnityEngine.TestTools;
 namespace SimpleRPG.Tests.PlayMode
 {
     /// <summary>
-    /// Checks the physics path that the damage tests skip: a real hitbox trigger overlapping a real HurtBox trigger
-    /// should fire <see cref="Hitbox.HitboxCollisionEvent"/>, and one on a non-HurtBox layer should not.
+    /// Checks the physics path that the damage tests skip: a real hitbox overlapping a real HurtBox
+    /// should fire <see cref="Hitbox.HitboxCollisionEvent"/> once, and one on a non-HurtBox layer should not.
     /// </summary>
     public class HitboxTriggerPlayModeTests
     {
@@ -29,6 +29,7 @@ namespace SimpleRPG.Tests.PlayMode
 
             hurtBoxObject = new GameObject("TestHurtBox");
             hurtBoxObject.AddComponent<BoxCollider>().isTrigger = true;
+            hurtBoxObject.AddComponent<Character>();
             hurtBoxObject.AddComponent<HurtBox>();
             hurtBoxObject.transform.position = hitboxObject.transform.position;
 

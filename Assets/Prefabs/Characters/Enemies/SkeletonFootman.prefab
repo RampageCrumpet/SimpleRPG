@@ -201,7 +201,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1193015078828670617}
-  m_Layer: 0
+  - component: {fileID: 2429281086879928284}
+  - component: {fileID: 7086053972853528394}
+  m_Layer: 11
   m_Name: LeftFoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -224,6 +226,41 @@ Transform:
   - {fileID: 1934963216030911423}
   m_Father: {fileID: 7526164437469970187}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &2429281086879928284
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 425503498435773482}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.1, y: 0.18, z: 0.09}
+  m_Center: {x: 0.03, y: 0.05, z: 0}
+--- !u!114 &7086053972853528394
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 425503498435773482}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f12eaf5b83ffe7041a7d69dfb8578270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
+  <BodyLocation>k__BackingField: 2
+  <Priority>k__BackingField: 0
 --- !u!1 &428237222045691756
 GameObject:
   m_ObjectHideFlags: 0
@@ -390,7 +427,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5283814420169243134}
-  m_Layer: 0
+  - component: {fileID: 6140736543021673475}
+  - component: {fileID: 2994864152549904413}
+  m_Layer: 11
   m_Name: RightLowerLeg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -416,6 +455,43 @@ Transform:
   - {fileID: 7750144585236511515}
   m_Father: {fileID: 1973296332335297386}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &6140736543021673475
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 657727957559319456}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.06
+  m_Height: 0.467
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.2035, z: 0}
+--- !u!114 &2994864152549904413
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 657727957559319456}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f12eaf5b83ffe7041a7d69dfb8578270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
+  <BodyLocation>k__BackingField: 2
+  <Priority>k__BackingField: 0
 --- !u!1 &689859184575912009
 GameObject:
   m_ObjectHideFlags: 0
@@ -461,7 +537,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6882971253286563318}
-  m_Layer: 0
+  - component: {fileID: 5363147685363662651}
+  - component: {fileID: 3355963076557314559}
+  m_Layer: 11
   m_Name: LeftUpperLeg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -485,6 +563,43 @@ Transform:
   - {fileID: 1036130666427206894}
   m_Father: {fileID: 4976591775403062425}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &5363147685363662651
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 691469913816933299}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.075
+  m_Height: 0.546
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.2355, z: 0}
+--- !u!114 &3355963076557314559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 691469913816933299}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f12eaf5b83ffe7041a7d69dfb8578270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
+  <BodyLocation>k__BackingField: 2
+  <Priority>k__BackingField: 0
 --- !u!1 &724237126720565278
 GameObject:
   m_ObjectHideFlags: 0
@@ -1377,75 +1492,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 4622749513936729907}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2837693757960258686
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6108890559158408348}
-  - component: {fileID: 5552570160399871887}
-  - component: {fileID: 911798424586982890}
-  m_Layer: 11
-  m_Name: TorsoHurtbox
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &6108890559158408348
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2837693757960258686}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1107997299232487885}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!136 &5552570160399871887
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2837693757960258686}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.3
-  m_Height: 1.5
-  m_Direction: 1
-  m_Center: {x: 0, y: 0.95, z: 0}
---- !u!114 &911798424586982890
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2837693757960258686}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f12eaf5b83ffe7041a7d69dfb8578270, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
-  <BodyLocation>k__BackingField: 1
 --- !u!1 &2853851132023016290
 GameObject:
   m_ObjectHideFlags: 0
@@ -1904,6 +1950,7 @@ GameObject:
   - component: {fileID: 3986305106387483216}
   - component: {fileID: 6310491284351285713}
   - component: {fileID: 7260935111467968478}
+  - component: {fileID: 5608653820513023892}
   m_Layer: 9
   m_Name: SkeletonFootman
   m_TagString: Untagged
@@ -1926,7 +1973,6 @@ Transform:
   m_Children:
   - {fileID: 4303527565750271826}
   - {fileID: 8544190148989948410}
-  - {fileID: 6108890559158408348}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &5451291427657900228
@@ -2189,6 +2235,19 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1088
   maximumCorrection: 0.3
+--- !u!114 &5608653820513023892
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068973633357433497}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2db2c13a9c4c4c4ab260cfabdff30ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::HitDetection.HitAnatomy
+  profile: {fileID: 11400000, guid: bbd496408b7dcff4cb35534959ecb7b7, type: 2}
 --- !u!1 &3109262660282379090
 GameObject:
   m_ObjectHideFlags: 0
@@ -2230,7 +2289,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8565511685215672765}
-  m_Layer: 0
+  - component: {fileID: 8200020914659786496}
+  - component: {fileID: 5737801598168165827}
+  m_Layer: 11
   m_Name: RightUpperArm
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2254,6 +2315,43 @@ Transform:
   - {fileID: 4622749513936729907}
   m_Father: {fileID: 7686992208586964008}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &8200020914659786496
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3191584103754601483}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.05
+  m_Height: 0.368
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.159, z: 0}
+--- !u!114 &5737801598168165827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3191584103754601483}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f12eaf5b83ffe7041a7d69dfb8578270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
+  <BodyLocation>k__BackingField: 3
+  <Priority>k__BackingField: 0
 --- !u!1 &3257731414782425270
 GameObject:
   m_ObjectHideFlags: 0
@@ -2325,7 +2423,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4976591775403062425}
-  m_Layer: 0
+  - component: {fileID: 4187306441580037309}
+  - component: {fileID: 1920083583310084431}
+  m_Layer: 11
   m_Name: Hips
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2353,6 +2453,41 @@ Transform:
   - {fileID: 5362935250003427624}
   m_Father: {fileID: 8515748631569151165}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &4187306441580037309
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3363150947287724006}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.28, y: 0.16, z: 0.18}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1920083583310084431
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3363150947287724006}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f12eaf5b83ffe7041a7d69dfb8578270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
+  <BodyLocation>k__BackingField: 1
+  <Priority>k__BackingField: 0
 --- !u!1 &3397581624647733415
 GameObject:
   m_ObjectHideFlags: 0
@@ -2769,7 +2904,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7750144585236511515}
-  m_Layer: 0
+  - component: {fileID: 6655287404233366046}
+  - component: {fileID: 5838908815852639140}
+  m_Layer: 11
   m_Name: RightFoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2792,6 +2929,41 @@ Transform:
   - {fileID: 6877357223243859874}
   m_Father: {fileID: 5283814420169243134}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &6655287404233366046
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4044698897914863433}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.1, y: 0.18, z: 0.09}
+  m_Center: {x: -0.03, y: 0.05, z: 0}
+--- !u!114 &5838908815852639140
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4044698897914863433}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f12eaf5b83ffe7041a7d69dfb8578270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
+  <BodyLocation>k__BackingField: 2
+  <Priority>k__BackingField: 0
 --- !u!1 &4105374422992865213
 GameObject:
   m_ObjectHideFlags: 0
@@ -3084,7 +3256,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5373184284449948568}
-  m_Layer: 0
+  - component: {fileID: 3480981415461047125}
+  - component: {fileID: 4585423894861607522}
+  m_Layer: 11
   m_Name: Chest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3127,6 +3301,41 @@ Transform:
   - {fileID: 6612535149176927227}
   m_Father: {fileID: 5362935250003427624}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &3480981415461047125
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4606412292099781131}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.32, y: 0.19, z: 0.24}
+  m_Center: {x: 0, y: 0.09, z: 0.04}
+--- !u!114 &4585423894861607522
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4606412292099781131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f12eaf5b83ffe7041a7d69dfb8578270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
+  <BodyLocation>k__BackingField: 1
+  <Priority>k__BackingField: 0
 --- !u!1 &4660520351171949110
 GameObject:
   m_ObjectHideFlags: 0
@@ -3512,7 +3721,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6612535149176927227}
-  m_Layer: 0
+  - component: {fileID: 1884897361108201562}
+  - component: {fileID: 7273749258915590647}
+  m_Layer: 11
   m_Name: UpperChest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3554,6 +3765,41 @@ Transform:
   - {fileID: 7686992208586964008}
   m_Father: {fileID: 5373184284449948568}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &1884897361108201562
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5613189263184725175}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.34, y: 0.24, z: 0.24}
+  m_Center: {x: 0, y: 0.1, z: 0.04}
+--- !u!114 &7273749258915590647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5613189263184725175}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f12eaf5b83ffe7041a7d69dfb8578270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
+  <BodyLocation>k__BackingField: 1
+  <Priority>k__BackingField: 0
 --- !u!1 &5722975811542983935
 GameObject:
   m_ObjectHideFlags: 0
@@ -4483,7 +4729,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8377297482639575944}
-  m_Layer: 0
+  - component: {fileID: 4937499872750823886}
+  - component: {fileID: 9096705253632088902}
+  m_Layer: 11
   m_Name: LeftLowerArm
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4508,6 +4756,43 @@ Transform:
   - {fileID: 3076801503284547346}
   m_Father: {fileID: 937034657251966795}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &4937499872750823886
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7062136981373217002}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.045
+  m_Height: 0.297
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.126, z: 0}
+--- !u!114 &9096705253632088902
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7062136981373217002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f12eaf5b83ffe7041a7d69dfb8578270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
+  <BodyLocation>k__BackingField: 3
+  <Priority>k__BackingField: 0
 --- !u!1 &7117118072912128212
 GameObject:
   m_ObjectHideFlags: 0
@@ -4861,7 +5146,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7526164437469970187}
-  m_Layer: 0
+  - component: {fileID: 1630200992920805413}
+  - component: {fileID: 5699260975557637845}
+  m_Layer: 11
   m_Name: LeftLowerLeg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4887,6 +5174,43 @@ Transform:
   - {fileID: 4330198157839915259}
   m_Father: {fileID: 6882971253286563318}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &1630200992920805413
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7695209704792667813}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.06
+  m_Height: 0.467
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.2035, z: 0}
+--- !u!114 &5699260975557637845
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7695209704792667813}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f12eaf5b83ffe7041a7d69dfb8578270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
+  <BodyLocation>k__BackingField: 2
+  <Priority>k__BackingField: 0
 --- !u!1 &7843384288744890915
 GameObject:
   m_ObjectHideFlags: 0
@@ -4896,7 +5220,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4622749513936729907}
-  m_Layer: 0
+  - component: {fileID: 5852707903728247308}
+  - component: {fileID: 2206646363059643976}
+  m_Layer: 11
   m_Name: RightLowerArm
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4921,6 +5247,43 @@ Transform:
   - {fileID: 6479207000513874575}
   m_Father: {fileID: 8565511685215672765}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &5852707903728247308
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7843384288744890915}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.045
+  m_Height: 0.297
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.126, z: 0}
+--- !u!114 &2206646363059643976
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7843384288744890915}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f12eaf5b83ffe7041a7d69dfb8578270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
+  <BodyLocation>k__BackingField: 3
+  <Priority>k__BackingField: 0
 --- !u!1 &7880175068451632012
 GameObject:
   m_ObjectHideFlags: 0
@@ -5024,7 +5387,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5362935250003427624}
-  m_Layer: 0
+  - component: {fileID: 7677710321168807294}
+  - component: {fileID: 3725000932596629373}
+  m_Layer: 11
   m_Name: Spine
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5052,6 +5417,41 @@ Transform:
   - {fileID: 9160428832481644363}
   m_Father: {fileID: 4976591775403062425}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &7677710321168807294
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8105861211364371006}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.26, y: 0.19, z: 0.18}
+  m_Center: {x: 0, y: 0.08, z: 0}
+--- !u!114 &3725000932596629373
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8105861211364371006}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f12eaf5b83ffe7041a7d69dfb8578270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
+  <BodyLocation>k__BackingField: 1
+  <Priority>k__BackingField: 0
 --- !u!1 &8114052592958258734
 GameObject:
   m_ObjectHideFlags: 0
@@ -5344,7 +5744,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8183242714601837600}
-  m_Layer: 0
+  - component: {fileID: 4425198225428639533}
+  - component: {fileID: 1015876006778590966}
+  m_Layer: 11
   m_Name: Head
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5367,6 +5769,41 @@ Transform:
   - {fileID: 6444468702878040445}
   m_Father: {fileID: 8847462381558922149}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &4425198225428639533
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8676665118511579129}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.17, y: 0.19, z: 0.22}
+  m_Center: {x: 0, y: 0.068, z: 0.015}
+--- !u!114 &1015876006778590966
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8676665118511579129}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f12eaf5b83ffe7041a7d69dfb8578270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
+  <BodyLocation>k__BackingField: 0
+  <Priority>k__BackingField: 0
 --- !u!1 &8681649609759345812
 GameObject:
   m_ObjectHideFlags: 0
@@ -5596,7 +6033,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1973296332335297386}
-  m_Layer: 0
+  - component: {fileID: 7088471589109583778}
+  - component: {fileID: 5374534211489621052}
+  m_Layer: 11
   m_Name: RightUpperLeg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5620,6 +6059,43 @@ Transform:
   - {fileID: 5283814420169243134}
   m_Father: {fileID: 4976591775403062425}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &7088471589109583778
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9071713952415137024}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.075
+  m_Height: 0.546
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.2355, z: 0}
+--- !u!114 &5374534211489621052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9071713952415137024}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f12eaf5b83ffe7041a7d69dfb8578270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
+  <BodyLocation>k__BackingField: 2
+  <Priority>k__BackingField: 0
 --- !u!1 &9111404732224283360
 GameObject:
   m_ObjectHideFlags: 0
@@ -5722,7 +6198,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 937034657251966795}
-  m_Layer: 0
+  - component: {fileID: 7249466413928945058}
+  - component: {fileID: 2712937897968411886}
+  m_Layer: 11
   m_Name: LeftUpperArm
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5746,3 +6224,40 @@ Transform:
   - {fileID: 5313020367349167269}
   m_Father: {fileID: 2838801975304911399}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &7249466413928945058
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9212214079072125120}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.05
+  m_Height: 0.368
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.159, z: 0}
+--- !u!114 &2712937897968411886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9212214079072125120}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f12eaf5b83ffe7041a7d69dfb8578270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
+  <BodyLocation>k__BackingField: 3
+  <Priority>k__BackingField: 0

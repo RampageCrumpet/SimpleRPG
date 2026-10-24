@@ -28,6 +28,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private const string TargetPrefab = "Assets/Tests/PlayMode/Prefabs/TestTarget.prefab";
         private const int StartingHealth = 100;
         private const int WeaponDamage = 10;
+        // Melee Power multiplies a weapon's damage by 1.5 at the default attributes, so a weapon of 10 deals 15.
+        private const int Blow = 15;
 
         private GameObject managerObject;
         private NetworkManager manager;
@@ -163,7 +165,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Torso);
             yield return null;
 
-            Assert.AreEqual(StartingHealth - WeaponDamage, victim.Health);
+            Assert.AreEqual(StartingHealth - Blow, victim.Health);
         }
 
         [UnityTest]
@@ -182,8 +184,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Torso);
             yield return null;
 
-            // Attack 1 is 10, attack 2 is 10 x 0.8 = 8.
-            Assert.AreEqual(StartingHealth - WeaponDamage - 8, victim.Health);
+            // Attack 1 is 15 (10 x Melee Power 1.5), attack 2 is 15 x 0.8 = 12.
+            Assert.AreEqual(StartingHealth - Blow - 12, victim.Health);
         }
 
         [UnityTest]
@@ -258,7 +260,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             WeaponOf(attacker).TargetHit(victim, BodyLocation.Torso);
             yield return null;
 
-            Assert.AreEqual(StartingHealth - WeaponDamage, victim.Health);
+            Assert.AreEqual(StartingHealth - Blow, victim.Health);
         }
 
         [UnityTest]
@@ -400,7 +402,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.AreEqual((int)BodyLocation.Head, hits[0].BodyLocation);
             Assert.AreEqual(1, hits[0].AttackNumber);
             Assert.AreEqual(DamageProvenance.DirectWeaponHit, hits[0].Provenance);
-            Assert.AreEqual(StartingHealth - WeaponDamage, healthWhenConfirmed, "The blow's damage is already applied when the event arrives.");
+            Assert.AreEqual(StartingHealth - Blow, healthWhenConfirmed, "The blow's damage is already applied when the event arrives.");
         }
 
         [UnityTest]
@@ -424,7 +426,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return null;
 
             Assert.AreEqual(1, confirmed, "The proc's own damage must not count as a weapon hit.");
-            Assert.AreEqual(StartingHealth - WeaponDamage - 5, victim.Health);
+            Assert.AreEqual(StartingHealth - Blow - 5, victim.Health);
         }
 
         [UnityTest]
@@ -553,7 +555,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             Assert.IsTrue(activated);
             Assert.Greater(slot.CooldownTimeLeft, 0f);
-            Assert.AreEqual(StartingHealth - WeaponDamage, victim.Health);
+            Assert.AreEqual(StartingHealth - Blow, victim.Health);
         }
 
         [UnityTest]

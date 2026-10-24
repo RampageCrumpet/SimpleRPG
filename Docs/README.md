@@ -9,3 +9,4 @@ For procedural equipment models, UVs, Substance Painter MCP, PBR maps and Unity 
 - [Skeleton animation](SkeletonAnimationPlan.md)
 - [Network authority](NetworkAuthority.md)
 - [Upper-body articulation](UpperBodyArticulation.md)
+- [Anatomical hit regions](HitRegions.md)

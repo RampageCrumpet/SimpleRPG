@@ -32,12 +32,15 @@ namespace SimpleRPG.Gameplay
     /// </summary>
     public readonly struct DamageRequest
     {
+        /// <summary>The body location of damage that struck no particular part of the body: a spell effect, a damage-over-time tick, a hazard.</summary>
+        public const int NoBodyLocation = -1;
+
         public DamageRequest(
             EntityId target,
             int amount,
             EntityId instigator = default,
             SourceHandle source = default,
-            int bodyLocation = 0,
+            int bodyLocation = NoBodyLocation,
             DamageProvenance provenance = DamageProvenance.None,
             ExecutionId execution = default)
         {
@@ -62,12 +65,18 @@ namespace SimpleRPG.Gameplay
         /// <summary>What the damage came from: a weapon, a spell's item, a trap.</summary>
         public SourceHandle Source { get; }
 
-        /// <summary>The body location hit, as the integer value of the game's own body location enum. Core does not interpret it.</summary>
+        /// <summary>
+        /// The body location hit, as the integer value of the game's own body location enum, or <see cref="NoBodyLocation"/>. Core only passes it
+        /// to a target's <see cref="IRegionDamageModifier"/>; it does not interpret it.
+        /// </summary>
         public int BodyLocation { get; }
 
         public DamageProvenance Provenance { get; }
 
         /// <summary>The ability execution this damage belongs to, if any.</summary>
         public ExecutionId Execution { get; }
+
+        /// <summary>The same request with a different amount, which keeps its attribution, source, location and provenance.</summary>
+        public DamageRequest WithAmount(int amount) => new DamageRequest(Target, amount, Instigator, Source, BodyLocation, Provenance, Execution);
     }
 }

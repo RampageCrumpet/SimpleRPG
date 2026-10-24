@@ -1,4 +1,5 @@
 using SimpleRPG;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -6,22 +7,25 @@ using UnityEngine.Events;
 namespace HitDetection
 {
     /// <summary>
-    /// A weapon's live blade. Reports the hurtboxes it touches. Touches come from two places that agree on the geometry: Unity's trigger messages,
-    /// which see the blade where it is at each physics step, and a sweep over the way the blade travelled since the previous step, so a fast swing
-    /// cannot step over a thin target between two steps. Both feed the same <see cref="HitboxCollisionEvent"/>, so a target is still reported once.
+    /// A weapon's live blade. Each physics step it asks which hurtboxes the blade overlapped since the previous step, at the poses along the way
+    /// and at the step's own pose, so a fast swing cannot step over a thin target between two steps. For each character it touches it reports one
+    /// hurtbox, chosen by the rule on <see cref="HitCandidate"/>, through <see cref="HitboxCollisionEvent"/>, and it reports that character only
+    /// once until it is switched off and on again. Which region of a character was struck therefore never depends on the order physics lists
+    /// its colliders in.
     /// </summary>
     [RequireComponent(typeof(Collider))]
     public class Hitbox : MonoBehaviour
     {
         /// <summary>
-        /// The most poses between two physics steps the sweep tests. A blade moving further than this covers is checked at the poses nearest to its path.
+        /// The most poses between two physics steps that are tested. A blade moving further than this covers is checked at the poses nearest to its path.
         /// </summary>
         private const int MaxSweepSamples = 12;
 
-        private static readonly Collider[] SweepBuffer = new Collider[32];
+        private static readonly Collider[] OverlapBuffer = new Collider[64];
 
-        LayerMask layerMask;
-        private readonly System.Collections.Generic.HashSet<Collider> contacts = new System.Collections.Generic.HashSet<Collider>();
+        private readonly HashSet<Character> reported = new HashSet<Character>();
+        private readonly List<HitCandidate> found = new List<HitCandidate>();
+        private LayerMask layerMask;
         private Collider shape;
         private bool hasPreviousPose;
         private Vector3 previousPosition;
@@ -29,42 +33,25 @@ namespace HitDetection
 
         private void OnEnable()
         {
-            contacts.Clear();
+            reported.Clear();
             hasPreviousPose = false;
-        }
 
-        private void OnDisable() => contacts.Clear();
-        private void OnTriggerExit(Collider other) => contacts.Remove(other);
-
-        public UnityEvent<Character, BodyLocation> HitboxCollisionEvent { get; set; } = new UnityEvent<Character, BodyLocation>();
-
-        public void Start()
-        {
             layerMask = LayerMask.GetMask("HurtBox");
             shape = GetComponent<Collider>();
             if (layerMask == 0)
             {
                 Debug.LogError($"Hitbox on '{name}' could not find the 'HurtBox' layer. Add it under Tags and Layers; hits will not register without it.", this);
             }
-        }
 
-        private void OnTriggerEnter(Collider other) => ReportContact(other);
-
-        // A weapon may already overlap a hurtbox when its active window opens.
-        // Weapon's swing tracker makes repeated contacts idempotent.
-        private void OnTriggerStay(Collider other) => OnTriggerEnter(other);
-
-        private void ReportContact(Collider other)
-        {
-            if (!enabled || !contacts.Add(other)) return;
-            if(layerMask == (layerMask | 1 << other.transform.gameObject.layer))
+            if (!(shape is BoxCollider || shape is SphereCollider || shape is CapsuleCollider))
             {
-                if (other.TryGetComponent(out HurtBox hurtBox))
-                {
-                    HitboxCollisionEvent.Invoke(hurtBox.character, hurtBox.BodyLocation);
-                }
+                Debug.LogError($"Hitbox on '{name}' needs a box, sphere or capsule collider; a {shape.GetType().Name} cannot be tested for hits.", this);
             }
         }
+
+        private void OnDisable() => reported.Clear();
+
+        public UnityEvent<Character, BodyLocation> HitboxCollisionEvent { get; set; } = new UnityEvent<Character, BodyLocation>();
 
         // Runs before the physics step, so the blade's transform is where the last frame left it, final pose included. The previous step's pose is
         // remembered here, not read from physics, so the path between them is the blade's real path whatever moved it.
@@ -76,9 +63,17 @@ namespace HitDetection
             }
 
             Transform blade = transform;
-            if (hasPreviousPose)
+            int samples = hasPreviousPose ? SampleCount(previousPosition, previousRotation, blade.position, blade.rotation) : 1;
+
+            // Hurtboxes ride animated bones too; bring their colliders up to this frame before asking what overlaps them.
+            Physics.SyncTransforms();
+
+            for (int i = 1; i <= samples && enabled; i++)
             {
-                Sweep(previousPosition, previousRotation, blade.position, blade.rotation);
+                float t = i / (float)samples;
+                Vector3 position = hasPreviousPose ? Vector3.Lerp(previousPosition, blade.position, t) : blade.position;
+                Quaternion rotation = hasPreviousPose ? Quaternion.Slerp(previousRotation, blade.rotation, t) : blade.rotation;
+                Probe(position, rotation);
             }
 
             previousPosition = blade.position;
@@ -86,36 +81,73 @@ namespace HitDetection
             hasPreviousPose = true;
         }
 
-        private void Sweep(Vector3 fromPosition, Quaternion fromRotation, Vector3 toPosition, Quaternion toRotation)
+        // How many poses the blade's path between two steps is tested at: spaced by the blade's thinnest extent, so no gap a thin target could hide in.
+        private int SampleCount(Vector3 fromPosition, Quaternion fromRotation, Vector3 toPosition, Quaternion toRotation)
         {
-            float reach = Reach();
+            float reach = shape.bounds.extents.magnitude;
             float travel = (toPosition - fromPosition).magnitude + Mathf.Deg2Rad * Quaternion.Angle(fromRotation, toRotation) * reach;
             float spacing = Mathf.Max(Thickness(), 0.02f);
-            int samples = Mathf.Clamp(Mathf.CeilToInt(travel / spacing), 1, MaxSweepSamples);
-            if (samples < 2)
+            return Mathf.Clamp(Mathf.CeilToInt(travel / spacing), 1, MaxSweepSamples);
+        }
+
+        // Reports the best hurtbox of each character the blade overlaps at this pose and has not reported already.
+        private void Probe(Vector3 position, Quaternion rotation)
+        {
+            int count = Overlap(position, rotation, out Vector3 centre);
+            found.Clear();
+            for (int c = 0; c < count; c++)
             {
-                return;
+                Collider other = OverlapBuffer[c];
+                if (!other.TryGetComponent(out HurtBox hurtBox))
+                {
+                    continue;
+                }
+
+                Character owner = hurtBox.character;
+                if (owner == null || reported.Contains(owner))
+                {
+                    continue;
+                }
+
+                HitCandidate candidate = new HitCandidate(
+                    owner,
+                    hurtBox.BodyLocation,
+                    hurtBox.Priority,
+                    hurtBox.Key,
+                    Vector3.Distance(other.ClosestPoint(centre), centre),
+                    Vector3.Distance(other.bounds.center, centre));
+                Offer(candidate);
             }
 
-            // Hurtboxes ride animated bones too; bring their colliders up to this frame before asking what overlaps them.
-            Physics.SyncTransforms();
-
-            // The end pose is the physics step's to report; the poses in between are the ones it would step over.
-            for (int i = 1; i < samples; i++)
+            // Characters struck at this pose are reported in a fixed order too: the one the blade is nearest first.
+            found.Sort((a, b) => a.IsPreferredTo(b) ? -1 : b.IsPreferredTo(a) ? 1 : 0);
+            for (int i = 0; i < found.Count && enabled; i++)
             {
-                float t = i / (float)samples;
-                Vector3 position = Vector3.Lerp(fromPosition, toPosition, t);
-                Quaternion rotation = Quaternion.Slerp(fromRotation, toRotation, t);
-                int count = Overlap(position, rotation);
-                for (int c = 0; c < count; c++)
+                HitCandidate hit = found[i];
+                if (reported.Add(hit.Character))
                 {
-                    ReportContact(SweepBuffer[c]);
+                    HitboxCollisionEvent.Invoke(hit.Character, hit.Location);
                 }
             }
         }
 
-        // How far from its pivot the blade reaches, for turning an angle into a distance.
-        private float Reach() => shape.bounds.extents.magnitude;
+        private void Offer(in HitCandidate candidate)
+        {
+            for (int i = 0; i < found.Count; i++)
+            {
+                if (found[i].Character == candidate.Character)
+                {
+                    if (candidate.IsPreferredTo(found[i]))
+                    {
+                        found[i] = candidate;
+                    }
+
+                    return;
+                }
+            }
+
+            found.Add(candidate);
+        }
 
         // The blade's thinnest world-space extent, which is how far it can move without leaving a gap a thin target could hide in.
         private float Thickness()
@@ -135,19 +167,23 @@ namespace HitDetection
             }
         }
 
-        private int Overlap(Vector3 position, Quaternion rotation)
+        private int Overlap(Vector3 position, Quaternion rotation, out Vector3 centre)
         {
             Vector3 scale = Abs(transform.lossyScale);
             switch (shape)
             {
                 case BoxCollider box:
-                    return Physics.OverlapBoxNonAlloc(position + rotation * Vector3.Scale(box.center, scale), Vector3.Scale(box.size, scale) * 0.5f, SweepBuffer, rotation, layerMask, QueryTriggerInteraction.Collide);
+                    centre = position + rotation * Vector3.Scale(box.center, scale);
+                    return Physics.OverlapBoxNonAlloc(centre, Vector3.Scale(box.size, scale) * 0.5f, OverlapBuffer, rotation, layerMask, QueryTriggerInteraction.Collide);
                 case SphereCollider sphere:
-                    return Physics.OverlapSphereNonAlloc(position + rotation * Vector3.Scale(sphere.center, scale), sphere.radius * MaxComponent(scale), SweepBuffer, layerMask, QueryTriggerInteraction.Collide);
+                    centre = position + rotation * Vector3.Scale(sphere.center, scale);
+                    return Physics.OverlapSphereNonAlloc(centre, sphere.radius * MaxComponent(scale), OverlapBuffer, layerMask, QueryTriggerInteraction.Collide);
                 case CapsuleCollider capsule:
                     CapsuleEnds(capsule, position, rotation, scale, out Vector3 a, out Vector3 b, out float radius);
-                    return Physics.OverlapCapsuleNonAlloc(a, b, radius, SweepBuffer, layerMask, QueryTriggerInteraction.Collide);
+                    centre = (a + b) * 0.5f;
+                    return Physics.OverlapCapsuleNonAlloc(a, b, radius, OverlapBuffer, layerMask, QueryTriggerInteraction.Collide);
                 default:
+                    centre = position;
                     return 0;
             }
         }

@@ -216,10 +216,15 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             player.transform.rotation = Quaternion.Euler(0, 180, 0);
             Physics.SyncTransforms();
             int before = player.Health;
+            var blows = new System.Collections.Generic.List<string>();
+            SimpleRPG.Gameplay.GameplayServices.Current.Events.Subscribe<SimpleRPG.Gameplay.DamageResolvedEvent>(e => blows.Add($"{e.Request.Amount}@{e.Request.BodyLocation} {e.HealthBefore}->{e.HealthAfter}"));
             float deadline = Time.time + 15;
             while (player.Health == before && Time.time < deadline) yield return null;
             Assert.Less(player.Health, before, "An animated blade must physically contact the player's hurtbox.");
-            Assert.GreaterOrEqual(player.Health, before - 30, "A swing cannot damage the same target repeatedly.");
+            // One skeleton blow is 40 (its sword x Melee Power) before the struck region's factor: 30 on a limb, 40 on the torso, 70 on the head.
+            // Which region the animated blade reaches first varies with the swing, so the bound is the worst case for a single blow.
+            Assert.AreEqual(1, blows.Count, "A swing cannot damage the same target repeatedly. Blows: " + string.Join(", ", blows));
+            Assert.GreaterOrEqual(player.Health, before - 70, "No single blow is worth more than a headshot. Blows: " + string.Join(", ", blows));
 
             // Kill with the player's real melee ability and animation-driven weapon, with the enemy planted in reach.
             enemy.enabled = false;

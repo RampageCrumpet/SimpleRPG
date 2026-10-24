@@ -53,6 +53,16 @@ namespace SimpleRPG.Gameplay
     }
 
     /// <summary>
+    /// What a combatant with an anatomy adds to a blow that strikes one of its body locations. <see cref="CombatResolver"/> asks a target that
+    /// implements this, once per weapon blow, after the damage has been calculated and before anything mitigates or stores it.
+    /// </summary>
+    public interface IRegionDamageModifier
+    {
+        /// <summary>The factor a blow to <paramref name="bodyLocation"/> is multiplied by. 1 leaves the damage alone.</summary>
+        float DamageMultiplier(int bodyLocation);
+    }
+
+    /// <summary>
     /// Finds combatants by entity ID.
     /// </summary>
     public interface ICombatantRegistry

@@ -10,8 +10,11 @@ using EntityId = SimpleRPG.Gameplay.EntityId;
 
 namespace SimpleRPG
 {
-    public class Character : NetworkBehaviour, ICombatant
+    public class Character : NetworkBehaviour, ICombatant, IRegionDamageModifier
     {
+        private HitAnatomy anatomy;
+        private bool anatomyLooked;
+
         /// <summary>
         /// The maximum health of a character with no stat profile defining Maximum Health. Otherwise the resolved Maximum Health is used.
         /// </summary>
@@ -190,6 +193,20 @@ namespace SimpleRPG
         /// Which life this is, starting at 1. Reviving starts the next one.
         /// </summary>
         public int LifeId => IsSpawned ? networkLivesEnded.Value + 1 : 1;
+
+        /// <summary>
+        /// What a weapon blow to a body location is worth against this character, which its <see cref="HitAnatomy"/> decides. 1 for a character without one.
+        /// </summary>
+        float IRegionDamageModifier.DamageMultiplier(int bodyLocation)
+        {
+            if (!anatomyLooked)
+            {
+                anatomy = GetComponent<HitAnatomy>();
+                anatomyLooked = true;
+            }
+
+            return anatomy != null ? anatomy.DamageMultiplier(bodyLocation) : 1f;
+        }
 
         Position3 ICombatant.Position => new Position3(transform.position.x, transform.position.y, transform.position.z);
 
