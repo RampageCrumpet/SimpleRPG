@@ -15,6 +15,7 @@ Written for agents that **cannot hear**. Every rule here exists because a sound 
 | Skeleton struck, head hit | `SFX_Skeleton_Hit_Head_01.wav` | 0.420 s | the strike plus a body layer, a second snap and an egg-crack click at the start |
 | Skeleton rise (get up) | `Assets/Art/Audio/SFX/Skeleton/SFX_Skeleton_Rise_01.wav` | 2.374 s | seven layers timed to the Rise clip: pile holds, bones in flight, torso lands, fingers, skull last |
 | Skeleton death (collapse) | `Assets/Art/Audio/SFX/Skeleton/SFX_Skeleton_Die_01.wav` | 1.750 s | layers timed to the Die clip's landings: silent first 0.3 s (the killing blow's hit sound covers it), release, first impacts, skull at 0.93 s, the crash at 1.0-1.2 s, egg-crack crumble and settling knocks |
+| Skeleton footstep, left and right | `Assets/Art/Audio/SFX/Skeleton/SFX_Skeleton_Footstep_L_01.wav`, `..._R_01.wav` | 0.200 s each | dry bone click (isolated falling-bone knock) plus a faint rattle, peak -11.7 dBFS, for the walk's footfalls at 0.06 s (L) and 0.68 s (R); **not played yet**, left for the audio manager |
 
 All are mono, 44.1 kHz, 16-bit, no reverb (Unity handles room acoustics), approved by the user by ear. The two skeleton swings are played by animation events (`PlayClip` at clip time 0.40 s on `Skeleton_Overhead` and `Skeleton_Slash`, received by `AnimationAudioEvents` on the skeleton prefab); nothing else plays them yet: the MVP gap assessment notes there is no general gameplay audio path (`MvpGapAssessment.md`). Unity import settings are untouched defaults.
 
@@ -28,6 +29,7 @@ Editable sources are outside the repository (back them up separately, as with th
 | Skeleton strike project, review WAV, plan and build notes | `I:/Art/Sounds/Impacts/SkeletonStrike/` (`PLAN.md`) |
 | Skeleton rise project, review WAV, plan and build notes | `I:/Art/Sounds/Skeleton/Rise/` (`PLAN.md`, includes the per-bone timeline) |
 | Skeleton death project, review WAV, plan and build notes | `I:/Art/Sounds/Skeleton/Die/` (`PLAN.md`, includes the landing timeline) |
+| Skeleton swings and footsteps: projects, review WAVs, plans | `I:/Art/Sounds/Skeleton/Swings/`, `I:/Art/Sounds/Skeleton/Footsteps/` (each has a `PLAN.md`) |
 | Raw source clips | `I:/Art/Sounds/Source Sounds/` (`Sword Swings/`, `Bones/`, `Crunches/`) |
 | Large licensed library (user's, do not modify) | `I:/Art/Sounds/Soniss GD2026/` (five zips, about 6.7 GB) |
 | Analysis tool | `I:/Art/Sounds/Tools/sound_analysis.py` |
@@ -136,7 +138,7 @@ Import the source, `select_region` and `edit_delete` the end, then the front (le
 
 ## Open work
 
-- The user chose to reuse the standard strike for body, arm and leg hits, with a chunkier head hit only, so no separate limb variant is planned. The skeleton's collapse set is complete: strike, head hit, rise and death. Not made yet: the skeleton's own weapon swings (overhead and slash, see `SkeletonAnimationPlan.md`), footsteps and any idle or vocal sound. The Die sound's weakest part is the first impacts (0.7-0.93 s, median attack 10 ms), where a sharp cluster could be added if it is judged soft.
+- The user chose to reuse the standard strike for body, arm and leg hits, with a chunkier head hit only, so no separate limb variant is planned. The skeleton's collapse set is complete: strike, head hit, rise and death. Not made yet: any idle or vocal sound. The skeleton's overhead and slash swings and its footsteps are made (the swings are played by animation events, the footsteps are supplied for the later audio manager and have no events). The Die sound's weakest part is the first impacts (0.7-0.93 s, median attack 10 ms), where a sharp cluster could be added if it is judged soft.
 - A hollow body "knock" under the crack was left out. Add it only if the strike is judged thin.
 - Rebuild the three longsword swings with true fade-outs, if the user wants to compare.
 - Verify the Freesound licenses behind the longsword swings (IDs 422513, 420626, 109432) and record them in `I:/Art/Sounds/Whoosh/SOURCES.md`.
