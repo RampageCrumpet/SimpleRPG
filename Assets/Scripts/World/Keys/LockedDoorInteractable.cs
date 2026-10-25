@@ -1,3 +1,4 @@
+using SimpleRPG.Audio;
 using SimpleRPG.ObjectInteractions;
 using UnityEngine;
 
@@ -39,10 +40,12 @@ namespace SimpleRPG.Keys
             if (ring != null && ring.Holds(keyId))
             {
                 ring.RequestOpen(keyId);
+                InteractableAudio.TryPlay(this, InteractionCue.Unlock);
             }
             else
             {
                 Debug.Log($"This door is locked (key {keyId}).");
+                InteractableAudio.TryPlay(this, InteractionCue.Locked);
             }
 
             interactor.StopInteraction();

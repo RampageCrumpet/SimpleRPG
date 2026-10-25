@@ -32,5 +32,12 @@ namespace SimpleRPG.Tests.PlayMode
         {
             DeactivationCount++;
         }
+
+        /// <summary>
+        /// The swing sound event on the attack clips. These tests are about timing of the hitbox, not sound, so it is ignored.
+        /// </summary>
+        public void PlayEvent(Object audioEvent)
+        {
+        }
     }
 }

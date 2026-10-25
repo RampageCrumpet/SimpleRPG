@@ -142,4 +142,4 @@ Import the source, `select_region` and `edit_delete` the end, then the front (le
 - A hollow body "knock" under the crack was left out. Add it only if the strike is judged thin.
 - Rebuild the three longsword swings with true fade-outs, if the user wants to compare.
 - Verify the Freesound licenses behind the longsword swings (IDs 422513, 420626, 109432) and record them in `I:/Art/Sounds/Whoosh/SOURCES.md`.
-- Add the audio path to gameplay (play on `DamageResolvedEvent` for hits, in the attack clips for swings), set Unity import settings (mono, short clips as decompress-on-load), commit the new assets.
+- The gameplay audio path now exists (see [Audio.md](Audio.md)): swings are data on the combo steps, impacts play from the server-confirmed hit, footsteps from foot contacts. Still to do: add the components to the player and skeleton prefabs (the skeleton's swings still play through `PlayClip` events), set Unity import settings (mono, short clips as decompress-on-load), commit the new assets.

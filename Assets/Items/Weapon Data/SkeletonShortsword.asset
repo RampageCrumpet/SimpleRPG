@@ -17,9 +17,15 @@ MonoBehaviour:
   <ItemName>k__BackingField: 
   <ItemSize>k__BackingField: {x: 0, y: 0}
   rules: []
+  audioProfile: {fileID: 0}
+  movementAudio: {fileID: 0}
+  audioSubject: {fileID: 0}
   grants: []
   startingCharges: 0
   grantedAbilities: []
   fixedAttributes: []
   damage:
     Damage: 15
+  combo: {fileID: 0}
+  audioMaterial: {fileID: 11400000, guid: 5f96eff97558a624ab9cd7692dd84962, type: 2}
+  impactSound: {fileID: 0}

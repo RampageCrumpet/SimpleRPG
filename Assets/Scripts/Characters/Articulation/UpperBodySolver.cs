@@ -36,12 +36,6 @@ namespace SimpleRPG.Articulation
         public float Twist => Clamp(Mathf.DeltaAngle(PelvisYaw, TorsoYaw), settings.maxTwist);
 
         /// <summary>
-        /// The twist the torso would show on a pelvis facing <paramref name="pelvisYaw"/>. Used by a machine that sees a pelvis it does not
-        /// simulate, such as the owning client, whose root comes from the server.
-        /// </summary>
-        public float TwistOn(float pelvisYaw) => Clamp(Mathf.DeltaAngle(pelvisYaw, TorsoYaw), settings.maxTwist);
-
-        /// <summary>
         /// Puts everything at rest facing a yaw and pitch, with the speed limits those of free movement. Used on spawn and respawn.
         /// </summary>
         public void Reset(float yaw, float pitch)

@@ -3,6 +3,7 @@ using SimpleRPG.InventorySystem;
 using System.Linq;
 using SimpleRPG.UI;
 using SimpleRPG.InventorySystem.LootGeneration;
+using SimpleRPG.Audio;
 
 namespace SimpleRPG.ObjectInteractions
 {
@@ -53,12 +54,14 @@ namespace SimpleRPG.ObjectInteractions
         public override void FinishInteraction(Interactor interactor)
         {
             GetLootMenuUI()?.SetLootMenuUIDisplayStatus(false);
+            InteractableAudio.TryPlay(this, InteractionCue.Close);
         }
 
         /// <inheritdoc/>
         public override void ActivateInteraction(Interactor interactor)
         {
             GetLootMenuUI()?.DisplayLootMenu(this.inventory);
+            InteractableAudio.TryPlay(this, InteractionCue.Open);
         }
 
         private LootMenuUI GetLootMenuUI()

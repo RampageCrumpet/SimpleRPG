@@ -207,18 +207,78 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.AreEqual(0f, Quaternion.Angle(sword.transform.rotation, model.rotation), 0.01f);
         }
 
+        // Mouse look as the owner does it: the controller keeps the pitch and yaw it was given on every later frame.
+        private FirstPersonLook OwnerLook() => (FirstPersonLook)typeof(FirstPersonCharacterController)
+            .GetField("look", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            .GetValue(playerObject.GetComponent<FirstPersonCharacterController>());
+
+        private Transform Eye() => (Transform)typeof(FirstPersonCharacterController)
+            .GetField("eye", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            .GetValue(playerObject.GetComponent<FirstPersonCharacterController>());
+
+        private Transform HeadBone() => playerObject.GetComponent<Animator>().GetBoneTransform(HumanBodyBones.Head);
+
+        [UnityTest]
+        public IEnumerator Camera_HangsOffTheCharacterAndSitsExactlyOnTheEye()
+        {
+            yield return Frames(2);
+            Transform eye = Eye();
+
+            Assert.IsNotNull(eye, "the controller has an eye reference");
+            Assert.IsTrue(eye.IsChildOf(HeadBone()), "the eye reference rides the head bone");
+            Assert.AreSame(playerObject.transform, cameraObject.transform.parent, "the camera is only parented to the character, not to a bone");
+
+            OwnerLook().Look(0f, 1f, 0.15f);
+            for (int i = 0; i < 20; i++)
+            {
+                yield return null;
+                Assert.AreEqual(0f, Vector3.Distance(cameraObject.transform.position, eye.position), 0.0001f, "the camera is on the evaluated eye every frame, with no frame of lag");
+            }
+        }
+
         [UnityTest]
         public IEnumerator Camera_FollowsTheViewNotTheBody()
         {
-            yield return Frames(2);
-            Assert.IsNotNull(cameraObject.transform.parent, "the owner's camera is attached to the character");
-            float startYaw = cameraObject.transform.eulerAngles.y;
+            FirstPersonLook look = OwnerLook();
+            look.Look(0.5f, 1f, 0.15f);
+            yield return Seconds(0.4f);
 
-            // Turn the camera's parent chain without telling the look controller: the camera must not inherit it.
-            cameraObject.transform.parent.parent.rotation = Quaternion.Euler(0f, 120f, 0f);
+            Quaternion view = Quaternion.Euler(look.Pitch, look.Yaw, 0f);
+            Assert.AreEqual(0f, Quaternion.Angle(view, cameraObject.transform.rotation), 0.01f, "the camera is aimed exactly where the view points");
+            Assert.Greater(Quaternion.Angle(HeadBone().rotation, cameraObject.transform.rotation), 3f, "while the head, which the torso tilts, is not where the camera points");
+        }
+
+        [UnityTest]
+        public IEnumerator Camera_UsesTheShippedNearPlane_AndAnEyeInsideTheHead()
+        {
             yield return Frames(2);
 
-            Assert.AreEqual(0f, Mathf.DeltaAngle(startYaw, cameraObject.transform.eulerAngles.y), 0.5f, "the camera does not inherit the body's rotation");
+            Assert.AreEqual(0.04f, cameraObject.GetComponent<Camera>().nearClipPlane, 0.0001f);
+            Vector3 inHead = HeadBone().InverseTransformPoint(Eye().position);
+            Assert.That(inHead.y, Is.InRange(0.05f, 0.2f), "the eye is above the head bone's pivot");
+            Assert.That(inHead.z, Is.InRange(0.03f, 0.14f), "and in front of it, behind the face");
+            Assert.AreEqual(0f, inHead.x, 0.001f, "and centred");
+        }
+
+        [UnityTest]
+        public IEnumerator Eye_ComesBackToWhereItWasOnceTheViewIsLevel()
+        {
+            yield return Seconds(0.5f);
+            Vector3 rest = playerObject.transform.InverseTransformPoint(Eye().position);
+
+            FirstPersonLook look = OwnerLook();
+            for (int round = 0; round < 3; round++)
+            {
+                look.Look(0f, 1f, 0.15f);
+                yield return Seconds(0.3f);
+                look.Look(0f, -2f, 0.15f);
+                yield return Seconds(0.3f);
+                for (int guard = 0; guard < 5000 && Mathf.Abs(look.Pitch) > 0.05f; guard++) look.Look(0f, -Mathf.Sign(look.Pitch), 0.0005f);
+                yield return Seconds(0.8f);
+            }
+
+            Vector3 after = playerObject.transform.InverseTransformPoint(Eye().position);
+            Assert.AreEqual(0f, Vector3.Distance(rest, after), 0.05f, "nothing was added to the eye that stays when the view returns; only the idle animation moves it");
         }
 
         /// <summary>
@@ -275,12 +335,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             yield return Frames(3);
             Vector3 rest = playerObject.transform.InverseTransformPoint(cameraObject.transform.position);
-            Assert.AreEqual(0f, Vector3.Distance(cameraObject.transform.position, cameraObject.transform.parent.position), 0.05f, "with the view level the eye sits on its mount, whatever the rig's scale");
 
-            // Mouse look as the owner does it: the controller keeps the pitch it was given on every later frame.
-            var look = (FirstPersonLook)typeof(FirstPersonCharacterController)
-                .GetField("look", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
-                .GetValue(playerObject.GetComponent<FirstPersonCharacterController>());
+            FirstPersonLook look = OwnerLook();
             look.Look(0f, 1f, 0.15f);
             yield return Seconds(0.4f);
             Vector3 down = playerObject.transform.InverseTransformPoint(cameraObject.transform.position);

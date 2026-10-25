@@ -1953,6 +1953,10 @@ GameObject:
   - component: {fileID: 5608653820513023892}
   - component: {fileID: 629422071696714900}
   - component: {fileID: 6636156658160998039}
+  - component: {fileID: 2763016675690759736}
+  - component: {fileID: 6612935030330707823}
+  - component: {fileID: 7642225760820071977}
+  - component: {fileID: 2512760872946552752}
   m_Layer: 9
   m_Name: SkeletonFootman
   m_TagString: Untagged
@@ -2359,6 +2363,75 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc00661fa4dda85409d52191d9c565db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SimpleRPG::AnimationAudioEvents
+--- !u!114 &2763016675690759736
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068973633357433497}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6aaf4ee48d657f7488c5bd86c6627573, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Audio.AudioIdentity
+  bodyMaterial: {fileID: 11400000, guid: aff787d7603dae24f9c94b82ba3a68bb, type: 2}
+  subject: {fileID: 0}
+  hurt: {fileID: 0}
+  death: {fileID: 11400000, guid: d963e19f36333ba47b84d3490afc1388, type: 2}
+  impactOverride: {fileID: 0}
+--- !u!114 &6612935030330707823
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068973633357433497}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0fc937840989d242876e38c403862fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Audio.CombatAudio
+  defaultSourceMaterial: {fileID: 0}
+--- !u!114 &7642225760820071977
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068973633357433497}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ed3184a0ed07c4408c26ccfcbc549b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Audio.MovementAudioState
+  defaultFootwear: {fileID: 11400000, guid: 50a6168000eabdd458057f56e8ce9420, type: 2}
+  maxLayersPerStep: 2
+--- !u!114 &2512760872946552752
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068973633357433497}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc65ed8ae04f8a74fbc214e27d2846b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Audio.FootstepEmitter
+  footsteps: {fileID: 0}
+  leftFoot: {fileID: 0}
+  rightFoot: {fileID: 0}
+  detectFromBones: 0
+  rootToSoleOffset: 0
+  contactHeight: 0.04
+  releaseHeight: 0.09
+  minBoneSpeed: 0.5
+  fullIntensitySpeed: 5
+  minStepInterval: 0.12
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &3109262660282379090
 GameObject:
   m_ObjectHideFlags: 0

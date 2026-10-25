@@ -138,6 +138,15 @@ namespace SimpleRPG.Articulation
         [Tooltip("The smallest change in twist or tilt, in degrees, the server bothers to replicate.")]
         public float replicationThreshold = 0.25f;
 
+        [Tooltip("Seconds the owner's view must be still before its predicted pelvis is checked against the server's. Longer than a round trip plus the replication delay.")]
+        public float reconcileStillSeconds = 0.75f;
+
+        [Tooltip("Seconds to wait, when the server's pose has not changed at all since the view moved, before checking the prediction against it.")]
+        public float reconcileSilenceSeconds = 3f;
+
+        [Tooltip("How far, in degrees, the server's pelvis may differ from the owner's prediction once the view is still before the owner tells the server where it looks.")]
+        public float reconcileThreshold = 3f;
+
         [Tooltip("Largest view change one look message may carry, in degrees. Anything larger is clamped by the server.")]
         public float maxYawPerMessage = 180f;
 

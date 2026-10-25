@@ -17,6 +17,9 @@ MonoBehaviour:
   <ItemName>k__BackingField: Brilliant Cut Diamond
   <ItemSize>k__BackingField: {x: 1, y: 1}
   rules: []
+  audioProfile: {fileID: 11400000, guid: 90ecb541dd0dd8144b46eefa0f4d0a56, type: 2}
+  movementAudio: {fileID: 0}
+  audioSubject: {fileID: 0}
   grants: []
   startingCharges: 0
   grantedAbilities: []

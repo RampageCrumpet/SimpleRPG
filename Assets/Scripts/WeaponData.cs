@@ -1,4 +1,5 @@
 using HitDetection;
+using SimpleRPG.Audio;
 using SimpleRPG.InventorySystem;
 using SimpleRPG;
 using System;
@@ -24,4 +25,17 @@ public class WeaponData : Item
     private SimpleRPG.Abilities.ComboDefinition combo;
 
     public SimpleRPG.Abilities.ComboDefinition Combo => combo;
+
+    [Header("Audio")]
+    [SerializeField]
+    [Tooltip("What the weapon is made of, for impact sound tables (steel, wood). Each attack's swing sound is set on the combo step.")]
+    private AudioTag audioMaterial;
+
+    [SerializeField]
+    [Tooltip("This weapon's own impact sound. Leave empty to use the shared material table.")]
+    private AudioEventBase impactSound;
+
+    public AudioTag AudioMaterial => audioMaterial;
+
+    public AudioEventBase ImpactSound => impactSound;
 }

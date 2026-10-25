@@ -39,9 +39,16 @@ public class FirstPersonCharacterController : NetworkBehaviour, IViewSink
     [Tooltip("The furthest up our character can look.")]
     private float minimumPitch = -60;
 
+    /// <summary>
+    /// A point on the head bone at the character's eyes. The camera sits at its world position and nowhere else.
+    /// </summary>
     [SerializeField]
-    [Tooltip("The transform we want to snap the camera to.")]
-    private Transform cameraTransform;
+    [Tooltip("A transform under the head bone at the character's eyes. The camera takes its world position; its rotation is ignored.")]
+    private Transform eye;
+
+    [SerializeField]
+    [Tooltip("The owner camera's near clipping plane in metres. Small, because the sword passes within centimetres of the eye.")]
+    private float nearClipPlane = 0.04f;
 
     /// <summary>
     /// The camera we want our script to be actively controlling.
@@ -64,11 +71,6 @@ public class FirstPersonCharacterController : NetworkBehaviour, IViewSink
     private UpperBodyArticulation articulation;
 
     /// <summary>
-    /// The head bone the eye rides on, and where the camera mount sits in that bone's space, so the eye leans with the body.
-    /// </summary>
-    private Vector3 eyeInHead;
-
-    /// <summary>
     /// Start is called before the first frame update.
     /// </summary>
     public void Start()
@@ -86,13 +88,15 @@ public class FirstPersonCharacterController : NetworkBehaviour, IViewSink
                 return;
             }
 
-            // Move the main camera to this character.
-            FirstPersonLookMath.AttachCamera(activeCamera.transform, cameraTransform);
-
-            if (this.articulation.Head != null)
+            if (this.eye == null)
             {
-                this.eyeInHead = this.articulation.Head.InverseTransformPoint(cameraTransform.position);
+                Debug.LogError("FirstPersonCharacterController: no eye transform is assigned, so the camera has nowhere to sit.", this);
+                return;
             }
+
+            // Move the main camera to this character. It hangs off the root only so it goes where the character goes; LateUpdate places it.
+            FirstPersonLookMath.AttachCamera(activeCamera.transform, this.transform);
+            this.activeCamera.nearClipPlane = this.nearClipPlane;
 
             this.look = new FirstPersonLook(activeCamera.transform, this, rotationSpeed, minimumPitch, maximumPitch, this.transform.eulerAngles.y);
             this.articulation.ViewReset += this.look.ResetYaw;
@@ -134,20 +138,15 @@ public class FirstPersonCharacterController : NetworkBehaviour, IViewSink
     }
 
     /// <summary>
-    /// The camera follows the view, not the body, so it is aimed again after everything that could have moved its parent this frame.
+    /// The camera's position is the eye's and its orientation is the view's. Runs after the animator and the articulation (this component's
+    /// execution order is later) have posed the head this frame, so the camera never reads last frame's pose.
     /// </summary>
     public void LateUpdate()
     {
-        this.look?.ApplyCamera();
-
-        // Runs after the articulation has posed the spine this frame. The eye stays on its mount and moves only by how far the bend carried the
-        // head, so leaning forward or back moves the view without the head's idle sway or the rig's rest pose shifting where the eye sits.
-        Transform head = this.articulation.Head;
-        if (this.look != null && head != null)
+        if (this.look != null)
         {
-            Vector3 before = this.articulation.HeadToWorldBeforeBend.MultiplyPoint3x4(this.eyeInHead);
-            Vector3 after = head.TransformPoint(this.eyeInHead);
-            this.activeCamera.transform.position = this.cameraTransform.position + (after - before);
+            this.look.ApplyCamera();
+            this.activeCamera.transform.position = this.eye.position;
         }
     }
 

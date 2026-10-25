@@ -1,3 +1,4 @@
+using SimpleRPG.Audio;
 using System;
 using System.Collections.Generic;
 using Unity.Netcode;
@@ -414,7 +415,9 @@ namespace SimpleRPG.InventorySystem
 
             if (CanMutate && destination.CanMutate)
             {
-                return TryMoveItem(item, destination, location);
+                bool moved = TryMoveItem(item, destination, location);
+                if (moved) PlayMoveSound(item, destination);
+                return moved;
             }
 
             if (destination == null || item == null || !idsByItem.TryGetValue(item, out uint instanceId))
@@ -423,7 +426,19 @@ namespace SimpleRPG.InventorySystem
             }
 
             MoveItemRpc(instanceId, new NetworkBehaviourReference(destination), location);
+
+            // The player's own drop is heard at once; if the server refuses it the item simply snaps back.
+            PlayMoveSound(item, destination);
             return true;
+        }
+
+        // Sound of the local player completing a move: carried to another container is a placement, shuffled inside one is a move.
+        private void PlayMoveSound(Item item, Inventory destination)
+        {
+            if (!IsServer || IsHost || !IsSpawned)
+            {
+                InventoryAudio.Play(item, destination == this ? InventoryAudioAction.Move : InventoryAudioAction.Place);
+            }
         }
 
         [Rpc(SendTo.Server)]

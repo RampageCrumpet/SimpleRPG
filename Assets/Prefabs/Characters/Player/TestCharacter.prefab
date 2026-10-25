@@ -121,6 +121,11 @@ GameObject:
   - component: {fileID: 5346200342057443795}
   - component: {fileID: 1280965052588903103}
   - component: {fileID: 6701926485859821356}
+  - component: {fileID: 7313932485249417080}
+  - component: {fileID: 3494658210507495922}
+  - component: {fileID: 7431768082195256017}
+  - component: {fileID: 6687638183346122012}
+  - component: {fileID: 3526595424310731791}
   m_Layer: 9
   m_Name: TestCharacter
   m_TagString: Player
@@ -285,7 +290,8 @@ MonoBehaviour:
   rotationSpeed: 360
   maximumPitch: 60
   minimumPitch: -60
-  cameraTransform: {fileID: 8654970195612128693}
+  eye: {fileID: 7027145573802843531}
+  nearClipPlane: 0.04
 --- !u!114 &326977853508813783
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -428,6 +434,87 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SimpleRPG::HitDetection.HitAnatomy
   profile: {fileID: 11400000, guid: f67148813a654cc46ac8936db03e118b, type: 2}
+--- !u!114 &7313932485249417080
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1669218347359381997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6aaf4ee48d657f7488c5bd86c6627573, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Audio.AudioIdentity
+  bodyMaterial: {fileID: 11400000, guid: b0f008d23ea053141a3e7ec85987c09b, type: 2}
+  subject: {fileID: 0}
+  hurt: {fileID: 0}
+  death: {fileID: 0}
+  impactOverride: {fileID: 0}
+--- !u!114 &3494658210507495922
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1669218347359381997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0fc937840989d242876e38c403862fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Audio.CombatAudio
+  defaultSourceMaterial: {fileID: 0}
+--- !u!114 &7431768082195256017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1669218347359381997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ed3184a0ed07c4408c26ccfcbc549b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Audio.MovementAudioState
+  defaultFootwear: {fileID: 11400000, guid: ebcde78d5cafea84a9aad61018ec2b4c, type: 2}
+  maxLayersPerStep: 2
+--- !u!114 &6687638183346122012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1669218347359381997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04291a3aad18a46478f92a502e84b247, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Audio.EquipmentMovementAudio
+--- !u!114 &3526595424310731791
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1669218347359381997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc65ed8ae04f8a74fbc214e27d2846b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Audio.FootstepEmitter
+  footsteps: {fileID: 0}
+  leftFoot: {fileID: 0}
+  rightFoot: {fileID: 0}
+  detectFromBones: 1
+  rootToSoleOffset: 0.43
+  contactHeight: 0.04
+  releaseHeight: 0.09
+  minBoneSpeed: 0.5
+  fullIntensitySpeed: 5
+  minStepInterval: 0.12
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &2840580516931018900
 GameObject:
   m_ObjectHideFlags: 0
@@ -537,7 +624,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!1 &6542745157136871469
+--- !u!1 &4231787482212294696
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -545,28 +632,28 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 8654970195612128693}
+  - component: {fileID: 7027145573802843531}
   m_Layer: 0
-  m_Name: CameraSnap
+  m_Name: Eye
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &8654970195612128693
+--- !u!4 &7027145573802843531
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6542745157136871469}
+  m_GameObject: {fileID: 4231787482212294696}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.738, z: 0.056}
+  m_LocalPosition: {x: 0, y: 0.12, z: 0.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7175371774869957736}
+  m_Father: {fileID: 803023371343795338}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6988979584291639778
 GameObject:
@@ -769,9 +856,9 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 5251107426523682287, guid: 6a3c3c37133b6ae4d9590995c8166d88, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 2337171937948101901, guid: 6a3c3c37133b6ae4d9590995c8166d88, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8654970195612128693}
+      addedObject: {fileID: 7027145573802843531}
     - targetCorrespondingSourceObject: {fileID: 1860097665412997098, guid: 6a3c3c37133b6ae4d9590995c8166d88, type: 3}
       insertIndex: -1
       addedObject: {fileID: 21576208631409357}
@@ -974,6 +1061,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <BodyLocation>k__BackingField: 2
   <Priority>k__BackingField: 0
+--- !u!4 &803023371343795338 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2337171937948101901, guid: 6a3c3c37133b6ae4d9590995c8166d88, type: 3}
+  m_PrefabInstance: {fileID: 3119768581187893639}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1746749317237679395 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3708177461330795684, guid: 6a3c3c37133b6ae4d9590995c8166d88, type: 3}

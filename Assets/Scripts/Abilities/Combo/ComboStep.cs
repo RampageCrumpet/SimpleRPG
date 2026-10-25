@@ -1,4 +1,5 @@
 using System;
+using SimpleRPG.Audio;
 using UnityEngine;
 
 namespace SimpleRPG.Abilities
@@ -39,6 +40,13 @@ namespace SimpleRPG.Abilities
 
         [Tooltip("Multiplies the weapon's damage for this step.")]
         [SerializeField, Min(0)] private float damageScalar = 1f;
+
+        [Header("Audio")]
+        [Tooltip("The swing sound for this attack. Played on every machine that shows the attack.")]
+        [SerializeField] private AudioEventBase swingSound;
+
+        [Tooltip("When the swing sound starts, in seconds from the start of the step; normally just before the hit window opens.")]
+        [SerializeField, Min(0)] private float swingSoundTime;
 
         public ComboStep(
             string state,
@@ -83,6 +91,20 @@ namespace SimpleRPG.Abilities
         public float StartOffset => startOffset;
 
         public float DamageScalar => damageScalar;
+
+        public AudioEventBase SwingSound => swingSound;
+
+        public float SwingSoundTime => swingSoundTime;
+
+        /// <summary>
+        /// Gives the step a swing sound, for tools and tests. Authored steps set it in the inspector.
+        /// </summary>
+        public ComboStep WithSwingSound(AudioEventBase sound, float time)
+        {
+            swingSound = sound;
+            swingSoundTime = time;
+            return this;
+        }
 
         /// <summary>
         /// The step's timing alone, which is what the combo logic runs on.

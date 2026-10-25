@@ -1,5 +1,6 @@
 using SimpleRPG;
 using SimpleRPG.Abilities;
+using SimpleRPG.Audio;
 using SimpleRPG.InventorySystem.LootGeneration;
 using System;
 using System.Collections.Generic;
@@ -58,6 +59,25 @@ namespace SimpleRPG.InventorySystem
         /// The rules this item brings while it is equipped.
         /// </summary>
         public IReadOnlyList<GameplayRuleDefinition> Rules => rules;
+
+        [Header("Audio")]
+        [SerializeField]
+        [Tooltip("Sounds of handling this item in the inventory. Point it at a shared family profile, or override single actions.")]
+        private ItemAudioProfile audioProfile;
+
+        [SerializeField]
+        [Tooltip("Sound of wearing this item: footwear, armor class and layered step sounds (plate clinking). Used when it is equipped.")]
+        private MovementAudioProfile movementAudio;
+
+        [SerializeField]
+        [Tooltip("Which kind of item this is, for sound tables that vary by item type.")]
+        private AudioTag audioSubject;
+
+        public ItemAudioProfile AudioProfile => audioProfile;
+
+        public MovementAudioProfile MovementAudio => movementAudio;
+
+        public AudioTag AudioSubject => audioSubject;
 
         /// <summary>
         /// Changes to the wearer's attributes this item brings while it is equipped. Applied on the server and released when the item comes off.

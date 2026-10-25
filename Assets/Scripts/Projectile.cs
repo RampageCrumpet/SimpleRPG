@@ -37,6 +37,12 @@ public class Projectile : NetworkBehaviour
 
     private float spawnTime;
 
+    /// <summary>How long this projectile lives before it expires, in seconds.</summary>
+    public float LifeSpan => lifeSpan;
+
+    /// <summary>How long this projectile has existed, in seconds.</summary>
+    public float Age => Time.time - spawnTime;
+
     /// <summary>
     /// The hitbox used to determine if this projectile hit anything.
     /// </summary>

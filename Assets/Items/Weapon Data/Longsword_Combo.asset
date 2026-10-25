@@ -23,6 +23,8 @@ MonoBehaviour:
     blendIn: 0.15
     startOffset: 0
     damageScalar: 1
+    swingSound: {fileID: 11400000, guid: 40feb3138c4496f49b8bb6a4b3021407, type: 2}
+    swingSoundTime: 0.93
   - state: Longsword_A2
     clip: {fileID: 8000201, guid: 8726080de97e2b5448914f71821bdb29, type: 3}
     duration: 1.8666668
@@ -33,6 +35,8 @@ MonoBehaviour:
     blendIn: 0.15
     startOffset: 0
     damageScalar: 0.79
+    swingSound: {fileID: 11400000, guid: b0a54fbd0158aa64dad0c4195ad8ffdf, type: 2}
+    swingSoundTime: 0.7
   - state: Longsword_A3
     clip: {fileID: 8000301, guid: e1caad9b31d9ec34a96bf337e1758121, type: 3}
     duration: 1.9666668
@@ -43,3 +47,5 @@ MonoBehaviour:
     blendIn: 0.15
     startOffset: 0
     damageScalar: 0.84
+    swingSound: {fileID: 11400000, guid: 29380b9d5cfe28144b2b2fc1557dd013, type: 2}
+    swingSoundTime: 0.81

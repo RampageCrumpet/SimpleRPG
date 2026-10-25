@@ -1,3 +1,4 @@
+using SimpleRPG.Audio;
 using UnityEngine;
 
 /// <summary>
@@ -24,6 +25,19 @@ public sealed class AnimationAudioEvents : MonoBehaviour
         if (clip is AudioClip audioClip)
         {
             source.PlayOneShot(audioClip);
+        }
+    }
+
+    /// <summary>
+    /// Animation event receiver for the audio system. Set the event's function to <c>PlayEvent</c> and its Object parameter to an audio event
+    /// or table. The sound plays attached to this object through the central audio service, so it gets the event's mixer routing, variation,
+    /// limits and 3D settings instead of this object's AudioSource. A missing or unsupported object is ignored.
+    /// </summary>
+    public void PlayEvent(Object audioEvent)
+    {
+        if (audioEvent is AudioEventBase request)
+        {
+            GameAudio.PlayAttached(request, default, transform);
         }
     }
 }

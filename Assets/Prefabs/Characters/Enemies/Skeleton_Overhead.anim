@@ -950070,9 +950070,9 @@ AnimationClip:
   m_HasMotionFloatCurves: 0
   m_Events:
   - time: 0.4
-    functionName: PlayClip
+    functionName: PlayEvent
     data: 
-    objectReferenceParameter: {fileID: 8300000, guid: 3552684b6d1079c4e94924a018df8813, type: 3}
+    objectReferenceParameter: {fileID: 11400000, guid: 954e2d7322b596c47a0b11336214385d, type: 2}
     floatParameter: 0
     intParameter: 0
     messageOptions: 0

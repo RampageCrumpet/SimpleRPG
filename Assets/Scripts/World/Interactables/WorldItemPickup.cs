@@ -1,3 +1,4 @@
+using SimpleRPG.Audio;
 using SimpleRPG.InventorySystem;
 using Unity.Netcode;
 using UnityEngine;
@@ -10,6 +11,20 @@ namespace SimpleRPG.ObjectInteractions
         [SerializeField] private Item item;
         public Item Item => item;
         private bool collected;
+
+        /// <summary>
+        /// The server removing the pickup is how every machine learns it was collected, so the sound plays from the despawn. A despawn caused by
+        /// the session ending is not a pickup.
+        /// </summary>
+        public override void OnNetworkDespawn()
+        {
+            if (!IsServer && NetworkManager != null && !NetworkManager.ShutdownInProgress && item != null)
+            {
+                InventoryAudio.PlayAt(item, InventoryAudioAction.Pickup, transform.position);
+            }
+
+            base.OnNetworkDespawn();
+        }
 
         public override bool IsLookedAtVia(Collider collider) => collider != null && collider.GetComponentInParent<WorldItemPickup>() == this;
 

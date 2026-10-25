@@ -40,7 +40,9 @@ namespace SimpleRPG.Tests.EditMode
                 Assert.That(clip.length, Is.EqualTo(1.3f).Within(.0001f));
                 Assert.AreEqual(60, clip.frameRate);
             }
-            var events = AnimationUtility.GetAnimationEvents(main);
+            var allEvents = AnimationUtility.GetAnimationEvents(main);
+            Assert.AreEqual(1, allEvents.Count(e => e.functionName == "PlayEvent"), "the swing sound is an audio event");
+            var events = allEvents.Where(e => e.functionName != "PlayEvent").ToArray();
             Assert.AreEqual(2, events.Length);
             Assert.AreEqual("ActivateWeapon", events[0].functionName);
             Assert.That(events[0].time, Is.EqualTo(.55f).Within(.0001f));
@@ -84,7 +86,9 @@ namespace SimpleRPG.Tests.EditMode
                 Assert.That(c.length, Is.EqualTo(1.3f).Within(.0001f));
                 Assert.AreEqual(60, c.frameRate);
             }
-            var events = AnimationUtility.GetAnimationEvents(clip);
+            var allEvents = AnimationUtility.GetAnimationEvents(clip);
+            Assert.AreEqual(1, allEvents.Count(e => e.functionName == "PlayEvent"), "the swing sound is an audio event");
+            var events = allEvents.Where(e => e.functionName != "PlayEvent").ToArray();
             Assert.AreEqual(2, events.Length);
             Assert.AreEqual("ActivateWeapon", events[0].functionName);
             Assert.That(events[0].time, Is.EqualTo(.524389f).Within(.0001f));

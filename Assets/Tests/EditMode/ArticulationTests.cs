@@ -235,14 +235,101 @@ namespace SimpleRPG.Tests.EditMode
             Assert.AreEqual(torso, solver.TorsoYaw);
         }
 
-        [Test]
-        public void TwistOn_ForeignPelvisIsStillClampedToTheLimit()
-        {
-            solver.Reset(0f, 0f);
-            solver.Step(100f, 0f, ArticulationPhase.Free, Dt);
+        // --- Owner prediction ---
+        // The owning client and the server each run their own solver on the same view. These prove the prediction carries the whole solution
+        // (pelvis included), that frame rate does not change where it ends up, and that it chases absolute targets so nothing accumulates.
 
-            Assert.AreEqual(settings.maxTwist, solver.TwistOn(0f), 0.001f);
-            Assert.AreEqual(100f - 80f, solver.TwistOn(80f), 0.001f);
+        private UpperBodySolver Fresh()
+        {
+            var other = new UpperBodySolver(settings);
+            other.Reset(0f, 0f);
+            return other;
+        }
+
+        [Test]
+        public void Prediction_PelvisIsDraggedAlongWhenTheTorsoWouldPassTheLimit()
+        {
+            UpperBodySolver predicted = Fresh();
+
+            for (int i = 1; i <= 30; i++)
+            {
+                predicted.Step(i * 8f, 0f, ArticulationPhase.Free, Dt);
+            }
+
+            Assert.AreEqual(240f - 360f, predicted.TorsoYaw, 0.01f);
+            Assert.AreNotEqual(0f, predicted.PelvisYaw, "the owner's own pelvis turned, instead of waiting for the replicated root");
+            Assert.LessOrEqual(Mathf.Abs(predicted.Twist), settings.maxTwist + 0.001f);
+        }
+
+        [Test]
+        public void Prediction_AndServerAgreeFrameForFrameOnTheSameInputs()
+        {
+            UpperBodySolver server = Fresh();
+            UpperBodySolver owner = Fresh();
+
+            for (int i = 1; i <= 120; i++)
+            {
+                ArticulationPhase phase = i < 40 ? ArticulationPhase.Free : i < 70 ? ArticulationPhase.Windup : ArticulationPhase.Active;
+                server.Step(i * 3f, 20f, phase, Dt);
+                owner.Step(i * 3f, 20f, phase, Dt);
+                Assert.AreEqual(server.PelvisYaw, owner.PelvisYaw, 0f);
+                Assert.AreEqual(server.TorsoYaw, owner.TorsoYaw, 0f);
+                Assert.AreEqual(server.Twist, owner.Twist, 0f);
+            }
+        }
+
+        [Test]
+        public void Prediction_ArrivesWhereTheServerDoesAtAnyFrameRate()
+        {
+            UpperBodySolver fast = Fresh();
+            UpperBodySolver slow = Fresh();
+
+            for (int i = 0; i < 400; i++) fast.Step(135f, 10f, ArticulationPhase.Free, 1f / 240f);
+            for (int i = 0; i < 100; i++) slow.Step(135f, 10f, ArticulationPhase.Free, 1f / 60f);
+
+            Assert.AreEqual(0f, Mathf.DeltaAngle(fast.PelvisYaw, slow.PelvisYaw), 0.01f);
+            Assert.AreEqual(0f, Mathf.DeltaAngle(fast.TorsoYaw, slow.TorsoYaw), 0.01f);
+        }
+
+        [Test]
+        public void Prediction_LateOrLostInputsLeaveNoLastingDifference()
+        {
+            UpperBodySolver server = Fresh();
+            UpperBodySolver owner = Fresh();
+
+            // The owner sees the view straight away; the server sees it a few steps late and misses some intermediate views. Both chase the same
+            // absolute view, so once it holds still the two agree exactly.
+            for (int i = 1; i <= 60; i++)
+            {
+                float view = i * 6f;
+                owner.Step(view, 0f, ArticulationPhase.Free, Dt);
+                if (i % 5 != 0) server.Step(Mathf.Max(0f, view - 24f), 0f, ArticulationPhase.Free, Dt);
+            }
+
+            for (int i = 0; i < 120; i++)
+            {
+                owner.Step(360f, 0f, ArticulationPhase.Free, Dt);
+                server.Step(360f, 0f, ArticulationPhase.Free, Dt);
+            }
+
+            Assert.AreEqual(0f, Mathf.DeltaAngle(owner.PelvisYaw, server.PelvisYaw), 0.01f);
+            Assert.AreEqual(0f, Mathf.DeltaAngle(owner.TorsoYaw, server.TorsoYaw), 0.01f);
+        }
+
+        [Test]
+        public void Prediction_ASpinFullCircleNeverAccumulatesAnError()
+        {
+            UpperBodySolver owner = Fresh();
+
+            for (int turn = 0; turn < 5; turn++)
+            {
+                for (int i = 1; i <= 60; i++) owner.Step(Mathf.Repeat(i * 6f + 180f, 360f) - 180f, 0f, ArticulationPhase.Free, Dt);
+            }
+
+            for (int i = 0; i < 120; i++) owner.Step(0f, 0f, ArticulationPhase.Free, Dt);
+
+            Assert.AreEqual(0f, Mathf.DeltaAngle(owner.PelvisYaw, 0f), 0.01f);
+            Assert.AreEqual(0f, owner.Twist, 0.01f);
         }
 
         // --- Spine pose ---
@@ -399,6 +486,14 @@ namespace SimpleRPG.Tests.EditMode
 
             Assert.AreEqual(-37.46f, pose.TwistDegrees, 0.0001f);
             Assert.AreEqual(12.34f, pose.PitchDegrees, 0.0001f);
+        }
+
+        [Test]
+        public void Pose_CarriesThePelvisYawAcrossTheWrapAround()
+        {
+            Assert.AreEqual(-179.5f, ArticulationPose.From(0f, 0f, 180.5f).PelvisYawDegrees, 0.0001f);
+            Assert.AreEqual(-90.25f, ArticulationPose.From(0f, 0f, -90.25f).PelvisYawDegrees, 0.0001f);
+            Assert.AreNotEqual(ArticulationPose.From(0f, 0f, 10f), ArticulationPose.From(0f, 0f, 20f));
         }
 
         [Test]

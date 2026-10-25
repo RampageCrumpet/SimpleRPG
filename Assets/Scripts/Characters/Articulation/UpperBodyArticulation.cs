@@ -5,23 +5,28 @@ using UnityEngine;
 namespace SimpleRPG.Articulation
 {
     /// <summary>
-    /// The torso twist and tilt as they travel over the network: the twist relative to the pelvis and the tilt, in hundredths of a degree.
+    /// The torso twist and tilt as they travel over the network: the twist relative to the pelvis, the tilt and the pelvis's own world yaw, in
+    /// hundredths of a degree. The pelvis yaw also rides the NetworkTransform; it is repeated here so the owner can check its prediction against it.
     /// </summary>
     public struct ArticulationPose : INetworkSerializable, IEquatable<ArticulationPose>
     {
         public short Twist;
         public short Pitch;
+        public short PelvisYaw;
 
         public float TwistDegrees => Twist * 0.01f;
 
         public float PitchDegrees => Pitch * 0.01f;
 
-        public static ArticulationPose From(float twistDegrees, float pitchDegrees)
+        public float PelvisYawDegrees => PelvisYaw * 0.01f;
+
+        public static ArticulationPose From(float twistDegrees, float pitchDegrees, float pelvisYawDegrees = 0f)
         {
             return new ArticulationPose
             {
                 Twist = (short)Mathf.Clamp(Mathf.RoundToInt(twistDegrees * 100f), short.MinValue, short.MaxValue),
                 Pitch = (short)Mathf.Clamp(Mathf.RoundToInt(pitchDegrees * 100f), short.MinValue, short.MaxValue),
+                PelvisYaw = (short)Mathf.Clamp(Mathf.RoundToInt(Mathf.DeltaAngle(0f, pelvisYawDegrees) * 100f), short.MinValue, short.MaxValue),
             };
         }
 
@@ -29,9 +34,10 @@ namespace SimpleRPG.Articulation
         {
             serializer.SerializeValue(ref Twist);
             serializer.SerializeValue(ref Pitch);
+            serializer.SerializeValue(ref PelvisYaw);
         }
 
-        public bool Equals(ArticulationPose other) => Twist == other.Twist && Pitch == other.Pitch;
+        public bool Equals(ArticulationPose other) => Twist == other.Twist && Pitch == other.Pitch && PelvisYaw == other.PelvisYaw;
     }
 
     /// <summary>
@@ -47,8 +53,12 @@ namespace SimpleRPG.Articulation
     /// transforms at the start of the next fixed step, so the blade and the hurtboxes, which ride bones below the spine, are tested where they were drawn.
     /// </para>
     /// <para>
-    /// The owning client (when it is not the server) predicts its own torso with the same solver so the weapon answers the mouse at once; its pelvis
-    /// is still the server's, so its pose is only as current as the root's replication (see bead simplerpg-7du.1.6).
+    /// The owning client (when it is not the server) predicts its whole solution with the same solver, pelvis included: it turns its own copy of
+    /// the character root each frame, over what the NetworkTransform last wrote, so the torso, the weapon and the camera answer the mouse at once.
+    /// The prediction chases absolute targets rather than integrating, so it cannot accumulate error. Only the root's yaw is predicted: nobody
+    /// else sees it, and the server's pose is the one hits are tested against. If the owner has been still long enough for the server to have
+    /// caught up and the server's pelvis still disagrees, the server holds a different view than the owner, and the owner sends it the absolute
+    /// yaw.
     /// </para>
     /// </summary>
     [RequireComponent(typeof(Animator))]
@@ -73,6 +83,11 @@ namespace SimpleRPG.Articulation
 
         private float lastSentYaw;
         private float lastSentPitch;
+
+        // Owner prediction: when the view last moved, and when the prediction last told the server where the owner really looks.
+        private float lastLookTime = float.NegativeInfinity;
+        private float lastResyncTime = float.NegativeInfinity;
+        private float lastPoseChangeTime = float.NegativeInfinity;
         private ArticulationPose lastPublished;
 
         // What other players see, eased toward the replicated value.
@@ -86,12 +101,6 @@ namespace SimpleRPG.Articulation
         public float AppliedTwist { get; private set; }
 
         public float AppliedPitch { get; private set; }
-
-        /// <summary>The head bone, or null if the rig has none.</summary>
-        public Transform Head { get; private set; }
-
-        /// <summary>Where the head was (its local-to-world matrix, so any rig scale is included) this frame after the animator and before the spine was bent, so the bend alone can be measured.</summary>
-        public Matrix4x4 HeadToWorldBeforeBend { get; private set; }
 
         /// <summary>
         /// Raised on the owning client when the server moves the view, such as on respawn, so the camera can follow. The float is the new yaw.
@@ -108,6 +117,9 @@ namespace SimpleRPG.Articulation
 
         public float ViewPitch => viewPitch;
 
+        /// <summary>How many times the owner has had to tell the server where it really looks. Zero in normal play.</summary>
+        public int ViewResyncCount { get; private set; }
+
         private void Awake()
         {
             character = GetComponent<Character>();
@@ -120,7 +132,6 @@ namespace SimpleRPG.Articulation
         {
             Animator animator = GetComponent<Animator>();
             rig = new SpineRig(animator, settings);
-            Head = animator.isHuman ? animator.GetBoneTransform(HumanBodyBones.Head) : null;
             if (!rig.IsUsable)
             {
                 Debug.LogWarning(name + " has no humanoid spine bones, so its upper body will not follow the view.", this);
@@ -130,6 +141,7 @@ namespace SimpleRPG.Articulation
         public override void OnNetworkSpawn()
         {
             character.OnRevive += HandleRevive;
+            networkPose.OnValueChanged += HandlePoseChanged;
             InitialiseView(transform.eulerAngles.y, 0f);
 
             if (!IsServer)
@@ -141,10 +153,16 @@ namespace SimpleRPG.Articulation
 
         public override void OnNetworkDespawn()
         {
+            networkPose.OnValueChanged -= HandlePoseChanged;
             if (character != null)
             {
                 character.OnRevive -= HandleRevive;
             }
+        }
+
+        private void HandlePoseChanged(ArticulationPose previous, ArticulationPose current)
+        {
+            lastPoseChangeTime = Time.time;
         }
 
         // ----- Look input -----
@@ -172,6 +190,11 @@ namespace SimpleRPG.Articulation
             }
 
             // The owning client tracks its own view for its prediction, and only talks to the server when the view actually changed.
+            if (yawDelta != 0f || !Mathf.Approximately(pitch, lastSentPitch))
+            {
+                lastLookTime = Time.time;
+            }
+
             ApplyLook(yawDelta, pitch);
             lastSentYaw += yawDelta;
             if (Mathf.Abs(lastSentYaw) > 0f || !Mathf.Approximately(pitch, lastSentPitch))
@@ -192,6 +215,18 @@ namespace SimpleRPG.Articulation
             }
 
             ApplyLook(yawDelta, pitch);
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+        private void ResyncViewServerRpc(float yaw)
+        {
+            // The same information the yaw deltas carry, as an absolute. It moves the view, never the body, which still chases it at the phase's speed.
+            if (!character.IsAlive || float.IsNaN(yaw) || float.IsInfinity(yaw))
+            {
+                return;
+            }
+
+            viewYaw = Mathf.Repeat(yaw + 180f, 360f) - 180f;
         }
 
         private void ApplyLook(float yawDelta, float pitch)
@@ -278,9 +313,10 @@ namespace SimpleRPG.Articulation
                 transform.rotation = Quaternion.Euler(0f, solver.PelvisYaw, 0f);
             }
 
-            ArticulationPose pose = ArticulationPose.From(solver.Twist, solver.TorsoPitch);
+            ArticulationPose pose = ArticulationPose.From(solver.Twist, solver.TorsoPitch, solver.PelvisYaw);
             if (Mathf.Abs(pose.TwistDegrees - lastPublished.TwistDegrees) >= settings.replicationThreshold
-                || Mathf.Abs(pose.PitchDegrees - lastPublished.PitchDegrees) >= settings.replicationThreshold)
+                || Mathf.Abs(pose.PitchDegrees - lastPublished.PitchDegrees) >= settings.replicationThreshold
+                || Mathf.Abs(Mathf.DeltaAngle(pose.PelvisYawDegrees, lastPublished.PelvisYawDegrees)) >= settings.replicationThreshold)
             {
                 lastPublished = pose;
                 networkPose.Value = pose;
@@ -292,6 +328,32 @@ namespace SimpleRPG.Articulation
             if (character.IsAlive)
             {
                 solver.Step(viewYaw, viewPitch, CurrentPhase, deltaTime);
+                CheckAgainstServer();
+            }
+        }
+
+        // The prediction and the server run the same solver on the same view, so once the view and the server's pose have been still for longer than
+        // a round trip the two pelvises must agree. If they do not, the server was told a different view (a lost or clamped message): tell it where the owner looks.
+        private void CheckAgainstServer()
+        {
+            float now = Time.time;
+            // The server has had its say once its pose has changed since the view last moved and then held still. If it never changed at all (the view
+            // moved too little to matter, or the message was lost) wait out the longer silence instead.
+            float quietSince = Mathf.Max(lastLookTime, lastPoseChangeTime);
+            float wait = lastPoseChangeTime >= lastLookTime ? settings.reconcileStillSeconds : settings.reconcileSilenceSeconds;
+            bool stillLongEnough = now - quietSince >= wait;
+            bool settled = Mathf.Abs(Mathf.DeltaAngle(solver.PelvisYaw, viewYaw)) < 0.01f;
+            bool throttled = now - lastResyncTime < settings.reconcileSilenceSeconds;
+            if (!stillLongEnough || !settled || throttled)
+            {
+                return;
+            }
+
+            if (Mathf.Abs(Mathf.DeltaAngle(solver.PelvisYaw, networkPose.Value.PelvisYawDegrees)) > settings.reconcileThreshold)
+            {
+                lastResyncTime = now;
+                ViewResyncCount++;
+                ResyncViewServerRpc(viewYaw);
             }
         }
 
@@ -311,7 +373,13 @@ namespace SimpleRPG.Articulation
             }
             else if (IsOwner)
             {
-                twist = solver.TwistOn(transform.eulerAngles.y);
+                // The prediction's own pelvis, not the replicated one, so the root and the torso twist agree with the view the owner just gave.
+                if (character.IsAlive)
+                {
+                    transform.rotation = Quaternion.Euler(0f, solver.PelvisYaw, 0f);
+                }
+
+                twist = solver.Twist;
                 pitch = solver.TorsoPitch;
             }
             else
@@ -322,13 +390,6 @@ namespace SimpleRPG.Articulation
 
             AppliedTwist = twist * poseWeight;
             AppliedPitch = pitch * poseWeight;
-            if (Head != null)
-            {
-                // Measured before Apply, with the previous frame's bend undone first, so the difference is only this frame's bend.
-                rig.Restore();
-                HeadToWorldBeforeBend = Head.localToWorldMatrix;
-            }
-
             rig.Apply(transform, AppliedTwist, AppliedPitch);
         }
     }

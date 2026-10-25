@@ -9,6 +9,30 @@ using UnityEngine;
 using EntityId = SimpleRPG.Gameplay.EntityId;
 
 /// <summary>
+/// A weapon hit the server confirmed, as every machine is told it, so presentation (sound, effects) can react to a real contact.
+/// </summary>
+public readonly struct MeleeHitCue
+{
+    public MeleeHitCue(Character victim, BodyLocation location, int attackNumber, Vector3 point)
+    {
+        Victim = victim;
+        Location = location;
+        AttackNumber = attackNumber;
+        Point = point;
+    }
+
+    /// <summary>The character struck, or null if it is not known on this machine.</summary>
+    public Character Victim { get; }
+
+    public BodyLocation Location { get; }
+
+    public int AttackNumber { get; }
+
+    /// <summary>Where the blade was when it struck.</summary>
+    public Vector3 Point { get; }
+}
+
+/// <summary>
 /// What every character's melee mechanics share: the swings the server is tracking, the weapon's hits and how they are reported to the
 /// ability that started the swing, and telling every machine which attack to play. A melee ability asks for a swing and is told what the
 /// swing hits; subclasses decide which attack plays and when its hit window is open, so abilities never handle animation, hitboxes or combo
@@ -56,6 +80,11 @@ public abstract class MeleeDeliveryBase : NetworkBehaviour, IMeleeSwingHost
     public delegate void NotifyMeleeAttackStarted(int attackNumber, float secondsIntoAttack);
 
     public event NotifyMeleeAttackStarted MeleeAttackStarted;
+
+    /// <summary>
+    /// Raised on every machine when the server confirms a weapon hit on a living target. Only confirmed contacts raise it, never an attack merely starting.
+    /// </summary>
+    public event System.Action<MeleeHitCue> MeleeHitConfirmed;
 
     /// <summary>
     /// Raised on a client when an attack it started showing before the server had spoken turned out not to have happened.
@@ -172,6 +201,29 @@ public abstract class MeleeDeliveryBase : NetworkBehaviour, IMeleeSwingHost
     }
 
     /// <summary>
+    /// Tells every machine a weapon hit was confirmed, so each can show it. Carries what happened, never a sound.
+    /// </summary>
+    [Rpc(SendTo.Everyone)]
+    private void HitConfirmedClientRpc(ulong victimObjectId, int location, int attackNumber, Vector3 point)
+    {
+        Character victim = null;
+        if (NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(victimObjectId, out NetworkObject spawned))
+        {
+            victim = spawned.GetComponent<Character>();
+        }
+
+        RaiseHitConfirmed(new MeleeHitCue(victim, (BodyLocation)location, attackNumber, point));
+    }
+
+    /// <summary>
+    /// Tells this machine's listeners a weapon hit was confirmed.
+    /// </summary>
+    protected void RaiseHitConfirmed(MeleeHitCue cue)
+    {
+        MeleeHitConfirmed?.Invoke(cue);
+    }
+
+    /// <summary>
     /// The server word that an attack has started reached this machine. Shows it unless it is already showing.
     /// </summary>
     protected virtual void OnAttackStarted(int attackNumber, float secondsIntoAttack, int pressId)
@@ -242,6 +294,8 @@ public abstract class MeleeDeliveryBase : NetworkBehaviour, IMeleeSwingHost
         // A blow that lands on a living target is a confirmed weapon hit; the damage above has already been applied, so rules reacting to it see the result.
         if (victimWasAlive)
         {
+            HitConfirmedClientRpc(victim.NetworkObjectId, (int)location, swing.AttackNumber, WeaponComponent != null ? WeaponComponent.transform.position : transform.position);
+
             GameplayEventDispatcher events = GameplayServices.Current.Events;
             events.Enqueue(new WeaponHitConfirmedEvent(Character.Id, victim.Id, (int)location, swing.AttackNumber, swing.Execution));
             if (!events.IsDraining)
