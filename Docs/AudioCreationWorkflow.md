@@ -16,7 +16,7 @@ Written for agents that **cannot hear**. Every rule here exists because a sound 
 | Skeleton rise (get up) | `Assets/Art/Audio/SFX/Skeleton/SFX_Skeleton_Rise_01.wav` | 2.374 s | seven layers timed to the Rise clip: pile holds, bones in flight, torso lands, fingers, skull last |
 | Skeleton death (collapse) | `Assets/Art/Audio/SFX/Skeleton/SFX_Skeleton_Die_01.wav` | 1.750 s | layers timed to the Die clip's landings: silent first 0.3 s (the killing blow's hit sound covers it), release, first impacts, skull at 0.93 s, the crash at 1.0-1.2 s, egg-crack crumble and settling knocks |
 
-All are mono, 44.1 kHz, 16-bit, no reverb (Unity handles room acoustics), approved by the user by ear. Nothing plays them yet: the MVP gap assessment notes there is no gameplay audio path (`MvpGapAssessment.md`). Unity import settings are untouched defaults.
+All are mono, 44.1 kHz, 16-bit, no reverb (Unity handles room acoustics), approved by the user by ear. The two skeleton swings are played by animation events (`PlayClip` at clip time 0.40 s on `Skeleton_Overhead` and `Skeleton_Slash`, received by `AnimationAudioEvents` on the skeleton prefab); nothing else plays them yet: the MVP gap assessment notes there is no general gameplay audio path (`MvpGapAssessment.md`). Unity import settings are untouched defaults.
 
 ## Where things live
 
