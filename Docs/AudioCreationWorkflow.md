@@ -14,6 +14,7 @@ Written for agents that **cannot hear**. Every rule here exists because a sound 
 | Skeleton struck, body/arm/leg hit | `SFX_Skeleton_Hit_Strike_01.wav` | 0.420 s | crack, snap, delayed rattle |
 | Skeleton struck, head hit | `SFX_Skeleton_Hit_Head_01.wav` | 0.420 s | the strike plus a body layer, a second snap and an egg-crack click at the start |
 | Skeleton rise (get up) | `Assets/Art/Audio/SFX/Skeleton/SFX_Skeleton_Rise_01.wav` | 2.374 s | seven layers timed to the Rise clip: pile holds, bones in flight, torso lands, fingers, skull last |
+| Skeleton death (collapse) | `Assets/Art/Audio/SFX/Skeleton/SFX_Skeleton_Die_01.wav` | 1.750 s | layers timed to the Die clip's landings: silent first 0.3 s (the killing blow's hit sound covers it), release, first impacts, skull at 0.93 s, the crash at 1.0-1.2 s, egg-crack crumble and settling knocks |
 
 All are mono, 44.1 kHz, 16-bit, no reverb (Unity handles room acoustics), approved by the user by ear. Nothing plays them yet: the MVP gap assessment notes there is no gameplay audio path (`MvpGapAssessment.md`). Unity import settings are untouched defaults.
 
@@ -26,6 +27,7 @@ Editable sources are outside the repository (back them up separately, as with th
 | Longsword projects, review WAVs, recipes | `I:/Art/Sounds/Whoosh/` (`Attacks/`, `Review/`, `SOURCES.md`) |
 | Skeleton strike project, review WAV, plan and build notes | `I:/Art/Sounds/Impacts/SkeletonStrike/` (`PLAN.md`) |
 | Skeleton rise project, review WAV, plan and build notes | `I:/Art/Sounds/Skeleton/Rise/` (`PLAN.md`, includes the per-bone timeline) |
+| Skeleton death project, review WAV, plan and build notes | `I:/Art/Sounds/Skeleton/Die/` (`PLAN.md`, includes the landing timeline) |
 | Raw source clips | `I:/Art/Sounds/Source Sounds/` (`Sword Swings/`, `Bones/`, `Crunches/`) |
 | Large licensed library (user's, do not modify) | `I:/Art/Sounds/Soniss GD2026/` (five zips, about 6.7 GB) |
 | Analysis tool | `I:/Art/Sounds/Tools/sound_analysis.py` |
@@ -56,7 +58,7 @@ Pull timings from the game, not from taste:
 - `Assets/Items/Weapon Data/Longsword_Combo.asset`: per-attack `hitStart`/`hitEnd`, `duration`, `damageScalar` (A1 0.93-1.17 s dmg 1.0, A2 0.63-0.92 s dmg 0.79, A3 0.75-0.98 s dmg 0.84).
 - `HitRegions.md`: Head ×1.75, Torso ×1.0, Arms/Legs ×0.75. A hit sound set should step with these.
 - Swing sounds: put the loudest point at the middle of the hit window. Start playback at about 0.93 s (A1), 0.70 s (A2), 0.81 s (A3) into the attack clip.
-- Animation-driven sounds (Rise, Die): read the clip's own motion. A Unity `.anim` is text YAML: parse `m_PositionCurves` and `m_EulerCurves` per bone path and take each bone's first-move and settle time (the Rise plan did this for 106 bones; legs settled at 1.4-1.5 s, ribs at 1.7 s, fingers at 2.2 s, skull last at 2.3 s). Also read the markers file next to the Blender source. Time the loud moments to when pieces land, not to an even texture.
+- Animation-driven sounds (Rise, Die): read the clip's own motion. A Unity `.anim` is text YAML: parse `m_PositionCurves` and `m_EulerCurves` per bone path and take each bone's first-move and settle time (the Rise plan did this for 106 bones; legs settled at 1.4-1.5 s, ribs at 1.7 s, fingers at 2.2 s, skull last at 2.3 s). Also read the markers file next to the Blender source. Time the loud moments to when pieces land, not to an even texture. For a physics collapse (Die) also detect **landings**: a bone whose speed falls from above 0.8 m/s to under 25% within 0.1 s. Counted per 100 ms they gave the Die timeline directly (first impacts 0.7-0.9 s, skull at 0.93 s matching the marker, the crash at 1.0-1.2 s with 71 landings, then thinning to 1.6 s). Landing speeds are only good for ranking loudness: the physics bake makes finger bones look fast.
 - Hit sounds: no pre-roll. The strike must start within about 5 ms of the file start, because the trigger is the confirmed hit.
 - Heavier and slower means lower, quicker and lighter means higher and shorter. Make each attack differ by layer-level choices, not by pitch-shifting one finished mix (the "fast" and "crisp" variants sounded identical).
 
@@ -88,6 +90,8 @@ Run the tool on every file you produce or are considering:
 
 **When you add a layer, prove it is audible.** Export before and after, subtract the two (`after - before`) and look at the difference by time. The first egg-crack layer added only about 1 dB to the first 5 ms: a single 15 ms click contributes almost no energy at a sensible level. The tool's RMS numbers barely moved, which was the clue. Raise the layer, then lower the whole mix to keep the peak consistent.
 
+**Measure per section, and do not over-read small shifts.** The knock-attack median over one wide window blended a soft section with a sharp one; running `--window` over each section separately showed where the softness was. A section holds only 10-30 events, so one or two events moving can shift the median by 2-3 ms. The Die build's crash section read 5.5 ms, then 8.0 ms after only a level change to a quieter layer: that was noise. Trust the energy balance and the shape; treat attack differences of a few ms as unchanged.
+
 Always compare **energy**, not peaks. The first strike candidate had the rattle at an acceptable peak but it overlapped the strike and lasted too long, so it dominated by energy. Estimate gain from the actual events in the slice you chose, not from the file's loudest peak: the rattle slice was about 18 dB quieter than the file peak suggested.
 
 ## What failed and why
@@ -105,6 +109,7 @@ Always compare **energy**, not peaks. The first strike candidate had the rattle 
 | Rattle at 70 ms, loud, long | "dominates" | it must start after the strike and fall away quickly |
 | Rise: soft ticks, reversed collapse and a rattle swell for 0-1.4 s | "paper rustling, not a skeleton falling apart" | measured attacks 28, 36 and 47 ms against 3 ms for a crack. **Reversing a collapse doubles the attack time** (18 to 36 ms) and turns knocks into swells |
 | Rise fix v2: sharp clusters added quietly under the soft bed | no change (median attack 16 ms) | the sharp layer must be louder than the soft one, or the soft one sets the character |
+| Death v1: crumble gain chosen from its filtered peak | crumble only 6.5 dB under the crash; the plan's guard was 14 dB | set a soft layer's level against the plan's relative target (check the RMS ratio of the quiet section to the loud one after export), not from an absolute peak. v2 measured 16.3 dB under |
 
 What worked for the skeleton: natural-pitch crack cluster + sharp snap accent at the strike, then a quiet rattle entering after it, all filtered, 0.42 s.
 
@@ -131,7 +136,7 @@ Import the source, `select_region` and `edit_delete` the end, then the front (le
 
 ## Open work
 
-- The user chose to reuse the standard strike for body, arm and leg hits, with a chunkier head hit only, so no separate limb variant is planned. The get up (Rise) is done. Next: skeleton **death**. Its clip (`Skeleton_Die`, 0-1.6 s, markers: `MajorCollapse` 0.667 s, `SkullGroundContact` 0.933 s, `PileSettled` 1.6 s in `I:/Art/Blender/Skeleton/Skeleton_AnimationMarkers_v65.json`) is the physics collapse that Rise reverses, so build it forward with sharp knocks, from `falling-bones` plus the crack clusters. Extract per-bone timing from the clip first, as `Rise/PLAN.md` does.
+- The user chose to reuse the standard strike for body, arm and leg hits, with a chunkier head hit only, so no separate limb variant is planned. The skeleton's collapse set is complete: strike, head hit, rise and death. Not made yet: the skeleton's own weapon swings (overhead and slash, see `SkeletonAnimationPlan.md`), footsteps and any idle or vocal sound. The Die sound's weakest part is the first impacts (0.7-0.93 s, median attack 10 ms), where a sharp cluster could be added if it is judged soft.
 - A hollow body "knock" under the crack was left out. Add it only if the strike is judged thin.
 - Rebuild the three longsword swings with true fade-outs, if the user wants to compare.
 - Verify the Freesound licenses behind the longsword swings (IDs 422513, 420626, 109432) and record them in `I:/Art/Sounds/Whoosh/SOURCES.md`.
