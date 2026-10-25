@@ -13,6 +13,7 @@ Written for agents that **cannot hear**. Every rule here exists because a sound 
 | Longsword A3, centerline thrust | `SFX_Longsword_A3_Thrust.wav` | 0.248 s | tight air puff, no scrape |
 | Skeleton struck, body/arm/leg hit | `SFX_Skeleton_Hit_Strike_01.wav` | 0.420 s | crack, snap, delayed rattle |
 | Skeleton struck, head hit | `SFX_Skeleton_Hit_Head_01.wav` | 0.420 s | the strike plus a body layer, a second snap and an egg-crack click at the start |
+| Skeleton rise (get up) | `Assets/Art/Audio/SFX/Skeleton/SFX_Skeleton_Rise_01.wav` | 2.374 s | seven layers timed to the Rise clip: pile holds, bones in flight, torso lands, fingers, skull last |
 
 All are mono, 44.1 kHz, 16-bit, no reverb (Unity handles room acoustics), approved by the user by ear. Nothing plays them yet: the MVP gap assessment notes there is no gameplay audio path (`MvpGapAssessment.md`). Unity import settings are untouched defaults.
 
@@ -24,6 +25,7 @@ Editable sources are outside the repository (back them up separately, as with th
 | --- | --- |
 | Longsword projects, review WAVs, recipes | `I:/Art/Sounds/Whoosh/` (`Attacks/`, `Review/`, `SOURCES.md`) |
 | Skeleton strike project, review WAV, plan and build notes | `I:/Art/Sounds/Impacts/SkeletonStrike/` (`PLAN.md`) |
+| Skeleton rise project, review WAV, plan and build notes | `I:/Art/Sounds/Skeleton/Rise/` (`PLAN.md`, includes the per-bone timeline) |
 | Raw source clips | `I:/Art/Sounds/Source Sounds/` (`Sword Swings/`, `Bones/`, `Crunches/`) |
 | Large licensed library (user's, do not modify) | `I:/Art/Sounds/Soniss GD2026/` (five zips, about 6.7 GB) |
 | Analysis tool | `I:/Art/Sounds/Tools/sound_analysis.py` |
@@ -54,6 +56,7 @@ Pull timings from the game, not from taste:
 - `Assets/Items/Weapon Data/Longsword_Combo.asset`: per-attack `hitStart`/`hitEnd`, `duration`, `damageScalar` (A1 0.93-1.17 s dmg 1.0, A2 0.63-0.92 s dmg 0.79, A3 0.75-0.98 s dmg 0.84).
 - `HitRegions.md`: Head ×1.75, Torso ×1.0, Arms/Legs ×0.75. A hit sound set should step with these.
 - Swing sounds: put the loudest point at the middle of the hit window. Start playback at about 0.93 s (A1), 0.70 s (A2), 0.81 s (A3) into the attack clip.
+- Animation-driven sounds (Rise, Die): read the clip's own motion. A Unity `.anim` is text YAML: parse `m_PositionCurves` and `m_EulerCurves` per bone path and take each bone's first-move and settle time (the Rise plan did this for 106 bones; legs settled at 1.4-1.5 s, ribs at 1.7 s, fingers at 2.2 s, skull last at 2.3 s). Also read the markers file next to the Blender source. Time the loud moments to when pieces land, not to an even texture.
 - Hit sounds: no pre-roll. The strike must start within about 5 ms of the file start, because the trigger is the confirmed hit.
 - Heavier and slower means lower, quicker and lighter means higher and shorter. Make each attack differ by layer-level choices, not by pitch-shifting one finished mix (the "fast" and "crisp" variants sounded identical).
 
@@ -80,6 +83,7 @@ Run the tool on every file you produce or are considering:
 | peak | headroom | final files about -5 to -6 dBFS; above 0 means the source is clipped |
 | centroid | brightness | 0.5-1.5 kHz boomy, **2-4 kHz dry and clacky**, 6 kHz and up hissy |
 | 20 ms RMS | the real envelope | compare it to the shape you intended |
+| knock attack (`--window=t0:t1`) | how sharp the strong events are: median 10-90% rise time | **a bone crack is about 3 ms (the shipped strike median is 4 ms)**; 17-50 ms reads as paper rustling |
 | energy before/after a split | which part dominates | rattle or tail well below the strike |
 
 **When you add a layer, prove it is audible.** Export before and after, subtract the two (`after - before`) and look at the difference by time. The first egg-crack layer added only about 1 dB to the first 5 ms: a single 15 ms click contributes almost no energy at a sensible level. The tool's RMS numbers barely moved, which was the clue. Raise the layer, then lower the whole mix to keep the peak consistent.
@@ -99,6 +103,8 @@ Always compare **energy**, not peaks. The first strike candidate had the rattle 
 | Crunch clusters slowed 20-25% plus a sine thump | "too deep, like nothing" | a skeleton is light and clacky; do not pitch down |
 | One 0.1 s filtered burst | "sharp noise" | a struck skeleton is a sequence: strike, then bones settling |
 | Rattle at 70 ms, loud, long | "dominates" | it must start after the strike and fall away quickly |
+| Rise: soft ticks, reversed collapse and a rattle swell for 0-1.4 s | "paper rustling, not a skeleton falling apart" | measured attacks 28, 36 and 47 ms against 3 ms for a crack. **Reversing a collapse doubles the attack time** (18 to 36 ms) and turns knocks into swells |
+| Rise fix v2: sharp clusters added quietly under the soft bed | no change (median attack 16 ms) | the sharp layer must be louder than the soft one, or the soft one sets the character |
 
 What worked for the skeleton: natural-pitch crack cluster + sharp snap accent at the strike, then a quiet rattle entering after it, all filtered, 0.42 s.
 
@@ -109,7 +115,7 @@ Most of these cost real time. Check them before trusting a result.
 - **`effect_adjustable_fade` ignores `fade_type` and always fades UP.** Use `effect_fade_out` and `effect_fade_in`. The longsword builds (and their first whoosh drafts) used the wrong tool, so the "fade-outs" in those recipes are fade-ins. Approved sounds are unchanged; see `Whoosh/SOURCES.md`.
 - **`project_save` fails** ("write to a file" error, timeout). Use `project_save_as` with a full path.
 - **Every Save As truncates the previously bound `.aup3`** to about 100-250 KB. Copy the project trio (`.aup3`, `-wal`, `-shm`) to a backup right after saving, and restore later. Verify with SQLite `PRAGMA integrity_check` and `select count(*) from sampleblocks` on a scratch copy.
-- **`edit_copy` then `edit_paste` does nothing.** To delay a layer, import it starting earlier in the source, `edit_silence` the lead-in, then `effect_fade_in`.
+- **`edit_copy` then `edit_paste` does nothing.** There are two working ways to delay a layer. (1) If the source is long enough, import it starting earlier, trim, then `edit_silence` the lead-in. (2) For a short source that must start late: `track_add_mono`, select it and a time range, `generate_tone` over that range, `edit_silence` it (a silent track of the delay length), import and process the event track, `select_tracks` both (silent track first), `track_align_end_to_end`. The event then starts exactly at the delay (verified at 0.30, 0.78, 1.42, 1.70 and 2.30 s).
 - **`generate_*` needs an existing selected track and a time selection** (`select_region`); without them it fails or leaves a hidden dialog open.
 - **`track_set_properties` acts on the focused track, not the index you pass.** Gain and `track_mute` do not apply. Use `effect_amplify`, and have only one track in the project when you export.
 - **`track_remove` removes the selected tracks.** Select explicitly with `select_tracks` and verify with `track_get_info`.
@@ -125,7 +131,7 @@ Import the source, `select_region` and `edit_delete` the end, then the front (le
 
 ## Open work
 
-- The user chose to reuse the standard strike for body, arm and leg hits, with a chunkier head hit only, so no separate limb variant is planned. Next: skeleton **get up** and **death**. Candidate sources are already chosen: `falling-bones` (collapse), `rattling-bones` (get up), `bones.wav` ticks, `bone-break-ver-2` (brighter crack).
+- The user chose to reuse the standard strike for body, arm and leg hits, with a chunkier head hit only, so no separate limb variant is planned. The get up (Rise) is done. Next: skeleton **death**. Its clip (`Skeleton_Die`, 0-1.6 s, markers: `MajorCollapse` 0.667 s, `SkullGroundContact` 0.933 s, `PileSettled` 1.6 s in `I:/Art/Blender/Skeleton/Skeleton_AnimationMarkers_v65.json`) is the physics collapse that Rise reverses, so build it forward with sharp knocks, from `falling-bones` plus the crack clusters. Extract per-bone timing from the clip first, as `Rise/PLAN.md` does.
 - A hollow body "knock" under the crack was left out. Add it only if the strike is judged thin.
 - Rebuild the three longsword swings with true fade-outs, if the user wants to compare.
 - Verify the Freesound licenses behind the longsword swings (IDs 422513, 420626, 109432) and record them in `I:/Art/Sounds/Whoosh/SOURCES.md`.
