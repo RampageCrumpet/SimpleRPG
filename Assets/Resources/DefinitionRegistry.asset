@@ -13,16 +13,40 @@ MonoBehaviour:
   m_Name: DefinitionRegistry
   m_EditorClassIdentifier: SimpleRPG.Abilities.Runtime::SimpleRPG.Abilities.DefinitionRegistry
   entries:
+  - id: 0434604cf7a5458ab362710fe6dedccc
+    shortId: 5
+    definition: {fileID: 11400000, guid: c737fa86903bf2f4fbcb400218974509, type: 2}
+  - id: 154433efb67046f18d586a5542a882f5
+    shortId: 6
+    definition: {fileID: 11400000, guid: 963ca786f6ff78c4d80a9d2646e8a1bd, type: 2}
+  - id: 49352fca759c4cee8935a0a28ec89cc1
+    shortId: 7
+    definition: {fileID: 11400000, guid: 9dba46361ec61e94698c0be83f59d111, type: 2}
+  - id: 4e90334329ab4d4392b4e7ceae67f83d
+    shortId: 8
+    definition: {fileID: 11400000, guid: 665a37f6da17db54990672abeeea8753, type: 2}
+  - id: 75cb4b9d7e64448ea094ba99c4812bcd
+    shortId: 9
+    definition: {fileID: 11400000, guid: 92b12f5296286f141a2e0872195caa60, type: 2}
+  - id: 8923b35d2c4b43ba9aa17906e5523ada
+    shortId: 10
+    definition: {fileID: 11400000, guid: 90cefbeedda14454ea9884e184650429, type: 2}
   - id: 960721d53a6a4943a848c085b59664ac
     shortId: 1
     definition: {fileID: 11400000, guid: 76b59de91a0ffdb42b941797eb301d93, type: 2}
   - id: 9a6b2a3fb7aa479c886800948fb018e8
     shortId: 2
     definition: {fileID: 11400000, guid: 39314b3f20bc29e4987f63c1b5d8d1d4, type: 2}
+  - id: b3ce88ffa80e422aa61cdde7216fea1b
+    shortId: 11
+    definition: {fileID: 11400000, guid: 891a1f996950cda48935b1f06fcd61f0, type: 2}
   - id: b6b4589e52304efc8d5221b0fe750af6
     shortId: 3
     definition: {fileID: 11400000, guid: ad82ddef38eacee43985f7cd31508d92, type: 2}
+  - id: d6a63972b5394814a77ffddbc6b7efdc
+    shortId: 12
+    definition: {fileID: 11400000, guid: fd5585e92924723468c45c906201173a, type: 2}
   - id: dab5efbef66b4f418452cd4c77919b0f
     shortId: 4
     definition: {fileID: 11400000, guid: 49664e7ac941459295ad0c76109a18fe, type: 2}
-  nextShortId: 5
+  nextShortId: 13

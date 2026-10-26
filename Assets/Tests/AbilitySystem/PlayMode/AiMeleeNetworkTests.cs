@@ -1,6 +1,7 @@
 using AI;
 using NUnit.Framework;
 using SimpleRPG.AI;
+using SimpleRPG.Animations;
 using SimpleRPG.Abilities.Integration;
 using SimpleRPG.Gameplay;
 using SimpleRPG.UI;
@@ -48,7 +49,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
     /// </summary>
     public class AiMeleeNetworkTests
     {
-        private const string GremlinPrefab = "Assets/Prefabs/Characters/Enemies/Gremlin.prefab";
+        private const string MonsterPrefab = "Assets/Prefabs/Characters/Enemies/SkeletonFootman.prefab";
         private const string PlayerPrefab = "Assets/Prefabs/Characters/Player/TestCharacter.prefab";
 
         private GameObject managerObject;
@@ -109,13 +110,15 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             return character;
         }
 
-        private Character SpawnGremlin(Vector3 position)
+        private Character SpawnMonster(Vector3 position)
         {
-            GameObject instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(GremlinPrefab), position, Quaternion.identity);
+            GameObject instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(MonsterPrefab), position, Quaternion.identity);
             spawned.Add(instance);
 
             // Swap the enemy's full AI (chasing needs a navigation mesh) for one that stays in the attack state.
             Object.DestroyImmediate(instance.GetComponent<AIController>());
+            NavigationGrounding grounding = instance.GetComponent<NavigationGrounding>();
+            if (grounding != null) Object.DestroyImmediate(grounding);
             NavMeshAgent agent = instance.GetComponent<NavMeshAgent>();
             if (agent != null) Object.DestroyImmediate(agent);
 
@@ -139,15 +142,15 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             Character target = SpawnPlayerTarget(new Vector3(0f, 0f, 1f));
             yield return null;
-            Character gremlin = SpawnGremlin(Vector3.zero);
+            Character monster = SpawnMonster(Vector3.zero);
             int attacks = 0;
-            gremlin.GetComponent<MeleeDelivery>().MeleeAttackStarted += (_, __) => attacks++;
+            monster.GetComponent<MeleeDelivery>().MeleeAttackStarted += (_, __) => attacks++;
 
             float deadline = Time.time + 3f;
             while (attacks == 0 && Time.time < deadline) yield return null;
 
             Assert.GreaterOrEqual(attacks, 1, "The attack state should use the enemy's melee ability from its ability bar.");
-            GraphAbilitySlot meleeSlot = gremlin.AbilitySlots.OfType<GraphAbilitySlot>().Single(x => x.Definition.HasNode(NodeTypes.MeleeSwing));
+            GraphAbilitySlot meleeSlot = monster.AbilitySlots.OfType<GraphAbilitySlot>().Single(x => x.Definition.HasNode(NodeTypes.MeleeSwing));
             Assert.Greater(meleeSlot.CooldownTimeLeft, -1f);
 
             // The clip's own events close the hit window, which ends the swing and releases the ability.
@@ -162,9 +165,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             SpawnPlayerTarget(new Vector3(0f, 0f, 1f));
             yield return null;
-            Character gremlin = SpawnGremlin(Vector3.zero);
+            Character monster = SpawnMonster(Vector3.zero);
             int attacks = 0;
-            gremlin.GetComponent<MeleeDelivery>().MeleeAttackStarted += (_, __) => attacks++;
+            monster.GetComponent<MeleeDelivery>().MeleeAttackStarted += (_, __) => attacks++;
 
             yield return new WaitForSeconds(0.8f);
 

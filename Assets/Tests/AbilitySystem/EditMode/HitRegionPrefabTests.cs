@@ -15,7 +15,6 @@ namespace SimpleRPG.Abilities.Tests.EditMode
     {
         private const string PlayerPath = "Assets/Prefabs/Characters/Player/TestCharacter.prefab";
         private const string SkeletonPath = "Assets/Prefabs/Characters/Enemies/SkeletonFootman.prefab";
-        private const string GremlinPath = "Assets/Prefabs/Characters/Enemies/Gremlin.prefab";
 
         private static GameObject Load(string path)
         {
@@ -39,10 +38,10 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         [TestCase(SkeletonPath, "RightUpperLeg", BodyLocation.Legs)]
         [TestCase(SkeletonPath, "RightLowerLeg", BodyLocation.Legs)]
         [TestCase(SkeletonPath, "RightFoot", BodyLocation.Legs)]
-        [TestCase(PlayerPath, "head.x", BodyLocation.Head)]
-        [TestCase(PlayerPath, "spine_03.x", BodyLocation.Torso)]
-        [TestCase(PlayerPath, "arm_twist.l", BodyLocation.Arms)]
-        [TestCase(PlayerPath, "thigh_twist.r", BodyLocation.Legs)]
+        [TestCase(PlayerPath, "Head", BodyLocation.Head)]
+        [TestCase(PlayerPath, "UpperChest", BodyLocation.Torso)]
+        [TestCase(PlayerPath, "LeftUpperArm", BodyLocation.Arms)]
+        [TestCase(PlayerPath, "RightUpperLeg", BodyLocation.Legs)]
         public void ARegionIsOnTheBoneThatDefinesIt(string prefab, string bone, BodyLocation expected)
         {
             HurtBox region = Load(prefab).GetComponentsInChildren<HurtBox>(true).SingleOrDefault(h => h.name == bone);
@@ -53,7 +52,6 @@ namespace SimpleRPG.Abilities.Tests.EditMode
 
         [TestCase(SkeletonPath)]
         [TestCase(PlayerPath)]
-        [TestCase(GremlinPath)]
         public void EveryBodyCoversTheHeadTorsoArmsAndLegs_WithTriggersOnTheHurtBoxLayer(string path)
         {
             GameObject prefab = Load(path);

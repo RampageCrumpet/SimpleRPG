@@ -238,12 +238,12 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         [UnityTest] public IEnumerator Skeleton_Shin_IsALegBlow() => StrikeSkeleton("LeftLowerLeg", BodyLocation.Legs, 23);
         [UnityTest] public IEnumerator Skeleton_Foot_IsALegBlow() => StrikeSkeleton("RightFoot", BodyLocation.Legs, 23);
 
-        [UnityTest] public IEnumerator Player_Head_IsAHeadshot() => StrikePlayer("head.x", BodyLocation.Head, 53);
-        [UnityTest] public IEnumerator Player_Chest_IsATorsoBlow() => StrikePlayer("spine_03.x", BodyLocation.Torso, 30);
-        [UnityTest] public IEnumerator Player_UpperArm_IsAnArmBlow() => StrikePlayer("arm_twist.l", BodyLocation.Arms, 23);
-        [UnityTest] public IEnumerator Player_Forearm_IsAnArmBlow() => StrikePlayer("forearm_twist.r", BodyLocation.Arms, 23);
-        [UnityTest] public IEnumerator Player_Thigh_IsALegBlow() => StrikePlayer("thigh_twist.l", BodyLocation.Legs, 23);
-        [UnityTest] public IEnumerator Player_Shin_IsALegBlow() => StrikePlayer("leg_twist.r", BodyLocation.Legs, 23);
+        [UnityTest] public IEnumerator Player_Head_IsAHeadshot() => StrikePlayer("Head", BodyLocation.Head, 53);
+        [UnityTest] public IEnumerator Player_Chest_IsATorsoBlow() => StrikePlayer("UpperChest", BodyLocation.Torso, 30);
+        [UnityTest] public IEnumerator Player_UpperArm_IsAnArmBlow() => StrikePlayer("LeftUpperArm", BodyLocation.Arms, 23);
+        [UnityTest] public IEnumerator Player_Forearm_IsAnArmBlow() => StrikePlayer("RightLowerArm", BodyLocation.Arms, 23);
+        [UnityTest] public IEnumerator Player_Thigh_IsALegBlow() => StrikePlayer("LeftUpperLeg", BodyLocation.Legs, 23);
+        [UnityTest] public IEnumerator Player_Shin_IsALegBlow() => StrikePlayer("RightLowerLeg", BodyLocation.Legs, 23);
 
         [UnityTest]
         public IEnumerator ADamageEvent_CarriesTheAttackerTheLocationAndTheFinalAmount()
@@ -377,7 +377,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.IsTrue(victim.GetComponentsInChildren<HurtBox>(true).All(h => h.Shapes.All(s => s.enabled)), "revived: every region is back");
 
             int before = victim.Health;
-            PlaceBlade(attacker, CentreOf(Region(victim, "head.x")), Vector3.right);
+            PlaceBlade(attacker, CentreOf(Region(victim, "Head")), Vector3.right);
             OpenWindow(attacker);
             yield return Steps(2);
             Assert.AreEqual(1, hits.Count(h => h.Victim == victim.Id), "one blow: " + string.Join(", ", damage.Select(d => d.Request.Amount + "@" + d.Request.BodyLocation)));
@@ -427,7 +427,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Freeze(slasher);
             foreach (Animator animator in victim.GetComponentsInChildren<Animator>(true)) animator.enabled = false;
             UpperBodyArticulation lean = victim.GetComponent<UpperBodyArticulation>();
-            HurtBox head = Region(victim, "head.x");
+            HurtBox head = Region(victim, "Head");
             Vector3 upright = CentreOf(head);
 
             // Control: a horizontal slash at head height, with the victim standing, hits the head.

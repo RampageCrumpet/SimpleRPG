@@ -31,7 +31,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private const string MeleeAttack = "Assets/Abilitities/Abillities/MeleeAttack.asset";
         private const string PlayerPrefab = "Assets/Prefabs/Characters/Player/TestCharacter.prefab";
         private const string TargetPrefab = "Assets/Tests/PlayMode/Prefabs/TestTarget.prefab";
-        private const string GremlinPrefab = "Assets/Prefabs/Characters/Enemies/Gremlin.prefab";
+        private const string MonsterPrefab = "Assets/Prefabs/Characters/Enemies/SkeletonFootman.prefab";
         private const string BloodMaterial = "Assets/Art/Material/UIBloodBar.mat";
         private const int StartingHealth = 100;
         private const int WeaponDamage = 10;
@@ -365,8 +365,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             Character player = SpawnPlayer(new Vector3(0f, 0f, 1f));
             yield return null;
-            Character gremlin = SpawnGremlin(Vector3.zero);
-            AIController ai = gremlin.GetComponent<AIController>();
+            Character monster = SpawnMonster(Vector3.zero);
+            AIController ai = monster.GetComponent<AIController>();
             yield return null;
 
             Assert.IsTrue(ai.SenseTargets().Contains(player), "Control: a living player in range is sensed.");
@@ -586,9 +586,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             return interactable;
         }
 
-        private Character SpawnGremlin(Vector3 position)
+        private Character SpawnMonster(Vector3 position)
         {
-            GameObject instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(GremlinPrefab), position, Quaternion.identity);
+            GameObject instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(MonsterPrefab), position, Quaternion.identity);
             spawned.Add(instance);
 
             // Chasing needs a navigation mesh; this controller only senses and tracks.
@@ -613,6 +613,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             public static void Remove(GameObject instance)
             {
+                // The skeleton's grounding component requires the agent, so it goes first.
+                NavigationGrounding grounding = instance.GetComponent<NavigationGrounding>();
+                if (grounding != null) Object.DestroyImmediate(grounding);
                 UnityEngine.AI.NavMeshAgent agent = instance.GetComponent<UnityEngine.AI.NavMeshAgent>();
                 if (agent != null) Object.DestroyImmediate(agent);
             }

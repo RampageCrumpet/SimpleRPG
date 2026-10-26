@@ -72,7 +72,7 @@ A client can only say where it looks. The speed limits, twist limit and phase ar
 
 The camera is **not** a child of the head. One owner for each thing:
 
-- **Position**: `FirstPersonCharacterController.LateUpdate` copies the world position of the `Eye` transform, a child of the humanoid head bone (`head.x`) at the character's eyes (local `(0, 0.12, 0.10)` in head space on `TestCharacter`). It runs after the animator and `SpineRig.Apply`, so the eye already carries locomotion, crouching, leaning, torso articulation and authored head movement. Nothing smooths or corrects it; small authored head movement moves the viewpoint.
+- **Position**: `FirstPersonCharacterController.LateUpdate` copies the world position of the `Eye` transform, a child of the humanoid head bone (`Head`) at the character's eyes (local `(0, 0.11, 0.09)` in head space on `TestCharacter`). It runs after the animator and `SpineRig.Apply`, so the eye already carries locomotion, crouching, leaning, torso articulation and authored head movement. Nothing smooths or corrects it; small authored head movement moves the viewpoint.
 - **Orientation**: `FirstPersonLook.ApplyCamera`, from the owner's view yaw and pitch only. The head's rotation never reaches the camera.
 - The camera is parented to the character root only so it goes where the character goes; its local pose is overwritten each frame.
 - **Near plane**: `FirstPersonCharacterController.nearClipPlane` (0.04 m), applied when the camera attaches. The vertical field of view is unchanged.

@@ -1,3 +1,5 @@
+> Historical: this investigation was written against the Magician_RIO rig, which has been replaced by the human male (`HumanMale_Rig`, bones named after Unity's humanoid bones). Bone names below are the old ones.
+
 # First-person camera and weapon readability investigation
 
 **Scope.** Evidence-only inspection performed on 2026-10-24. No gameplay code, animation clips, prefabs, or camera settings were edited. Runtime checks used a local host session and were discarded when Play mode stopped.

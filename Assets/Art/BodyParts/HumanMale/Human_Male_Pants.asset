@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72a214674ef3ded4eac74b41c7680c12, type: 3}
+  m_Name: Human_Male_Pants
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Appearance.BodyPartDefinition
+  definitionId: 75cb4b9d7e64448ea094ba99c4812bcd
+  slot: 2
+  mesh: {fileID: 3482564407842391687, guid: 1d4cf8bd0d278c444afb173d1211263f, type: 3}
+  materials:
+  - {fileID: 2100000, guid: ac2e868fd3314764a9a772697259984c, type: 2}
+  boneNames:
+  - Hips
+  - Spine
+  - Chest
+  - UpperChest
+  - Neck
+  - Head
+  - LeftShoulder
+  - LeftUpperArm
+  - LeftLowerArm
+  - LeftHand
+  - LeftThumbProximal
+  - LeftThumbIntermediate
+  - LeftThumbDistal
+  - LeftIndexProximal
+  - LeftIndexIntermediate
+  - LeftIndexDistal
+  - LeftMiddleProximal
+  - LeftMiddleIntermediate
+  - LeftMiddleDistal
+  - LeftRingProximal
+  - LeftRingIntermediate
+  - LeftRingDistal
+  - LeftLittleProximal
+  - LeftLittleIntermediate
+  - LeftLittleDistal
+  - RightShoulder
+  - RightUpperArm
+  - RightLowerArm
+  - RightHand
+  - RightThumbProximal
+  - RightThumbIntermediate
+  - RightThumbDistal
+  - RightIndexProximal
+  - RightIndexIntermediate
+  - RightIndexDistal
+  - RightMiddleProximal
+  - RightMiddleIntermediate
+  - RightMiddleDistal
+  - RightRingProximal
+  - RightRingIntermediate
+  - RightRingDistal
+  - RightLittleProximal
+  - RightLittleIntermediate
+  - RightLittleDistal
+  - LeftUpperLeg
+  - LeftLowerLeg
+  - LeftFoot
+  - LeftToes
+  - RightUpperLeg
+  - RightLowerLeg
+  - RightFoot
+  - RightToes
+  rootBoneName: Hips
+  localBounds:
+    m_Center: {x: -0.00016460568, y: -0.26250947, z: -0.00087171793}
+    m_Extent: {x: 0.23245016, y: 0.37353766, z: 0.13659894}
+  attachBoneName: 
+  attachPosition: {x: 0, y: 0, z: 0}
+  attachRotation: {x: 0, y: 0, z: 0, w: 1}
+  attachScale: {x: 1, y: 1, z: 1}

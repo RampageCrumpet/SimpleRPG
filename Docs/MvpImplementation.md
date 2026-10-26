@@ -84,7 +84,7 @@ The player now holds the supplied Longsword_lowpoly_singlemesh export, imported 
 
 Arrival placement also rejects isolated NavMesh islands: the first room's candidate must have a complete path to another room before it becomes the population anchor. This matters for stairwell starts. Integration coverage includes seed 42 with the normal 25-room, three-floor configuration and an unbounded maximum, alongside the other generation cases.
 
-Dungeon dimensions were restored against the original package on 2026-10-22: active modules are 4m instead of10m, logical cells2m, floor spacing8m. The skeleton retains its exact1.78004m source height and unit transforms; Magician_RIO is excluded. Navigation bake radius/height now match the skeleton (.3m/1.8m). See AssetScale.md for source locations, export normalization and stair traversal details.
+Dungeon dimensions were restored against the original package on 2026-10-22: active modules are 4m instead of10m, logical cells2m, floor spacing8m. The skeleton retains its exact1.78004m source height and unit transforms. Navigation bake radius/height now match the skeleton (.3m/1.8m). See AssetScale.md for source locations, export normalization and stair traversal details.
 
 The Low and Very Low URP presets use per-pixel additional lights. The exploration point light requires this for normal maps and metallic specular highlights; per-vertex lighting made walls flat and fully metallic treasure black. Other presets already used per-pixel lighting. Existing packed maps are valid (R metallic, A smoothness); no texture repacking is needed for this fix. Reflection intensity remains unchanged. Visual captures: Library/GoldPerPixel.png and Library/WallPerPixel.png.
 

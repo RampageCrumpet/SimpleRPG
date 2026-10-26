@@ -11,4 +11,5 @@ For sound effects (Audacity MCP, sourcing, measuring, known tool quirks), start 
 - [Skeleton animation](SkeletonAnimationPlan.md)
 - [Network authority](NetworkAuthority.md)
 - [Upper-body articulation](UpperBodyArticulation.md)
+- [Character appearance](CharacterAppearance.md)
 - [Anatomical hit regions](HitRegions.md)

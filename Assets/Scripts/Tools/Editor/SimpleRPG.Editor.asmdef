@@ -3,6 +3,8 @@
     "rootNamespace": "SimpleRPG.Editor",
     "references": [
         "SimpleRPG",
+        "SimpleRPG.Abilities.Runtime",
+        "SimpleRPG.Gameplay.Core",
         "Unity.Netcode.Runtime",
         "Unity.RenderPipelines.Universal.Runtime"
     ],
