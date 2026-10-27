@@ -18,7 +18,7 @@ The dungeon reference is `C:/Users/Alex Van Oss/Downloads/modulardungeoncollecti
 
 The active exports were normalized back to the original physical dimensions. Existing baked coordinate orientation, pivots, model identities and Unity GUIDs were retained because the original package FBXs use a different coordinate convention. Replacing those files directly would move or reverse existing room geometry. Prefab positions, collider dimensions, connection distances, cell size and floor spacing were migrated by the same 0.4 factor; logical cell counts and room counts are unchanged. Unused package assets were left untouched.
 
-The player's human male (`Human_Male_Model.fbx`, about 1.69 m from soles to crown, unit scale) replaced the disposable Magician_RIO test model; it is not part of the dungeon audit, and the player capsule has not been resized to it. Existing decorative candle instance variations are not a world-scale reference.
+The player's human male (`Human_Male.fbx`, about 1.69 m from soles to crown, unit scale) replaced the disposable Magician_RIO test model; it is not part of the dungeon audit, and the player capsule has not been resized to it. Existing decorative candle instance variations are not a world-scale reference.
 
 The shared ModularDungeon_RoomComponents/Connection.prefab was migrated with the rooms. Its existing approach floors and walls must use the same dimensions as their parent rooms; otherwise room packing and physical passages disagree. No replacement or additional floor tiles are required.
 

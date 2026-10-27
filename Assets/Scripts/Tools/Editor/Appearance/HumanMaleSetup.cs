@@ -13,7 +13,7 @@ namespace SimpleRPG.AppearanceTools
     /// </summary>
     public static class HumanMaleSetup
     {
-        private const string ModelPath = "Assets/Art/3d Models/Human/Human_Male_Model.fbx";
+        private const string ModelPath = "Assets/Art/3d Models/Human/Human_Male.fbx";
         private const string EyebrowsPath = "Assets/Art/3d Models/Human/Human_Male_Eyebrows.fbx";
         public const string PartsFolder = "Assets/Art/BodyParts/HumanMale";
         public const string RigPrefabPath = "Assets/Prefabs/Characters/Human/HumanMale_Rig.prefab";
