@@ -229,6 +229,19 @@ namespace SimpleRPG.Abilities
 
         public bool HasStatus(EntityId target, StatusDefinition status) => GetStatuses(target, status).Count > 0;
 
+        /// <summary>
+        /// Gets every status currently on an entity, with its definition, for display.
+        /// </summary>
+        public IReadOnlyList<(StatusDefinition Definition, StatusSnapshot Snapshot)> GetAllStatuses(EntityId target)
+        {
+            if (!byTarget.TryGetValue(target, out List<Group> groups))
+            {
+                return Array.Empty<(StatusDefinition, StatusSnapshot)>();
+            }
+
+            return groups.Where(g => !g.Removed).Select(g => (g.Definition, Snapshot(g))).ToList();
+        }
+
         // ----- Applying -----
 
         /// <inheritdoc/>

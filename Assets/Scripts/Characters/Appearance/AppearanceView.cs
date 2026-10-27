@@ -12,6 +12,10 @@ namespace SimpleRPG.Appearance
         private readonly RigBoneIndex rig;
         private readonly Transform partsRoot;
         private readonly Dictionary<BodyPartSlot, GameObject> shown = new Dictionary<BodyPartSlot, GameObject>();
+        private readonly Dictionary<BodyPartSlot, BodyPartDefinition> parts = new Dictionary<BodyPartSlot, BodyPartDefinition>();
+
+        /// <summary>The parts currently shown, so another view (a UI preview) can show the same ones.</summary>
+        public IEnumerable<BodyPartDefinition> Parts => parts.Values;
 
         public AppearanceView(RigBoneIndex rig, Transform partsRoot)
         {
@@ -29,6 +33,7 @@ namespace SimpleRPG.Appearance
         {
             Clear(part.Slot);
             shown[part.Slot] = BodyPartBinder.Create(part, rig, partsRoot);
+            parts[part.Slot] = part;
         }
 
         public void Clear(BodyPartSlot slot)
@@ -36,6 +41,7 @@ namespace SimpleRPG.Appearance
             if (!shown.TryGetValue(slot, out GameObject current)) return;
 
             shown.Remove(slot);
+            parts.Remove(slot);
             if (current == null) return;
             if (Application.isPlaying) Object.Destroy(current);
             else Object.DestroyImmediate(current);

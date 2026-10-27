@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,6 +19,13 @@ namespace SimpleRPG.UI
         [SerializeField]
         [Tooltip("The image drawn with the Blood Bar shader.")]
         private Image bloodImage;
+
+        /// <summary>
+        /// Shows the current and maximum health as numbers, if set.
+        /// </summary>
+        [SerializeField]
+        [Tooltip("Shows current / maximum health as text. Optional.")]
+        private TMP_Text valueText;
 
         /// <summary>
         /// How fast the blood level moves toward the real health, in fractions of the bar per second.
@@ -134,6 +142,11 @@ namespace SimpleRPG.UI
         private void Apply()
         {
             Rect rect = bloodImage.rectTransform.rect;
+            if (valueText != null)
+            {
+                valueText.text = character != null ? character.Health + " / " + character.MaxHealth : string.Empty;
+            }
+
             material.SetFloat(FillId, shownFill);
             material.SetFloat(TrailId, shownTrail);
             material.SetFloat(AspectId, rect.height > 0f ? rect.width / rect.height : 1f);

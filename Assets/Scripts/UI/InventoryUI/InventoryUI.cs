@@ -3,7 +3,6 @@ using SimpleRPG.InventorySystem;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
-using static UnityEngine.GraphicsBuffer;
 
 namespace SimpleRPG.UI
 {
@@ -72,27 +71,44 @@ namespace SimpleRPG.UI
         [Tooltip("The size of an individual cell on our screen.")]
         public Vector2 CellSize { get; private set; }
 
-        void Start()
+        /// <summary>
+        /// The side of every inventory cell in canvas units, in every view, so items move between inventories at one scale.
+        /// </summary>
+        public const float ReferenceCellSize = 64f;
+
+        void Awake()
         {
+            EnsureReferences();
+        }
+
+        private void EnsureReferences()
+        {
+            if (inventoryUIRectTransform != null)
+            {
+                return;
+            }
+
             inventoryGridRectTransform = inventoryGridImage.gameObject.GetComponent<RectTransform>();
             inventoryGridBackdropRectTransform = inventoryGridBackdrop.gameObject.GetComponent<RectTransform>();
             inventoryUIRectTransform = this.gameObject.GetComponent<RectTransform>();
-
-            // Hide this InventoryUI until it's needed.
-            this.gameObject.SetActive(false);
         }
 
         /// <summary>
-        /// Updates the grid size of the inventory.
+        /// The size of this view in canvas units: the grid of the inventory it shows.
+        /// </summary>
+        public Vector2 GridSize => inventoryUIRectTransform.sizeDelta;
+
+        /// <summary>
+        /// Updates the grid size of the inventory. Where the view sits on screen is the screen layout's business, not this view's.
         /// </summary>
         /// <param name="inventory"> The inventory we want to update our grid size to match.</param>
         private void UpdateGridSize(Inventory inventory)
         {
-            // RectTransform coordinates are canvas units. Nested canvases do not multiply that unit scale.
-            float canvasScaleFactor = inventoryGridImage.canvas.referencePixelsPerUnit;
-
-            // CellSize is equal to the ratio between the sprite and it's pixels per unit, scaled by the canvas and image's scale factors, then scaled byt
-            CellSize = (inventoryGridImage.sprite.rect.size / inventoryGridImage.sprite.pixelsPerUnit) * canvasScaleFactor / inventoryGridImage.pixelsPerUnitMultiplier;
+            // Scale the tiled grid sprite so that one tile is exactly one cell.
+            float referencePixelsPerUnit = inventoryGridImage.canvas.referencePixelsPerUnit;
+            Sprite sprite = inventoryGridImage.sprite;
+            inventoryGridImage.pixelsPerUnitMultiplier = sprite.rect.width / sprite.pixelsPerUnit * referencePixelsPerUnit / ReferenceCellSize;
+            CellSize = new Vector2(ReferenceCellSize, ReferenceCellSize);
 
             // The size of the inventory we want to display.
             Vector2 gridInventorySize = (Vector2)inventory.InventorySize * CellSize;
@@ -103,9 +119,6 @@ namespace SimpleRPG.UI
             inventoryGridBackdropRectTransform.offsetMin = Vector2.zero;
             inventoryGridBackdropRectTransform.offsetMax = Vector2.zero;
             inventoryUIRectTransform.sizeDelta = gridInventorySize;
-            Rect viewport = ((RectTransform)inventoryGridImage.canvas.transform).rect;
-            float fit = Mathf.Min(1f, viewport.width * 0.48f / gridInventorySize.x, viewport.height * 0.75f / gridInventorySize.y);
-            inventoryUIRectTransform.localScale = new Vector3(fit, fit, 1f);
         }
 
         /// <summary>
@@ -162,6 +175,17 @@ namespace SimpleRPG.UI
         }
 
         /// <summary>
+        /// Asks for an item in this inventory to be worn by the character that owns it. Inventories without equipment (a chest) do nothing.
+        /// </summary>
+        public void RequestEquip(Item item)
+        {
+            if (Inventory != null && Inventory.TryGetComponent(out Equipment equipment))
+            {
+                equipment.RequestEquip(item);
+            }
+        }
+
+        /// <summary>
         /// Sets the <see cref="Inventory"/> the UI is represnting and updates the UI to display it.
         /// </summary>
         /// <param name="inventory"> The Inventory we want to display.</param>
@@ -172,6 +196,7 @@ namespace SimpleRPG.UI
                 this.Inventory.Changed -= RefreshItemIcons;
             }
 
+            EnsureReferences();
             this.Inventory = inventory;
             inventory.Changed += RefreshItemIcons;
             UpdateGridSize(inventory);
@@ -225,4 +250,4 @@ namespace SimpleRPG.UI
             }
         }
     }
-}
+}

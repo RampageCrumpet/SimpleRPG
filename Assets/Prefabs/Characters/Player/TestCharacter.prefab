@@ -293,6 +293,9 @@ MonoBehaviour:
   maximumPitch: 60
   minimumPitch: -60
   eye: {fileID: 4544152594189161446}
+  restEye: {x: 0, y: 1.043, z: 0.12}
+  deathBlendSeconds: 0.25
+  fieldOfView: 75
   nearClipPlane: 0.04
 --- !u!114 &326977853508813783
 MonoBehaviour:
@@ -368,7 +371,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  <InventorySize>k__BackingField: {x: 15, y: 10}
+  <InventorySize>k__BackingField: {x: 12, y: 4}
 --- !u!114 &1002941924275506353
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -149,6 +149,11 @@ namespace SimpleRPG
         public float MovementSpeed => Attributes != null ? (float)Mathf.Max(0f, (float)Attributes.Get(DerivedStats.MovementSpeed)) : 0f;
 
         /// <summary>
+        /// True if this character's stat profile defines the derived stat, so a stat sheet can leave out stats the character does not have.
+        /// </summary>
+        public bool HasDerivedStat(AttributeId stat) => statProfile != null && statProfile.Sheet.Rules.Any(x => x.Stat == stat);
+
+        /// <summary>
         /// Maximum Health as the server resolves it: the stat rounded to a whole number and at least 1, or the fallback if the character has no such stat.
         /// </summary>
         private int ResolveMaxHealth()

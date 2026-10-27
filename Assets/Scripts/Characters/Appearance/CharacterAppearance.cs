@@ -49,6 +49,12 @@ namespace SimpleRPG.Appearance
 
         public BodyPartDefinition[] DefaultParts => defaultParts;
 
+        /// <summary>The parts worn right now on this machine.</summary>
+        public System.Collections.Generic.IEnumerable<BodyPartDefinition> CurrentParts => View.Parts;
+
+        /// <summary>The skeleton root the parts bind to.</summary>
+        public Transform RigRoot => rigRoot;
+
         /// <summary>Replaces how part ids are resolved. For tests.</summary>
         public void UseCatalog(IBodyPartCatalog replacement) => catalog = replacement;
 

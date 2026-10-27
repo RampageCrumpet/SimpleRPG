@@ -119,7 +119,9 @@ public class FirstPersonCharacterController : NetworkBehaviour, IViewSink
             this.activeCamera.nearClipPlane = this.nearClipPlane;
             this.activeCamera.fieldOfView = this.fieldOfView;
 
-            this.look = new FirstPersonLook(this, rotationSpeed, minimumPitch, maximumPitch, this.transform.eulerAngles.y);
+            // Start from the yaw the articulation already holds, not the transform's: the two are read at different moments and a respawn or
+            // placement in between left the view and the server's body a fixed angle apart, so movement and the camera disagreed with the body.
+            this.look = new FirstPersonLook(this, rotationSpeed, minimumPitch, maximumPitch, this.articulation.ViewYaw);
             this.articulation.ViewReset += this.look.ResetYaw;
 
             // Lock the cursor so it doesn't go wiggling everywhere.

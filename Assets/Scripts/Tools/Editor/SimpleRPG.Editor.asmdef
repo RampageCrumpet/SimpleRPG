@@ -6,6 +6,8 @@
         "SimpleRPG.Abilities.Runtime",
         "SimpleRPG.Gameplay.Core",
         "Unity.Netcode.Runtime",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
         "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [

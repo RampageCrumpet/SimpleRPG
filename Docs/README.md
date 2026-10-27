@@ -10,6 +10,8 @@ For sound effects (Audacity MCP, sourcing, measuring, known tool quirks), start 
 - [Dungeon generation](DungeonGeneration.md)
 - [Skeleton animation](SkeletonAnimationPlan.md)
 - [Network authority](NetworkAuthority.md)
+- [Equipment and the paper doll](Equipment.md)
+- [HUD and inventory screens](InventoryScreens.md)
 - [Upper-body articulation](UpperBodyArticulation.md)
 - [Character appearance](CharacterAppearance.md)
 - [Anatomical hit regions](HitRegions.md)

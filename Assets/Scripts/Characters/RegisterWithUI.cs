@@ -43,8 +43,10 @@ namespace SimpleRPG.UI
                 Interactor interactor = GetComponent<Interactor>();
                 GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<InteractionUI>()).Single(x => x != null).SetInteractor(interactor);
 
-                Inventory inventory = GetComponent<Inventory>();
-                GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<LootMenuUI>()).Single(x => x != null).PlayerInventoryUI.SetInventory(inventory);
+                // The inventory screens show the character's inventory, equipment, preview and stats.
+                GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<LootMenuUI>()).Single(x => x != null).BindPlayer(character);
+
+                GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponentInChildren<BuffBarUI>(true)).Single(x => x != null).SetCharacter(character);
 
             }
         }

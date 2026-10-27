@@ -298,11 +298,19 @@ namespace SimpleRPG.InventorySystem
 
         private bool TryFindFreeLocation(Item item, out Vector2Int location)
         {
+            return TryFindFreeLocation(item, null, out location);
+        }
+
+        /// <summary>
+        /// Finds the first location the item fits, treating the cells of <paramref name="ignored"/> (an item about to leave) as free.
+        /// </summary>
+        private bool TryFindFreeLocation(Item item, Item ignored, out Vector2Int location)
+        {
             for (int x = 0; x < InventorySize.x; x++)
             {
                 for (int y = 0; y < InventorySize.y; y++)
                 {
-                    if (inventory[x, y] == null && ValidateItemPlacement(item, new Vector2Int(x, y)))
+                    if ((inventory[x, y] == null || inventory[x, y] == ignored) && ValidateItemPlacement(item, new Vector2Int(x, y), ignored))
                     {
                         location = new Vector2Int(x, y);
                         return true;
@@ -322,6 +330,11 @@ namespace SimpleRPG.InventorySystem
         /// <returns> False if the item is outside the bounds of the inventory or overlaps another item, true otherwise.</returns>
         public bool ValidateItemPlacement(Item item, Vector2Int location)
         {
+            return ValidateItemPlacement(item, location, null);
+        }
+
+        private bool ValidateItemPlacement(Item item, Vector2Int location, Item ignored)
+        {
             for (int x = location.x; x < location.x + item.ItemSize.x; x++)
             {
                 for (int y = location.y; y < location.y + item.ItemSize.y; y++)
@@ -331,7 +344,7 @@ namespace SimpleRPG.InventorySystem
                         return false;
 
                     // A slot the item would have filled is occupied by a different.
-                    if (inventory[x, y] != null && inventory[x, y] != item)
+                    if (inventory[x, y] != null && inventory[x, y] != item && inventory[x, y] != ignored)
                         return false;
                 }
             }
@@ -399,6 +412,58 @@ namespace SimpleRPG.InventorySystem
             {
                 Changed?.Invoke();
             }
+        }
+
+        /// <summary>
+        /// Finds the item in this inventory with the given instance ID.
+        /// </summary>
+        public bool TryGetItem(uint instanceId, out Item item)
+        {
+            return itemsById.TryGetValue(instanceId, out item);
+        }
+
+        /// <summary>
+        /// Checks whether an item would fit somewhere in this inventory, optionally once <paramref name="leaving"/> (an item in this inventory
+        /// that is about to go) has made room. Changes nothing.
+        /// </summary>
+        internal bool TryFindRoom(Item item, Item leaving, out Vector2Int location)
+        {
+            return TryFindFreeLocation(item, leaving, out location);
+        }
+
+        /// <summary>
+        /// Takes an item out of the inventory without destroying it, returning the instance ID it had so it can be placed elsewhere
+        /// (an equipment slot) and come back as the same item. Authority only.
+        /// </summary>
+        internal bool Detach(Item item, out uint instanceId, out Vector2Int location)
+        {
+            instanceId = 0;
+            location = default;
+            if (!CanMutate || !idsByItem.TryGetValue(item, out instanceId))
+            {
+                return false;
+            }
+
+            foreach ((Item stored, Vector2Int position) in GetItems())
+            {
+                if (stored == item)
+                {
+                    location = position;
+                    break;
+                }
+            }
+
+            RemoveItemInternal(item);
+            Changed?.Invoke();
+            return true;
+        }
+
+        /// <summary>
+        /// Puts a detached item back at a location the caller has validated, under the instance ID it had. Authority only.
+        /// </summary>
+        internal void Attach(Item item, Vector2Int location, uint instanceId)
+        {
+            PlaceItem(item, location, instanceId);
         }
 
         /// <summary>

@@ -1,5 +1,7 @@
 using SimpleRPG.Gameplay;
 using SimpleRPG.InventorySystem;
+using SimpleRPG.UI;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -12,7 +14,7 @@ namespace SimpleRPG.Abilities.Integration
     /// <see cref="TryActivateOnServer"/> directly.
     /// </summary>
     [RequireComponent(typeof(Character))]
-    public sealed class AbilityUser : NetworkBehaviour, IAbilityActivator
+    public sealed class AbilityUser : NetworkBehaviour, IAbilityActivator, IBuffSource
     {
         /// <summary>
         /// Ticks of slack on the cooldown, so network jitter between a client's press and the server's clock doesn't refuse a use that was ready
@@ -36,6 +38,23 @@ namespace SimpleRPG.Abilities.Integration
         private void Awake()
         {
             character = GetComponent<Character>();
+        }
+
+        /// <summary>
+        /// Lists the statuses on this character for the buff bar. Only the server holds statuses, so elsewhere the list is empty.
+        /// </summary>
+        public void GetBuffs(List<BuffEntry> into)
+        {
+            into.Clear();
+            if (!IsServer || !IsSpawned)
+            {
+                return;
+            }
+
+            foreach ((StatusDefinition definition, StatusSnapshot snapshot) in AbilityServices.Current.Statuses.GetAllStatuses(character.Id))
+            {
+                into.Add(new BuffEntry(definition.StatusName, definition.Icon, snapshot.StackCount));
+            }
         }
 
         public override void OnNetworkSpawn()

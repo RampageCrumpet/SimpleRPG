@@ -233,25 +233,17 @@ namespace SimpleRPG
                 return false;
             }
 
-            if (item == null || instanceId == 0 || slot == EquipmentSlot.Consumable)
+            if (!IsEquippable(slot, item, instanceId, out int itemId))
             {
-                return false;
-            }
+                if (item != null && itemId == 0 && instanceId != 0 && slot != EquipmentSlot.Consumable)
+                {
+                    Debug.LogError($"Item '{item.ItemName}' isn't in the ItemRegistry, so it can't be replicated. Add it to the registry.");
+                }
 
-            ItemRegistry registry = ItemRegistry.Instance;
-            int itemId = registry != null ? registry.GetId(item) : 0;
-            if (itemId == 0)
-            {
-                Debug.LogError($"Item '{item.ItemName}' isn't in the ItemRegistry, so it can't be replicated. Add it to the registry.");
                 return false;
             }
 
             // The change is recorded and published before the events go out, so a rule reacting to an event sees the new equipment.
-            if (IsEquipped(instanceId))
-            {
-                return false;
-            }
-
             if (items.ContainsKey(slot))
             {
                 RemoveEntry(slot);
@@ -273,6 +265,103 @@ namespace SimpleRPG
 
             equipmentSet.Equip((int)slot, new ItemInstanceId(instanceId));
             return true;
+        }
+
+        /// <summary>
+        /// Asks for armor in this character's inventory to be worn. On the server it happens at once; on the owning client the request is sent
+        /// and the result arrives through <see cref="Changed"/>. See <see cref="EquipmentController"/> for what makes a request valid.
+        /// </summary>
+        /// <returns>True if the request was carried out or sent; false if it can't possibly succeed.</returns>
+        public bool RequestEquip(Item item)
+        {
+            Inventory inventory = GetComponent<Inventory>();
+            if (item == null || inventory == null)
+            {
+                return false;
+            }
+
+            if (IsServer)
+            {
+                return EquipmentController.TryEquip(inventory, this, item) == EquipResult.Success;
+            }
+
+            uint instanceId = (uint)inventory.GetInstanceId(item).Value;
+            if (!IsSpawned || !IsOwner || instanceId == 0)
+            {
+                return false;
+            }
+
+            EquipRpc(instanceId);
+            return true;
+        }
+
+        /// <summary>
+        /// Asks for the armor in a slot to go back into this character's inventory. Same routing as <see cref="RequestEquip"/>.
+        /// </summary>
+        public bool RequestUnequip(EquipmentSlot slot)
+        {
+            Inventory inventory = GetComponent<Inventory>();
+            if (inventory == null || Get(slot) == null)
+            {
+                return false;
+            }
+
+            if (IsServer)
+            {
+                return EquipmentController.TryUnequip(inventory, this, slot) == EquipResult.Success;
+            }
+
+            if (!IsSpawned || !IsOwner)
+            {
+                return false;
+            }
+
+            UnequipRpc((int)slot);
+            return true;
+        }
+
+        [Rpc(SendTo.Server)]
+        private void EquipRpc(uint instanceId, RpcParams rpcParams = default)
+        {
+            if (CanBeChangedBy(rpcParams.Receive.SenderClientId) && TryGetComponent(out Inventory inventory) && inventory.TryGetItem(instanceId, out Item item))
+            {
+                EquipmentController.TryEquip(inventory, this, item);
+            }
+        }
+
+        [Rpc(SendTo.Server)]
+        private void UnequipRpc(int slot, RpcParams rpcParams = default)
+        {
+            if (CanBeChangedBy(rpcParams.Receive.SenderClientId) && TryGetComponent(out Inventory inventory) && System.Enum.IsDefined(typeof(EquipmentSlot), slot))
+            {
+                EquipmentController.TryUnequip(inventory, this, (EquipmentSlot)slot);
+            }
+        }
+
+        /// <summary>
+        /// Only the owning client may change a character's equipment, and not while the character is dead.
+        /// </summary>
+        private bool CanBeChangedBy(ulong clientId) => OwnerClientId == clientId && character.IsAlive;
+
+        /// <summary>
+        /// Would <see cref="Equip"/> accept this? Changes nothing and logs nothing, so callers can check before they take the item from somewhere else.
+        /// </summary>
+        public bool CanEquip(EquipmentSlot slot, Item item, uint instanceId)
+        {
+            return IsServer && equipmentSet != null && IsEquippable(slot, item, instanceId, out _);
+        }
+
+        private bool IsEquippable(EquipmentSlot slot, Item item, uint instanceId, out int itemId)
+        {
+            itemId = 0;
+            if (item == null || instanceId == 0 || slot == EquipmentSlot.Consumable)
+            {
+                return false;
+            }
+
+            ItemRegistry registry = ItemRegistry.Instance;
+            itemId = registry != null ? registry.GetId(item) : 0;
+            return itemId != 0 && !IsEquipped(instanceId);
         }
 
         /// <summary>

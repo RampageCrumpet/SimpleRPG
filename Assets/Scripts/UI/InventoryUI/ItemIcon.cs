@@ -10,8 +10,19 @@ namespace SimpleRPG.UI
     /// The UI representation of an item in the inventory.
     /// </summary>
     [RequireComponent(typeof(Image))]
-    public class ItemIcon : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+    public class ItemIcon : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
     {
+        /// <summary>
+        /// Right-clicking an item asks to wear it. Only armor in the player's own inventory can be; anything else is refused by the equipment rules.
+        /// </summary>
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData.button == PointerEventData.InputButton.Right && inventoryUI != null)
+            {
+                inventoryUI.RequestEquip(Item);
+            }
+        }
+
         /// <summary>
         /// The item this icon represents
         /// </summary>
