@@ -70,12 +70,12 @@ A client can only say where it looks. The speed limits, twist limit and phase ar
 
 ## The camera
 
-The camera is **not** a child of the head. One owner for each thing:
+The camera is **not** a child of the head: the walk animation moves the head's eye about 10 cm (roughly 5 cm sideways, 7 cm up and down, 5 cm forward, measured on `TestCharacter`) and tilts the head up to ~19 degrees off the view, and a camera riding it shows all of that. One owner for each thing:
 
-- **Position**: `FirstPersonCharacterController.LateUpdate` copies the world position of the `Eye` transform, a child of the humanoid head bone (`Head`) at the character's eyes (local `(0, 0.11, 0.09)` in head space on `TestCharacter`). It runs after the animator and `SpineRig.Apply`, so the eye already carries locomotion, crouching, leaning, torso articulation and authored head movement. Nothing smooths or corrects it; small authored head movement moves the viewpoint.
-- **Orientation**: `FirstPersonLook.ApplyCamera`, from the owner's view yaw and pitch only. The head's rotation never reaches the camera.
-- The camera is parented to the character root only so it goes where the character goes; its local pose is overwritten each frame.
-- **Near plane**: `FirstPersonCharacterController.nearClipPlane` (0.04 m), applied when the camera attaches. The vertical field of view is unchanged.
+- **Position**: `FirstPersonCharacterController.LateUpdate` holds the camera at `restEye` in the character root's space, plus `UpperBodyArticulation.TrackedDisplacement`: how far this frame's spine twist and tilt (`SpineRig.Apply`) moved the `Eye` transform (a child of the head bone) away from where the animator alone left it. The animated bob and sway are therefore never read; the deliberate lean into the view is. No smoothing, no lag, nothing fed back to the bones. When the character dies the camera hands over to the animated eye over `deathBlendSeconds`.
+- **Orientation**: the owner's view yaw and pitch only, set in the same `LateUpdate`. The head's rotation never reaches the camera, so it always points exactly where the mouse does.
+- The camera is parented to the character root only so it goes where the character goes; its pose is overwritten each frame.
+- **Lens**: near plane 0.04 m, vertical field of view 75 degrees (`fieldOfView`), both applied when the camera attaches.
 
 ## Limitations to check by hand
 

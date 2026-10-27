@@ -103,6 +103,14 @@ namespace SimpleRPG.Articulation
         public float AppliedPitch { get; private set; }
 
         /// <summary>
+        /// How far this frame's twist and tilt moved the tracked point (see <see cref="TrackPoint"/>) from where the animation alone left it, in
+        /// world space. This is the deliberate part of the point's motion; everything else the animation does to it is the clip's own.
+        /// </summary>
+        public Vector3 TrackedDisplacement { get; private set; }
+
+        private Transform trackedPoint;
+
+        /// <summary>
         /// Raised on the owning client when the server moves the view, such as on respawn, so the camera can follow. The float is the new yaw.
         /// </summary>
         public event Action<float> ViewReset;
@@ -158,6 +166,14 @@ namespace SimpleRPG.Articulation
             {
                 character.OnRevive -= HandleRevive;
             }
+        }
+
+        /// <summary>
+        /// Asks for <see cref="TrackedDisplacement"/> of a transform under the spine, such as the eye. Valid after this component's LateUpdate.
+        /// </summary>
+        public void TrackPoint(Transform point)
+        {
+            trackedPoint = point;
         }
 
         private void HandlePoseChanged(ArticulationPose previous, ArticulationPose current)
@@ -390,7 +406,8 @@ namespace SimpleRPG.Articulation
 
             AppliedTwist = twist * poseWeight;
             AppliedPitch = pitch * poseWeight;
-            rig.Apply(transform, AppliedTwist, AppliedPitch);
+            rig.Apply(transform, AppliedTwist, AppliedPitch, trackedPoint, out Vector3 displacement);
+            TrackedDisplacement = displacement;
         }
     }
 }

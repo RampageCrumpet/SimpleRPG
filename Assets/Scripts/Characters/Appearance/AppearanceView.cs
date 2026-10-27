@@ -21,6 +21,9 @@ namespace SimpleRPG.Appearance
 
         public bool IsShowing(BodyPartSlot slot) => shown.ContainsKey(slot);
 
+        /// <summary>The object showing the slot's part, or null if the slot is empty.</summary>
+        public GameObject ShownIn(BodyPartSlot slot) => shown.TryGetValue(slot, out GameObject current) ? current : null;
+
         /// <summary>Shows the part in its slot, replacing whatever was there.</summary>
         public void Show(BodyPartDefinition part)
         {

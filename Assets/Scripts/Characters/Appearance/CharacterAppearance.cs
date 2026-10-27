@@ -72,6 +72,9 @@ namespace SimpleRPG.Appearance
             view?.ClearAll();
         }
 
+        /// <summary>The object showing the part worn in the slot on this machine, or null if the slot is empty.</summary>
+        public GameObject ShownIn(BodyPartSlot slot) => View.ShownIn(slot);
+
         /// <summary>Server only: wears the part in its slot, replacing the part there.</summary>
         public void ServerEquip(BodyPartDefinition part)
         {

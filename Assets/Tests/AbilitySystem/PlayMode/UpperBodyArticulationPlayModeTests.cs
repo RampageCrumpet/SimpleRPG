@@ -9,6 +9,8 @@ using System.Collections;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.TestTools;
 
 namespace SimpleRPG.Abilities.Tests.PlayMode
@@ -219,33 +221,120 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private Transform HeadBone() => playerObject.GetComponent<Animator>().GetBoneTransform(HumanBodyBones.Head);
 
         [UnityTest]
-        public IEnumerator Camera_HangsOffTheCharacterAndSitsExactlyOnTheEye()
+        public IEnumerator Camera_HangsOffTheCharacter_AndPointsExactlyWhereTheViewDoes()
         {
             yield return Frames(2);
-            Transform eye = Eye();
-
-            Assert.IsNotNull(eye, "the controller has an eye reference");
-            Assert.IsTrue(eye.IsChildOf(HeadBone()), "the eye reference rides the head bone");
             Assert.AreSame(playerObject.transform, cameraObject.transform.parent, "the camera is only parented to the character, not to a bone");
 
-            OwnerLook().Look(0f, 1f, 0.15f);
-            for (int i = 0; i < 20; i++)
+            FirstPersonLook look = OwnerLook();
+            look.Look(0.5f, 1f, 0.15f);
+            for (int i = 0; i < 40; i++)
             {
-                yield return null;
-                Assert.AreEqual(0f, Vector3.Distance(cameraObject.transform.position, eye.position), 0.0001f, "the camera is on the evaluated eye every frame, with no frame of lag");
+                yield return new WaitForEndOfFrame();
+                Quaternion view = Quaternion.Euler(look.Pitch, look.Yaw, 0f);
+                Assert.AreEqual(0f, Quaternion.Angle(view, cameraObject.transform.rotation), 0.001f, "the camera is aimed exactly at the view on every frame, whatever the head's animation does");
             }
         }
 
         [UnityTest]
-        public IEnumerator Camera_FollowsTheViewNotTheBody()
+        public IEnumerator Camera_DoesNotFeedBackIntoTheView()
         {
             FirstPersonLook look = OwnerLook();
-            look.Look(0.5f, 1f, 0.15f);
-            yield return Seconds(0.4f);
+            look.Look(0.5f, 0.5f, 0.15f);
+            float yaw = look.Yaw;
+            float pitch = look.Pitch;
 
-            Quaternion view = Quaternion.Euler(look.Pitch, look.Yaw, 0f);
-            Assert.AreEqual(0f, Quaternion.Angle(view, cameraObject.transform.rotation), 0.01f, "the camera is aimed exactly where the view points");
-            Assert.Greater(Quaternion.Angle(HeadBone().rotation, cameraObject.transform.rotation), 3f, "while the head, which the torso tilts, is not where the camera points");
+            yield return Seconds(1f);
+
+            Assert.AreEqual(yaw, look.Yaw, 0.0001f, "with no input the view does not drift, whatever the camera does");
+            Assert.AreEqual(pitch, look.Pitch, 0.0001f);
+        }
+
+        [UnityTest]
+        public IEnumerator Camera_StaysOnTheRestEye_AtIdleAndWhileWalking()
+        {
+            yield return Seconds(0.5f);
+            Vector3 idle = playerObject.transform.InverseTransformPoint(cameraObject.transform.position);
+
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            try
+            {
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.W));
+                yield return Seconds(1f);
+                Assert.Greater(playerObject.GetComponent<CharacterController>().velocity.magnitude, 0.5f, "the character is walking");
+
+                float headSpread = 0f;
+                float cameraSpread = 0f;
+                Vector3 headMin = Vector3.one * 100f, headMax = Vector3.one * -100f, camMin = headMin, camMax = headMax;
+                float headRoll = 0f;
+                int frames = 90;
+                for (int i = 0; i < frames; i++)
+                {
+                    yield return null;
+                    Vector3 head = playerObject.transform.InverseTransformPoint(Eye().position);
+                    Vector3 cam = playerObject.transform.InverseTransformPoint(cameraObject.transform.position);
+                    headMin = Vector3.Min(headMin, head); headMax = Vector3.Max(headMax, head);
+                    camMin = Vector3.Min(camMin, cam); camMax = Vector3.Max(camMax, cam);
+                    headRoll = Mathf.Max(headRoll, Quaternion.Angle(Quaternion.Euler(OwnerLook().Pitch, OwnerLook().Yaw, 0f), Eye().rotation));
+                }
+
+                headSpread = (headMax - headMin).magnitude;
+                cameraSpread = (camMax - camMin).magnitude;
+                Assert.Less(cameraSpread, 0.01f, "walking does not move the camera relative to the body");
+                Assert.AreEqual(0f, Vector3.Distance(idle, playerObject.transform.InverseTransformPoint(cameraObject.transform.position)), 0.01f, "and it is where it was at rest");
+            }
+            finally
+            {
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+                InputSystem.RemoveDevice(keyboard);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator Camera_LeansWithTheArticulation_ButNotWithTheAnimation()
+        {
+            yield return Seconds(0.5f);
+            Vector3 rest = playerObject.transform.InverseTransformPoint(cameraObject.transform.position);
+
+            // Look hard down: the torso bends over, which is deliberate motion the camera must show.
+            FirstPersonLook look = OwnerLook();
+            for (int i = 0; i < 60; i++)
+            {
+                look.Look(0f, 1f, 0.02f);
+                yield return null;
+            }
+
+            Vector3 bent = playerObject.transform.InverseTransformPoint(cameraObject.transform.position);
+            Assert.Greater(Vector3.Distance(rest, bent), 0.05f, "bending over with the view moves the eye");
+        }
+
+        // Measurement, not a regression test: writes where the guard, middle and tip of the blade are in camera space through a chained combo.
+        [UnityTest]
+        public IEnumerator Probe_SwordInCameraSpace()
+        {
+            AbilityDefinition melee = UnityEditor.AssetDatabase.LoadAssetAtPath<AbilityDefinition>(MeleeAttackPath);
+            Transform model = sword.transform.Find("Longsword Model");
+            AbilityUser user = playerObject.GetComponent<AbilityUser>();
+            Camera cam = cameraObject.GetComponent<Camera>();
+            var lines = new System.Text.StringBuilder();
+            lines.AppendLine("t,hit,guard_x,guard_y,guard_z,mid_x,mid_y,mid_z,tip_x,tip_y,tip_z");
+            yield return Seconds(0.5f);
+            float start = Time.time;
+            float next = 0f;
+            while (Time.time - start < 6f)
+            {
+                float t = Time.time - start;
+                if (t >= next && next <= 5.5f && (next == 0f || Mathf.Repeat(next, 1.3f) < 0.06f)) user.TryActivateOnServer(melee);
+                Vector3 g = cam.transform.InverseTransformPoint(model.position);
+                Vector3 m = cam.transform.InverseTransformPoint(model.TransformPoint(new Vector3(0f, 0.00613f, 0f)));
+                Vector3 e = cam.transform.InverseTransformPoint(model.TransformPoint(new Vector3(0f, 0.01226f, 0f)));
+                bool live = sword.gameObject.activeInHierarchy && sword.enabled;
+                lines.AppendLine($"{t:F3},{(live ? 1 : 0)},{g.x:F3},{g.y:F3},{g.z:F3},{m.x:F3},{m.y:F3},{m.z:F3},{e.x:F3},{e.y:F3},{e.z:F3}");
+                if (t >= next) next += 0.05f;
+                yield return null;
+            }
+
+            System.IO.File.WriteAllText(System.Environment.GetEnvironmentVariable("SWORD_PROBE_OUT") ?? "C:/Users/ALEXVA~1/AppData/Local/Temp/claude/I--Unity-Projects-SimpleRPG/368dfdec-0804-4c41-a1ee-87bb5dfba007/scratchpad/sword.csv", lines.ToString());
         }
 
         [UnityTest]

@@ -8,7 +8,8 @@
         "SimpleRPG.Abilities.Integration",
         "Unity.Netcode.Runtime",
         "Unity.Multiplayer.Tools.NetworkSimulator.Runtime",
-        "Unity.AI.Navigation"
+        "Unity.AI.Navigation",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

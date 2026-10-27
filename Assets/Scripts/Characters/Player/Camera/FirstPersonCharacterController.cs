@@ -40,11 +40,25 @@ public class FirstPersonCharacterController : NetworkBehaviour, IViewSink
     private float minimumPitch = -60;
 
     /// <summary>
-    /// A point on the head bone at the character's eyes. The camera sits at its world position and nowhere else.
+    /// A point on the head bone at the character's eyes. The animator's pose of it is measured, never copied to the camera: see
+    /// <see cref="LateUpdate"/>.
     /// </summary>
     [SerializeField]
-    [Tooltip("A transform under the head bone at the character's eyes. The camera takes its world position; its rotation is ignored.")]
+    [Tooltip("A transform under the head bone at the character's eyes. Its animated motion is not followed; only the lean the view gives it is.")]
     private Transform eye;
+
+    [SerializeField]
+    [Tooltip("Where the eye sits in the character root's space when standing at rest. The camera is held here, plus the lean the view gives the spine, so walking and other clips do not bob it.")]
+    private Vector3 restEye = new Vector3(0f, 1.043f, 0.12f);
+
+    [SerializeField]
+    [Tooltip("Seconds for the camera to hand over from the held eye to the animated head when the character dies.")]
+    private float deathBlendSeconds = 0.25f;
+
+    [SerializeField]
+    [Range(40f, 100f)]
+    [Tooltip("The owner camera's vertical field of view in degrees. The hands hang well below the eye, so a wider view keeps more of the swing on screen; the aim is unaffected.")]
+    private float fieldOfView = 75f;
 
     [SerializeField]
     [Tooltip("The owner camera's near clipping plane in metres. Small, because the sword passes within centimetres of the eye.")]
@@ -54,6 +68,11 @@ public class FirstPersonCharacterController : NetworkBehaviour, IViewSink
     /// The camera we want our script to be actively controlling.
     /// </summary>
     private Camera activeCamera;
+
+    /// <summary>
+    /// 1 while the camera is held at the rest eye, 0 when it follows the animated head (a dead character's falling body).
+    /// </summary>
+    private float stability = 1f;
 
     /// <summary>
     /// Applies mouse look to the owner's camera. Only exists on the owner.
@@ -94,11 +113,13 @@ public class FirstPersonCharacterController : NetworkBehaviour, IViewSink
                 return;
             }
 
-            // Move the main camera to this character. It hangs off the root only so it goes where the character goes; LateUpdate places it.
+            // The camera hangs off the root only so it goes where the character goes; LateUpdate places it.
             FirstPersonLookMath.AttachCamera(activeCamera.transform, this.transform);
+            this.articulation.TrackPoint(this.eye);
             this.activeCamera.nearClipPlane = this.nearClipPlane;
+            this.activeCamera.fieldOfView = this.fieldOfView;
 
-            this.look = new FirstPersonLook(activeCamera.transform, this, rotationSpeed, minimumPitch, maximumPitch, this.transform.eulerAngles.y);
+            this.look = new FirstPersonLook(this, rotationSpeed, minimumPitch, maximumPitch, this.transform.eulerAngles.y);
             this.articulation.ViewReset += this.look.ResetYaw;
 
             // Lock the cursor so it doesn't go wiggling everywhere.
@@ -138,16 +159,22 @@ public class FirstPersonCharacterController : NetworkBehaviour, IViewSink
     }
 
     /// <summary>
-    /// The camera's position is the eye's and its orientation is the view's. Runs after the animator and the articulation (this component's
-    /// execution order is later) have posed the head this frame, so the camera never reads last frame's pose.
+    /// Places the camera. Its orientation is the view's, so it points exactly where the mouse does and the head's animation cannot tilt it. Its
+    /// position is the rest eye on the character root plus how far the articulation (the lean into the view) moved the eye off the animated pose,
+    /// so the walk's bob and sway, which live in the animated pose, never reach it. Runs after the articulation (this component's execution order is
+    /// later), reading its result from this frame, so nothing lags and nothing is fed back: the camera is never read by anything that poses a bone.
     /// </summary>
     public void LateUpdate()
     {
-        if (this.look != null)
+        if (this.look == null)
         {
-            this.look.ApplyCamera();
-            this.activeCamera.transform.position = this.eye.position;
+            return;
         }
+
+        this.stability = Mathf.MoveTowards(this.stability, this.IsAlive ? 1f : 0f, this.deathBlendSeconds > 0f ? Time.deltaTime / this.deathBlendSeconds : 1f);
+        this.activeCamera.transform.SetPositionAndRotation(
+            FirstPersonLookMath.StableEyePosition(this.transform.TransformPoint(this.restEye), this.articulation.TrackedDisplacement, this.eye.position, this.stability),
+            Quaternion.Euler(this.look.Pitch, this.look.Yaw, 0f));
     }
 
     public override void OnDestroy()

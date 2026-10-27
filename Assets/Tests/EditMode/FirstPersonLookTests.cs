@@ -27,7 +27,7 @@ namespace SimpleRPG.Tests.EditMode
             bodyObject = new GameObject("Body");
             anchorObject = new GameObject("Anchor");
             viewSink = new FakeViewSink();
-            look = new FirstPersonLook(cameraObject.transform, viewSink, RotationSpeed, MinimumPitch, MaximumPitch);
+            look = new FirstPersonLook(viewSink, RotationSpeed, MinimumPitch, MaximumPitch);
         }
 
         [TearDown]
@@ -49,7 +49,6 @@ namespace SimpleRPG.Tests.EditMode
             }
 
             Assert.AreEqual(MaximumPitch, look.Pitch, 0.0001f);
-            Assert.AreEqual(MaximumPitch, Mathf.DeltaAngle(0f, cameraObject.transform.eulerAngles.x), 0.01f);
         }
 
         [Test]
@@ -61,7 +60,6 @@ namespace SimpleRPG.Tests.EditMode
             }
 
             Assert.AreEqual(MinimumPitch, look.Pitch, 0.0001f);
-            Assert.AreEqual(MinimumPitch, Mathf.DeltaAngle(0f, cameraObject.transform.eulerAngles.x), 0.01f);
         }
 
         [Test]
@@ -81,8 +79,8 @@ namespace SimpleRPG.Tests.EditMode
             var fiveFramesObject = new GameObject("FiveFrames");
             try
             {
-                var tenFrames = new FirstPersonLook(tenFramesObject.transform, new FakeViewSink(), RotationSpeed, MinimumPitch, MaximumPitch);
-                var fiveFrames = new FirstPersonLook(fiveFramesObject.transform, new FakeViewSink(), RotationSpeed, MinimumPitch, MaximumPitch);
+                var tenFrames = new FirstPersonLook(new FakeViewSink(), RotationSpeed, MinimumPitch, MaximumPitch);
+                var fiveFrames = new FirstPersonLook(new FakeViewSink(), RotationSpeed, MinimumPitch, MaximumPitch);
 
                 for (int i = 0; i < 10; i++) tenFrames.Look(0f, 1f, 0.01f);
                 for (int i = 0; i < 5; i++) fiveFrames.Look(0f, 1f, 0.02f);
@@ -106,16 +104,18 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
-        public void Pitch_OnlyChangesTheCameraAndNotTheBody()
+        public void Look_NeverTouchesTheCameraOrTheBody()
         {
             bodyObject.transform.rotation = Quaternion.Euler(0f, 45f, 0f);
+            cameraObject.transform.rotation = Quaternion.Euler(10f, 20f, 30f);
             Quaternion bodyBefore = bodyObject.transform.rotation;
+            Quaternion cameraBefore = cameraObject.transform.rotation;
 
-            look.Look(0f, 1f, 0.1f);
+            look.Look(3f, 1f, 0.1f);
+            look.ResetYaw(75f);
 
             Assert.AreEqual(bodyBefore, bodyObject.transform.rotation);
-            Assert.AreEqual(0f, cameraObject.transform.eulerAngles.y, 0.0001f);
-            Assert.AreEqual(0f, cameraObject.transform.eulerAngles.z, 0.0001f);
+            Assert.AreEqual(cameraBefore, cameraObject.transform.rotation, "the view is input state; the camera's pose is the head's");
         }
 
         // --- Yaw routing ---
@@ -146,23 +146,9 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
-        public void Yaw_TurnsTheCameraInWorldSpaceWhateverItsParentDoes()
-        {
-            // The body trails the view, so a parent that has turned elsewhere must not show up in where the camera points.
-            anchorObject.transform.rotation = Quaternion.Euler(0f, 100f, 0f);
-            cameraObject.transform.SetParent(anchorObject.transform);
-
-            look.Look(2f, 0f, 0.05f);
-            anchorObject.transform.rotation = Quaternion.Euler(0f, -40f, 0f);
-            look.ApplyCamera();
-
-            Assert.AreEqual(10f, Mathf.DeltaAngle(0f, cameraObject.transform.eulerAngles.y), 0.01f);
-        }
-
-        [Test]
         public void Yaw_AccumulatesAndStartsFromTheInitialYaw()
         {
-            var turned = new FirstPersonLook(cameraObject.transform, new FakeViewSink(), RotationSpeed, MinimumPitch, MaximumPitch, 90f);
+            var turned = new FirstPersonLook(new FakeViewSink(), RotationSpeed, MinimumPitch, MaximumPitch, 90f);
 
             turned.Look(2f, 0f, 0.05f);
 
@@ -178,7 +164,7 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
-        public void ResetYaw_AimsTheCameraWithoutReportingAndClearsThePitch()
+        public void ResetYaw_AimsTheViewWithoutReportingAndClearsThePitch()
         {
             look.Look(0f, 2f, 0.05f);
             viewSink.Looks.Clear();
@@ -187,7 +173,7 @@ namespace SimpleRPG.Tests.EditMode
 
             Assert.AreEqual(0, viewSink.Looks.Count);
             Assert.AreEqual(0f, look.Pitch);
-            Assert.AreEqual(75f, Mathf.DeltaAngle(0f, cameraObject.transform.eulerAngles.y), 0.01f);
+            Assert.AreEqual(75f, look.Yaw, 0.0001f);
         }
 
         // --- Gating ---
@@ -222,6 +208,22 @@ namespace SimpleRPG.Tests.EditMode
 
             Assert.AreSame(anchorObject.transform, cameraObject.transform.parent);
             Assert.AreEqual(Vector3.zero, cameraObject.transform.localPosition);
+        }
+
+        [Test]
+        public void StableEyePosition_HoldsTheRestEyePlusTheLean_AndIgnoresTheAnimatedEyeWhileAlive()
+        {
+            Vector3 position = FirstPersonLookMath.StableEyePosition(new Vector3(0f, 1f, 0f), new Vector3(0f, -0.1f, 0.2f), new Vector3(0.05f, 1.07f, 0.04f), 1f);
+
+            Assert.AreEqual(0f, Vector3.Distance(new Vector3(0f, 0.9f, 0.2f), position), 0.0001f);
+        }
+
+        [Test]
+        public void StableEyePosition_FollowsTheAnimatedEyeOnceStabilityIsGone()
+        {
+            Vector3 animated = new Vector3(0.05f, 0.3f, 0.4f);
+
+            Assert.AreEqual(0f, Vector3.Distance(animated, FirstPersonLookMath.StableEyePosition(Vector3.up, Vector3.forward, animated, 0f)), 0.0001f);
         }
 
         [Test]

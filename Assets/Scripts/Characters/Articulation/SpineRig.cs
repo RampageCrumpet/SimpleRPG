@@ -71,9 +71,36 @@ namespace SimpleRPG.Articulation
         /// <param name="pitch">Degrees to tilt, positive forward.</param>
         public void Apply(Transform frame, float twist, float pitch)
         {
+            Apply(frame, twist, pitch, null, out _);
+        }
+
+        /// <summary>
+        /// Adds a twist and tilt to the spine and reports how far that moved a point somewhere below it, such as the eye.
+        /// </summary>
+        /// <param name="frame">The character's root. Its up axis is the twist axis and its right axis, turned by the twist, the tilt axis.</param>
+        /// <param name="twist">Degrees to twist, positive to the right.</param>
+        /// <param name="pitch">Degrees to tilt, positive forward.</param>
+        /// <param name="tracked">A transform under the spine, or null.</param>
+        /// <param name="displacement">World-space distance the tracked point moved because of the twist and tilt alone, from where the animator
+        /// left it. Zero when there is no tracked point.</param>
+        public void Apply(Transform frame, float twist, float pitch, Transform tracked, out Vector3 displacement)
+        {
             Vector3 up = frame.up;
             Vector3 right = frame.right;
             float twistSoFar = 0f;
+
+            // If the animator did not rewrite a bone since our last offset, undo that offset first so offsets never pile up. Done for the whole
+            // chain before anything is posed, so the tracked point is read from the purely animated pose.
+            for (int i = 0; i < bones.Length; i++)
+            {
+                Transform bone = bones[i];
+                if (bone != null && hasApplied[i] && Same(bone.localRotation, appliedLocal[i]))
+                {
+                    bone.localRotation = animatedLocal[i];
+                }
+            }
+
+            Vector3 animatedPoint = tracked != null ? tracked.position : Vector3.zero;
 
             for (int i = 0; i < bones.Length; i++)
             {
@@ -81,12 +108,6 @@ namespace SimpleRPG.Articulation
                 if (bone == null)
                 {
                     continue;
-                }
-
-                // If the animator did not rewrite this bone since our last offset, undo that offset first so offsets never pile up.
-                if (hasApplied[i] && Same(bone.localRotation, appliedLocal[i]))
-                {
-                    bone.localRotation = animatedLocal[i];
                 }
 
                 animatedLocal[i] = bone.localRotation;
@@ -102,6 +123,8 @@ namespace SimpleRPG.Articulation
                 appliedLocal[i] = bone.localRotation;
                 hasApplied[i] = true;
             }
+
+            displacement = tracked != null ? tracked.position - animatedPoint : Vector3.zero;
         }
 
         private static bool Same(Quaternion a, Quaternion b)

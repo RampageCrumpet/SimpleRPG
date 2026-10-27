@@ -16,7 +16,7 @@ MonoBehaviour:
     maxTwist: 70
     maxPitchDown: 90
     maxPitchUp: 90
-    pitchGain: 1.5
+    pitchGain: 1
     pelvisDeadZone: 15
     pelvisRecenterSpeed: 90
     pelvisFollowSpeed: 300

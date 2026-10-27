@@ -41,6 +41,18 @@ public static class FirstPersonLookMath
     }
 
     /// <summary>
+    /// Where the first-person camera sits: held at the rest eye plus the articulation's lean, or on the animated eye as the character dies.
+    /// </summary>
+    /// <param name="restEye"> The rest eye in world space, carried by the character root.</param>
+    /// <param name="lean"> How far the articulation moved the eye from the animated pose, in world space.</param>
+    /// <param name="animatedEye"> The eye where the animation and the articulation left it.</param>
+    /// <param name="stability"> 1 to hold the camera at the rest eye, 0 to follow the animated eye.</param>
+    public static UnityEngine.Vector3 StableEyePosition(UnityEngine.Vector3 restEye, UnityEngine.Vector3 lean, UnityEngine.Vector3 animatedEye, float stability)
+    {
+        return UnityEngine.Vector3.Lerp(animatedEye, restEye + lean, stability);
+    }
+
+    /// <summary>
     /// Builds the flat, normalized movement direction from the character's axes and the player's input.
     /// </summary>
     /// <param name="forward"> The character's forward axis.</param>
