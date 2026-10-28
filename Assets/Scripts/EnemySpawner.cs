@@ -1,6 +1,7 @@
 using SimpleRPG.InventorySystem.LootGeneration;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace SimpleRPG
 {
@@ -8,11 +9,12 @@ namespace SimpleRPG
     public class EnemySpawner : MonoBehaviour
     {
         /// <summary>
-        /// The LootTable containing enemies this spawner can spawn.
+        /// The encounter table containing the enemies this spawner can spawn.
         /// </summary>
-        [Tooltip("The LootTable containing enemies this spawner can spawn.")]
+        [Tooltip("The encounter table containing the enemies this spawner can spawn.")]
         [SerializeField]
-        WeightedRandomTable lootTable;
+        [FormerlySerializedAs("lootTable")]
+        WeightedRandomTable encounterTable;
 
         NetworkSpawn networkSpawn;
 
@@ -21,8 +23,8 @@ namespace SimpleRPG
         {
             networkSpawn = this.GetComponent<NetworkSpawn>();
 
-            // Get a random enemy from the loot table
-            var result = lootTable.GetResult(GameplayRandomSource.Current).OfType<EnemyRandomEntry>().FirstOrDefault();
+            // Get a random enemy from the encounter table
+            var result = encounterTable.GetResult(GameplayRandomSource.Current).OfType<EncounterEntry>().FirstOrDefault();
             if (result != null && result.EnemyPrefab != null)
             {
                 networkSpawn.SpawnGameObject(result.EnemyPrefab);

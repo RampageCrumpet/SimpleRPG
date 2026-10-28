@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 44f9829fa1e25ee45a141d639fd84c06, type: 3}
   m_Name: SkeletonFootman
-  m_EditorClassIdentifier: SimpleRPG::EnemyRandomEntry
+  m_EditorClassIdentifier: SimpleRPG::EncounterEntry
   <DropChance>k__BackingField: 1
   <Unique>k__BackingField: 0
   <Always>k__BackingField: 0

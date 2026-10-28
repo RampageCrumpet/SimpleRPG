@@ -39,15 +39,6 @@ namespace SimpleRPG.InventorySystem.LootGeneration
         [Tooltip("The item dropping is enabled.")]
         public bool Enabled { get; set; } = true;
 
-        /// <inheritdoc/>
-        public event EventHandler PreResultEvaluation;
-
-        /// <inheritdoc/>
-        public event EventHandler PostResultEvaluation;
-
-        /// <inheritdoc/>
-        public event EventHandler ObjectSelected;
-
         /// <summary>
         /// Gets the resulting loot drop from this lootable object.
         /// </summary>
@@ -62,24 +53,6 @@ namespace SimpleRPG.InventorySystem.LootGeneration
         public virtual IEnumerable<WeightedRandomEntry> GetResult(System.Random random)
         {
             return GetResult();
-        }
-
-        // Fires the ObjectSelected event. Called when the object is selected to be included in the loot drop.
-        public void OnObjectSelected(EventArgs e)
-        {
-            ObjectSelected?.Invoke(this, e);
-        }
-
-        // Fires the PostResultEvaluation event. Called after the results have been calculated and the result set is complete, but before the results are returned.
-        public void OnPostResultEvaluation(ResultEventArgs e)
-        {
-            PostResultEvaluation?.Invoke(this, e);
-        }
-
-        // Fires the PreResultEvaluation event. Called before all of the probabilities of all items of the current LootTable have been calculated.
-        public void OnPreResultEvaluation(EventArgs e)
-        {
-            PreResultEvaluation?.Invoke(this, e);
         }
     }
 }

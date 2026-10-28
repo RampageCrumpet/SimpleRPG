@@ -72,7 +72,7 @@ namespace SimpleRPG.LevelGeneration
                 // Keep the arrival room safe. No restrictions on room types or dungeon size.
                 if (i > 0 && encounters != null && random.NextDouble() < encounterChance)
                 {
-                    foreach (var enemy in encounters.GetResult(random).OfType<EnemyRandomEntry>())
+                    foreach (var enemy in encounters.GetResult(random).OfType<EncounterEntry>())
                         if (enemy.EnemyPrefab != null && TryFindPosition(rooms[i], cellSize, random, true, out Vector3 point))
                         {
                             Spawn(enemy.EnemyPrefab, point, Quaternion.Euler(0, (float)random.NextDouble() * 360, 0));

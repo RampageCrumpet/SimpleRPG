@@ -10,7 +10,7 @@ namespace SimpleRPG.Tests.EditMode
 {
     /// <summary>
     /// Checks weighted loot selection: proportional picks, invalid weights, empty and null-only tables, Always entries,
-    /// roll counts, unique entries, callbacks and seeded reproducibility.
+    /// roll counts, unique entries and seeded reproducibility.
     /// </summary>
     public class WeightedRandomTableTests
     {
@@ -241,31 +241,6 @@ namespace SimpleRPG.Tests.EditMode
             {
                 Assert.AreSame(item, Pick(table, new System.Random(seed)).Single());
             }
-        }
-
-        [Test]
-        public void Callbacks_FireOnceForTheTableAndOncePerSelection()
-        {
-            LootableItem item = Entry(weight: 1);
-            int preCalls = 0;
-            int selectedCalls = 0;
-            int postCalls = 0;
-            ResultEventArgs postArgs = null;
-            item.PreResultEvaluation += (sender, e) => preCalls++;
-            item.ObjectSelected += (sender, e) => selectedCalls++;
-            item.PostResultEvaluation += (sender, e) =>
-            {
-                postCalls++;
-                postArgs = (ResultEventArgs)e;
-            };
-            WeightedRandomTable table = Table(count: 2, item);
-
-            List<WeightedRandomEntry> result = Pick(table, new System.Random(12));
-
-            Assert.That(preCalls, Is.EqualTo(1));
-            Assert.That(selectedCalls, Is.EqualTo(2));
-            Assert.That(postCalls, Is.EqualTo(1));
-            Assert.That(postArgs.LootResult.Count(), Is.EqualTo(result.Count));
         }
 
         [Test]

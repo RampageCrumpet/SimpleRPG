@@ -57,4 +57,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 204a0ced807c38b42aafd96c275673b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lootTable: {fileID: 11400000, guid: 1b95c4d6858b7544eb2a3843edc7a77c, type: 2}
+  encounterTable: {fileID: 11400000, guid: 1b95c4d6858b7544eb2a3843edc7a77c, type: 2}

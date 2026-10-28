@@ -38,7 +38,7 @@ Death releases outstanding swings, closes hitboxes, stops navigation, disables t
 3. Add Animator, AnimatableCharacter, MeleeDelivery and the graph AbilityUser component. Configure animation triggers and any activation/death presentation. Use in-place clips when the NavMeshAgent supplies movement. For rigs with animated bone translations, use transform clips and matching transform masks rather than humanoid retargeting.
 4. Place HurtBox trigger colliders on the HurtBox layer. Fit the standing body collider to the model.
 5. Attach a Weapon at the model's hand/socket, with a kinematic Rigidbody and a blade-shaped Hitbox trigger on the Hitbox layer. The weapon's network behaviors use the character's root NetworkObject.
-6. Register the prefab in the network prefab lists and add an EnemyRandomEntry to the encounter table.
+6. Register the prefab in the network prefab lists and add an EncounterEntry to the encounter table.
 
 A different locomotion or attack style can supply its own state composition/delivery instead of duplicating the skeleton implementation. Perception, tracking, health and navigation are independent of skeleton names or humanoid assets.
 

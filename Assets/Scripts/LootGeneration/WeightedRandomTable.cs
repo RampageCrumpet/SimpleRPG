@@ -40,16 +40,9 @@ namespace SimpleRPG.InventorySystem.LootGeneration
 
             List<WeightedRandomEntry> result = new List<WeightedRandomEntry>();
 
-            // Notify listeners that the loot table is about to be evaluated.
-            foreach (WeightedRandomEntry item in contents)
-            {
-                item.OnPreResultEvaluation(EventArgs.Empty);
-            }
-
             // Every enabled Always entry drops, regardless of the weighted rolls.
             foreach (WeightedRandomEntry item in contents.Where(x => x.Always && x.Enabled))
             {
-                item.OnObjectSelected(EventArgs.Empty);
                 AddResult(result, item.GetResult(random));
             }
 
@@ -70,15 +63,7 @@ namespace SimpleRPG.InventorySystem.LootGeneration
                     droppedUnique.Add(picked);
                 }
 
-                picked.OnObjectSelected(EventArgs.Empty);
                 AddResult(result, picked.GetResult(random));
-            }
-
-            // Notify listeners that the loot table has been evaluated.
-            ResultEventArgs resultEventArgs = new ResultEventArgs(result);
-            foreach (WeightedRandomEntry item in contents)
-            {
-                item.OnPostResultEvaluation(resultEventArgs);
             }
 
             return result;
