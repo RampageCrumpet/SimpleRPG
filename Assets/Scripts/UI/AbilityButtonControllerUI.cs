@@ -8,30 +8,31 @@ namespace SimpleRPG.UI
     public class AbilityButtonControllerUI : MonoBehaviour, ILocalPlayerView
     {
         /// <summary>
-        /// The object we want to use as a blueprint for spawning all of our abillity buttons.
+        /// The object we want to use as a blueprint for spawning all of our ability buttons.
         /// </summary>
         [SerializeField]
-        [Tooltip("The abillity button prefab.")]
+        [Tooltip("The ability button prefab.")]
         private GameObject abilityButtonPrefab;
 
         private readonly List<AbilityButton> abilityButtons = new List<AbilityButton>();
 
         /// <summary>
-        /// The <see cref="GameObject"/> that holds the UI for our abillities.
+        /// The <see cref="GameObject"/> that holds the UI for our abilities.
         /// </summary>
-        [field: SerializeField]
+        [SerializeField]
+        [UnityEngine.Serialization.FormerlySerializedAs("abillityBar")]
         [Tooltip("The layout control for the players ability buttons.")]
-        private GameObject abillityBar;
+        private GameObject abilityBar;
 
         /// <summary>
-        /// Create the abillity buttons.
+        /// Create the ability buttons.
         /// </summary>
         public void CreateAbilityButtons(IEnumerable<IAbilitySlot> abilitySlots)
         {
             // Create a button for each of our abilities.
             for (int x = 0; x < abilitySlots.Count(); x++)
             {
-                GameObject newAbilityButtonGameObject = Object.Instantiate(abilityButtonPrefab, abillityBar.transform);
+                GameObject newAbilityButtonGameObject = Object.Instantiate(abilityButtonPrefab, abilityBar.transform);
                 AbilityButton newAbilityButton = newAbilityButtonGameObject.GetComponent<AbilityButton>();
                 newAbilityButton.Initialize(abilitySlots.ElementAt(x));
                 abilityButtons.Add(newAbilityButton);

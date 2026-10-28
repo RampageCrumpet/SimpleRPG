@@ -133,7 +133,7 @@ namespace SimpleRPG
         /// <summary>
         /// Stop the interaction with the interactable if the player takes any action.
         /// </summary>
-        /// <param name="slot">The abillity that was used.</param>
+        /// <param name="slot">The ability that was used.</param>
         private void HandleAbilityActivated(IAbilitySlot slot)
         {
             if(Interactable != null)

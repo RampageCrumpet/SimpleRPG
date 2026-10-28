@@ -9,7 +9,7 @@ using UnityEngine.UI;
 namespace SimpleRPG.UI
 {
     /// <summary>
-    /// This script handles controller the cooldown display for an abillity.
+    /// This script handles controller the cooldown display for an ability.
     /// </summary>
     public class AbilityButton : MonoBehaviour
     {
@@ -35,11 +35,10 @@ namespace SimpleRPG.UI
 
             this.abilitySlot = abilitySlot;
             abilityIconImage.sprite = abilitySlot.Icon;
-            //darkAbilityIcon.sprite = ability.abillitySprite;
         }
 
         /// <summary>
-        /// Activate the abillity associate with this button.
+        /// Activate the ability associated with this button.
         /// </summary>
         public void Activate()
         {
@@ -60,7 +59,7 @@ namespace SimpleRPG.UI
         {
             if (abilitySlot != null)
             {
-                //Scale the dark mask so the abillity is properly visible behind it.
+                //Scale the dark mask so the ability is properly visible behind it.
                 darkAbilityIcon.fillAmount = abilitySlot.CooldownTime > 0f ? abilitySlot.CooldownTimeLeft / abilitySlot.CooldownTime : 0f;
 
                 // If the ability is cooling down we want the text to be visible.

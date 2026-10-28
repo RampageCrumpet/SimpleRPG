@@ -475,7 +475,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   abilityButtonPrefab: {fileID: 7073308292650528889, guid: 4f0a9e7b5d2bfed40811a35d856e8829, type: 3}
-  abillityBar: {fileID: 3479307613687889396}
+  abilityBar: {fileID: 3479307613687889396}
 --- !u!1 &3479307613687889396
 GameObject:
   m_ObjectHideFlags: 0
