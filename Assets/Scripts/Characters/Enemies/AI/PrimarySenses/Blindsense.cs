@@ -1,6 +1,5 @@
 using SimpleRPG.AI;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace SimpleRPG.AI
@@ -22,29 +21,44 @@ namespace SimpleRPG.AI
         [Tooltip("Should this sense only return the player?")]
         private bool onlySensePlayers;
 
-        /// <summary>
-        /// The list of characters we can sense.
-        /// </summary>
-        private IEnumerable<Character> sensedCharacters = new List<Character>();
+        private Collider[] overlaps = new Collider[64];
+        private readonly List<Character> found = new List<Character>();
 
         /// <inheritdoc cref="PrimarySense.CanSense(Character)"/>
         public override bool CanSense(Character target)
         {
-            return target != null && Sense().Contains(target);
+            if (target == null) return false;
+            found.Clear();
+            Sense(found);
+            return found.Contains(target);
         }
 
         public override IEnumerable<Character> Sense()
         {
-            // Create an overlap sphere and return all of the characters within the range of this sense.
-            sensedCharacters = Physics.OverlapSphere(transform.position, Range, sensableLayers, QueryTriggerInteraction.Collide)
-                .Select(x => x.GetComponentInParent<Character>()).Where(x => x != null && x.IsAlive).Distinct().ToArray();
+            var results = new List<Character>();
+            Sense(results);
+            return results;
+        }
 
-            if(onlySensePlayers)
+        /// <inheritdoc/>
+        public override void Sense(List<Character> results)
+        {
+            // Every living character within the range of this sense, each once.
+            // A full buffer may have dropped colliders (each character has many hurtboxes), so grow it and look again.
+            int count = Physics.OverlapSphereNonAlloc(transform.position, Range, overlaps, sensableLayers, QueryTriggerInteraction.Collide);
+            while (count == overlaps.Length)
             {
-                sensedCharacters = sensedCharacters.Where(x => x.gameObject.tag == "Player");
+                overlaps = new Collider[overlaps.Length * 2];
+                count = Physics.OverlapSphereNonAlloc(transform.position, Range, overlaps, sensableLayers, QueryTriggerInteraction.Collide);
             }
 
-            return sensedCharacters;
+            for (int i = 0; i < count; i++)
+            {
+                Character character = overlaps[i].GetComponentInParent<Character>();
+                if (character == null || !character.IsAlive) continue;
+                if (onlySensePlayers && !character.CompareTag("Player")) continue;
+                if (!results.Contains(character)) results.Add(character);
+            }
         }
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created

@@ -18,6 +18,8 @@ namespace AI
         public IEnumerable<PrimarySense> PrimarySenses { get; set; }
         public IEnumerable<SecondarySense> SecondarySenses { get; set; }
         [Min(0.1f)] public float AttackRange = 1.5f;
+        [Min(0f), Tooltip("Seconds between sensing sweeps while the current target stays valid or there is none. A lost target forces an immediate sweep. 0 senses on every call.")]
+        public float SenseInterval = 0.2f;
         public Character Target { get; private set; }
         public bool IsDead { get; private set; }
 
@@ -71,11 +73,35 @@ namespace AI
         public IEnumerable<Character> SenseTargets() => PrimarySenses
             .SelectMany(s => s.Sense()).Where(c => c != null && c != Character && c.IsAlive).Distinct();
 
+        private readonly List<Character> sensedBuffer = new List<Character>();
+        private float nextSenseTime;
+
         public bool TrackTarget()
         {
-            var sensed = SenseTargets().ToArray();
-            if (Target == null || !Target.IsAlive || !sensed.Contains(Target))
-                Target = sensed.OrderBy(c => (c.transform.position - transform.position).sqrMagnitude).FirstOrDefault();
+            bool targetValid = Target != null && Target.IsAlive;
+            // Between sweeps, keep a valid target or a sweep that found nothing. A target that died or was destroyed forces a new sweep.
+            if (Time.time < nextSenseTime && (targetValid || Target == null)) return targetValid;
+
+            nextSenseTime = Time.time + SenseInterval;
+            sensedBuffer.Clear();
+            if (PrimarySenses is PrimarySense[] senses)
+                for (int i = 0; i < senses.Length; i++) senses[i].Sense(sensedBuffer);
+            else if (PrimarySenses != null)
+                foreach (PrimarySense sense in PrimarySenses) sense.Sense(sensedBuffer);
+
+            bool stillSensed = false;
+            Character nearest = null;
+            float nearestDistance = float.MaxValue;
+            for (int i = 0; i < sensedBuffer.Count; i++)
+            {
+                Character candidate = sensedBuffer[i];
+                if (candidate == null || candidate == Character || !candidate.IsAlive) continue;
+                if (candidate == Target) stillSensed = true;
+                float distance = (candidate.transform.position - transform.position).sqrMagnitude;
+                if (distance < nearestDistance) { nearestDistance = distance; nearest = candidate; }
+            }
+
+            if (!targetValid || !stillSensed) Target = nearest;
             return Target != null;
         }
 

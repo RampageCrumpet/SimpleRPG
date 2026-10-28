@@ -57,6 +57,7 @@ namespace SimpleRPG.Tests
                 var sense = owner.AddComponent<FixedTargetSense>();
                 sense.Targets = new[] { distant, controller.Character, close, close };
                 controller.PrimarySenses = new[] { sense };
+                controller.SenseInterval = 0f; // Time does not advance in this test, and it changes the sensed set between calls.
                 Assert.IsTrue(controller.TrackTarget());
                 Assert.AreSame(close, controller.Target);
                 sense.Targets = new[] { distant };

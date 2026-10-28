@@ -51,9 +51,22 @@ namespace SimpleRPG.InventorySystem
         private readonly Dictionary<Item, uint> idsByItem = new Dictionary<Item, uint>();
 
         /// <summary>
-        /// Source of unique item instance IDs. Only meaningful on the server (or offline).
+        /// Source of unique item instance IDs, shared by every inventory because items keep their ID when they move between inventories.
+        /// Only meaningful on the server (or offline). Restarts from zero for each <see cref="NetworkManager"/>, so a new session or test starts clean.
         /// </summary>
         private static uint lastInstanceId;
+        private static NetworkManager instanceIdOwner;
+
+        private static uint NextInstanceId()
+        {
+            if (instanceIdOwner != NetworkManager.Singleton)
+            {
+                instanceIdOwner = NetworkManager.Singleton;
+                lastInstanceId = 0;
+            }
+
+            return ++lastInstanceId;
+        }
 
         /// <summary>
         /// True if this machine may change the contents directly: it's the server, or the inventory isn't networked.
@@ -151,7 +164,7 @@ namespace SimpleRPG.InventorySystem
         {
             if (instanceId == 0)
             {
-                instanceId = ++lastInstanceId;
+                instanceId = NextInstanceId();
             }
 
             FillCells(item, location);
@@ -163,7 +176,8 @@ namespace SimpleRPG.InventorySystem
                 entries.Add(new InventoryEntry
                 {
                     InstanceId = instanceId,
-                    ItemId = ItemRegistry.Instance.GetId(item),
+                    // Callers check the registry (CanPlaceAsAuthority, CanMoveBetween) before placing; 0 would mean "unknown item".
+                    ItemId = ItemRegistry.Instance != null ? ItemRegistry.Instance.GetId(item) : 0,
                     Position = location
                 });
             }
@@ -473,7 +487,7 @@ namespace SimpleRPG.InventorySystem
         /// <returns>True if the move happened or the request was sent; false if it can't possibly succeed.</returns>
         public bool RequestMoveItem(Item item, Inventory destination, Vector2Int location)
         {
-            if (destination == null)
+            if (destination == null || item == null)
             {
                 return false;
             }
@@ -485,7 +499,7 @@ namespace SimpleRPG.InventorySystem
                 return moved;
             }
 
-            if (destination == null || item == null || !idsByItem.TryGetValue(item, out uint instanceId))
+            if (!idsByItem.TryGetValue(item, out uint instanceId))
             {
                 return false;
             }
@@ -527,36 +541,35 @@ namespace SimpleRPG.InventorySystem
         /// </summary>
         private bool CanBeAccessedBy(ulong clientId)
         {
-            // A dead character cannot handle items, whether its own or a container's.
-            foreach (NetworkObject deadCheck in NetworkManager.SpawnManager.GetClientOwnedObjects(clientId))
+            if (OwnerClientId != clientId && SharedAccessRange <= 0f)
             {
-                if (deadCheck.TryGetComponent(out Character dead) && !dead.IsAlive)
-                {
-                    return false;
-                }
-            }
-
-            if (OwnerClientId == clientId && SharedAccessRange <= 0f)
-            {
-                return true;
-            }
-
-            if (SharedAccessRange <= 0f)
-            {
+                // Neither the owner's own inventory nor a shared container.
                 return false;
             }
+
+            bool reachesContainer = OwnerClientId == clientId && SharedAccessRange <= 0f;
 
             // Characters are spawned with ownership rather than as player objects, so look at the characters the client owns.
             foreach (NetworkObject owned in NetworkManager.SpawnManager.GetClientOwnedObjects(clientId))
             {
-                if (owned.TryGetComponent(out Character _) &&
-                    Vector3.Distance(owned.transform.position, transform.position) <= SharedAccessRange)
+                if (!owned.TryGetComponent(out Character character))
                 {
-                    return true;
+                    continue;
+                }
+
+                // A dead character cannot handle items, whether its own or a container's.
+                if (!character.IsAlive)
+                {
+                    return false;
+                }
+
+                if (!reachesContainer && Vector3.Distance(owned.transform.position, transform.position) <= SharedAccessRange)
+                {
+                    reachesContainer = true;
                 }
             }
 
-            return false;
+            return reachesContainer;
         }
 
         /// <summary>
