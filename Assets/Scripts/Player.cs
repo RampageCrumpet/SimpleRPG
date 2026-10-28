@@ -33,7 +33,9 @@ namespace SimpleRPG
         private IEnumerator SpawnWhenDungeonReady()
         {
             var population = UnityEngine.Object.FindAnyObjectByType<SimpleRPG.LevelGeneration.DungeonPopulation>();
-            while (population != null && !population.IsReady) yield return null;
+            while (population != null && !population.IsReady && !population.HasFailed) yield return null;
+            if (population != null && population.HasFailed)
+                Debug.LogError($"Spawning player {OwnerClientId} at the fallback position because dungeon population failed: {population.FailureReason}", this);
             if (IsSpawned) SpawnCharacter();
         }
 
@@ -46,7 +48,7 @@ namespace SimpleRPG
             if (IsServer)
             {
                 var population = UnityEngine.Object.FindAnyObjectByType<SimpleRPG.LevelGeneration.DungeonPopulation>();
-                Vector3 spawnPosition = population != null ? population.PlayerSpawnPosition + Vector3.up * 0.15f : new Vector3(0, 5, 0);
+                Vector3 spawnPosition = population != null && population.IsReady ? population.PlayerSpawnPosition + Vector3.up * 0.15f : new Vector3(0, 5, 0);
                 GameObject playerInstance = Instantiate(playerPrefab, spawnPosition, playerPrefab.transform.rotation);
                 playerInstance.GetComponent<NetworkObject>().SpawnWithOwnership(this.OwnerClientId, true);
 

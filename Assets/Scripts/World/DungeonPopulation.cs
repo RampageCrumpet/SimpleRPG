@@ -21,17 +21,51 @@ namespace SimpleRPG.LevelGeneration
         public int EnemyCount { get; private set; }
         public int TreasureCount { get; private set; }
         public bool IsReady { get; private set; }
+        /// <summary>True once population has ended unsuccessfully; waiters must stop waiting on <see cref="IsReady"/>.</summary>
+        public bool HasFailed { get; private set; }
+        public string FailureReason { get; private set; }
 
         public void Populate(IReadOnlyList<RoomBlueprint> rooms, float cellSize, int seed)
         {
             IsReady = false;
-            if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer || rooms.Count == 0) return;
-            var random = new System.Random(seed);
-            occupied.Clear();
-            EnemyCount = TreasureCount = 0;
-            if (!TryFindArrival(rooms, cellSize, random, out Vector3 start))
-                throw new System.InvalidOperationException("The dungeon's first room has no safe player start connected to another room.");
-            occupied.Add(start);
+            HasFailed = false;
+            FailureReason = null;
+            if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
+            if (!TryPopulate(rooms, cellSize, seed, out string error))
+                Debug.LogError($"Dungeon population failed: {error}", this);
+        }
+
+        /// <summary>Populates the rooms. On failure, records <see cref="FailureReason"/>, sets <see cref="HasFailed"/> and returns false.</summary>
+        public bool TryPopulate(IReadOnlyList<RoomBlueprint> rooms, float cellSize, int seed, out string error)
+        {
+            IsReady = false;
+            HasFailed = false;
+            FailureReason = null;
+            error = null;
+            if (rooms == null || rooms.Count == 0)
+                error = "The generated dungeon has no rooms to populate.";
+            else
+            {
+                occupied.Clear();
+                EnemyCount = TreasureCount = 0;
+                var random = new System.Random(seed);
+                if (!TryFindArrival(rooms, cellSize, random, out Vector3 start))
+                    error = "The dungeon's first room has no safe player start connected to another room.";
+                else
+                {
+                    occupied.Add(start);
+                    PopulateRooms(rooms, cellSize, random);
+                    IsReady = true;
+                    return true;
+                }
+            }
+            HasFailed = true;
+            FailureReason = error;
+            return false;
+        }
+
+        private void PopulateRooms(IReadOnlyList<RoomBlueprint> rooms, float cellSize, System.Random random)
+        {
 
             for (int i = 0; i < rooms.Count; i++)
             {
@@ -58,7 +92,6 @@ namespace SimpleRPG.LevelGeneration
                             TreasureCount++;
                         }
             }
-            IsReady = true;
         }
 
         private bool TryFindArrival(IReadOnlyList<RoomBlueprint> rooms, float cellSize, System.Random random, out Vector3 start)

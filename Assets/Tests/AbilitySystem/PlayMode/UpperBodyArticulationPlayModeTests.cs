@@ -230,7 +230,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             look.Look(0.5f, 1f, 0.15f);
             for (int i = 0; i < 40; i++)
             {
-                yield return new WaitForEndOfFrame();
+                // Wait for a whole frame, so LateUpdate has placed the camera since the view last changed. Not WaitForEndOfFrame: that never fires while the Game view is not rendering.
+                int frame = Time.frameCount;
+                while (Time.frameCount == frame) yield return null;
                 Quaternion view = Quaternion.Euler(look.Pitch, look.Yaw, 0f);
                 Assert.AreEqual(0f, Quaternion.Angle(view, cameraObject.transform.rotation), 0.001f, "the camera is aimed exactly at the view on every frame, whatever the head's animation does");
             }
