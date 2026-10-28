@@ -69,7 +69,20 @@ public class Weapon : NetworkBehaviour
     public void ActivateHitbox()
     {
         swing.Begin();
-        if (hitbox != null) hitbox.enabled = true;
+        // Only the server acts on hits (see TargetHit), so a client that is only animating the swing does not run the sweeps.
+        if (hitbox != null) hitbox.enabled = ResolvesHits;
+    }
+
+    /// <summary>
+    /// True where hits are resolved: on the server, or when no network session is running (offline play and tests).
+    /// </summary>
+    private static bool ResolvesHits
+    {
+        get
+        {
+            NetworkManager manager = NetworkManager.Singleton;
+            return manager == null || !manager.IsListening || manager.IsServer;
+        }
     }
 
     public void DeactivateHitbox()

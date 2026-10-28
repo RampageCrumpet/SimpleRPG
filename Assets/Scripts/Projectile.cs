@@ -83,12 +83,6 @@ public class Projectile : NetworkBehaviour
         }
     }
 
-    /// <summary>
-    /// Server only. Records who fired the projectile, starts it moving, and tells clients to do the same.
-    /// The server must set these itself: a <see cref="ClientRpc"/> body doesn't run on a dedicated server.
-    /// </summary>
-    /// <param name="shooter">The character that fired this projectile, or null for a projectile with no shooter.</param>
-    /// <param name="direction">The direction to fire in.</param>
     public override void OnNetworkDespawn()
     {
         // A projectile removed without hitting anything or running out of time (a scene change, a shutdown) still tells the ability that fired it.
@@ -101,6 +95,12 @@ public class Projectile : NetworkBehaviour
         base.OnNetworkDespawn();
     }
 
+    /// <summary>
+    /// Server only. Records who fired the projectile, starts it moving, and tells clients to do the same.
+    /// The server must set these itself: a <see cref="ClientRpc"/> body doesn't run on a dedicated server.
+    /// </summary>
+    /// <param name="shooter">The character that fired this projectile, or null for a projectile with no shooter.</param>
+    /// <param name="direction">The direction to fire in.</param>
     public void Launch(Character shooter, Vector3 direction)
     {
         if (!this.IsServer)

@@ -91,10 +91,31 @@ namespace SimpleRPG.Abilities.Integration
         public void GetBuffs(List<BuffEntry> into)
         {
             into.Clear();
-            foreach ((StatusDefinition status, int stacks, long _) in GetActiveStatuses())
+            if (!IsSpawned || DefinitionRegistry.Instance == null)
             {
-                into.Add(new BuffEntry(status.StatusName, status.Icon, stacks));
+                return;
             }
+
+            // Polled every frame by the buff bar, so read the replicated list directly instead of building another one.
+            for (int i = 0; i < activeStatuses.Count; i++)
+            {
+                if (TryResolveStatus(activeStatuses[i], out StatusDefinition status))
+                {
+                    into.Add(new BuffEntry(status.StatusName, status.Icon, activeStatuses[i].Stacks));
+                }
+            }
+        }
+
+        private static bool TryResolveStatus(ActiveStatusEntry entry, out StatusDefinition status)
+        {
+            if (DefinitionRegistry.Instance.TryGetByShortId(entry.StatusShortId, out GameplayDefinition definition) && definition is StatusDefinition resolved)
+            {
+                status = resolved;
+                return true;
+            }
+
+            status = null;
+            return false;
         }
 
         /// <summary>
@@ -110,7 +131,7 @@ namespace SimpleRPG.Abilities.Integration
 
             foreach (ActiveStatusEntry entry in activeStatuses)
             {
-                if (DefinitionRegistry.Instance.TryGetByShortId(entry.StatusShortId, out GameplayDefinition definition) && definition is StatusDefinition status)
+                if (TryResolveStatus(entry, out StatusDefinition status))
                 {
                     result.Add((status, entry.Stacks, entry.ExpiryTick));
                 }

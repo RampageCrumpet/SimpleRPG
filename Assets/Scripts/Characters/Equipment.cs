@@ -14,7 +14,7 @@ namespace SimpleRPG
     /// <see cref="NetworkList{T}"/> that every client (including late joiners) reads. Each change raises item equipped and unequipped events
     /// on the server so rules that depend on equipment can follow it.
     /// An equipped item is identified by the same instance ID the item has in an <see cref="Inventory"/>. Moving items between an inventory and
-    /// equipment slots is not wired up yet; callers pass the item and its instance ID.
+    /// equipment slots goes through <see cref="SimpleRPG.InventorySystem.EquipmentController"/>, which checks the whole request before anything changes.
     /// </summary>
     [RequireComponent(typeof(Character))]
     public class Equipment : NetworkBehaviour

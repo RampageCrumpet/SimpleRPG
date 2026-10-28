@@ -151,14 +151,30 @@ namespace SimpleRPG
         /// <summary>
         /// True if this character's stat profile defines the derived stat, so a stat sheet can leave out stats the character does not have.
         /// </summary>
-        public bool HasDerivedStat(AttributeId stat) => statProfile != null && statProfile.Sheet.Rules.Any(x => x.Stat == stat);
+        public bool HasDerivedStat(AttributeId stat)
+        {
+            if (statProfile == null)
+            {
+                return false;
+            }
+
+            foreach (var rule in statProfile.Sheet.Rules)
+            {
+                if (rule.Stat == stat)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         /// <summary>
         /// Maximum Health as the server resolves it: the stat rounded to a whole number and at least 1, or the fallback if the character has no such stat.
         /// </summary>
         private int ResolveMaxHealth()
         {
-            if (Attributes != null && statProfile != null && statProfile.Sheet.Rules.Any(x => x.Stat == DerivedStats.MaximumHealth))
+            if (Attributes != null && HasDerivedStat(DerivedStats.MaximumHealth))
             {
                 return Mathf.Max(1, Mathf.RoundToInt((float)Attributes.Get(DerivedStats.MaximumHealth)));
             }
@@ -323,17 +339,9 @@ namespace SimpleRPG
             }
 
             DamageRequest request = new DamageRequest(Id, damage.Damage, instigator != null ? instigator.Id : default, bodyLocation: (int)location, provenance: provenance);
-            DamageOutcome outcome = GameplayServices.Current.Combat.Apply(request);
+            GameplayServices.Current.Combat.Apply(request);
 
-            if (outcome.WasApplied)
-            {
-                Debug.Log(this.gameObject.name + " has taken " + damage.Damage + " damage at " + location.ToString() + ".");
-            }
-
-            if (outcome.Result == DamageResult.Killed)
-            {
-                Debug.Log(this.gameObject.name + " has died.");
-            }
+            // The resolver publishes damage and death events; nothing is logged per hit.
         }
 
         void ICombatant.CommitHealth(int health)
