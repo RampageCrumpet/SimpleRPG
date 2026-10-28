@@ -39,6 +39,8 @@ An ability is a ScriptableObject (`AbilityDefinition`) holding a flat list of no
 
 Clients ask; the server decides. An ability request carries only an ability short id (or a slot and an ability position for items). The server checks ownership, that the character has the ability, life, cooldown, eligibility and charges. A client cannot change health, equipment or charges, and cannot read another player's charges. These are tested with a real second client on the loopback network (`RemoteClientNetworkTests`).
 
+Statuses are computed only on the server but shown everywhere: `AbilityUser` mirrors each status group on its character (status short id, stacks, ending tick) into a server-written `NetworkList`, driven by the status events including `StatusRefreshedEvent`. Clients only display it (`StatusReplicationNetworkTests`). One-shot visual cues are not part of this; none exist yet.
+
 ## Running the tests
 
 With the editor open, use the Test Runner window. Without it (the project must not be open in another editor):

@@ -128,6 +128,7 @@ GameObject:
   - component: {fileID: 3526595424310731791}
   - component: {fileID: 1553968823863620238}
   - component: {fileID: 1130225416307983987}
+  - component: {fileID: 3463122332262826166}
   m_Layer: 9
   m_Name: TestCharacter
   m_TagString: Player
@@ -558,6 +559,65 @@ MonoBehaviour:
   m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Appearance.OwnerViewBodyHider
   ShowTopMostFoldoutHeaderGroup: 1
   hiddenSlots: 0000000007000000i
+--- !u!114 &3463122332262826166
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1669218347359381997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54045b8afda18ef4ca3750a983e71b0f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Animations.HandGripIK
+  blendSeconds: 0.15
+--- !u!1 &3806423276993517633
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5973440120182795518}
+  - component: {fileID: 3458615168790840709}
+  m_Layer: 0
+  m_Name: Grip_Left
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5973440120182795518
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3806423276993517633}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.26374444, y: 0.39320666, z: -0.60680497, w: 0.63844746}
+  m_LocalPosition: {x: 0.0069534555, y: -0.06916453, z: 0.026348993}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4398385389684406659}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3458615168790840709
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3806423276993517633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60d783644bed871478fa4d3ab08a3318, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Animations.HandGrip
+  hand: 0
+  palmInHand: {x: 0, y: 0.09, z: -0.025}
 --- !u!1 &4258446281043409012
 GameObject:
   m_ObjectHideFlags: 0
@@ -617,12 +677,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4270958836031857002}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.07, z: 0}
+  m_LocalRotation: {x: -0.6480772, y: -0.7237378, z: -0.13262911, w: 0.19649206}
+  m_LocalPosition: {x: -0.055776972, y: 0.10454317, z: -0.037857085}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1636202891583317820}
+  - {fileID: 5973440120182795518}
   m_Father: {fileID: 1374147126712585938}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!65 &4741881176610932588

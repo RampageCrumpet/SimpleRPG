@@ -21,7 +21,13 @@ namespace SimpleRPG.Animations
         /// <summary>The state an attack layer rests in when no attack is playing.</summary>
         private const string AttackLayerEmptyState = "Empty";
 
+        /// <summary>The state an attack layer holds while a weapon is carried and no attack is playing; attacks recover into it.</summary>
+        private const string AttackLayerReadyState = "Longsword_Ready";
+
         private const float CancelBlendSeconds = 0.15f;
+        private const float StanceBlendSeconds = 0.2f;
+        private const string AttackStatePrefix = "Longsword_A";
+        private Equipment equipment;
 
         private void Start()
         {
@@ -30,6 +36,8 @@ namespace SimpleRPG.Animations
             characterController = GetComponent<CharacterController>();
             agent = GetComponent<NavMeshAgent>();
             melee = GetComponent<MeleeDeliveryBase>();
+            equipment = GetComponent<Equipment>();
+            if (equipment != null) equipment.Changed += RefreshStance;
             lastPosition = transform.position;
             character.OnTakeDamage += UpdateTakeDamage;
             character.OnDeath += Die;
@@ -40,7 +48,11 @@ namespace SimpleRPG.Animations
                 melee.MeleeAttackCancelled += CancelAttack;
             }
             if (!character.IsAlive) Die();
-            else Trigger(activationTrigger);
+            else
+            {
+                Trigger(activationTrigger);
+                RefreshStance();
+            }
         }
 
         private void Update()
@@ -93,6 +105,7 @@ namespace SimpleRPG.Animations
             }
 
             Trigger(activationTrigger);
+            RefreshStance();
         }
 
         private void MeleeAttack(int attackNumber, float secondsIntoAttack)
@@ -124,18 +137,44 @@ namespace SimpleRPG.Animations
         // An attack shown ahead of the server's word did not happen: fade the layer that was playing it back to its empty state.
         private void CancelAttack()
         {
+            int rest = RestStateHash();
             int empty = Animator.StringToHash(AttackLayerEmptyState);
             foreach (Animator animator in animators)
             {
                 for (int layer = 0; layer < animator.layerCount; layer++)
                 {
-                    if (animator.HasState(layer, empty)) animator.CrossFadeInFixedTime(empty, CancelBlendSeconds, layer);
+                    if (animator.HasState(layer, rest)) animator.CrossFadeInFixedTime(rest, CancelBlendSeconds, layer);
+                    else if (animator.HasState(layer, empty)) animator.CrossFadeInFixedTime(empty, CancelBlendSeconds, layer);
+                }
+            }
+        }
+
+        // The ready stance while a weapon is carried, nothing otherwise. A character with no weapon gets no weapon posture.
+        private int RestStateHash() => Animator.StringToHash(character.WeaponData != null ? AttackLayerReadyState : AttackLayerEmptyState);
+
+        // Moves every attack layer that is resting (not mid-attack) to the stance that matches what the character carries.
+        private void RefreshStance()
+        {
+            if (!character.IsAlive) return;
+
+            int rest = RestStateHash();
+            foreach (Animator animator in animators)
+            {
+                for (int layer = 0; layer < animator.layerCount; layer++)
+                {
+                    if (!animator.HasState(layer, rest)) continue;
+
+                    AnimatorStateInfo now = animator.GetCurrentAnimatorStateInfo(layer);
+                    bool inAttack = now.IsName(AttackStatePrefix + "1") || now.IsName(AttackStatePrefix + "2") || now.IsName(AttackStatePrefix + "3");
+                    bool heading = animator.IsInTransition(layer) ? animator.GetNextAnimatorStateInfo(layer).shortNameHash == rest : now.shortNameHash == rest;
+                    if (!inAttack && !heading) animator.CrossFadeInFixedTime(rest, StanceBlendSeconds, layer);
                 }
             }
         }
 
         private void OnDestroy()
         {
+            if (equipment != null) equipment.Changed -= RefreshStance;
             if (character != null)
             {
                 character.OnTakeDamage -= UpdateTakeDamage;

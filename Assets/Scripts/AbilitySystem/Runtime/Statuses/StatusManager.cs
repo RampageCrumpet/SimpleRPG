@@ -266,6 +266,11 @@ namespace SimpleRPG.Abilities
             }
 
             StatusApplyResult result = Reapply(group, application, now);
+            if (result == StatusApplyResult.Refreshed && !group.Removed)
+            {
+                Raise(new StatusRefreshedEvent(group.Target, group.DefinitionId, group.Id));
+            }
+
             Drain();
             return result;
         }

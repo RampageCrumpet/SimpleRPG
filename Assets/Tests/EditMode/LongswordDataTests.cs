@@ -127,7 +127,7 @@ namespace SimpleRPG.Tests.EditMode
             {
                 AnimatorState state = layer.stateMachine.states.Select(s => s.state).SingleOrDefault(s => s.name == step.State);
                 Assert.IsNotNull(state, $"The attack layer has no state '{step.State}'.");
-                Assert.AreSame(step.Clip, state.motion, $"State '{step.State}' must play the step's clip.");
+                Assert.AreEqual(step.Clip, state.motion, $"State '{step.State}' must play the step's clip.");
             }
         }
 
@@ -140,6 +140,38 @@ namespace SimpleRPG.Tests.EditMode
             foreach (AnimatorControllerLayer layer in controller.layers)
             {
                 Assert.IsFalse(layer.stateMachine.states.Any(s => s.state.name.EndsWith("_Combo") || s.state.name.EndsWith("_Recovery")), layer.name);
+            }
+        }
+
+        [Test]
+        public void AttackLayer_RestsInAHeldReadyPoseTakenFromTheFirstAttackClip()
+        {
+            AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(PlayerController);
+            AnimatorStateMachine machine = controller.layers.Single(l => l.name == AttackLayerName).stateMachine;
+            AnimatorState ready = machine.states.Select(s => s.state).SingleOrDefault(s => s.name == "Longsword_Ready");
+            Assert.IsNotNull(ready, "The attack layer needs a state that holds the ready stance.");
+
+            AnimatorState first = machine.states.Select(s => s.state).Single(s => s.name == "Longsword_A1");
+            Assert.AreSame(first.motion, ready.motion, "The ready pose reuses the A1 clip instead of a copy.");
+            Assert.AreEqual(0f, ready.speed, "The ready pose is held, not played.");
+            Assert.AreEqual(0f, ready.cycleOffset, "The ready pose is the clip's first frame, which A1 also ends on.");
+            Assert.AreEqual(0, ready.transitions.Length, "The ready state is left by the attack code, not by transitions.");
+
+            foreach (string attack in new[] { "Longsword_A1", "Longsword_A2", "Longsword_A3" })
+            {
+                AnimatorState state = machine.states.Select(s => s.state).Single(s => s.name == attack);
+                Assert.IsTrue(state.transitions.Length > 0 && state.transitions.All(t => t.destinationState == ready), $"{attack} must recover into the ready stance, not drop to the base layer.");
+            }
+        }
+
+        [Test]
+        public void FirstAttackClip_EndsOnItsStartingPose()
+        {
+            AnimationClip clip = GetClip(Attack1Fbx, "Longsword_A1");
+            foreach (EditorCurveBinding binding in AnimationUtility.GetCurveBindings(clip).Where(b => b.propertyName.StartsWith("Right ")))
+            {
+                AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
+                Assert.AreEqual(curve.Evaluate(0f), curve.Evaluate(clip.length), 0.02f, binding.propertyName);
             }
         }
     }

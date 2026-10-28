@@ -1,9 +1,11 @@
 using SimpleRPG.Gameplay;
 using SimpleRPG.InventorySystem;
 using SimpleRPG.UI;
+using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using EntityId = SimpleRPG.Gameplay.EntityId;
 
 namespace SimpleRPG.Abilities.Integration
 {
@@ -29,7 +31,45 @@ namespace SimpleRPG.Abilities.Integration
         [Tooltip("Where projectiles start, in this character's local space.")]
         private Vector3 muzzleOffset = new Vector3(0f, 1.2f, 0.8f);
 
+        /// <summary>
+        /// One status on this character as every machine sees it: which status, how many stacks, and when it ends. Short ids only; the
+        /// definition is looked up in the <see cref="DefinitionRegistry"/> on each machine.
+        /// </summary>
+        public struct ActiveStatusEntry : INetworkSerializable, IEquatable<ActiveStatusEntry>
+        {
+            public uint Group;
+            public uint StatusShortId;
+            public int Stacks;
+
+            /// <summary>The network tick the status ends at (its last stack's, when stacks run out separately).</summary>
+            public long ExpiryTick;
+
+            public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+            {
+                serializer.SerializeValue(ref Group);
+                serializer.SerializeValue(ref StatusShortId);
+                serializer.SerializeValue(ref Stacks);
+                serializer.SerializeValue(ref ExpiryTick);
+            }
+
+            public bool Equals(ActiveStatusEntry other) =>
+                Group == other.Group && StatusShortId == other.StatusShortId && Stacks == other.Stacks && ExpiryTick == other.ExpiryTick;
+
+            public override bool Equals(object obj) => obj is ActiveStatusEntry other && Equals(other);
+
+            public override int GetHashCode() => HashCode.Combine(Group, StatusShortId, Stacks, ExpiryTick);
+        }
+
         private Character character;
+
+        /// <summary>
+        /// The statuses on this character. Written only by the server from the status events; every client, late joiners included, reads it.
+        /// </summary>
+        private readonly NetworkList<ActiveStatusEntry> activeStatuses = new NetworkList<ActiveStatusEntry>();
+
+        private GameplayEventDispatcher statusEvents;
+
+        private readonly List<SubscriptionHandle> statusSubscriptions = new List<SubscriptionHandle>();
 
         private CooldownTracker cooldowns;
 
@@ -41,30 +81,164 @@ namespace SimpleRPG.Abilities.Integration
         }
 
         /// <summary>
-        /// Lists the statuses on this character for the buff bar. Only the server holds statuses, so elsewhere the list is empty.
+        /// Raised on every machine when this character's statuses change.
+        /// </summary>
+        public event Action StatusesChanged;
+
+        /// <summary>
+        /// Lists the statuses on this character for the buff bar. Every machine reads the replicated list, so a client sees what the server decided.
         /// </summary>
         public void GetBuffs(List<BuffEntry> into)
         {
             into.Clear();
-            if (!IsServer || !IsSpawned)
+            foreach ((StatusDefinition status, int stacks, long _) in GetActiveStatuses())
             {
-                return;
+                into.Add(new BuffEntry(status.StatusName, status.Icon, stacks));
+            }
+        }
+
+        /// <summary>
+        /// Gets the statuses on this character with the network tick each ends at, from the replicated list.
+        /// </summary>
+        public IReadOnlyList<(StatusDefinition Status, int Stacks, long ExpiryTick)> GetActiveStatuses()
+        {
+            List<(StatusDefinition, int, long)> result = new List<(StatusDefinition, int, long)>();
+            if (!IsSpawned || DefinitionRegistry.Instance == null)
+            {
+                return result;
             }
 
-            foreach ((StatusDefinition definition, StatusSnapshot snapshot) in AbilityServices.Current.Statuses.GetAllStatuses(character.Id))
+            foreach (ActiveStatusEntry entry in activeStatuses)
             {
-                into.Add(new BuffEntry(definition.StatusName, definition.Icon, snapshot.StackCount));
+                if (DefinitionRegistry.Instance.TryGetByShortId(entry.StatusShortId, out GameplayDefinition definition) && definition is StatusDefinition status)
+                {
+                    result.Add((status, entry.Stacks, entry.ExpiryTick));
+                }
             }
+
+            return result;
         }
 
         public override void OnNetworkSpawn()
         {
+            activeStatuses.OnListChanged += HandleStatusListChanged;
+
             if (IsServer)
             {
                 cooldowns = new CooldownTracker(AbilityServices.Current.Clock, CooldownToleranceTicks);
                 itemCaster = new ItemAbilityCaster(AbilityServices.Current.Executor, GameplayServices.Current.ItemStates, cooldowns);
+                BeginReplicatingStatuses();
+            }
+
+            StatusesChanged?.Invoke();
+        }
+
+        public override void OnNetworkDespawn()
+        {
+            activeStatuses.OnListChanged -= HandleStatusListChanged;
+            EndReplicatingStatuses();
+        }
+
+        private void HandleStatusListChanged(NetworkListEvent<ActiveStatusEntry> changeEvent) => StatusesChanged?.Invoke();
+
+        // ----- Status replication (server) -----
+
+        private void BeginReplicatingStatuses()
+        {
+            EndReplicatingStatuses();
+            statusEvents = GameplayServices.Current.Events;
+            statusSubscriptions.Add(statusEvents.Subscribe<StatusAppliedEvent>(e => SyncStatus(e.Target, e.Group)));
+            statusSubscriptions.Add(statusEvents.Subscribe<StatusStackAddedEvent>(e => SyncStatus(e.Target, e.Group)));
+            statusSubscriptions.Add(statusEvents.Subscribe<StatusStackExpiredEvent>(e => SyncStatus(e.Target, e.Group)));
+            statusSubscriptions.Add(statusEvents.Subscribe<StatusRefreshedEvent>(e => SyncStatus(e.Target, e.Group)));
+            statusSubscriptions.Add(statusEvents.Subscribe<StatusRemovedEvent>(e => SyncStatus(e.Target, e.Group)));
+
+            // Statuses already on the character when it spawned.
+            foreach ((StatusDefinition _, StatusSnapshot snapshot) in AbilityServices.Current.Statuses.GetAllStatuses(character.Id))
+            {
+                SyncStatus(character.Id, snapshot.Group);
             }
         }
+
+        private void EndReplicatingStatuses()
+        {
+            if (statusEvents != null)
+            {
+                foreach (SubscriptionHandle handle in statusSubscriptions) statusEvents.Unsubscribe(handle);
+            }
+
+            statusSubscriptions.Clear();
+            statusEvents = null;
+        }
+
+        /// <summary>
+        /// Makes the replicated entry for one status group match the status manager as it is now: added, updated or removed. It reads the
+        /// current state rather than the event, so several events in a row always converge on the truth.
+        /// </summary>
+        private void SyncStatus(EntityId target, StatusInstanceId group)
+        {
+            if (!IsServer || !IsSpawned || target != character.Id)
+            {
+                return;
+            }
+
+            StatusSnapshot current = null;
+            foreach ((StatusDefinition _, StatusSnapshot snapshot) in AbilityServices.Current.Statuses.GetAllStatuses(target))
+            {
+                if (snapshot.Group == group)
+                {
+                    current = snapshot;
+                    break;
+                }
+            }
+
+            // A status that is not in the registry has no short id to send, so it stays on the server.
+            uint shortId = 0;
+            if (current != null && (DefinitionRegistry.Instance == null || !DefinitionRegistry.Instance.TryGetShortId(current.Status, out shortId)))
+            {
+                current = null;
+            }
+
+            int index = IndexOfStatus(group.Value);
+            if (current == null)
+            {
+                if (index >= 0) activeStatuses.RemoveAt(index);
+                return;
+            }
+
+            ActiveStatusEntry entry = new ActiveStatusEntry
+            {
+                Group = group.Value,
+                StatusShortId = shortId,
+                Stacks = current.StackCount,
+                ExpiryTick = current.SharedExpiryTick >= 0 ? current.SharedExpiryTick : LastStackExpiry(current),
+            };
+
+            if (index < 0) activeStatuses.Add(entry);
+            else if (!activeStatuses[index].Equals(entry)) activeStatuses[index] = entry;
+        }
+
+        private static long LastStackExpiry(StatusSnapshot snapshot)
+        {
+            long last = 0;
+            foreach (StackSnapshot stack in snapshot.Stacks)
+            {
+                if (stack.ExpiryTick > last) last = stack.ExpiryTick;
+            }
+
+            return last;
+        }
+
+        private int IndexOfStatus(uint group)
+        {
+            for (int i = 0; i < activeStatuses.Count; i++)
+            {
+                if (activeStatuses[i].Group == group) return i;
+            }
+
+            return -1;
+        }
+
 
         /// <summary>
         /// Asks to use one of the abilities the item in a slot provides. On a client the request names the slot and the ability's position in the

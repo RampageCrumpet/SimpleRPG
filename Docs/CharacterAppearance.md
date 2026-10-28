@@ -27,7 +27,13 @@ Server-authoritative, like equipment. The server owns the worn parts in a `Netwo
 
 Re-exporting the model updates the same assets and regenerates `HumanMale_Rig.prefab`, the model with its meshes and animator stripped. `CharacterAppearance` has *Preview Default Parts* and *Clear Preview* context-menu commands for seeing the parts in the editor; previews are never saved.
 
+## Corrected longsword sources
+
+The current body FBX comes from `I:/Art/3d Models/Human_Male/Human_Male_Corrected.blend`. The companion `Human_Male_Longsword_Corrected.blend` contains all three baked attacks and a sword for review. Editable Cascadeur scenes and animation exports are in `I:/Art/Cascadeur/Longsword/HumanMale/Corrected`. The audit and validation evidence are in `I:/Art/3d Models/Human_Male/Authoring/RigAudit_20261027/REPORT.md`.
+
+The skeleton retains its 52 bones and original proportions. Wrist weights blend across the forearm/hand transition. The TestCharacter prefab's sword mount and Grip_Left target are calibrated to the corrected closed hands; retain these transforms when replacing the weapon model. HandGripIK removes the small residual from Unity's compressed Humanoid curves.
+
 ## Known limits
 
-- The rig faces +Z with the sword mounted at `RightHand` (`Longsword`), grip offset `(0, 0.07, 0)`. The offset and the hurtbox shapes were fitted by measurement from the T-pose and need a visual check in play.
+- The rig faces +Z with the sword mounted at `RightHand` (`Longsword`). Its calibrated local position is approximately `(-0.055777, 0.104543, -0.037857)` metres; its rotation is also essential. Hurtbox shapes still need a visual check in play.
 - The `CharacterController` capsule (1.98 m) was left as it was and is taller than the 1.69 m body.

@@ -79,6 +79,25 @@ namespace SimpleRPG.Gameplay
     }
 
     /// <summary>
+    /// A status's timers were restarted without a stack being added, so what it shows (the time left) changed.
+    /// </summary>
+    public sealed class StatusRefreshedEvent : GameplayEvent
+    {
+        public StatusRefreshedEvent(EntityId target, DefinitionId status, StatusInstanceId group)
+        {
+            Target = target;
+            Status = status;
+            Group = group;
+        }
+
+        public EntityId Target { get; }
+
+        public DefinitionId Status { get; }
+
+        public StatusInstanceId Group { get; }
+    }
+
+    /// <summary>
     /// A single stack ended while its status carried on, or as the last stack of a status that ended.
     /// </summary>
     public sealed class StatusStackExpiredEvent : GameplayEvent
