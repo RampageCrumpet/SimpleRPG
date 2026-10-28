@@ -1,0 +1,28 @@
+# Attack 2 (left diagonal, rising lower-left to upper-right) - 2026-10-15
+
+Project `I:/Art/Cascadeur/Longsword_Attack2_LeftDiagonal.casc` (created by copying the Attack 1 project and letting `build.build` clear and re-key it). Neutral clip frames 0-112, Combo clip frames 140-198 (combo frame f at 140+f). Playback range 0-112. Vectors: `scripts/attack2_final_vecs1.json` (neutral and combo). Timings: windup 0-41 (0.683 s), hit 41-55 (0.233 s), combo tail 55-58 (0.05 s), neutral finish 55-112 (0.95 s).
+
+## How it was built (scripts: attack2_base.py, grid9_chunk.py with EVAL/LEAD options, dp_assemble.py)
+- Base motion is Attack 1's solved full-body vectors re-used: frame 0 is Attack 1's combo end (combo frame 87, exact, including roll and swivels); the windup eases (Hermite, initial tip velocity matched to Attack 1's combo end, 2.4 m/s) into a chamber taken from Attack 1's follow-through extreme (source frame 90.5) with a little sword draw and body-only loading (pelvis +10 deg yaw, hips -3 cm); the hit plays Attack 1's cut backwards (source 90.5 -> 59.5) with an arclength-based bell speed profile; neutral continues along the same path decelerating for 11 frames, then blends to Ready (smootherstep, ends exactly on Ready); the combo tail decelerates over 3 frames.
+- Roll and swivel: grid + DP (`ROLLS_USE` -90..90 step 30, twist limits 60/110, either-edge lead rule `LEAD_KW=dict(true_until=-1)`), tables on every second frame in slow zones and every frame in 41-61, interpolated and smoothed (`dp_assemble.dp_assemble`).
+
+## Findings worth keeping
+- **The true edge cannot lead a retraced reverse cut.** With the hand grip fixed on the sword the feasible sword roll window from Attack 1's end pose is only about -60 to +30 degrees (costs jump into the thousands beyond +/-60); edge-leading at the hit needs about -120 to -150 degrees of roll. Scans over torso yaw/pitch/roll, pelvis yaw, blade direction yaw/pitch and swivels (frames 45-53) never got below a cost of about 4000 with the edge within 45 degrees. In the delivered clip the back (false) edge leads the hit (edge angle 136-179 degrees to travel); the flat never leads. Options for the user: accept, allow wrist limits well beyond 110 twist, or change Attack 1's end pose / swap hand roles.
+- Pelvis yaw and hip translation change nothing for the arms (the sword and arms depend only on the torso frame), so use them for windup body motion for free. Extra torso yaw, pitch, roll, sword draw and blade-direction changes all cost the left arm (twist past -110 or right flexion past 72).
+- A windup that only moves the sword costs wrist range; a visible windup comes from the legs, hips, pelvis and a decaying carry of Attack 1's end velocity.
+- Per-frame grid timing: about 2.5 s per frame with 7 rolls x 15 swivels; 8-9 frames per MCP call (13 frames timed out).
+
+## Scene results (evaluated skeleton)
+Neutral/Combo: frame 0 equals Attack 1's combo end exactly; tip speed peak 23.8 m/s at frame 48; largest tip direction change 20.6 deg/frame; no blade-to-body distance under 33 cm; feet fixed (left heel up to 3 cm); head travel 15 x 14 x 14 cm, yaw 15-17 deg. Right wrist flexion 73 (limit 72) at frames 28-41, left twist -110 at frames 29-32; no other hard-limit frames. Acceleration flags only at hit start (frames 44-51, expected). Combo clip last frame tip speed 1.5 m/s (frame 58) awaiting Attack 3's start; Neutral ends on Ready.
+
+
+## v2: slower cut (user: "slightly slow down the attack; the back edge is acceptable, the sword is double-edged") - 2026-10-15
+- Hit window lengthened from 14 to 17 frames (0.283 s): hit 41-58, combo tail 58-61, neutral follow-through to 69, Ready at frame 115 (was 112). Combo clip 140-201 (project range 0-115, build total 202). Peak tip speed 19.6 m/s (was 23.8). Constants `A2_HIT1, A2_COMBO_END, A2_NEUTRAL_TAIL, A2_NEUTRAL_END = 58, 61, 69, 115` in `attack2_base.py`; vectors `scripts/attack2_final_vecs2.json`.
+- The back edge leading is accepted by the user (double-edged longsword); no further edge work needed.
+- Review (`review12.review` + `extra_checks`): no position or rotation spikes besides the hit start (frames 45-52, expected), no knee lock/backward bend, no foot slide, head rotation at most 0.54 deg/frame, hands at least 28 cm from hips and thighs, blade-to-body at least 33 cm; hard-limit frames: right wrist flexion 73 vs 72 at frames 28-41, left twist -110 at 29-32. Lowest blade tip 1.9 cm above the floor at frame 41 (chamber); the lowest joint is a toe at 0.8 cm. Frame 115 equals Attack 1's Ready (0.0 cm); frame 0 equals Attack 1's combo end exactly.
+- Attack 1 re-reviewed with the same checks: clean (one left-foot slide of 0.4 cm at frame 54; frame 80 left ulnar 36 from the user's pose; lowest tip 4.3 cm at frame 91).
+- Trap hit again: do not name a scene-state variable `S` in scripts that exec `posesolver.py` (rule 8). Saving fails with "already opened in another tab" if an older tab of the same file is still open: remove that tab first (`sm.remove_application_scene`).
+
+
+## v3 branch layout - 2026-10-15
+The user restated the original boundaries (attack 0-55, combo 55-58, neutral 55-112). The slowed 17-frame hit was kept and the whole attack moved 3 frames earlier by shortening the windup from 41 to 38 frames (`branches.retime_attack_ease`: windup resampled with an ease-out u = 1-(1-t)^2.6 whose start slope matches Attack 1's end velocity, hit/combo/recovery frames copied with an offset of 3). Windup tip speed now 1.8 m/s at the start (Attack 1 ends at 2.4) falling smoothly; the old ease parked the sword for about 12 frames. Branch frame 55 == 195 (0.0 cm); combo end (frame 58) is the exact vector Attack 3 starts from. Vectors `scripts/attack2_final_vecs3.json`.
