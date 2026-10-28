@@ -84,6 +84,12 @@ namespace SimpleRPG
         private readonly NetworkVariable<int> networkLivesEnded = new NetworkVariable<int>();
 
         /// <summary>
+        /// When the current life began, in server time (see <see cref="ServerClock"/>). Replicated, so a machine that sees the character late can join
+        /// its starting animation part-way through, the way a swing is joined, instead of playing it from the start.
+        /// </summary>
+        private readonly NetworkVariable<double> networkLifeStartedAt = new NetworkVariable<double>();
+
+        /// <summary>
         /// The ID this character is registered as a combatant under, on the server.
         /// </summary>
         private EntityId registeredId;
@@ -146,6 +152,11 @@ namespace SimpleRPG
         public int LifeId => IsSpawned ? networkLivesEnded.Value + 1 : 1;
 
         /// <summary>
+        /// When the current life began, in server time: when the character spawned, or when it last revived. Now before it spawns.
+        /// </summary>
+        public double LifeStartedAt => IsSpawned ? networkLifeStartedAt.Value : ServerClock.Now;
+
+        /// <summary>
         /// What a weapon blow to a body location is worth against this character, which its <see cref="HitAnatomy"/> decides. 1 for a character without one.
         /// </summary>
         float IRegionDamageModifier.DamageMultiplier(int bodyLocation)
@@ -166,6 +177,7 @@ namespace SimpleRPG
             if (IsServer)
             {
                 registeredId = Id;
+                networkLifeStartedAt.Value = ServerClock.Now;
                 respawnPosition = transform.position;
                 respawnRotation = transform.rotation;
                 GameplayServices.Current.Combatants.Register(this);
@@ -253,6 +265,7 @@ namespace SimpleRPG
         void ICombatant.CommitRevive(int health)
         {
             networkLivesEnded.Value++;
+            networkLifeStartedAt.Value = ServerClock.Now;
             networkHealth.Value = health;
             networkIsDead.Value = false;
         }

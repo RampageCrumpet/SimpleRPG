@@ -24,6 +24,9 @@ namespace SimpleRPG.Animations
         /// <summary>The state an attack layer holds while a weapon is carried and no attack is playing; attacks recover into it.</summary>
         private const string AttackLayerReadyState = "Longsword_Ready";
 
+        /// <summary>The base-layer state a character's life starts in (the skeleton's rise), which a late observer joins part-way through.</summary>
+        private const string StartingState = "Rise";
+
         private const float CancelBlendSeconds = 0.15f;
         private const float StanceBlendSeconds = 0.2f;
         private const string AttackStatePrefix = "Longsword_A";
@@ -51,6 +54,7 @@ namespace SimpleRPG.Animations
             else
             {
                 Trigger(activationTrigger);
+                JoinStartingState();
                 RefreshStance();
             }
         }
@@ -105,7 +109,28 @@ namespace SimpleRPG.Animations
             }
 
             Trigger(activationTrigger);
+            JoinStartingState();
             RefreshStance();
+        }
+
+        /// <summary>
+        /// The seconds of its starting animation this character's current life has already played on the shared clock. A machine that sees the
+        /// character late joins the animation that far in, so the rise ends when the server's activation delay does.
+        /// </summary>
+        public static float SecondsIntoStart(double lifeStartedAt, double now) => (float)System.Math.Max(0.0, now - lifeStartedAt);
+
+        private void JoinStartingState()
+        {
+            float elapsed = SecondsIntoStart(character.LifeStartedAt, ServerClock.Now);
+            if (elapsed <= 0.05f) return;
+
+            int hash = Animator.StringToHash(StartingState);
+            foreach (Animator animator in animators)
+            {
+                if (!animator.HasState(0, hash)) continue;
+                animator.PlayInFixedTime(hash, 0, elapsed);
+                animator.Update(0f);
+            }
         }
 
         private void MeleeAttack(int attackNumber, float secondsIntoAttack)
