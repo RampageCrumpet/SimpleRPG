@@ -230,6 +230,56 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             Assert.IsTrue(registry.TryGet(good.Id, out _));
         }
 
+        private AbilityDefinition Ability(string displayName)
+        {
+            AbilityDefinition ability = Create<AbilityDefinition>();
+            typeof(AbilityDefinition)
+                .GetField("abilityName", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                .SetValue(ability, displayName);
+            ability.AssignNewId();
+            return ability;
+        }
+
+        [Test]
+        public void AbilitiesWithTheSameDisplayName_AreTwoAbilities_ToTheValidatorAndTheRegistry()
+        {
+            AbilityDefinition first = Ability("Slash");
+            AbilityDefinition second = Ability("Slash");
+
+            Assert.AreEqual(first.AbilityName, second.AbilityName);
+            Assert.IsEmpty(DefinitionRegistry.Validate(new GameplayDefinition[] { first, second }), "a shared display name is not an error");
+            Assert.IsTrue(registry.Rebuild(new GameplayDefinition[] { first, second }).Success);
+
+            Assert.IsTrue(registry.TryGetShortId(first.Id, out uint firstShort));
+            Assert.IsTrue(registry.TryGetShortId(second.Id, out uint secondShort));
+            Assert.AreNotEqual(firstShort, secondShort);
+            Assert.IsTrue(registry.TryGetByShortId(firstShort, out GameplayDefinition foundFirst));
+            Assert.IsTrue(registry.TryGetByShortId(secondShort, out GameplayDefinition foundSecond));
+            Assert.AreSame(first, foundFirst, "each id finds its own ability, whatever the display names are");
+            Assert.AreSame(second, foundSecond);
+        }
+
+        [Test]
+        public void ChangingAnAbilitysDisplayName_ChangesNeitherItsIdNorHowItIsFound()
+        {
+            AbilityDefinition ability = Ability("Firebolt");
+            Assert.IsTrue(registry.Rebuild(new GameplayDefinition[] { ability }).Success);
+            DefinitionId id = ability.Id;
+            registry.TryGetShortId(id, out uint shortId);
+
+            typeof(AbilityDefinition)
+                .GetField("abilityName", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                .SetValue(ability, "Flame Dart");
+
+            Assert.AreEqual("Flame Dart", ability.AbilityName);
+            Assert.AreEqual(id, ability.Id);
+            Assert.IsTrue(registry.TryGetByShortId(shortId, out GameplayDefinition byShort));
+            Assert.AreSame(ability, byShort);
+            Assert.IsTrue(registry.TryGet(id, out GameplayDefinition byId));
+            Assert.AreSame(ability, byId);
+            Assert.IsTrue(registry.CheckUpToDate(new GameplayDefinition[] { ability }).Success, "a rename leaves the registry up to date");
+        }
+
         [Test]
         public void Lookup_OfAnUnknownId_ReturnsFalse()
         {
