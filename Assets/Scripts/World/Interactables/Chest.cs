@@ -41,10 +41,17 @@ namespace SimpleRPG.ObjectInteractions
         {
             base.Start();
             inventory = this.GetComponent<Inventory>();
+        }
+
+        /// <inheritdoc/>
+        public override void OnNetworkSpawn()
+        {
+            base.OnNetworkSpawn();
 
             // Only the server owns the contents; clients receive them through the inventory's replicated state.
-            if (this.IsSpawned && this.IsServer)
+            if (this.IsServer)
             {
+                inventory = this.GetComponent<Inventory>();
                 inventory.SharedAccessRange = InteractionRange + ServerAccessSlack;
                 GenerateRandomInventory();
             }
@@ -82,7 +89,7 @@ namespace SimpleRPG.ObjectInteractions
             if (lootTable != null)
             {
                 // Only lootable items can go in a chest; other entry types and items without an Item are skipped.
-                foreach (LootableItem lootable in lootTable.GetResult().OfType<LootableItem>())
+                foreach (LootableItem lootable in lootTable.GetResult(GameplayRandomSource.Current).OfType<LootableItem>())
                 {
                     if (lootable.Item == null)
                     {

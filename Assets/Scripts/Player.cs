@@ -24,10 +24,34 @@ namespace SimpleRPG
         [Tooltip("Our player's character")]
         public Character character;
 
+        /// <summary>
+        /// The spawned character, replicated so clients that join later receive it too. Written once by the server.
+        /// </summary>
+        private readonly NetworkVariable<NetworkObjectReference> characterReference = new NetworkVariable<NetworkObjectReference>();
+
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
             if (IsServer) StartCoroutine(SpawnWhenDungeonReady());
+            else StartCoroutine(BindCharacterWhenAvailable());
+        }
+
+        /// <summary>
+        /// Clients wait for the replicated reference and for the character object it points at, which may arrive after the player object.
+        /// </summary>
+        private IEnumerator BindCharacterWhenAvailable()
+        {
+            while (IsSpawned && character == null)
+            {
+                if (characterReference.Value.TryGet(out NetworkObject characterObject, NetworkManager))
+                {
+                    character = characterObject.GetComponent<Character>();
+                    character.Initialize();
+                    yield break;
+                }
+
+                yield return null;
+            }
         }
 
         private IEnumerator SpawnWhenDungeonReady()
@@ -56,21 +80,7 @@ namespace SimpleRPG
                 character = playerInstance.GetComponent<Character>();
                 character.Initialize();
 
-                SetupCharacterAcrossNetwork_ClientRPC(playerInstance.GetComponent<NetworkObject>().NetworkObjectId);
-            }
-        }
-
-        /// <summary>
-        /// Setups the connection between the character and client across the network.
-        /// </summary>
-        [ClientRpc]
-        private void SetupCharacterAcrossNetwork_ClientRPC(ulong playerInstanceNetworkID)
-        {
-            // Find and Initialize the character on the client. If the client is also the server the character may already be initialized.
-            if(character == null)
-            {
-                character = FindObjectsByType<NetworkObject>().Single(x => x.NetworkObjectId == playerInstanceNetworkID).GetComponent<Character>();
-                character.Initialize();
+                characterReference.Value = new NetworkObjectReference(playerInstance);
             }
         }
     }

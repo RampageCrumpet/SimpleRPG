@@ -1,3 +1,4 @@
+using SimpleRPG.Gameplay;
 using SimpleRPG.LevelGeneration;
 using Unity.AI.Navigation;
 using Unity.Netcode;
@@ -36,7 +37,11 @@ public class GameController : NetworkBehaviour
 
         if (IsServer)
         {
-            levelGeneratorController.GenerateLevelAcrossNetwork(UseRandomSeed ? CreateSeed() : Seed);
+            int seed = UseRandomSeed ? CreateSeed() : Seed;
+            // One logged seed reproduces the layout and every loot and combat roll that follows.
+            Debug.Log($"Session seed: {seed}");
+            GameplayServices.Current.Random = new SeededRandom(seed);
+            levelGeneratorController.GenerateLevelAcrossNetwork(seed);
 
             // Only the server runs AI, so it is the only machine that needs a navmesh.
             navMeshSurface.BuildNavMesh();

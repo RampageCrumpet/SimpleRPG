@@ -22,7 +22,7 @@ namespace SimpleRPG
             networkSpawn = this.GetComponent<NetworkSpawn>();
 
             // Get a random enemy from the loot table
-            var result = lootTable.GetResult().OfType<EnemyRandomEntry>().FirstOrDefault();
+            var result = lootTable.GetResult(GameplayRandomSource.Current).OfType<EnemyRandomEntry>().FirstOrDefault();
             if (result != null && result.EnemyPrefab != null)
             {
                 networkSpawn.SpawnGameObject(result.EnemyPrefab);
