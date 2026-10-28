@@ -3,6 +3,7 @@
     "rootNamespace": "SimpleRPG.Tests.PlayMode",
     "references": [
         "SimpleRPG",
+        "SimpleRPG.Gameplay.Core",
         "Unity.Netcode.Runtime"
     ],
     "includePlatforms": [],

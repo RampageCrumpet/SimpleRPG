@@ -32,6 +32,7 @@ An ability is a ScriptableObject (`AbilityDefinition`) holding a flat list of no
 - **Event queue.** Ordered, one queue, depth limit 8 and 256 events per drain. Over the limit, events are dropped and reported, except death cleanup.
 - **Potency and grants.** Timed effects snapshot potency when applied; persistent grants read live values.
 - **Charges.** Kept per item instance in `ItemStateStore`, spent only on the server, replicated read-only to the owner. There is no recharge.
+- **Time sources.** Rules the server and clients must agree on, and that a pause would have to stop together, read `IGameplayClock` (the network tick): cooldown validation, status expiry, scheduled ticks. Timers driven by animation or real-time presentation read Unity time on purpose: projectile lifetime, the enemy activation delay, melee swing recovery and timeout, the interaction hold, the enemy sensing interval, and the owner's local cooldown display. They advance with animation, so a `Time.timeScale` pause or hit-stop slows them together with it, whereas the network clock keeps running. Neither group is wrong; converting a few timers to the other clock would make them disagree with animation instead. If a pause or hit-stop is built, choose a clock for each timer there rather than converting them piecemeal.
 - **Compiled form.** The compiled graph is cached beside the asset, never in it.
 - **Tracing.** One optional `IExecutionTrace` on the real executor. Without a trace attached, nothing is recorded and no text is built.
 

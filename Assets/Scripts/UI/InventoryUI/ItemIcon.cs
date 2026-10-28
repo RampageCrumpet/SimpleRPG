@@ -79,10 +79,6 @@ namespace SimpleRPG.UI
             this.transform.SetAsLastSibling();
         }
 
-        public void Update()
-        {
-        }
-
         ///<inheritdoc/>
         public void OnDrag(PointerEventData eventData)
         {
