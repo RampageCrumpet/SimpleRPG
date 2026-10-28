@@ -37,13 +37,13 @@ namespace SimpleRPG
         /// </summary>
         private bool hasHit;
 
-        private float spawnTime;
+        private double spawnTime;
 
         /// <summary>How long this projectile lives before it expires, in seconds.</summary>
         public float LifeSpan => lifeSpan;
 
         /// <summary>How long this projectile has existed, in seconds.</summary>
-        public float Age => Time.time - spawnTime;
+        public float Age => (float)(ServerClock.Now - spawnTime);
 
         /// <summary>
         /// The hitbox used to determine if this projectile hit anything.
@@ -64,7 +64,7 @@ namespace SimpleRPG
         // Start is called before the first frame update
         void Start()
         {
-            spawnTime = Time.time;
+            spawnTime = ServerClock.Now;
             this.hitBox = this.GetComponent<Hitbox>();
             hitBox.HitboxCollisionEvent.AddListener(TargetHit);
         }
@@ -73,7 +73,7 @@ namespace SimpleRPG
         void Update()
         {
             // If the projectile has outlived it's lifespan.
-            if (Time.time - spawnTime > lifeSpan)
+            if (ServerClock.Now - spawnTime > lifeSpan)
             {
                 if (IsServer && !hasHit)
                 {

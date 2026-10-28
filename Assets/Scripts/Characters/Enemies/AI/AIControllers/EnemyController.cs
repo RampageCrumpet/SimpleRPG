@@ -9,7 +9,7 @@ namespace SimpleRPG.AI
     public class EnemyController : AIController
     {
         [SerializeField, Min(0)] private float activationDuration;
-        private float readyAt;
+        private double readyAt;
         private Dictionary<EnemyState, IState> states;
         public EnemyState CurrentState { get; private set; }
 
@@ -21,7 +21,7 @@ namespace SimpleRPG.AI
                 { EnemyState.Chase, new ChaseState(this) },
                 { EnemyState.Attack, new MeleeAttackState(this, () => Enter(EnemyState.Chase)) }
             };
-            readyAt = Time.time + activationDuration;
+            readyAt = ServerClock.Now + activationDuration;
             var machine = new StateMachine();
             machine.InitializeStateMachine(states[EnemyState.Idle]);
             return machine;
@@ -29,7 +29,7 @@ namespace SimpleRPG.AI
 
         protected override void Update()
         {
-            if (Time.time >= readyAt) base.Update();
+            if (ServerClock.Now >= readyAt) base.Update();
         }
 
         public void Enter(EnemyState state)

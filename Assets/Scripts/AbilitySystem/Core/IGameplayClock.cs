@@ -4,8 +4,8 @@ namespace SimpleRPG.Gameplay
 {
     /// <summary>
     /// The authoritative time source for gameplay rules: cooldowns, status expiry, delays and scheduled ticks.
-    /// Rules read time from here so timing is the same under test and on the network. Timers that follow animation or real-time presentation
-    /// (projectile lifetime, melee swing recovery, the interaction hold) deliberately read Unity time instead; see "Time sources" in
+    /// Rules read time from here so timing is the same under test and on the network. The server's other timers (swing recovery, projectile
+    /// lifetime) read the same server time through ServerClock; only machine-local presentation reads Unity time. See "Time sources" in
     /// Docs/AbilitySystem.md.
     /// </summary>
     public interface IGameplayClock

@@ -53,7 +53,7 @@ namespace SimpleRPG
             public IMeleeEvents Events;
             public ExecutionId Execution;
             public int AttackNumber;
-            public float StartedAt;
+            public double StartedAt;
         }
 
         /// <summary>
@@ -183,7 +183,7 @@ namespace SimpleRPG
                 Events = events,
                 Execution = launch.Execution,
                 AttackNumber = attackNumber,
-                StartedAt = Time.time,
+                StartedAt = ServerClock.Now,
             };
 
             MeleeAttackClientRpc(attackNumber, startTime, pressId);

@@ -74,15 +74,15 @@ namespace SimpleRPG.AI
             .SelectMany(s => s.Sense()).Where(c => c != null && c != Character && c.IsAlive).Distinct();
 
         private readonly List<Character> sensedBuffer = new List<Character>();
-        private float nextSenseTime;
+        private double nextSenseTime;
 
         public bool TrackTarget()
         {
             bool targetValid = Target != null && Target.IsAlive;
             // Between sweeps, keep a valid target or a sweep that found nothing. A target that died or was destroyed forces a new sweep.
-            if (Time.time < nextSenseTime && (targetValid || Target == null)) return targetValid;
+            if (ServerClock.Now < nextSenseTime && (targetValid || Target == null)) return targetValid;
 
-            nextSenseTime = Time.time + SenseInterval;
+            nextSenseTime = ServerClock.Now + SenseInterval;
             sensedBuffer.Clear();
             if (PrimarySenses is PrimarySense[] senses)
                 for (int i = 0; i < senses.Length; i++) senses[i].Sense(sensedBuffer);

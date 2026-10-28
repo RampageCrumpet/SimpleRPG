@@ -28,12 +28,12 @@ namespace SimpleRPG
         [Tooltip("The attacks this character chooses between. Hit windows come from clip events.")]
         [SerializeField] private IndependentAttack[] independentAttacks = System.Array.Empty<IndependentAttack>();
 
-        private float recoveryUntil;
+        private double recoveryUntil;
 
         /// <summary>
         /// True if a new attack may start: the last one's recovery is over and none is still in progress.
         /// </summary>
-        public bool CanStartFreshChain => Time.time >= recoveryUntil && Swings.Count == 0;
+        public bool CanStartFreshChain => ServerClock.Now >= recoveryUntil && Swings.Count == 0;
 
         public override AttackAnimation AnimationFor(int attackNumber)
         {
@@ -53,7 +53,7 @@ namespace SimpleRPG
             }
 
             // A swing whose animation never closed its hit window (it was interrupted) must not hold its ability open forever.
-            foreach (Swing swing in Swings.Values.Where(s => Time.time - s.StartedAt > independentAttacks[s.AttackNumber - 1].Duration + SwingTimeoutSlack).ToList())
+            foreach (Swing swing in Swings.Values.Where(s => ServerClock.Now - s.StartedAt > independentAttacks[s.AttackNumber - 1].Duration + SwingTimeoutSlack).ToList())
             {
                 Finish(swing);
             }
@@ -97,7 +97,7 @@ namespace SimpleRPG
 
             int chosen = Mathf.Min(independentAttacks.Length - 1, (int)(GameplayServices.Current.Random.NextDouble() * independentAttacks.Length));
             int attackNumber = chosen + 1;
-            recoveryUntil = Time.time + independentAttacks[chosen].Duration;
+            recoveryUntil = ServerClock.Now + independentAttacks[chosen].Duration;
 
             StartSwing(attackNumber, launch, events, NetworkManager.ServerTime.Time, 0);
             return true;
