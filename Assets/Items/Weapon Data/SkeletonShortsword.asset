@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26bef1c1d7e1c7b429c6003714bedf29, type: 3}
   m_Name: SkeletonShortsword
   m_EditorClassIdentifier: SimpleRPG::WeaponData
+  definitionId: 6033b174c0fb4d53a5619db04a93f166
   <WorldPrefab>k__BackingField: {fileID: 0}
   <Icon>k__BackingField: {fileID: 0}
   <ItemName>k__BackingField: 

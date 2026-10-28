@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6511a776aa640fb469496949a9bad1b2, type: 3}
   m_Name: Brillaint Cut Emerald
   m_EditorClassIdentifier: 
+  definitionId: ad19f2de27eb4bb5878406bb08c10dcd
   <WorldPrefab>k__BackingField: {fileID: 432316041483306273, guid: 5e94dd35b4a9f76458d8837dd6f79f81, type: 3}
   <Icon>k__BackingField: {fileID: 21300000, guid: 6de6effc681547842808a86018057a35, type: 3}
   <ItemName>k__BackingField: Brilliant Cut Emerald

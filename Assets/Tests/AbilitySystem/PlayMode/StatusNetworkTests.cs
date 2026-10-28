@@ -35,7 +35,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private readonly List<GameObject> spawned = new List<GameObject>();
         private readonly List<Object> created = new List<Object>();
         private GameplayServices services;
-        private ItemRegistry previousRegistry;
+        private DefinitionRegistry previousRegistry;
         private StatusDefinition burning;
         private AbilityDefinition tickAbility;
 
@@ -85,7 +85,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             }
 
             if (managerObject != null) Object.Destroy(managerObject);
-            if (previousRegistry != null) ItemRegistry.Instance = previousRegistry;
+            if (previousRegistry != null) DefinitionRegistry.Instance = previousRegistry;
             foreach (Object o in created)
             {
                 if (o != null) Object.DestroyImmediate(o);
@@ -290,8 +290,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             ComboDefinition swordCombo = ComboTestSupport.CreateCombo();
             created.Add(swordCombo);
             ComboTestSupport.GiveCombo(sword, swordCombo);
-            previousRegistry = ItemRegistry.Instance;
-            ItemRegistry.Instance = ItemRegistry.Create(new Item[] { sword });
+            previousRegistry = DefinitionRegistry.Instance;
+            DefinitionRegistry.Instance = ItemTestRegistry.With(new Item[] { sword });
 
             Character wielder = Spawn(PlayerPrefab, Vector3.zero);
             Character victim = Spawn(TargetPrefab, new Vector3(0f, 0f, 2f));

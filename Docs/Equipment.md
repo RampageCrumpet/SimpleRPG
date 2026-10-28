@@ -15,7 +15,7 @@ Armor is worn on five slots: head, chest, hands, legs, feet. This page covers wh
 
 - An item is in the inventory or in a slot, never both and never neither. It keeps the same instance ID as it moves, so charges and other per-item state follow it.
 - Equipping into an occupied slot returns the previous item to the inventory. The previous item may use the room the new item leaves behind.
-- Every outcome is an `EquipResult`: `Success`, or why it was refused (`NotArmor`, `ItemNotInInventory`, `ItemNotReplicable` for an item missing from the `ItemRegistry`, `SlotEmpty`, `NoRoomInInventory`, ...). A refusal changes nothing.
+- Every outcome is an `EquipResult`: `Success`, or why it was refused (`NotArmor`, `ItemNotInInventory`, `ItemNotReplicable` for an item missing from the `DefinitionRegistry`, `SlotEmpty`, `NoRoomInInventory`, ...). A refusal changes nothing.
 - Equip and unequip are server operations. `Equipment.RequestEquip` / `RequestUnequip` run the controller on the server and send an `[Rpc]` from the owning client; the server checks that the sender owns the character and that it is alive.
 - Equipment state is correct with no UI open or even created. Nothing in `Equipment`, `ArmorData` or `EquipmentController` refers to the UI.
 
@@ -23,7 +23,7 @@ Armor is worn on five slots: head, chest, hands, legs, feet. This page covers wh
 
 - Right-click armor in your inventory to wear it. Right-click or left-click a worn slot on the paper doll to take it off. Dragging is not used for equipping.
 - `RegisterWithUI` binds the paper doll for the owning client through `LootMenuUI.BindPlayer`. See [Inventory screens](InventoryScreens.md) for where it sits.
-- To make armor: create an **Items > ArmorData** asset, set its slot, icon and size, and append it to the `ItemRegistry` (append only; the position is its network id).
+- To make armor: create an **Items > ArmorData** asset, set its slot, icon and size. Items are gameplay definitions, so the asset is given a permanent id when it is created; run **SimpleRPG > Definitions > Rebuild Definition Registry** to register it and give it a network id (never reused).
 
 ## Observing equipment
 
@@ -50,4 +50,4 @@ A presentation component on the character will observe `Equipment.Changed` and, 
 
 - No armor statistics, durability, requirements, weight or set bonuses. `Item.Grants` and `Item.Rules` already apply while an item is worn, as for any equipped item.
 - There is no item tooltip anywhere in the UI yet, so the paper doll has none either.
-- The `ItemRegistry` must list every wearable item, or `Equipment` refuses it (clients could not look it up).
+- The `DefinitionRegistry` must list every wearable item, or `Equipment` refuses it (clients could not look it up). Validate Definitions fails the build if it does not.

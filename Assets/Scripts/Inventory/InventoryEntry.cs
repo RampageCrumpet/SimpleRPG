@@ -15,9 +15,9 @@ namespace SimpleRPG.InventorySystem
         public uint InstanceId;
 
         /// <summary>
-        /// The <see cref="ItemRegistry"/> ID of the item.
+        /// The network id of the item (see <see cref="ItemIds"/>).
         /// </summary>
-        public int ItemId;
+        public uint ItemId;
 
         /// <summary>
         /// The inventory cell holding the item's origin (its smallest x/y cell).

@@ -25,7 +25,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private Equipment equipment;
         private GameplayServices services;
         private List<string> log;
-        private ItemRegistry previousRegistry;
+        private DefinitionRegistry previousRegistry;
         private WeaponData sword;
         private WeaponData dagger;
         private Item amulet;
@@ -41,8 +41,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             sword = CreateWeapon(25);
             dagger = CreateWeapon(8);
             amulet = ScriptableObject.CreateInstance<Item>();
-            previousRegistry = ItemRegistry.Instance;
-            ItemRegistry.Instance = ItemRegistry.Create(new Item[] { sword, dagger, amulet });
+            previousRegistry = DefinitionRegistry.Instance;
+            DefinitionRegistry.Instance = ItemTestRegistry.With(new Item[] { sword, dagger, amulet });
 
             managerObject = new GameObject("TestNetworkManager");
             UnityTransport transport = managerObject.AddComponent<UnityTransport>();
@@ -78,7 +78,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             if (managerObject != null) Object.Destroy(managerObject);
             if (characterObject != null) Object.Destroy(characterObject);
-            ItemRegistry.Instance = previousRegistry;
+            DefinitionRegistry.Instance = previousRegistry;
             Object.DestroyImmediate(sword);
             Object.DestroyImmediate(dagger);
             Object.DestroyImmediate(amulet);
@@ -191,7 +191,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         public void AnItemMissingFromTheRegistry_IsRefused_BecauseClientsCouldNotFindIt()
         {
             WeaponData unregistered = CreateWeapon(5);
-            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("ItemRegistry"));
+            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("DefinitionRegistry"));
 
             Assert.IsFalse(equipment.Equip(EquipmentSlot.mainHand, unregistered, 100));
 

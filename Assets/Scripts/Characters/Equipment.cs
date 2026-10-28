@@ -26,7 +26,7 @@ namespace SimpleRPG
         {
             public int Slot;
             public uint InstanceId;
-            public int ItemId;
+            public uint ItemId;
 
             public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
             {
@@ -222,7 +222,7 @@ namespace SimpleRPG
         /// Puts an item in a slot, taking out what was there. Server only.
         /// </summary>
         /// <param name="slot">The slot. The consumable slot holds no equipment.</param>
-        /// <param name="item">The item. It must be in the <see cref="ItemRegistry"/> so clients can find it.</param>
+        /// <param name="item">The item. It must be in the <see cref="SimpleRPG.Abilities.DefinitionRegistry"/> so clients can find it.</param>
         /// <param name="instanceId">The item's instance ID, never 0. An item can only be in one slot at a time.</param>
         /// <returns>False if the request was refused.</returns>
         public bool Equip(EquipmentSlot slot, Item item, uint instanceId)
@@ -233,11 +233,11 @@ namespace SimpleRPG
                 return false;
             }
 
-            if (!IsEquippable(slot, item, instanceId, out int itemId))
+            if (!IsEquippable(slot, item, instanceId, out uint itemId))
             {
                 if (item != null && itemId == 0 && instanceId != 0 && slot != EquipmentSlot.Consumable)
                 {
-                    Debug.LogError($"Item '{item.ItemName}' isn't in the ItemRegistry, so it can't be replicated. Add it to the registry.");
+                    Debug.LogError($"Item '{item.ItemName}' isn't in the DefinitionRegistry, so it can't be replicated. Rebuild the registry (SimpleRPG > Definitions).");
                 }
 
                 return false;
@@ -351,7 +351,7 @@ namespace SimpleRPG
             return IsServer && equipmentSet != null && IsEquippable(slot, item, instanceId, out _);
         }
 
-        private bool IsEquippable(EquipmentSlot slot, Item item, uint instanceId, out int itemId)
+        private bool IsEquippable(EquipmentSlot slot, Item item, uint instanceId, out uint itemId)
         {
             itemId = 0;
             if (item == null || instanceId == 0 || slot == EquipmentSlot.Consumable)
@@ -359,8 +359,7 @@ namespace SimpleRPG
                 return false;
             }
 
-            ItemRegistry registry = ItemRegistry.Instance;
-            itemId = registry != null ? registry.GetId(item) : 0;
+            itemId = ItemIds.GetId(item);
             return itemId != 0 && !IsEquipped(instanceId);
         }
 
@@ -434,13 +433,12 @@ namespace SimpleRPG
             items.Clear();
             instanceIds.Clear();
 
-            ItemRegistry registry = ItemRegistry.Instance;
             foreach (EquippedEntry entry in entries)
             {
-                Item item = registry != null ? registry.GetItem(entry.ItemId) : null;
+                Item item = ItemIds.GetItem(entry.ItemId);
                 if (item == null)
                 {
-                    Debug.LogError($"{name}: no registered item with ID {entry.ItemId}; add it to the ItemRegistry.");
+                    Debug.LogError($"{name}: no registered item with ID {entry.ItemId}; rebuild the DefinitionRegistry (SimpleRPG > Definitions).");
                     continue;
                 }
 

@@ -34,7 +34,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private readonly List<GameObject> spawned = new List<GameObject>();
         private readonly List<Object> created = new List<Object>();
         private GameplayServices services;
-        private ItemRegistry previousRegistry;
+        private DefinitionRegistry previousRegistry;
         private AbilityDefinition staffBolt;
         private Item staff;
         private Item ring;
@@ -53,8 +53,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             created.Add(ring);
             Set(ring, "grants", new List<GrantSpec> { new GrantSpec { AttributeKey = PrimaryAttributes.Intelligence.Key, Layer = ModifierLayer.Add, Value = 3 } });
 
-            previousRegistry = ItemRegistry.Instance;
-            ItemRegistry.Instance = ItemRegistry.Create(new[] { staff, ring });
+            previousRegistry = DefinitionRegistry.Instance;
+            DefinitionRegistry.Instance = ItemTestRegistry.With(new[] { staff, ring });
 
             managerObject = new GameObject("TestNetworkManager");
             UnityTransport transport = managerObject.AddComponent<UnityTransport>();
@@ -87,7 +87,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             }
 
             if (managerObject != null) Object.Destroy(managerObject);
-            ItemRegistry.Instance = previousRegistry;
+            DefinitionRegistry.Instance = previousRegistry;
             foreach (Object o in created)
             {
                 if (o != null) Object.DestroyImmediate(o);
@@ -317,7 +317,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         public IEnumerator AStaffThatNeedsIntelligence_RefusesAnUnderqualifiedWielder_UntilARingMakesThemQualified()
         {
             Item demanding = Staff(3, new[] { new AttributeRequirement { AttributeKey = PrimaryAttributes.Intelligence.Key, Minimum = 12 } });
-            ItemRegistry.Instance = ItemRegistry.Create(new[] { staff, ring, demanding });
+            DefinitionRegistry.Instance = ItemTestRegistry.With(new[] { staff, ring, demanding });
             Character wielder = Spawn(PlayerPrefab, Vector3.zero);
             yield return null;
             EquipmentOf(wielder).Equip(EquipmentSlot.mainHand, demanding, 802);

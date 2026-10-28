@@ -27,7 +27,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private Equipment equipment;
         private Inventory inventory;
         private List<string> log;
-        private ItemRegistry previousRegistry;
+        private DefinitionRegistry previousRegistry;
         private readonly List<Object> created = new List<Object>();
 
         private ArmorData helmet;
@@ -52,9 +52,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             greaves = Armor(EquipmentSlot.legs, Vector2Int.one);
             boots = Armor(EquipmentSlot.feet, Vector2Int.one);
 
-            previousRegistry = ItemRegistry.Instance;
-            ItemRegistry.Instance = ItemRegistry.Create(new Item[] { helmet, otherHelmet, breastplate, gauntlets, greaves, boots });
-            created.Add(ItemRegistry.Instance);
+            previousRegistry = DefinitionRegistry.Instance;
+            DefinitionRegistry.Instance = ItemTestRegistry.With(new Item[] { helmet, otherHelmet, breastplate, gauntlets, greaves, boots });
+            created.Add(DefinitionRegistry.Instance);
 
             managerObject = new GameObject("TestNetworkManager");
             UnityTransport transport = managerObject.AddComponent<UnityTransport>();
@@ -90,7 +90,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             if (managerObject != null) Object.Destroy(managerObject);
             if (characterObject != null) Object.Destroy(characterObject);
-            ItemRegistry.Instance = previousRegistry;
+            DefinitionRegistry.Instance = previousRegistry;
             foreach (Object item in created)
             {
                 if (item != null) Object.DestroyImmediate(item);
@@ -189,8 +189,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             // A 2x2 inventory holding one 2x2 breastplate has no free cell, but equipping the other breastplate frees four.
             SetInventorySize(inventory, new Vector2Int(2, 2));
             ArmorData spare = Armor(EquipmentSlot.chest, new Vector2Int(2, 2));
-            ItemRegistry.Instance = ItemRegistry.Create(new Item[] { helmet, otherHelmet, breastplate, gauntlets, greaves, boots, spare });
-            created.Add(ItemRegistry.Instance);
+            DefinitionRegistry.Instance = ItemTestRegistry.With(new Item[] { helmet, otherHelmet, breastplate, gauntlets, greaves, boots, spare });
+            created.Add(DefinitionRegistry.Instance);
             Item worn = Give(breastplate);
             EquipmentController.TryEquip(inventory, equipment, worn);
             Item replacement = Give(spare);
@@ -209,8 +209,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             // The worn breastplate needs a free 2x2 block. Once the one-cell replacement leaves, a filler item still blocks every such block.
             SetInventorySize(inventory, new Vector2Int(2, 2));
             ArmorData small = Armor(EquipmentSlot.chest, Vector2Int.one);
-            ItemRegistry.Instance = ItemRegistry.Create(new Item[] { helmet, otherHelmet, breastplate, gauntlets, greaves, boots, small });
-            created.Add(ItemRegistry.Instance);
+            DefinitionRegistry.Instance = ItemTestRegistry.With(new Item[] { helmet, otherHelmet, breastplate, gauntlets, greaves, boots, small });
+            created.Add(DefinitionRegistry.Instance);
             Item worn = Give(breastplate);
             EquipmentController.TryEquip(inventory, equipment, worn);
             Item replacement = Give(small);
@@ -274,8 +274,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             WeaponData sword = ScriptableObject.CreateInstance<WeaponData>();
             created.Add(plain);
             created.Add(sword);
-            ItemRegistry.Instance = ItemRegistry.Create(new Item[] { helmet, plain, sword });
-            created.Add(ItemRegistry.Instance);
+            DefinitionRegistry.Instance = ItemTestRegistry.With(new Item[] { helmet, plain, sword });
+            created.Add(DefinitionRegistry.Instance);
             Item plainCopy = plain.CloneInstance();
             Item swordCopy = sword.CloneInstance();
             typeof(Item).GetField("<ItemSize>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(plainCopy, Vector2Int.one);
@@ -295,8 +295,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         public void ArmorDeclaringANonArmorSlot_IsRefused()
         {
             ArmorData misconfigured = Armor(EquipmentSlot.mainHand, Vector2Int.one);
-            ItemRegistry.Instance = ItemRegistry.Create(new Item[] { misconfigured });
-            created.Add(ItemRegistry.Instance);
+            DefinitionRegistry.Instance = ItemTestRegistry.With(new Item[] { misconfigured });
+            created.Add(DefinitionRegistry.Instance);
             Item copy = Give(misconfigured);
 
             Assert.AreEqual(EquipResult.NotArmor, EquipmentController.TryEquip(inventory, equipment, copy));

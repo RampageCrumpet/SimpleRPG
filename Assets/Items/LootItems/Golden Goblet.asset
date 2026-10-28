@@ -12,11 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6511a776aa640fb469496949a9bad1b2, type: 3}
   m_Name: Golden Goblet
   m_EditorClassIdentifier: SimpleRPG::SimpleRPG.InventorySystem.Item
+  definitionId: c985e9aede7f434c9d842bf0293d4d31
   <WorldPrefab>k__BackingField: {fileID: 3205298321413172928, guid: d88dacbf7331bfa45a2b690e42c146bc, type: 3}
   <Icon>k__BackingField: {fileID: 5293527103206090926, guid: daf7f26dbbbeed2409173232d87b97f2, type: 3}
   <ItemName>k__BackingField: Golden Goblet
   <ItemSize>k__BackingField: {x: 2, y: 2}
   rules: []
+  audioProfile: {fileID: 0}
+  movementAudio: {fileID: 0}
+  audioSubject: {fileID: 0}
   grants: []
   startingCharges: 0
   grantedAbilities: []

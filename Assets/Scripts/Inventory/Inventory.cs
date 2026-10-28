@@ -109,17 +109,15 @@ namespace SimpleRPG.InventorySystem
             itemsById = new Dictionary<uint, Item>();
             idsByItem.Clear();
 
-            ItemRegistry registry = ItemRegistry.Instance;
-
             foreach (InventoryEntry entry in entries)
             {
                 Item item;
-                if (!previousItems.Remove(entry.InstanceId, out item) || (registry != null && registry.GetId(item) != entry.ItemId))
+                if (!previousItems.Remove(entry.InstanceId, out item) || ItemIds.GetId(item) != entry.ItemId)
                 {
-                    Item template = registry != null ? registry.GetItem(entry.ItemId) : null;
+                    Item template = ItemIds.GetItem(entry.ItemId);
                     if (template == null)
                     {
-                        Debug.LogError($"{gameObject.name}: no registered item with ID {entry.ItemId}; add it to the ItemRegistry.");
+                        Debug.LogError($"{gameObject.name}: no registered item with ID {entry.ItemId}; rebuild the DefinitionRegistry (SimpleRPG > Definitions).");
                         continue;
                     }
 
@@ -177,7 +175,7 @@ namespace SimpleRPG.InventorySystem
                 {
                     InstanceId = instanceId,
                     // Callers check the registry (CanPlaceAsAuthority, CanMoveBetween) before placing; 0 would mean "unknown item".
-                    ItemId = ItemRegistry.Instance != null ? ItemRegistry.Instance.GetId(item) : 0,
+                    ItemId = ItemIds.GetId(item),
                     Position = location
                 });
             }
@@ -302,9 +300,9 @@ namespace SimpleRPG.InventorySystem
                 return false;
             }
 
-            if (IsSpawned && (ItemRegistry.Instance == null || ItemRegistry.Instance.GetId(item) == 0))
+            if (IsSpawned && !ItemIds.IsReplicable(item))
             {
-                Debug.LogError($"Item '{item.ItemName}' isn't in the ItemRegistry, so it can't be replicated. Add it to the registry.");
+                Debug.LogError($"Item '{item.ItemName}' isn't in the DefinitionRegistry, so it can't be replicated. Rebuild the registry (SimpleRPG > Definitions).");
                 return false;
             }
 
@@ -411,7 +409,7 @@ namespace SimpleRPG.InventorySystem
         /// </summary>
         public bool CanReplicate(Item item)
         {
-            return !IsSpawned || (ItemRegistry.Instance != null && ItemRegistry.Instance.GetId(item) != 0);
+            return !IsSpawned || ItemIds.IsReplicable(item);
         }
 
         /// <summary>

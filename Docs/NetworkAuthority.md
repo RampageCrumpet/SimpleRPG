@@ -25,7 +25,7 @@ A host is a server that also has a local player, so it follows the server rules.
 - Mutate replicated state only where `IsServer` is true. The `Inventory` Add/Remove methods log an error on clients.
 - Gameplay an action needs the actor alive for is gated on `Character.IsAlive`, on the server, at the entry point that acts (RPC handler or server method). Client-side checks are courtesy only.
 - Anything a client wants to change is a `[Rpc(SendTo.Server)]` request that validates before acting. Use `RequireOwnership = true` when only the owner may call it.
-- Item identity on the wire is the `ItemRegistry` id (position in the registry list, **append only**). New `Item` assets need `Items > Update Item Registry` run in the editor. Items are never serialized themselves.
+- Item identity on the wire is the item's short id in the `DefinitionRegistry` (`ItemIds.GetId` / `GetItem`). Items are `GameplayDefinition` assets with a permanent id; short ids are assigned once and never reused, so they also stay valid in saved data. New `Item` assets need `SimpleRPG > Definitions > Rebuild Definition Registry` run in the editor. Items are never serialized themselves.
 - Ability, status, rule and attribute definitions are `GameplayDefinition` assets with permanent ids in the `DefinitionRegistry`; the wire carries short ids only. Runtime state lives in managers and stores, never in the assets.
 
 ## Extending

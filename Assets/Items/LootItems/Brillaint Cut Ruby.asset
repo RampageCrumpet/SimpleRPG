@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6511a776aa640fb469496949a9bad1b2, type: 3}
   m_Name: Brillaint Cut Ruby
   m_EditorClassIdentifier: 
+  definitionId: 413aff45018945378d4a3d6870fbf761
   <WorldPrefab>k__BackingField: {fileID: 7948128242909867124, guid: 5b0d621d94aab074c8f1e45b5407bd63, type: 3}
   <Icon>k__BackingField: {fileID: 21300000, guid: 9d25a531b5e228548b6ea6700e833dc7, type: 3}
   <ItemName>k__BackingField: Brilliant Cut Ruby

@@ -35,7 +35,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private readonly List<GameObject> spawned = new List<GameObject>();
         private readonly List<Object> created = new List<Object>();
         private GameplayServices services;
-        private ItemRegistry previousRegistry;
+        private DefinitionRegistry previousRegistry;
         private WeaponData sword;
         private WeaponData dagger;
         private GameplayRuleDefinition rule;
@@ -57,8 +57,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             sword = Weapon(10, rule);
             dagger = Weapon(6);
-            previousRegistry = ItemRegistry.Instance;
-            ItemRegistry.Instance = ItemRegistry.Create(new Item[] { sword, dagger });
+            previousRegistry = DefinitionRegistry.Instance;
+            DefinitionRegistry.Instance = ItemTestRegistry.With(new Item[] { sword, dagger });
 
             managerObject = new GameObject("TestNetworkManager");
             UnityTransport transport = managerObject.AddComponent<UnityTransport>();
@@ -91,7 +91,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             }
 
             if (managerObject != null) Object.Destroy(managerObject);
-            ItemRegistry.Instance = previousRegistry;
+            DefinitionRegistry.Instance = previousRegistry;
             foreach (Object o in created)
             {
                 if (o != null) Object.DestroyImmediate(o);

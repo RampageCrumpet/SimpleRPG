@@ -12,11 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6511a776aa640fb469496949a9bad1b2, type: 3}
   m_Name: Golden Ewer
   m_EditorClassIdentifier: SimpleRPG::SimpleRPG.InventorySystem.Item
+  definitionId: c8b22b91ddf54aa3ac9e49eed3a9d8e4
   <WorldPrefab>k__BackingField: {fileID: 1714725245239889385, guid: 2d72d2e657ee3864c89c5c52a6ccdcae, type: 3}
   <Icon>k__BackingField: {fileID: 3285071076168246420, guid: b96e8a4bad4cedd4cb8bd4072904e33c, type: 3}
   <ItemName>k__BackingField: Golden Ewer
   <ItemSize>k__BackingField: {x: 2, y: 2}
   rules: []
+  audioProfile: {fileID: 0}
+  movementAudio: {fileID: 0}
+  audioSubject: {fileID: 0}
   grants: []
   startingCharges: 0
   grantedAbilities: []

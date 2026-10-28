@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26bef1c1d7e1c7b429c6003714bedf29, type: 3}
   m_Name: TestWeaponData
   m_EditorClassIdentifier: 
+  definitionId: d5f8bbb00a9e4115b267116fb7b4bc04
   <WorldPrefab>k__BackingField: {fileID: 0}
   <Icon>k__BackingField: {fileID: 0}
   <ItemName>k__BackingField: 

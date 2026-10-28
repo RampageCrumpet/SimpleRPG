@@ -26,7 +26,7 @@ namespace SimpleRPG.InventorySystem
     /// A serializable base class containing information about items.
     /// </summary>
     [CreateAssetMenu(fileName = "Item", menuName = "Items/Item")]
-    public class Item : ScriptableObject
+    public class Item : GameplayDefinition
     {
         [field: SerializeField]
         [Tooltip("Networked world pickup for this catalog item.")]

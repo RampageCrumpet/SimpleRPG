@@ -104,7 +104,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
                     else Assert.IsTrue(pickup.TryPickUp(player));
                     var copy = inventory.GetItems().Select(e => e.item).Single(i => i.SourceAsset == source);
                     Assert.AreNotSame(source, copy);
-                    Assert.Greater(ItemRegistry.Instance.GetId(copy), 0);
+                    Assert.Greater(ItemIds.GetId(copy), 0u);
                     if (pickup != null) Assert.IsFalse(pickup.TryPickUp(player), "A pickup cannot be claimed twice.");
                 }
                 var menu = Object.FindAnyObjectByType<SimpleRPG.UI.LootMenuUI>();

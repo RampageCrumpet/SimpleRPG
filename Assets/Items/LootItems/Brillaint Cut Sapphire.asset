@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6511a776aa640fb469496949a9bad1b2, type: 3}
   m_Name: Brillaint Cut Sapphire
   m_EditorClassIdentifier: 
+  definitionId: 72ce8c39f32d44cd8a7b39770a518de7
   <WorldPrefab>k__BackingField: {fileID: 7223055755451144850, guid: e1ffeb1b709ca1148a53587a3ca15b1c, type: 3}
   <Icon>k__BackingField: {fileID: 21300000, guid: f0901b87d27eb3448af3d08b60c64315, type: 3}
   <ItemName>k__BackingField: Brilliant Cut Sapphire

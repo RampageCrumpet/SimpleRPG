@@ -1,16 +1,19 @@
 using System.Reflection;
 using NUnit.Framework;
+using SimpleRPG.Abilities;
 using SimpleRPG.InventorySystem;
 using UnityEngine;
 
 namespace SimpleRPG.Tests.EditMode
 {
     /// <summary>
-    /// Checks the pieces of the server-authority model that don't need a running network: the item registry and the inventory's validated moves.
+    /// Checks the pieces of the server-authority model that don't need a running network: the item ids and the inventory's validated moves.
     /// </summary>
     public class NetworkAuthorityTests
     {
         private GameObject host;
+        private DefinitionRegistry previousRegistry;
+        private DefinitionRegistry testRegistry;
 
         [TearDown]
         public void TearDown()
@@ -19,32 +22,73 @@ namespace SimpleRPG.Tests.EditMode
             {
                 Object.DestroyImmediate(host);
             }
+
+            if (testRegistry != null)
+            {
+                DefinitionRegistry.Instance = previousRegistry;
+                Object.DestroyImmediate(testRegistry);
+                testRegistry = null;
+            }
         }
 
-        // --- Item registry ---
+        /// <summary>Makes a registry listing exactly these items, as the game's definition registry lists its items, and uses it.</summary>
+        private void UseRegistryOf(params Item[] items)
+        {
+            foreach (Item item in items) item.EnsureId();
+            testRegistry = ScriptableObject.CreateInstance<DefinitionRegistry>();
+            Assert.IsTrue(testRegistry.Rebuild(items).Success);
+            previousRegistry = DefinitionRegistry.Instance;
+            DefinitionRegistry.Instance = testRegistry;
+        }
+
+        // --- Item ids ---
 
         [Test]
-        public void Registry_ClonesShareTheirSourceAssetsId()
+        public void ItemIds_ClonesShareTheirSourceAssetsId()
         {
             Item sword = MakeItem(new Vector2Int(1, 3));
             Item gem = MakeItem(new Vector2Int(1, 1));
-            ItemRegistry registry = ItemRegistry.Create(new[] { sword, gem });
+            UseRegistryOf(sword, gem);
 
-            Assert.AreEqual(1, registry.GetId(sword));
-            Assert.AreEqual(2, registry.GetId(gem));
-            Assert.AreEqual(2, registry.GetId(gem.CloneInstance()));
-            Assert.AreSame(gem, registry.GetItem(2));
+            uint swordId = ItemIds.GetId(sword);
+            uint gemId = ItemIds.GetId(gem);
+            Assert.AreNotEqual(0u, swordId);
+            Assert.AreNotEqual(0u, gemId);
+            Assert.AreNotEqual(swordId, gemId);
+            Assert.AreEqual(gemId, ItemIds.GetId(gem.CloneInstance()));
+            Assert.AreSame(gem, ItemIds.GetItem(gemId));
+            Assert.AreSame(sword, ItemIds.GetItem(swordId));
         }
 
         [Test]
-        public void Registry_UnknownItemsAndIdsAreRejected()
+        public void ItemIds_UnknownItemsAndIdsAreRejected()
         {
-            ItemRegistry registry = ItemRegistry.Create(new[] { MakeItem(Vector2Int.one) });
+            Item known = MakeItem(Vector2Int.one);
+            UseRegistryOf(known);
 
-            Assert.AreEqual(0, registry.GetId(MakeItem(Vector2Int.one)));
-            Assert.AreEqual(0, registry.GetId(null));
-            Assert.IsNull(registry.GetItem(0));
-            Assert.IsNull(registry.GetItem(99));
+            Assert.AreEqual(0u, ItemIds.GetId(MakeItem(Vector2Int.one)), "an item that is not in the registry has no id");
+            Assert.AreEqual(0u, ItemIds.GetId(null));
+            Assert.IsNull(ItemIds.GetItem(0));
+            Assert.IsNull(ItemIds.GetItem(99999));
+            Assert.IsFalse(ItemIds.IsReplicable(MakeItem(Vector2Int.one)));
+            Assert.IsTrue(ItemIds.IsReplicable(known));
+        }
+
+        [Test]
+        public void ItemIds_IdsAreNotReusedWhenAnItemIsRemoved()
+        {
+            Item first = MakeItem(Vector2Int.one);
+            Item second = MakeItem(Vector2Int.one);
+            UseRegistryOf(first, second);
+            uint firstId = ItemIds.GetId(first);
+
+            Item replacement = MakeItem(Vector2Int.one);
+            replacement.EnsureId();
+            Assert.IsTrue(testRegistry.Rebuild(new[] { second, replacement }).Success, "the first item is dropped, a new one added");
+
+            Assert.AreEqual(0u, ItemIds.GetId(first));
+            Assert.IsNull(ItemIds.GetItem(firstId), "a retired id finds nothing");
+            Assert.AreNotEqual(firstId, ItemIds.GetId(replacement), "a retired id is never handed to another item, so saved data cannot be misread");
         }
 
         // --- Inventory ---

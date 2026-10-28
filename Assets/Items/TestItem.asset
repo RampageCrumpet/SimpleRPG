@@ -12,6 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6511a776aa640fb469496949a9bad1b2, type: 3}
   m_Name: TestItem
   m_EditorClassIdentifier: 
+  definitionId: 3436f7a0a74d4b99b8eaf35bd7fc2f26
+  <WorldPrefab>k__BackingField: {fileID: 0}
   <Icon>k__BackingField: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
   <ItemName>k__BackingField: TestItem
   <ItemSize>k__BackingField: {x: 2, y: 2}
+  rules: []
+  audioProfile: {fileID: 0}
+  movementAudio: {fileID: 0}
+  audioSubject: {fileID: 0}
+  grants: []
+  startingCharges: 0
+  grantedAbilities: []
+  fixedAttributes: []

@@ -80,6 +80,11 @@ namespace SimpleRPG.Abilities
         /// </summary>
         public int Count => entries.Count;
 
+        /// <summary>
+        /// Every registered definition that still exists.
+        /// </summary>
+        public IEnumerable<GameplayDefinition> Definitions => entries.Where(e => e.definition != null).Select(e => e.definition);
+
         private void OnEnable()
         {
             byId = null;

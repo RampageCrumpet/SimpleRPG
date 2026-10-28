@@ -33,7 +33,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private readonly List<GameObject> spawned = new List<GameObject>();
         private readonly List<Object> created = new List<Object>();
         private GameplayServices services;
-        private ItemRegistry previousRegistry;
+        private DefinitionRegistry previousRegistry;
         private Item amulet;
 
         [UnitySetUp]
@@ -65,8 +65,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
                 new GrantSpec { AttributeKey = PrimaryAttributes.Strength.Key, Layer = ModifierLayer.Add, Value = 3 },
                 new GrantSpec { AttributeKey = PrimaryAttributes.Constitution.Key, Layer = ModifierLayer.Add, Value = 2 },
             });
-            previousRegistry = ItemRegistry.Instance;
-            ItemRegistry.Instance = ItemRegistry.Create(new[] { amulet });
+            previousRegistry = DefinitionRegistry.Instance;
+            DefinitionRegistry.Instance = ItemTestRegistry.With(new[] { amulet });
 
             managerObject = new GameObject("TestNetworkManager");
             UnityTransport transport = managerObject.AddComponent<UnityTransport>();
@@ -100,7 +100,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             }
 
             if (managerObject != null) Object.Destroy(managerObject);
-            ItemRegistry.Instance = previousRegistry;
+            DefinitionRegistry.Instance = previousRegistry;
             foreach (Object o in created)
             {
                 if (o != null) Object.DestroyImmediate(o);

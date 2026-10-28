@@ -77,7 +77,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         protected NetworkManager client;
         protected readonly List<GameObject> spawned = new List<GameObject>();
         protected readonly List<Object> created = new List<Object>();
-        protected ItemRegistry previousRegistry;
+        protected DefinitionRegistry previousRegistry;
         protected Item staff;
         protected AbilityDefinition staffBolt;
 
@@ -89,8 +89,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             staffBolt = BuildStaffBolt();
             staff = BuildStaff(staffBolt);
-            previousRegistry = ItemRegistry.Instance;
-            ItemRegistry.Instance = ItemRegistry.Create(new[] { staff });
+            previousRegistry = DefinitionRegistry.Instance;
+            DefinitionRegistry.Instance = ItemTestRegistry.With(new[] { staff });
 
             SimulateLatency();
 
@@ -143,7 +143,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             if (Simulator != null) Object.Destroy(Simulator.gameObject);
             if (clientObject != null) Object.Destroy(clientObject);
             if (hostObject != null) Object.Destroy(hostObject);
-            ItemRegistry.Instance = previousRegistry;
+            DefinitionRegistry.Instance = previousRegistry;
             foreach (Object o in created)
             {
                 if (o != null) Object.DestroyImmediate(o);

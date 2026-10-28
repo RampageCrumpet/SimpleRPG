@@ -58,7 +58,7 @@ The overhead uses the approved 1.3-second export with its damage window at 0.55-
 1. Create an Item asset with a name, icon and positive grid size.
 2. Make a world prefab using the supplied visual, a collider, NetworkObject and WorldItemPickup. Set its Item and interaction settings; set the Item's WorldPrefab back to it.
 3. Create a LootableItem entry referring to the Item. Add it to the existing gold/gem/nested treasure tables as appropriate.
-4. Run **Items > Update Item Registry**. Registry entries are appended; do not reorder existing IDs.
+4. Run **SimpleRPG > Definitions > Rebuild Definition Registry**. Items get a permanent id when created, and the registry gives each a network id that is never reused.
 5. Register the pickup prefab in the network prefab lists.
 
 The pickup RPC resolves the requesting client's controlled character. The server checks ownership context, distance, living state and inventory capacity before creating the inventory instance and despawning the pickup. Inventory clones retain SourceAsset identity and receive the existing inventory instance ID.
