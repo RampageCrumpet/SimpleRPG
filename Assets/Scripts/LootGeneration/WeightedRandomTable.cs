@@ -22,7 +22,6 @@ namespace SimpleRPG.InventorySystem.LootGeneration
         public int Count { get; set; }
 
         /// <inheritdoc/>
-        [SerializeReference]
         [Tooltip("The items that can be dropped.")]
         public List<WeightedRandomEntry> Contents;
 

@@ -6,7 +6,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
 
-namespace AI
+namespace SimpleRPG.AI
 {
     /// <summary>Shared server-owned perception, target tracking, navigation and terminal lifecycle.</summary>
     [RequireComponent(typeof(Character))]

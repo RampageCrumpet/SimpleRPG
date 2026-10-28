@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace LevelGeneration
+namespace SimpleRPG.LevelGeneration
 {
     /// <summary>
     /// One of the four sides of a cell. Ordered clockwise seen from above, so a quarter turn adds one.

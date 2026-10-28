@@ -2,7 +2,7 @@ using SimpleRPG;
 using UnityEngine;
 
 
-namespace HitDetection
+namespace SimpleRPG.HitDetection
 {
     /// <summary>
     /// One struck region of a character's body: a trigger collider on the HurtBox layer, parented to the bone it follows, so animation and the

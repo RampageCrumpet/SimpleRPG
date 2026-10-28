@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace LevelGeneration
+namespace SimpleRPG.LevelGeneration
 {
     /// <summary>
     /// A joined pair of doors that stays shut until the player has the key, and the room the key is found in.

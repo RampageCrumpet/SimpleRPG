@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 
 
-namespace HitDetection
+namespace SimpleRPG.HitDetection
 {
     /// <summary>
     /// A weapon's live blade. Each physics step it asks which hurtboxes the blade overlapped since the previous step, at the poses along the way

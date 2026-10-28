@@ -1,4 +1,4 @@
-using LevelGeneration;
+using SimpleRPG.LevelGeneration;
 using SimpleRPG.InventorySystem.LootGeneration;
 using System.Collections.Generic;
 using System.Linq;

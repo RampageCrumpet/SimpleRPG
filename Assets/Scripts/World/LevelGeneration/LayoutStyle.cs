@@ -1,6 +1,6 @@
 using System;
 
-namespace LevelGeneration
+namespace SimpleRPG.LevelGeneration
 {
     /// <summary>
     /// How a dungeon is shaped, as opposed to how big it is. Both dials run from 0 to 1 and 0.5 is the generator's natural behaviour.

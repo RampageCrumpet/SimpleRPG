@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace LevelGeneration
+namespace SimpleRPG.LevelGeneration
 {
     /// <summary>
     /// The packed location of one door, in cells from the room's lowest corner.

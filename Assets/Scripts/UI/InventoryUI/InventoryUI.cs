@@ -68,7 +68,6 @@ namespace SimpleRPG.UI
         /// <summary>
         /// The size of an individual cell on our screen.
         /// </summary>
-        [Tooltip("The size of an individual cell on our screen.")]
         public Vector2 CellSize { get; private set; }
 
         /// <summary>

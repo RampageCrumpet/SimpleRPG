@@ -32,8 +32,7 @@ namespace SimpleRPG.ObjectInteractions
 
         [Header("Loot Settings")]
 
-        //TODO: Unity has issues with serializing interfaces, so we need to use the concrete type here. If you find a good workaround replace this.
-        [SerializeField, SerializeReference]
+        [SerializeField]
         [Tooltip("The LootTable for this chest.")]
         private WeightedRandomTable lootTable;
 

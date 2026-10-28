@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace LevelGeneration
+namespace SimpleRPG.LevelGeneration
 {
     /// <summary>
     /// A kind of door (a gate, a sewer pipe, stairs, ...). Doors only join doors of the same type, so a gate never opens onto a sewer.

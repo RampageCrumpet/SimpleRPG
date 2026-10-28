@@ -1,4 +1,4 @@
-using HitDetection;
+using SimpleRPG.HitDetection;
 using NUnit.Framework;
 using SimpleRPG.Abilities.Integration;
 using SimpleRPG.Animations;
@@ -180,7 +180,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             Assert.IsTrue(attacker.GetComponent<AbilityUser>().TryActivateOnServer(AssetDatabase.LoadAssetAtPath<AbilityDefinition>(MeleeAttack)));
             ComboTestSupport.Advance(attacker, ComboTestSupport.InsideHitWindow);
-            attacker.GetComponentInChildren<global::Weapon>().TargetHit(victim, BodyLocation.Torso);
+            attacker.GetComponentInChildren<SimpleRPG.Weapon>().TargetHit(victim, BodyLocation.Torso);
         }
 
         // ----- The flaming sword -----

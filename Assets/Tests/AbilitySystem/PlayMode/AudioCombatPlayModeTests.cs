@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using HitDetection;
+using SimpleRPG.HitDetection;
 using NUnit.Framework;
 using SimpleRPG.Abilities;
 using SimpleRPG.Audio;

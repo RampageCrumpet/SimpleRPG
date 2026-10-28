@@ -1,6 +1,5 @@
 using System;
-using HitDetection;
-
+using SimpleRPG.HitDetection;
 namespace SimpleRPG.Audio
 {
     /// <summary>

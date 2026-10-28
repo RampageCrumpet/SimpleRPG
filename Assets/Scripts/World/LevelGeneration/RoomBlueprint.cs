@@ -5,7 +5,7 @@ using System.Data;
 using System.Linq;
 using UnityEngine;
 
-namespace LevelGeneration
+namespace SimpleRPG.LevelGeneration
 {
     /// <summary>
     /// This class holds all of the data needed to instantiate a room including it's size and list of connections.

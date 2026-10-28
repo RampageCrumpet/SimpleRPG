@@ -1,4 +1,4 @@
-using HitDetection;
+using SimpleRPG.HitDetection;
 using NUnit.Framework;
 using SimpleRPG.Abilities.Integration;
 using SimpleRPG.Animations;
@@ -305,7 +305,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             ComboTestSupport.UseManualClock(wielder);
             Assert.IsTrue(wielder.GetComponent<AbilityUser>().TryActivateOnServer(AssetDatabase.LoadAssetAtPath<AbilityDefinition>(MeleeAttack)));
             ComboTestSupport.Advance(wielder, ComboTestSupport.InsideHitWindow);
-            wielder.GetComponentInChildren<global::Weapon>().TargetHit(victim, BodyLocation.Torso);
+            wielder.GetComponentInChildren<SimpleRPG.Weapon>().TargetHit(victim, BodyLocation.Torso);
             yield return null;
             Object.FindObjectsByType<Projectile>().Single().TargetHit(victim, BodyLocation.Torso);
             yield return null;

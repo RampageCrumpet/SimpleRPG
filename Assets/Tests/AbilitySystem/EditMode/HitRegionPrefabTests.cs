@@ -1,4 +1,4 @@
-using HitDetection;
+using SimpleRPG.HitDetection;
 using NUnit.Framework;
 using System.Linq;
 using System.Reflection;

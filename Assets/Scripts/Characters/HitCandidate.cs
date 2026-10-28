@@ -1,7 +1,7 @@
 using SimpleRPG;
 using UnityEngine;
 
-namespace HitDetection
+namespace SimpleRPG.HitDetection
 {
     /// <summary>
     /// One hurtbox a blade overlaps at one pose, and what the contact-resolution rule needs to choose between several on the same character.

@@ -1,7 +1,7 @@
 using SimpleRPG.Abilities;
 using System.Linq;
 
-namespace AI
+namespace SimpleRPG.AI
 {
     /// <summary>Selects a ready melee ability; actual hits remain animation-driven weapon contacts.</summary>
     public sealed class MeleeAttackState : IState

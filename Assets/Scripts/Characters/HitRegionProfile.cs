@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace HitDetection
+namespace SimpleRPG.HitDetection
 {
     /// <summary>
     /// What a blow to each body location is worth against one kind of character. An asset, so a skeleton and a player (or a spider) carry

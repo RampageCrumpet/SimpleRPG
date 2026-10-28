@@ -1,4 +1,4 @@
-using HitDetection;
+using SimpleRPG.HitDetection;
 using SimpleRPG.Abilities;
 using SimpleRPG.Gameplay;
 using System.Collections.Generic;

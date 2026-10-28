@@ -1,4 +1,4 @@
-using LevelGeneration;
+using SimpleRPG.LevelGeneration;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;

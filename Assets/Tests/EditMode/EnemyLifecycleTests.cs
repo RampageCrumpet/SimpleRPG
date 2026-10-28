@@ -1,6 +1,5 @@
-using AI;
-using NUnit.Framework;
 using SimpleRPG.AI;
+using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
 

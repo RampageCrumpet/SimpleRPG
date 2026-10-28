@@ -1,7 +1,7 @@
 using UnityEngine;
 
 
-namespace HitDetection
+namespace SimpleRPG.HitDetection
 {
     public enum BodyLocation
     {

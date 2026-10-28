@@ -1,4 +1,4 @@
-namespace AI
+namespace SimpleRPG.AI
 {
     public sealed class ChaseState : IState
     {

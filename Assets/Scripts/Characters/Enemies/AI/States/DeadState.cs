@@ -1,4 +1,4 @@
-namespace AI
+namespace SimpleRPG.AI
 {
     /// <summary>Terminal state. Shutdown and presentation are committed once by Character's death event.</summary>
     public sealed class DeadState : IState

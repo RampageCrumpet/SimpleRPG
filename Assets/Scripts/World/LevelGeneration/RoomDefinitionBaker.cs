@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace LevelGeneration
+namespace SimpleRPG.LevelGeneration
 {
     /// <summary>
     /// Turns the packed values on room prefabs into the plain <see cref="RoomDefinition"/>s the layout generator reads.

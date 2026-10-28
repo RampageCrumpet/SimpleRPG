@@ -1,5 +1,5 @@
 using System.Collections;
-using HitDetection;
+using SimpleRPG.HitDetection;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;

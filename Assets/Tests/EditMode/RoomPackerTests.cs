@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using LevelGeneration;
+using SimpleRPG.LevelGeneration;
 using NUnit.Framework;
 using SimpleRPG.EditorTools;
 using UnityEditor;

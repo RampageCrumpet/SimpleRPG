@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using HitDetection;
+using SimpleRPG.HitDetection;
 using NUnit.Framework;
 using SimpleRPG.Audio;
 using SimpleRPG.InventorySystem;

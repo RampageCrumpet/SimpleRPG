@@ -1,8 +1,7 @@
-using AI;
-using HitDetection;
+using SimpleRPG.AI;
+using SimpleRPG.HitDetection;
 using NUnit.Framework;
 using SimpleRPG.Abilities.Integration;
-using SimpleRPG.AI;
 using SimpleRPG.Animations;
 using SimpleRPG.Articulation;
 using SimpleRPG.Gameplay;

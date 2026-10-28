@@ -1,4 +1,4 @@
-using LevelGeneration;
+using SimpleRPG.LevelGeneration;
 using UnityEditor;
 using UnityEngine;
 

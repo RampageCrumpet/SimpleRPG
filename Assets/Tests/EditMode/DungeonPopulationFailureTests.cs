@@ -1,5 +1,4 @@
 using NUnit.Framework;
-using LevelGeneration;
 using SimpleRPG.LevelGeneration;
 using UnityEngine;
 

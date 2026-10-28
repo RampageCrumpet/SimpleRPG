@@ -1,5 +1,5 @@
 using System.Linq;
-using LevelGeneration;
+using SimpleRPG.LevelGeneration;
 using NUnit.Framework;
 using SimpleRPG.Keys;
 using UnityEditor;

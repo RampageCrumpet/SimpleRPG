@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace LevelGeneration
+namespace SimpleRPG.LevelGeneration
 {
     /// <summary>
     /// A finished dungeon plan: which rooms stand where, and which doors were closed with a wall.

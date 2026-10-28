@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace AI
+namespace SimpleRPG.AI
 {
     public enum EnemyState { Idle, Chase, Attack }
 

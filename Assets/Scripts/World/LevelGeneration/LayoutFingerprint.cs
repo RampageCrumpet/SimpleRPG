@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace LevelGeneration
+namespace SimpleRPG.LevelGeneration
 {
     /// <summary>
     /// Short checksums that let two machines confirm they are building the same dungeon.

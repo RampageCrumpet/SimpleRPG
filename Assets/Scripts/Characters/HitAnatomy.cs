@@ -2,7 +2,7 @@ using SimpleRPG;
 using SimpleRPG.Gameplay;
 using UnityEngine;
 
-namespace HitDetection
+namespace SimpleRPG.HitDetection
 {
     /// <summary>
     /// A character's anatomy for combat: the hurtboxes on its bones and what the body locations they stand for are worth. Player and monster
