@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace SimpleRPG.UI
@@ -14,11 +13,6 @@ namespace SimpleRPG.UI
     /// </summary>
     public class AbilityButton : MonoBehaviour
     {
-        /// <summary>
-        /// The input action that triggers the ability associated with this button. Null if the slot has no key.
-        /// </summary>
-        public InputAction abilityAction;
-
         [Tooltip("The mask used to darken this ability when it's cooling down.")]
         public Image darkMask;
 
@@ -29,7 +23,6 @@ namespace SimpleRPG.UI
         private Image darkAbilityIcon;
 
         private IAbilitySlot abilitySlot;
-        private bool requiresNewPress;
 
         /// <summary>
         /// Initialize the UI button after creation.
@@ -41,8 +34,6 @@ namespace SimpleRPG.UI
             darkAbilityIcon = this.GetComponentsInChildren<Image>().Single(x => x.gameObject != this.gameObject);
 
             this.abilitySlot = abilitySlot;
-            requiresNewPress = abilitySlot is GraphAbilitySlot graph
-                && graph.Definition.HasNode(NodeTypes.MeleeSwing);
             abilityIconImage.sprite = abilitySlot.Icon;
             //darkAbilityIcon.sprite = ability.abillitySprite;
         }
@@ -58,12 +49,8 @@ namespace SimpleRPG.UI
         // Update is called once per frame
         void Update()
         {
+            // The player's controls (LocalPlayerControls) activate abilities; the button only shows the slot's state.
             UpdateCooldown();
-
-            if (abilityAction != null && (requiresNewPress ? abilityAction.WasPressedThisFrame() : abilityAction.IsPressed()))
-            {
-                this.abilitySlot.Activate();
-            }
         }
 
         /// <summary>

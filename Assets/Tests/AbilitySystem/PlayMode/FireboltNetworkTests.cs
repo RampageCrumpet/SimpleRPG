@@ -96,7 +96,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             spawned.Add(instance);
 
             // Player-only components expect a camera, input and the game's UI, which these tests don't load. Remove them before spawning.
-            RegisterWithUI hud = instance.GetComponent<RegisterWithUI>();
+            LocalPlayerControls hud = instance.GetComponent<LocalPlayerControls>();
             if (hud != null) Object.DestroyImmediate(hud);
 
             FirstPersonCharacterController firstPerson = instance.GetComponent<FirstPersonCharacterController>();

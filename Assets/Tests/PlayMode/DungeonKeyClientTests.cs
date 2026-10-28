@@ -29,15 +29,6 @@ namespace SimpleRPG.Tests.PlayMode
         private DungeonKeyRing hostRing;
         private GameObject mainCamera;
 
-        /// <summary>
-        /// A locally owned character registers with the scene's UI (RegisterWithUI.AttachToUI), which uses Single() and throws in
-        /// a bare test scene. It happens once for every owner spawn, so each manager started here declares it.
-        /// </summary>
-        private static void ExpectNoUiException()
-        {
-            LogAssert.Expect(LogType.Exception, new System.Text.RegularExpressions.Regex("Sequence contains no matching element"));
-        }
-
         private static NetworkManager NewManager(string name)
         {
             var go = new GameObject(name);
@@ -63,7 +54,6 @@ namespace SimpleRPG.Tests.PlayMode
             // The first person controller of every spawned character looks for the scene's MainCamera.
             mainCamera = new GameObject("TestCamera", typeof(Camera)) { tag = "MainCamera" };
             host = NewManager("TestHost");
-            ExpectNoUiException();
             Assert.IsTrue(host.StartHost(), "The test host should start.");
             yield return null;
 
@@ -113,7 +103,6 @@ namespace SimpleRPG.Tests.PlayMode
         private IEnumerator Connect(string name)
         {
             NetworkManager client = NewManager(name);
-            ExpectNoUiException();
 
             // Both managers live in one process and share the spawn bookkeeping, so the client's copy of the host's objects
             // trips Netcode's duplicate-id check. A real second process would not.

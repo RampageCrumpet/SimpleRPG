@@ -55,7 +55,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             GameObject prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefab);
             Assert.IsNotNull(prefab);
             playerObject = Object.Instantiate(prefab, Vector3.zero, Quaternion.identity);
-            foreach (System.Type type in new[] { typeof(RegisterWithUI) })
+            foreach (System.Type type in new[] { typeof(LocalPlayerControls) })
             {
                 Component component = playerObject.GetComponent(type);
                 if (component != null) Object.DestroyImmediate(component);

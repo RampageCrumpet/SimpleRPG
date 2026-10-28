@@ -111,7 +111,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             foreach (System.Type type in new[]
             {
-                typeof(RegisterWithUI), typeof(FirstPersonCharacterController), typeof(AnimatableCharacter),
+                typeof(LocalPlayerControls), typeof(FirstPersonCharacterController), typeof(AnimatableCharacter),
                 typeof(NavigationGrounding), typeof(AIController), typeof(NavMeshAgent), typeof(Blindsense),
             })
             {

@@ -40,7 +40,7 @@ namespace SimpleRPG
             this.interactor = interactor;
         }
 
-        public void OnGUI()
+        private void Update()
         {
             if (interactor != null && interactor.Interactable != null)
             {

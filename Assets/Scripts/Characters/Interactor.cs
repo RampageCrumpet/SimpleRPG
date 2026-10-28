@@ -143,6 +143,19 @@ namespace SimpleRPG
         }
 
         /// <summary>
+        /// What the player is looking at and could interact with, refreshed once a frame by the owning player's controls. Null if nothing.
+        /// </summary>
+        public Interactable Target { get; private set; }
+
+        /// <summary>
+        /// Looks for the interactable the player is looking at and remembers it as <see cref="Target"/>.
+        /// </summary>
+        public void RefreshTarget()
+        {
+            Target = FindInteractionTarget();
+        }
+
+        /// <summary>
         /// Finds the interactable object that the player is looking at within range and returns it if one exists.
         /// </summary>
         /// <returns> Returns the interactable object the player is looking at within range if one exists, otherwise returns null.</returns>

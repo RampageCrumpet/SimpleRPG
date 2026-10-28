@@ -1,5 +1,6 @@
 using SimpleRPG.Controls;
 using SimpleRPG.InventorySystem;
+using SimpleRPG.ObjectInteractions;
 using UnityEngine;
 
 namespace SimpleRPG.UI
@@ -13,7 +14,7 @@ namespace SimpleRPG.UI
     /// </list>
     /// The panels are the same objects in both, moved between the two layouts; inventory and equipment state live in their own components.
     /// </summary>
-    public class LootMenuUI : MonoBehaviour
+    public class LootMenuUI : MonoBehaviour, ILocalPlayerView
     {
         /// <summary>
         /// Which screen is open.
@@ -101,6 +102,28 @@ namespace SimpleRPG.UI
             playerUIController = this.gameObject.GetComponentInParent<PlayerUIController>();
             Apply(ScreenMode.Closed);
         }
+
+        /// <inheritdoc/>
+        public void BindLocalPlayer(Character character)
+        {
+            BindPlayer(character);
+
+            // Containers ask for the menu through these events instead of searching the scene for it.
+            UnbindLocalPlayer();
+            LootContainer.OpenRequested += DisplayLootMenu;
+            LootContainer.CloseRequested += CloseFromWorld;
+        }
+
+        /// <inheritdoc/>
+        public void UnbindLocalPlayer()
+        {
+            LootContainer.OpenRequested -= DisplayLootMenu;
+            LootContainer.CloseRequested -= CloseFromWorld;
+        }
+
+        private void OnDestroy() => UnbindLocalPlayer();
+
+        private void CloseFromWorld() => SetLootMenuUIDisplayStatus(false);
 
         /// <summary>
         /// Shows the local character's equipment, inventory, preview and stats on the screens.

@@ -13,11 +13,17 @@ namespace SimpleRPG.AI
             this.controller = controller;
             this.outsideRange = outsideRange;
         }
-        public void OnStateEnter() => controller.StopMoving();
+        // Not every enemy has melee delivery, so this may stay null; looked up once, not every frame.
+        private MeleeDelivery delivery;
+
+        public void OnStateEnter()
+        {
+            delivery = controller.GetComponent<MeleeDelivery>();
+            controller.StopMoving();
+        }
         public void OnStateExit() { }
         public void OnStateUpdate()
         {
-            var delivery = controller.GetComponent<MeleeDelivery>();
             // Commit to direction and stay planted through windup, strike and recovery.
             if (delivery != null && !delivery.CanStartFreshChain) return;
             if (!controller.TrackTarget() || !controller.InAttackRange) { outsideRange(); return; }

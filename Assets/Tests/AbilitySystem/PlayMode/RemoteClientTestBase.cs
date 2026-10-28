@@ -191,7 +191,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
         protected static void StripPlayerOnlyParts(GameObject instance)
         {
-            foreach (Type type in new[] { typeof(RegisterWithUI), typeof(FirstPersonCharacterController), typeof(AnimatableCharacter) })
+            foreach (Type type in new[] { typeof(LocalPlayerControls), typeof(FirstPersonCharacterController), typeof(AnimatableCharacter) })
             {
                 Component component = instance.GetComponent(type);
                 if (component != null) Object.DestroyImmediate(component);

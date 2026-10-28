@@ -9,7 +9,7 @@ namespace SimpleRPG.UI
     /// Tells the local player they have died and lets them start their next life. The panel shows while the character is dead, holds the
     /// cursor free and the camera still, and asks the server to respawn the character when the player chooses to.
     /// </summary>
-    public class DeathScreenUI : MonoBehaviour
+    public class DeathScreenUI : MonoBehaviour, ILocalPlayerView
     {
         /// <summary>
         /// The panel shown while the character is dead.
@@ -41,6 +41,12 @@ namespace SimpleRPG.UI
         /// </summary>
         public bool IsShowing => panel != null && panel.activeSelf;
 
+        /// <inheritdoc/>
+        public void BindLocalPlayer(Character character) => SetCharacter(character, GetComponentInParent<PlayerUIController>());
+
+        /// <inheritdoc/>
+        public void UnbindLocalPlayer() => SetCharacter(null, null);
+
         /// <summary>
         /// Points the screen at the locally owned character, replacing the previous one, and shows the panel if that character is dead.
         /// </summary>
@@ -64,14 +70,6 @@ namespace SimpleRPG.UI
         {
             if (panel != null) panel.SetActive(false);
             if (respawnButton != null) respawnButton.onClick.AddListener(Respawn);
-        }
-
-        private void Update()
-        {
-            if (IsShowing && GameInput.Interact.WasPressedThisFrame())
-            {
-                Respawn();
-            }
         }
 
         private void OnDestroy()

@@ -3,17 +3,18 @@ using UnityEngine;
 
 namespace SimpleRPG.UI
 {
+    /// <summary>
+    /// The root of the player's HUD and menus. When the local player is announced (see <see cref="LocalPlayer"/>) it binds every
+    /// <see cref="ILocalPlayerView"/> beneath it to that character, and unbinds them when it goes, so the character never needs to find the UI
+    /// and a new piece of UI only has to implement the interface. It also owns the cursor and tells the rest of the game when a menu has the
+    /// player's attention.
+    /// </summary>
     public class PlayerUIController : MonoBehaviour
     {
         /// <summary>
         /// The MonoBehaviours that are currently requesting the mouse be shown and the camera controls be disabled..
         /// </summary>
         private HashSet<MonoBehaviour> lockingBehaviours = new();
-
-        /// <summary>
-        /// The FirstPersonCharacterController that is in charge of the player's camera.
-        /// </summary>
-        private FirstPersonCharacterController firstPersonCharacterController;
 
         /// <summary>
         /// The character this UI belongs to, if one has been set.
@@ -25,6 +26,29 @@ namespace SimpleRPG.UI
         /// </summary>
         public bool IsLocalCharacterAlive => LocalCharacter == null || LocalCharacter.IsAlive;
 
+        private void OnEnable()
+        {
+            LocalPlayer.Ready += BindViews;
+            LocalPlayer.Gone += UnbindViews;
+
+            // The character may have been announced before this UI came up.
+            if (LocalPlayer.Current != null)
+            {
+                BindViews(LocalPlayer.Current);
+            }
+        }
+
+        private void OnDisable()
+        {
+            LocalPlayer.Ready -= BindViews;
+            LocalPlayer.Gone -= UnbindViews;
+
+            if (LocalCharacter != null)
+            {
+                UnbindViews(LocalCharacter);
+            }
+        }
+
         /// <summary>
         /// Sets the character this UI belongs to.
         /// </summary>
@@ -33,13 +57,24 @@ namespace SimpleRPG.UI
             LocalCharacter = character;
         }
 
-        /// <summary>
-        /// Sets the <see cref="FirstPersonCharacterController"/> that is in charge of the player's camera.
-        /// </summary>
-        /// <param name="firstPersonCharacterController"> The character controller in charge of the camera.</param>
-        public void SetCharacterController(FirstPersonCharacterController firstPersonCharacterController)
+        private void BindViews(Character character)
         {
-            this.firstPersonCharacterController = firstPersonCharacterController;
+            // The controller must know the character before the views bind: a character that joined already dead shows the death screen at once.
+            LocalCharacter = character;
+            foreach (ILocalPlayerView view in GetComponentsInChildren<ILocalPlayerView>(true))
+            {
+                view.BindLocalPlayer(character);
+            }
+        }
+
+        private void UnbindViews(Character character)
+        {
+            foreach (ILocalPlayerView view in GetComponentsInChildren<ILocalPlayerView>(true))
+            {
+                view.UnbindLocalPlayer();
+            }
+
+            LocalCharacter = null;
         }
 
         /// <summary>
@@ -59,6 +94,7 @@ namespace SimpleRPG.UI
         public void UnlockRotationAndHideMouse(MonoBehaviour lockingBehavior)
         {
             lockingBehaviours.Remove(lockingBehavior);
+
             if (lockingBehaviours.Count == 0)
             {
                 SetMenuControlMode(false);
@@ -66,22 +102,15 @@ namespace SimpleRPG.UI
         }
 
         /// <summary>
-        /// When enabled the mouse is shown and the camera is locked. When disabled the mouse is hidden and the camera is unlocked.
+        /// When enabled the mouse is shown and gameplay input and the camera are held back. When disabled the mouse is hidden and they resume.
+        /// The camera and the player's controls listen to <see cref="LocalPlayer.MenuModeChanged"/>, so this does not know what they are.
         /// </summary>
-        /// <param name="value"> True to hide the mouse and lock camera rotation, false otherwise.</param>
+        /// <param name="value"> True to show the mouse and hold gameplay input back, false otherwise.</param>
         private void SetMenuControlMode(bool value)
         {
-            if (value)
-            {
-                Cursor.lockState = CursorLockMode.None;
-            }
-            else
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-            }
-
+            Cursor.lockState = value ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = value;
-            if (firstPersonCharacterController != null) firstPersonCharacterController.enabled = !value;
+            LocalPlayer.SetMenuMode(value);
         }
     }
 }

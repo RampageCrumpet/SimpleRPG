@@ -48,9 +48,14 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private WeaponData weaponData;
         private AbilityDefinition melee;
 
+        // The local player and menu state are static, so nothing may carry over from one test to the next.
+        [TearDown]
+        public void ClearLocalPlayerState() => LocalPlayer.Reset();
+
         [UnitySetUp]
         public IEnumerator SetUp()
         {
+            LocalPlayer.Reset();
             services = GameplayServices.Reset();
             AbilityServices.Reset();
             deaths = new List<DeathContext>();
@@ -124,7 +129,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             GameObject instance = Object.Instantiate(prefab, position, Quaternion.identity);
             spawned.Add(instance);
 
-            foreach (System.Type type in new[] { typeof(RegisterWithUI), typeof(AnimatableCharacter) })
+            foreach (System.Type type in new[] { typeof(LocalPlayerControls), typeof(AnimatableCharacter) })
             {
                 Component component = instance.GetComponent(type);
                 if (component != null) Object.DestroyImmediate(component);
@@ -544,19 +549,18 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator DeathScreen_BoundToAnAlreadyDeadCharacter_ShowsEvenBeforeTheControllerIsSet()
+        public IEnumerator DeathScreen_BoundToAnAlreadyDeadCharacter_ShowsAtOnce()
         {
             Character player = SpawnPlayer();
             yield return null;
             Kill(player);
             yield return null;
 
-            // A late joiner binds the screen to a character that is already dead, before the UI controller has the character's controls.
-            DeathScreenUI screen = CreateDeathScreen(out PlayerUIController playerUI, setController: false);
+            // A late joiner binds the screen to a character that is already dead.
+            DeathScreenUI screen = CreateDeathScreen(out PlayerUIController playerUI);
             screen.SetCharacter(player, playerUI);
 
             Assert.IsTrue(screen.IsShowing);
-            playerUI.SetCharacterController(player.GetComponent<FirstPersonCharacterController>());
             screen.Respawn();
             yield return null;
             Assert.IsFalse(screen.IsShowing);
@@ -639,7 +643,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             return bar;
         }
 
-        private DeathScreenUI CreateDeathScreen(out PlayerUIController playerUI, bool setController = true)
+        private DeathScreenUI CreateDeathScreen(out PlayerUIController playerUI)
         {
             GameObject root = new GameObject("TestDeathScreen");
             spawned.Add(root);
@@ -654,9 +658,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             typeof(DeathScreenUI).GetField("panel", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(screen, panel);
             screenObject.SetActive(true);
 
-            // The UI controller switches the player's first person controller off while a menu holds the controls.
+            // While a menu holds the player's attention the first person controller switches itself off (it listens to LocalPlayer).
             Character player = Object.FindObjectsByType<Character>().First(c => c.GetComponent<FirstPersonCharacterController>() != null);
-            if (setController) playerUI.SetCharacterController(player.GetComponent<FirstPersonCharacterController>());
             playerUI.SetCharacter(player);
             return screen;
         }

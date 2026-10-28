@@ -1,4 +1,3 @@
-using SimpleRPG.Controls;
 using SimpleRPG.Abilities;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +5,7 @@ using UnityEngine;
 
 namespace SimpleRPG.UI
 {
-    public class AbilityButtonControllerUI : MonoBehaviour
+    public class AbilityButtonControllerUI : MonoBehaviour, ILocalPlayerView
     {
         /// <summary>
         /// The object we want to use as a blueprint for spawning all of our abillity buttons.
@@ -35,9 +34,26 @@ namespace SimpleRPG.UI
                 GameObject newAbilityButtonGameObject = Object.Instantiate(abilityButtonPrefab, abillityBar.transform);
                 AbilityButton newAbilityButton = newAbilityButtonGameObject.GetComponent<AbilityButton>();
                 newAbilityButton.Initialize(abilitySlots.ElementAt(x));
-                newAbilityButton.abilityAction = GameInput.Ability(x + 1);
                 abilityButtons.Add(newAbilityButton);
             }
+        }
+
+        /// <inheritdoc/>
+        public void BindLocalPlayer(Character character)
+        {
+            UnbindLocalPlayer();
+            CreateAbilityButtons(character.AbilitySlots);
+        }
+
+        /// <inheritdoc/>
+        public void UnbindLocalPlayer()
+        {
+            foreach (AbilityButton button in abilityButtons)
+            {
+                if (button != null) Object.Destroy(button.gameObject);
+            }
+
+            abilityButtons.Clear();
         }
     }
 }

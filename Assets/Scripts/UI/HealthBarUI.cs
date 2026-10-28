@@ -7,7 +7,7 @@ namespace SimpleRPG.UI
     /// <summary>
     /// Shows the local character's health as a pool of blood. The blood image uses the Blood Bar shader, which this drives with the current fill and a lagging damage trail.
     /// </summary>
-    public class HealthBarUI : MonoBehaviour
+    public class HealthBarUI : MonoBehaviour, ILocalPlayerView
     {
         private static readonly int FillId = Shader.PropertyToID("_Fill");
         private static readonly int TrailId = Shader.PropertyToID("_Trail");
@@ -73,6 +73,12 @@ namespace SimpleRPG.UI
             Apply();
         }
 
+        /// <inheritdoc/>
+        public void BindLocalPlayer(Character character) => SetCharacter(character);
+
+        /// <inheritdoc/>
+        public void UnbindLocalPlayer() => SetCharacter(null);
+
         /// <summary>
         /// Moves the displayed values one step toward the targets.
         /// </summary>
@@ -136,7 +142,7 @@ namespace SimpleRPG.UI
 
         private float TargetFill()
         {
-            return character.MaxHealth > 0 ? Mathf.Clamp01((float)character.Health / character.MaxHealth) : 0f;
+            return character != null && character.MaxHealth > 0 ? Mathf.Clamp01((float)character.Health / character.MaxHealth) : 0f;
         }
 
         private void Apply()

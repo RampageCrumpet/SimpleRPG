@@ -1,7 +1,7 @@
 using UnityEngine;
 using SimpleRPG.InventorySystem;
+using System;
 using System.Linq;
-using SimpleRPG.UI;
 using SimpleRPG.InventorySystem.LootGeneration;
 using SimpleRPG.Audio;
 
@@ -27,9 +27,22 @@ namespace SimpleRPG.ObjectInteractions
         protected Inventory Inventory { get; private set; }
 
         /// <summary>
-        /// The UI for the loot menu. Looked up on first use because a dedicated server has no UI.
+        /// Raised, on the machine whose player opened a container, with the inventory to show. The loot menu listens; with no menu (a dedicated
+        /// server) nothing happens, and a container never has to find or know about the UI.
         /// </summary>
-        LootMenuUI lootMenuUI;
+        public static event Action<Inventory> OpenRequested;
+
+        /// <summary>
+        /// Raised, on the machine whose player finished with a container, so the loot menu can close.
+        /// </summary>
+        public static event Action CloseRequested;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetEvents()
+        {
+            OpenRequested = null;
+            CloseRequested = null;
+        }
 
         [Header("Loot Settings")]
 
@@ -59,25 +72,15 @@ namespace SimpleRPG.ObjectInteractions
         /// <inheritdoc/>
         public override void FinishInteraction(Interactor interactor)
         {
-            GetLootMenuUI()?.SetLootMenuUIDisplayStatus(false);
+            CloseRequested?.Invoke();
             InteractableAudio.TryPlay(this, InteractionCue.Close);
         }
 
         /// <inheritdoc/>
         public override void ActivateInteraction(Interactor interactor)
         {
-            GetLootMenuUI()?.DisplayLootMenu(this.Inventory);
+            OpenRequested?.Invoke(this.Inventory);
             InteractableAudio.TryPlay(this, InteractionCue.Open);
-        }
-
-        private LootMenuUI GetLootMenuUI()
-        {
-            if (lootMenuUI == null)
-            {
-                lootMenuUI = GameObject.FindGameObjectsWithTag("UI").Select(x => x.GetComponent<LootMenuUI>()).SingleOrDefault(x => x != null);
-            }
-
-            return lootMenuUI;
         }
 
         /// <summary>

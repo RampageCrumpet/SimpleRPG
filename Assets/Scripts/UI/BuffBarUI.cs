@@ -40,7 +40,7 @@ namespace SimpleRPG.UI
     /// It reads the local character's <see cref="IBuffSource"/>. Statuses live in the server's status manager today, so a remote client's bar
     /// stays empty until statuses are replicated (tracked in its own bead).
     /// </summary>
-    public class BuffBarUI : MonoBehaviour
+    public class BuffBarUI : MonoBehaviour, ILocalPlayerView
     {
         public const int MaxSlots = 8;
 
@@ -76,6 +76,12 @@ namespace SimpleRPG.UI
         {
             source = character != null ? character.GetComponent<IBuffSource>() : null;
         }
+
+        /// <inheritdoc/>
+        public void BindLocalPlayer(Character character) => SetCharacter(character);
+
+        /// <inheritdoc/>
+        public void UnbindLocalPlayer() => SetCharacter(null);
 
         private void Awake()
         {

@@ -126,6 +126,10 @@ namespace SimpleRPG
                 this.look = new FirstPersonLook(this, rotationSpeed, minimumPitch, maximumPitch, this.articulation.ViewYaw);
                 this.articulation.ViewReset += this.look.ResetYaw;
 
+                // A menu with the player's attention holds the camera and movement back, whatever the menu is.
+                LocalPlayer.MenuModeChanged += HandleMenuModeChanged;
+                this.enabled = !LocalPlayer.InMenu;
+
                 // Lock the cursor so it doesn't go wiggling everywhere.
                 Cursor.lockState = CursorLockMode.Locked;
             }
@@ -181,8 +185,15 @@ namespace SimpleRPG
                 Quaternion.Euler(this.look.Pitch, this.look.Yaw, 0f));
         }
 
+        private void HandleMenuModeChanged(bool inMenu)
+        {
+            this.enabled = !inMenu;
+        }
+
         public override void OnDestroy()
         {
+            LocalPlayer.MenuModeChanged -= HandleMenuModeChanged;
+
             if (this.look != null && this.articulation != null)
             {
                 this.articulation.ViewReset -= this.look.ResetYaw;
