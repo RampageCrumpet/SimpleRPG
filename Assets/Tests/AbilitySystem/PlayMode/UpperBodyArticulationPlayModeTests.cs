@@ -227,14 +227,35 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.AreSame(playerObject.transform, cameraObject.transform.parent, "the camera is only parented to the character, not to a bone");
 
             FirstPersonLook look = OwnerLook();
+            CameraViewProbe probe = cameraObject.AddComponent<CameraViewProbe>();
+            probe.Look = look;
             look.Look(0.5f, 1f, 0.15f);
             for (int i = 0; i < 40; i++)
             {
-                // Wait for a whole frame, so LateUpdate has placed the camera since the view last changed. Not WaitForEndOfFrame: that never fires while the Game view is not rendering.
-                int frame = Time.frameCount;
-                while (Time.frameCount == frame) yield return null;
-                Quaternion view = Quaternion.Euler(look.Pitch, look.Yaw, 0f);
-                Assert.AreEqual(0f, Quaternion.Angle(view, cameraObject.transform.rotation), 0.001f, "the camera is aimed exactly at the view on every frame, whatever the head's animation does");
+                // Wait for a LateUpdate that ran after the controller's, which measured the camera against the view at that same moment.
+                // Not WaitForEndOfFrame (never fires while the Game view is not rendering), and not a bare yield, which resumes before LateUpdate
+                // so the view could change (mouse input, a server reset) after the camera was last placed.
+                int samples = probe.Samples;
+                while (probe.Samples == samples) yield return null;
+                Assert.AreEqual(0f, probe.AngleToView, 0.001f, "the camera is aimed exactly at the view on every frame, whatever the head's animation does");
+            }
+        }
+
+        /// <summary>
+        /// Measures the camera against the view after the character controller has placed it this frame.
+        /// </summary>
+        [DefaultExecutionOrder(10000)]
+        private sealed class CameraViewProbe : MonoBehaviour
+        {
+            public FirstPersonLook Look;
+            public int Samples { get; private set; }
+            public float AngleToView { get; private set; }
+
+            private void LateUpdate()
+            {
+                if (Look == null) return;
+                AngleToView = Quaternion.Angle(Quaternion.Euler(Look.Pitch, Look.Yaw, 0f), transform.rotation);
+                Samples++;
             }
         }
 

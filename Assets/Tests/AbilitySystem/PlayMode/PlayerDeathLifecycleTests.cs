@@ -406,6 +406,10 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.AreEqual(1, onRevive);
             Assert.Less(Vector3.Distance(player.transform.position, spawnPoint), 0.5f, "The player is back where it started.");
 
+            // The respawn point sits a few centimetres above the floor, and a controller that is still falling takes no horizontal step,
+            // so let the character land before steering it, as the alive-movement test does.
+            yield return new WaitForSeconds(0.5f);
+
             float moved = 0f;
             float turned = 0f;
             yield return TryToMoveAndTurn(player, (m, t) => { moved = m; turned = t; });
