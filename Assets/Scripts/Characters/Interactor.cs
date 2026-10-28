@@ -157,9 +157,12 @@ namespace SimpleRPG
 
             if (Physics.Raycast(ray, out hit))
             {
-                foreach (var interactable in InteractableManager.Interactables)
+                // Only interactables above the collider that was hit can be looked at through it, so walk up from it
+                // instead of testing every interactable in the scene every frame.
+                for (Transform node = hit.collider.transform; node != null; node = node.parent)
                 {
-                    if (interactable.IsLookedAtVia(hit.collider) && Vector3.Distance(transform.position, interactable.transform.position) <= interactable.InteractionRange)
+                    if (node.TryGetComponent(out Interactable interactable) && interactable.isActiveAndEnabled &&
+                        interactable.IsLookedAtVia(hit.collider) && Vector3.Distance(transform.position, interactable.transform.position) <= interactable.InteractionRange)
                     {
                         return interactable;
                     }

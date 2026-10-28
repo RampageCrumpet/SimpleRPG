@@ -22,7 +22,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
     public class UpperBodyArticulationPlayModeTests
     {
         private const string PlayerPrefab = "Assets/Prefabs/Characters/Player/TestCharacter.prefab";
-        private const string MeleeAttackPath = "Assets/Abilitities/Abillities/MeleeAttack.asset";
+        private const string MeleeAttackPath = "Assets/Abilities/Abilities/MeleeAttack.asset";
         private const string WeaponPath = "Assets/Items/Weapon Data/TestWeaponData.asset";
 
         private GameObject managerObject;

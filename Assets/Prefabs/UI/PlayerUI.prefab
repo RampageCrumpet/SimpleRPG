@@ -487,7 +487,7 @@ GameObject:
   - component: {fileID: 3479307613687889397}
   - component: {fileID: 3479307613687889398}
   m_Layer: 0
-  m_Name: AbillityBarUI
+  m_Name: AbilityBarUI
   m_TagString: UI
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

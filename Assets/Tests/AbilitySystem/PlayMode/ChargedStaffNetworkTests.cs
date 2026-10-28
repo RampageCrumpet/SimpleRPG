@@ -23,7 +23,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
     /// </summary>
     public class ChargedStaffNetworkTests
     {
-        private const string Firebolt = "Assets/Abilitities/Abillities/Firebolt.asset";
+        private const string Firebolt = "Assets/Abilities/Abilities/Firebolt.asset";
         private const string PlayerPrefab = "Assets/Prefabs/Characters/Player/TestCharacter.prefab";
         private const string TargetPrefab = "Assets/Tests/PlayMode/Prefabs/TestTarget.prefab";
         private const string MagicPower = "test.attr.magicpower";
@@ -152,7 +152,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             GameObject instance = Object.Instantiate(prefab, position, Quaternion.identity);
             spawned.Add(instance);
 
-            foreach (System.Type type in new[] { typeof(RegisterWithUI), typeof(FirstPersonCharacterController), typeof(ThirdPersonCharacterController), typeof(AnimatableCharacter) })
+            foreach (System.Type type in new[] { typeof(RegisterWithUI), typeof(FirstPersonCharacterController), typeof(AnimatableCharacter) })
             {
                 Component component = instance.GetComponent(type);
                 if (component != null) Object.DestroyImmediate(component);

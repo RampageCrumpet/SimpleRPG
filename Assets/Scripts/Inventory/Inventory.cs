@@ -262,14 +262,7 @@ namespace SimpleRPG.InventorySystem
         /// <returns> True if we suceeded in placing the item, false otherwise.</returns>
         public bool AddItem(Item item)
         {
-            if (TryFindFreeLocation(item, out Vector2Int location) && CanPlaceAsAuthority(item, location))
-            {
-                PlaceItem(item, location);
-                return true;
-            }
-
-            // We were not able to place the item in the inventory.
-            return false;
+            return TryAddAtFreeLocation(item, cloneFirst: false);
         }
 
         /// <summary>
@@ -280,14 +273,22 @@ namespace SimpleRPG.InventorySystem
         /// <returns> True if we suceeded in placing the item, false otherwise.</returns>
         public bool AddItemInstance(Item item)
         {
-            if (TryFindFreeLocation(item, out Vector2Int location) && CanPlaceAsAuthority(item, location))
+            return TryAddAtFreeLocation(item, cloneFirst: true);
+        }
+
+        /// <summary>
+        /// Places the item (or a fresh instance of it) at the first free location, if this machine may add it. Authority only.
+        /// </summary>
+        private bool TryAddAtFreeLocation(Item item, bool cloneFirst)
+        {
+            if (!TryFindFreeLocation(item, out Vector2Int location) || !CanPlaceAsAuthority(item, location))
             {
-                PlaceItem(item.CloneInstance(), location);
-                return true;
+                // We were not able to place the item in the inventory.
+                return false;
             }
 
-            // We were not able to place the item in the inventory.
-            return false;
+            PlaceItem(cloneFirst ? item.CloneInstance() : item, location);
+            return true;
         }
 
         /// <summary>

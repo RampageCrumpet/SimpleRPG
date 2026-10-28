@@ -22,8 +22,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
     /// </summary>
     public class FireboltNetworkTests
     {
-        private const string Firebolt = "Assets/Abilitities/Abillities/Firebolt.asset";
-        private const string Icebolt = "Assets/Abilitities/Abillities/Icebolt.asset";
+        private const string Firebolt = "Assets/Abilities/Abilities/Firebolt.asset";
+        private const string Icebolt = "Assets/Abilities/Abilities/Icebolt.asset";
         private const string PlayerPrefab = "Assets/Prefabs/Characters/Player/TestCharacter.prefab";
         private const string MonsterPrefab = "Assets/Tests/PlayMode/Prefabs/TestTarget.prefab";
         private const int StartingHealth = 100;
@@ -101,9 +101,6 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             FirstPersonCharacterController firstPerson = instance.GetComponent<FirstPersonCharacterController>();
             if (firstPerson != null) Object.DestroyImmediate(firstPerson);
-
-            ThirdPersonCharacterController thirdPerson = instance.GetComponent<ThirdPersonCharacterController>();
-            if (thirdPerson != null) Object.DestroyImmediate(thirdPerson);
 
             Character character = instance.GetComponent<Character>();
             if (graphAbilities.Length > 0)

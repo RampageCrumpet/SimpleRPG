@@ -27,7 +27,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
     /// </summary>
     public class AnatomicalHitNetworkTests
     {
-        private const string MeleeAttack = "Assets/Abilitities/Abillities/MeleeAttack.asset";
+        private const string MeleeAttack = "Assets/Abilities/Abilities/MeleeAttack.asset";
         private const string PlayerPrefab = "Assets/Prefabs/Characters/Player/TestCharacter.prefab";
         private const string SkeletonPrefab = "Assets/Prefabs/Characters/Enemies/SkeletonFootman.prefab";
         private const int WeaponDamage = 20;
@@ -112,7 +112,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             foreach (System.Type type in new[]
             {
-                typeof(RegisterWithUI), typeof(FirstPersonCharacterController), typeof(ThirdPersonCharacterController), typeof(AnimatableCharacter),
+                typeof(RegisterWithUI), typeof(FirstPersonCharacterController), typeof(AnimatableCharacter),
                 typeof(NavigationGrounding), typeof(AIController), typeof(NavMeshAgent), typeof(Blindsense),
             })
             {

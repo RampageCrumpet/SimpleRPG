@@ -97,7 +97,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             GameObject instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefab), position, Quaternion.identity);
             spawned.Add(instance);
-            foreach (System.Type type in new[] { typeof(RegisterWithUI), typeof(FirstPersonCharacterController), typeof(ThirdPersonCharacterController), typeof(Animations.AnimatableCharacter) })
+            foreach (System.Type type in new[] { typeof(RegisterWithUI), typeof(FirstPersonCharacterController), typeof(Animations.AnimatableCharacter) })
             {
                 Component component = instance.GetComponent(type);
                 if (component != null) Object.DestroyImmediate(component);

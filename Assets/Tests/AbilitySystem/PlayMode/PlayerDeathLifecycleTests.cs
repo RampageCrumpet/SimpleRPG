@@ -28,7 +28,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
     /// </summary>
     public class PlayerDeathLifecycleTests
     {
-        private const string MeleeAttack = "Assets/Abilitities/Abillities/MeleeAttack.asset";
+        private const string MeleeAttack = "Assets/Abilities/Abilities/MeleeAttack.asset";
         private const string PlayerPrefab = "Assets/Prefabs/Characters/Player/TestCharacter.prefab";
         private const string TargetPrefab = "Assets/Tests/PlayMode/Prefabs/TestTarget.prefab";
         private const string MonsterPrefab = "Assets/Prefabs/Characters/Enemies/SkeletonFootman.prefab";

@@ -14,7 +14,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
     /// </summary>
     public class RemoteClientLatencyNetworkTests : RemoteClientTestBase
     {
-        private const string MeleeAttack = "Assets/Abilitities/Abillities/MeleeAttack.asset";
+        private const string MeleeAttack = "Assets/Abilities/Abilities/MeleeAttack.asset";
 
         protected override int SimulatedDelayMs => 100;
 

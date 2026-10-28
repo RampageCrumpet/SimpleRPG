@@ -6,28 +6,26 @@ namespace SimpleRPG.ObjectInteractions
     public static class InteractableManager
     {
         /// <summary>
+        /// Backing collection of <see cref="Interactable"/> for the <see cref="Interactables"/> property.
+        /// </summary>
+        private static readonly List<Interactable> interactables = new List<Interactable>();
+
+        /// <summary>
         /// A collection of all <see cref="Interactable"/> objects.
         /// </summary>
-        public static IReadOnlyCollection<Interactable> Interactables
-        { 
-            get
-            {
-                if(interactables == null)
-                {
-                    interactables = new List<Interactable>();
-                }
-
-                return interactables;
-            }
-        }
+        public static IReadOnlyCollection<Interactable> Interactables => interactables;
 
         /// <summary>
         /// Registers a new <see cref="Interactable"/> in the scene so that other objects know it can be interacted with.
+        /// Registering the same interactable twice has no effect.
         /// </summary>
         /// <param name="interactable"> The <see cref="Interactable"/> we want to register.</param>
         public static void RegisterInteractable(Interactable interactable)
         {
-            interactables.Add(interactable);
+            if (interactable != null && !interactables.Contains(interactable))
+            {
+                interactables.Add(interactable);
+            }
         }
 
         /// <summary>
@@ -40,8 +38,12 @@ namespace SimpleRPG.ObjectInteractions
         }
 
         /// <summary>
-        /// Backing collection of <see cref="Interactable"/> for the <see cref="Interactables"/> property.
+        /// Forgets every registration. With domain reload disabled the list would otherwise carry destroyed interactables from the last play session into the next.
         /// </summary>
-        private static List<Interactable> interactables = new List<Interactable>();
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        public static void Clear()
+        {
+            interactables.Clear();
+        }
     }
 }

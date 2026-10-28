@@ -20,7 +20,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
     /// </summary>
     public class AbilityNodeInspectorTests
     {
-        private const string Firebolt = "Assets/Abilitities/Abillities/Firebolt.asset";
+        private const string Firebolt = "Assets/Abilities/Abilities/Firebolt.asset";
         private const string TempFolder = "Assets/_NodeInspectorTests";
 
         private readonly List<UnityEngine.Object> created = new List<UnityEngine.Object>();

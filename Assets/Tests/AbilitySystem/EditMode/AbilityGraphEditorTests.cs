@@ -15,8 +15,8 @@ namespace SimpleRPG.Abilities.Tests.EditMode
     /// </summary>
     public class AbilityGraphEditorTests
     {
-        private const string Firebolt = "Assets/Abilitities/Abillities/Firebolt.asset";
-        private const string MeleeAttack = "Assets/Abilitities/Abillities/MeleeAttack.asset";
+        private const string Firebolt = "Assets/Abilities/Abilities/Firebolt.asset";
+        private const string MeleeAttack = "Assets/Abilities/Abilities/MeleeAttack.asset";
         private const string TempFolder = "Assets/_AbilityGraphEditorTests";
 
         private readonly List<Object> created = new List<Object>();

@@ -10,8 +10,8 @@ namespace SimpleRPG.Abilities.Tests.EditMode
     /// </summary>
     public class ShippedMeleePowerTests
     {
-        private const string PlayerMelee = "Assets/Abilitities/Abillities/MeleeAttack.asset";
-        private const string MonsterMelee = "Assets/Abilitities/Abillities/MeleeAttackGremlin.asset";
+        private const string PlayerMelee = "Assets/Abilities/Abilities/MeleeAttack.asset";
+        private const string MonsterMelee = "Assets/Abilities/Abilities/MeleeAttackGremlin.asset";
 
         private GameplayEventDispatcher events;
         private CombatantRegistry combatants;

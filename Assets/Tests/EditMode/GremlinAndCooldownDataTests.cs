@@ -10,8 +10,8 @@ namespace SimpleRPG.Tests.EditMode
     /// </summary>
     public class GremlinAndCooldownDataTests
     {
-        private const string GremlinAbility = "Assets/Abilitities/Abillities/MeleeAttackGremlin.asset";
-        private const string PlayerAbility = "Assets/Abilitities/Abillities/MeleeAttack.asset";
+        private const string GremlinAbility = "Assets/Abilities/Abilities/MeleeAttackGremlin.asset";
+        private const string PlayerAbility = "Assets/Abilities/Abilities/MeleeAttack.asset";
 
         [Test]
         public void GremlinAbility_HasOneSecondCooldown()

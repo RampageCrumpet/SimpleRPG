@@ -19,14 +19,14 @@ namespace SimpleRPG.UI
         /// </summary>
         public InputAction abilityAction;
 
-        [Tooltip("The mask used to darken this abillity when it's cooling down.")]
+        [Tooltip("The mask used to darken this ability when it's cooling down.")]
         public Image darkMask;
 
         [Tooltip("The Text Mesh we use to display the cooldown time.")]
         public TMP_Text cooldownText;
 
         private Image abilityIconImage;
-        private Image darkAbillityIcon;
+        private Image darkAbilityIcon;
 
         private IAbilitySlot abilitySlot;
         private bool requiresNewPress;
@@ -38,13 +38,13 @@ namespace SimpleRPG.UI
         public void Initialize(IAbilitySlot abilitySlot)
         {
             abilityIconImage = this.GetComponent<Image>();
-            darkAbillityIcon = this.GetComponentsInChildren<Image>().Single(x => x.gameObject != this.gameObject);
+            darkAbilityIcon = this.GetComponentsInChildren<Image>().Single(x => x.gameObject != this.gameObject);
 
             this.abilitySlot = abilitySlot;
             requiresNewPress = abilitySlot is GraphAbilitySlot graph
                 && graph.Definition.HasNode(NodeTypes.MeleeSwing);
             abilityIconImage.sprite = abilitySlot.Icon;
-            //darkAbillityIcon.sprite = ability.abillitySprite;
+            //darkAbilityIcon.sprite = ability.abillitySprite;
         }
 
         /// <summary>
@@ -74,7 +74,7 @@ namespace SimpleRPG.UI
             if (abilitySlot != null)
             {
                 //Scale the dark mask so the abillity is properly visible behind it.
-                darkAbillityIcon.fillAmount = abilitySlot.CooldownTime > 0f ? abilitySlot.CooldownTimeLeft / abilitySlot.CooldownTime : 0f;
+                darkAbilityIcon.fillAmount = abilitySlot.CooldownTime > 0f ? abilitySlot.CooldownTimeLeft / abilitySlot.CooldownTime : 0f;
 
                 // If the ability is cooling down we want the text to be visible.
                 if (abilitySlot.CooldownTimeLeft >= 0)

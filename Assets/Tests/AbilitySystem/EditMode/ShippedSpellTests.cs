@@ -14,8 +14,8 @@ namespace SimpleRPG.Abilities.Tests.EditMode
     /// </summary>
     public class ShippedSpellTests
     {
-        private const string Firebolt = "Assets/Abilitities/Abillities/Firebolt.asset";
-        private const string Icebolt = "Assets/Abilitities/Abillities/Icebolt.asset";
+        private const string Firebolt = "Assets/Abilities/Abilities/Firebolt.asset";
+        private const string Icebolt = "Assets/Abilities/Abilities/Icebolt.asset";
 
         private static AbilityDefinition Load(string path)
         {

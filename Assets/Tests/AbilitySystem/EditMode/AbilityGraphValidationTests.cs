@@ -13,7 +13,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
     /// </summary>
     public class AbilityGraphValidationTests
     {
-        private const string Firebolt = "Assets/Abilitities/Abillities/Firebolt.asset";
+        private const string Firebolt = "Assets/Abilities/Abilities/Firebolt.asset";
 
         private readonly List<Object> created = new List<Object>();
 

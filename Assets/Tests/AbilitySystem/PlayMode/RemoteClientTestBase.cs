@@ -64,9 +64,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
                 melee.MeleeAttackCancelled += () => Cancelled++;
             }
         }
-        protected const string Firebolt = "Assets/Abilitities/Abillities/Firebolt.asset";
-        protected const string Icebolt = "Assets/Abilitities/Abillities/Icebolt.asset";
-        protected const string MeleeAttack = "Assets/Abilitities/Abillities/MeleeAttack.asset";
+        protected const string Firebolt = "Assets/Abilities/Abilities/Firebolt.asset";
+        protected const string Icebolt = "Assets/Abilities/Abilities/Icebolt.asset";
+        protected const string MeleeAttack = "Assets/Abilities/Abilities/MeleeAttack.asset";
         protected const string PlayerPrefab = "Assets/Prefabs/Characters/Player/TestCharacter.prefab";
         protected const string TargetPrefab = "Assets/Tests/PlayMode/Prefabs/TestTarget.prefab";
         protected const int StartingHealth = 100;
@@ -191,7 +191,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
         protected static void StripPlayerOnlyParts(GameObject instance)
         {
-            foreach (Type type in new[] { typeof(RegisterWithUI), typeof(FirstPersonCharacterController), typeof(ThirdPersonCharacterController), typeof(AnimatableCharacter) })
+            foreach (Type type in new[] { typeof(RegisterWithUI), typeof(FirstPersonCharacterController), typeof(AnimatableCharacter) })
             {
                 Component component = instance.GetComponent(type);
                 if (component != null) Object.DestroyImmediate(component);

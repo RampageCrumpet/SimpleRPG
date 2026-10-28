@@ -23,7 +23,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
     /// </summary>
     public class MeleeNetworkTests
     {
-        private const string MeleeAttack = "Assets/Abilitities/Abillities/MeleeAttack.asset";
+        private const string MeleeAttack = "Assets/Abilities/Abilities/MeleeAttack.asset";
         private const string PlayerPrefab = "Assets/Prefabs/Characters/Player/TestCharacter.prefab";
         private const string TargetPrefab = "Assets/Tests/PlayMode/Prefabs/TestTarget.prefab";
         private const int StartingHealth = 100;
@@ -106,7 +106,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             GameObject instance = Object.Instantiate(prefab, position, Quaternion.identity);
             spawned.Add(instance);
 
-            foreach (System.Type type in new[] { typeof(RegisterWithUI), typeof(FirstPersonCharacterController), typeof(ThirdPersonCharacterController) })
+            foreach (System.Type type in new[] { typeof(RegisterWithUI), typeof(FirstPersonCharacterController) })
             {
                 Component component = instance.GetComponent(type);
                 if (component != null) Object.DestroyImmediate(component);
