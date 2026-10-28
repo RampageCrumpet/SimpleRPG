@@ -52,26 +52,28 @@ public class Doodad : MonoBehaviour
     /// <param name="rotationIncrement"> The number of degrees per increment.</param>
     private void ApplyRotation(float rotationIncrement)
     {
-        Quaternion newRotation = new Quaternion();
-
         // Find the number of steps needed to rotate the object halfway around.
         int rotationSteps = (int)(360f / rotationIncrement)/2;
 
+        // Quaternion components are not angles, so build the rotation from Euler angles. With no axis enabled this is the identity.
+        Vector3 angles = Vector3.zero;
+
         if (rotateXAxis)
         {
-            newRotation.x = Random.Range(-rotationSteps, rotationSteps) * rotationIncrement;
+            angles.x = Random.Range(-rotationSteps, rotationSteps) * rotationIncrement;
         }
 
         if (rotateYAxis)
         {
-            newRotation.y = Random.Range(-rotationSteps, rotationSteps) * rotationIncrement;
+            angles.y = Random.Range(-rotationSteps, rotationSteps) * rotationIncrement;
         }
 
         if (rotateZAxis)
         {
-            newRotation.z = Random.Range(-rotationSteps, rotationSteps) * rotationIncrement;
+            angles.z = Random.Range(-rotationSteps, rotationSteps) * rotationIncrement;
         }
 
+        Quaternion newRotation = Quaternion.Euler(angles);
         this.transform.rotation = newRotation;
     }
 

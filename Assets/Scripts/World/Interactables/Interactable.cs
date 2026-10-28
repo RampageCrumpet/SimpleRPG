@@ -44,7 +44,7 @@ namespace SimpleRPG.ObjectInteractions
         public virtual IReadOnlyList<Renderer> OutlineRenderers =>
             outlineRenderers ??= GetComponentsInChildren<Renderer>().Where(r => r is MeshRenderer || r is SkinnedMeshRenderer).ToArray();
 
-        public void Start()
+        public virtual void Start()
         {
             //Register this interactable so that it can be interacted with.
             InteractableManager.RegisterInteractable(this);
@@ -71,7 +71,7 @@ namespace SimpleRPG.ObjectInteractions
         /// <param name="interactor"> The Interactor finishing the interaction.</param>
         public abstract void FinishInteraction(Interactor interactor);
 
-        new public void OnDestroy()
+        public override void OnDestroy()
         {
             //Remove ourselves from the list of interactable objects.
             InteractableManager.UnregisterInteractable(this);

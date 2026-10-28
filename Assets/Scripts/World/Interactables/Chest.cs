@@ -37,7 +37,7 @@ namespace SimpleRPG.ObjectInteractions
         [Tooltip("The LootTable for this chest.")]
         private WeightedRandomTable lootTable;
 
-        new public void Start()
+        public override void Start()
         {
             base.Start();
             inventory = this.GetComponent<Inventory>();
