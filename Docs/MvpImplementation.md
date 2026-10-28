@@ -9,7 +9,7 @@ Open `Assets/Scenes/SampleScene.unity` in Unity **6000.6.6f1**. Enter Play Mode 
 - Approach a skeleton, observe its rise, walk, overhead and diagonal attacks, and fight using the sword. Damage requires blade contact during an animation's active frames.
 - Look at treasure within 2.5 units and press **F**. The timed interaction asks the server to add the item to inventory. A full inventory leaves it in the world.
 - Press **I** to inspect inventory; press I or Escape to close it.
-- Stop and restart Play Mode for a new expedition. There is no extraction, persistence, death/respawn screen or reward economy in this milestone.
+- Stop and restart Play Mode for a new expedition. There is no extraction, persistence or death/respawn screen in this milestone, and rewards are limited to what dead enemies and chests hold.
 
 The arrival room has no generated enemy. Encounters and treasure populate the other generated rooms after navigation is built. Three gold objects (goblet, bell, ewer) and four gemstones use the supplied meshes. Gold icons are renders of those existing assets. A camera-following exploration light keeps the dungeon readable; connection buttons hide after starting a session.
 
@@ -29,7 +29,11 @@ Animation timing matches the supplied exports at 1x playback: longsword attacks 
 
 `AnimatableCharacter` maps movement and character events to available animator parameters. The NavMeshAgent owns movement, with Apply Root Motion disabled. NavigationGrounding adjusts its base offset against the visible World/Walkable floor; it freezes naturally when death disables navigation. This removes the 6–9cm gap introduced by NavMesh voxelization. The skeleton gameplay controller starts in Rise and uses rig-specific transform clips derived from the supplied exports. This preserves the translations needed for the entire bone pile to land, including hands and fingers that humanoid retargeting discards. The original humanoid imports and animation test prefab/controller are preserved. Rebuild the derived clips through SimpleRPG > Rebuild Skeleton Gameplay Clips. The adapter normalizes the export hierarchy and centimetre scale, removes the walk cycle's forward travel, and retains the original events. Transform masks isolate the weapon arms. While walking, the Weapon_Arm layer uses the authored Walk arm motion; while standing, it uses Ready. The agent walks at the refined authored 0.8m / 1.2s stride speed (0.667m/s), with Walk playing at 1x; empty layers use Write Defaults so they release the leg pose.
 
-Death releases outstanding swings, closes hitboxes, stops navigation, disables the standing body collider and plays the configured death trigger. The weapon stays attached to the animated hand, following it into the bone pile. The corpse remains in its final pose.
+Death releases outstanding swings, closes hitboxes, stops navigation, disables the standing body collider and plays the configured death trigger. The weapon stays attached to the animated hand, following it into the bone pile. The corpse remains in its final pose, for the whole session.
+
+A dead enemy can be searched like a chest. Enemies carry a `LootableCorpse` and an `Inventory`; the corpse cannot be interacted with while the character lives, and when it dies the server rolls the enemy's own loot table once from the seeded gameplay stream into that inventory. Players open it with the normal interaction and take items through the same validated inventory moves, within the corpse's reach. Nothing drops on the floor. To give an enemy loot, add `LootableCorpse` (which adds the `Inventory`), set the inventory size, interaction name and text, and assign a loot table; an enemy without one is simply empty.
+
+The AI states switch between one another with explicit calls (idle, chase, attack), and death is handled once, centrally, in `AIController`, not in each state. That stays simple at four states; if more behaviours arrive (ranged attack, flee, patrol), replace the calls with a transition table.
 
 ## Add another conventional melee enemy
 

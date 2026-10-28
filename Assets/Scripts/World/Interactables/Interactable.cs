@@ -36,6 +36,11 @@ namespace SimpleRPG.ObjectInteractions
         [Tooltip("The time it takes to interact with this object in seconds.")]
         public float InteractionTime { get; protected set; }
 
+        /// <summary>
+        /// False while the player cannot interact with this object, for example a living enemy that only becomes lootable when it dies.
+        /// </summary>
+        public virtual bool CanBeInteractedWith => true;
+
         private Renderer[] outlineRenderers;
 
         /// <summary>

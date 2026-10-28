@@ -161,7 +161,7 @@ namespace SimpleRPG
                 // instead of testing every interactable in the scene every frame.
                 for (Transform node = hit.collider.transform; node != null; node = node.parent)
                 {
-                    if (node.TryGetComponent(out Interactable interactable) && interactable.isActiveAndEnabled &&
+                    if (node.TryGetComponent(out Interactable interactable) && interactable.isActiveAndEnabled && interactable.CanBeInteractedWith &&
                         interactable.IsLookedAtVia(hit.collider) && Vector3.Distance(transform.position, interactable.transform.position) <= interactable.InteractionRange)
                     {
                         return interactable;

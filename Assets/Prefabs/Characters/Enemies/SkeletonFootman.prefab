@@ -1957,6 +1957,8 @@ GameObject:
   - component: {fileID: 6612935030330707823}
   - component: {fileID: 7642225760820071977}
   - component: {fileID: 2512760872946552752}
+  - component: {fileID: 6882573695827128756}
+  - component: {fileID: 3407008257685371376}
   m_Layer: 9
   m_Name: SkeletonFootman
   m_TagString: Untagged
@@ -2193,6 +2195,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SimpleRPG::AI.EnemyController
   ShowTopMostFoldoutHeaderGroup: 1
   AttackRange: 1.5
+  SenseInterval: 0.2
   activationDuration: 2.9
 --- !u!114 &3986305106387483216
 MonoBehaviour:
@@ -2432,6 +2435,38 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &6882573695827128756
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068973633357433497}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 340eb2f6079b78d4aa39f57b07af2cce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.InventorySystem.Inventory
+  ShowTopMostFoldoutHeaderGroup: 1
+  <InventorySize>k__BackingField: {x: 6, y: 4}
+--- !u!114 &3407008257685371376
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068973633357433497}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52ff2d0e379034f48a9694fefd7e2e8f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.ObjectInteractions.LootableCorpse
+  ShowTopMostFoldoutHeaderGroup: 1
+  <InteractionRange>k__BackingField: 3
+  <InteractionName>k__BackingField: Skeleton
+  <InteractionText>k__BackingField: Search
+  <InteractionTime>k__BackingField: 1
+  lootTable: {fileID: 11400000, guid: 1e3f96a264f8ae748ba95145095b8513, type: 2}
 --- !u!1 &3109262660282379090
 GameObject:
   m_ObjectHideFlags: 0
