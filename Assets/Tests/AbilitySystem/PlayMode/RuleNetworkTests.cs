@@ -193,7 +193,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character neighbour = Spawn(TargetPrefab, new Vector3(1f, 0f, 2f));
             Character farAway = Spawn(TargetPrefab, new Vector3(20f, 0f, 20f));
             yield return null;
-            wielder.WeaponData = sword;
+            wielder.Loadout.DefaultWeapon = sword;
             Assert.IsTrue(EquipmentOf(wielder).Equip(EquipmentSlot.mainHand, sword, 500));
 
             SwingAt(wielder, victim);
@@ -218,7 +218,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character wielder = Spawn(PlayerPrefab, Vector3.zero);
             Character victim = Spawn(TargetPrefab, new Vector3(0f, 0f, 2f));
             yield return null;
-            wielder.WeaponData = sword;
+            wielder.Loadout.DefaultWeapon = sword;
             EquipmentOf(wielder).Equip(EquipmentSlot.mainHand, sword, 500);
             int weaponHits = 0;
             services.Events.Subscribe<WeaponHitConfirmedEvent>(e => weaponHits++);
@@ -239,7 +239,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character wielder = Spawn(PlayerPrefab, Vector3.zero);
             Character victim = Spawn(TargetPrefab, new Vector3(0f, 0f, 2f));
             yield return null;
-            wielder.WeaponData = sword;
+            wielder.Loadout.DefaultWeapon = sword;
             EquipmentOf(wielder).Equip(EquipmentSlot.mainHand, sword, 500);
             victim.TakeDamage(new DamageInfo { Damage = StartingHealth - 20 }, BodyLocation.Torso);
             DeathContext death = null;
@@ -261,7 +261,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character wielder = Spawn(PlayerPrefab, Vector3.zero);
             Character victim = Spawn(TargetPrefab, new Vector3(0f, 0f, 2f));
             yield return null;
-            wielder.WeaponData = dagger;
+            wielder.Loadout.DefaultWeapon = dagger;
             EquipmentOf(wielder).Equip(EquipmentSlot.mainHand, dagger, 501);
 
             SwingAt(wielder, victim);
@@ -277,7 +277,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character wielder = Spawn(PlayerPrefab, Vector3.zero);
             Character victim = Spawn(TargetPrefab, new Vector3(0f, 0f, 2f));
             yield return null;
-            wielder.WeaponData = sword;
+            wielder.Loadout.DefaultWeapon = sword;
             EquipmentOf(wielder).Equip(EquipmentSlot.mainHand, sword, 500);
             EquipmentOf(wielder).Unequip(EquipmentSlot.mainHand);
             Assert.AreEqual(0, AbilityServices.Current.Rules.ActiveRuleCount(wielder.Id));
@@ -309,7 +309,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character victim = Spawn(TargetPrefab, new Vector3(10f, 0f, 2f));
             yield return null;
             EquipmentOf(wielder).Equip(EquipmentSlot.mainHand, sword, 500);
-            other.WeaponData = dagger;
+            other.Loadout.DefaultWeapon = dagger;
 
             SwingAt(other, victim);
             yield return null;
@@ -384,7 +384,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character wielder = Spawn(PlayerPrefab, Vector3.zero);
             Character victim = Spawn(TargetPrefab, new Vector3(0f, 0f, 2f));
             yield return null;
-            wielder.WeaponData = dagger;
+            wielder.Loadout.DefaultWeapon = dagger;
             EquipmentOf(wielder).Equip(EquipmentSlot.mainHand, dagger, 501);
 
             Assert.IsTrue(wielder.GetComponent<AbilityUser>().TryActivateOnServer(AssetDatabase.LoadAssetAtPath<AbilityDefinition>(Firebolt)));

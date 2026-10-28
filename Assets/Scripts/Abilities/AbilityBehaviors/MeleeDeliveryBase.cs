@@ -286,7 +286,7 @@ namespace SimpleRPG
                 return;
             }
 
-            WeaponData weaponData = Character.WeaponData;
+            WeaponData weaponData = Character.Loadout.Weapon;
             float baseDamage = weaponData != null && weaponData.damage != null ? weaponData.damage.Damage : 0f;
             bool victimWasAlive = victim.IsAlive;
 

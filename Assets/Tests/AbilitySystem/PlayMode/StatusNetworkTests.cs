@@ -249,7 +249,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             Character wielder = Spawn(PlayerPrefab, Vector3.zero);
             yield return null;
-            typeof(Character).GetField("graphAbilities", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(wielder, new List<AbilityDefinition> { tickAbility });
+            typeof(CombatLoadout).GetField("abilities", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(wielder.Loadout, new List<AbilityDefinition> { tickAbility });
 
             LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("only a status can run it"));
             bool ran = wielder.GetComponent<AbilityUser>().TryActivateOnServer(tickAbility);
@@ -296,7 +296,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character wielder = Spawn(PlayerPrefab, Vector3.zero);
             Character victim = Spawn(TargetPrefab, new Vector3(0f, 0f, 2f));
             yield return null;
-            wielder.WeaponData = sword;
+            wielder.Loadout.DefaultWeapon = sword;
             wielder.GetComponent<Equipment>().Equip(EquipmentSlot.mainHand, sword, 700);
             List<DamageRequest> periodic = new List<DamageRequest>();
             services.Events.Subscribe<DamageResolvedEvent>(e => { if (e.Request.Provenance == DamageProvenance.Periodic) periodic.Add(e.Request); });

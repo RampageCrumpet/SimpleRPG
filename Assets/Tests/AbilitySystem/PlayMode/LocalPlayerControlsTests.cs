@@ -108,9 +108,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
         private int SlotWhere(System.Func<GraphAbilitySlot, bool> predicate)
         {
-            for (int i = 0; i < player.AbilitySlots.Count; i++)
+            for (int i = 0; i < player.Loadout.Slots.Count; i++)
             {
-                if (player.AbilitySlots[i] is GraphAbilitySlot slot && predicate(slot)) return i;
+                if (player.Loadout.Slots[i] is GraphAbilitySlot slot && predicate(slot)) return i;
             }
 
             return -1;
@@ -120,9 +120,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             int count = 0;
             System.Action<IAbilitySlot> handler = _ => count++;
-            player.AbilitySlots[slot].Activated += handler;
+            player.Loadout.Slots[slot].Activated += handler;
             act();
-            player.AbilitySlots[slot].Activated -= handler;
+            player.Loadout.Slots[slot].Activated -= handler;
             return count;
         }
 

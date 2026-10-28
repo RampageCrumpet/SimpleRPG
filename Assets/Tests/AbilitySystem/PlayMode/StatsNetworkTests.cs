@@ -101,7 +101,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character character = instance.GetComponent<Character>();
             if (profile != null)
             {
-                typeof(Character).GetField("statProfile", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(character, profile);
+                typeof(CharacterStats).GetField("statProfile", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(character.Stats, profile);
             }
 
             character.Initialize();
@@ -167,7 +167,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             Assert.AreEqual(100, player.MaxHealth);
             Assert.AreEqual(100, player.Health);
-            Assert.AreEqual(4f, player.MovementSpeed, 1e-4f);
+            Assert.AreEqual(4f, player.Stats.MovementSpeed, 1e-4f);
             yield return null;
         }
 
@@ -179,13 +179,13 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return MeasureSpeed(player, d => normal = d);
             Assert.AreEqual(4f, normal, 0.8f, "The player moves at the baseline speed.");
 
-            ModifierHandle handle = player.Attributes.AddModifier(AttributeModifier.Factor(DerivedStats.MovementSpeed, 0.25, default));
-            Assert.AreEqual(1f, player.MovementSpeed, 1e-4f);
+            ModifierHandle handle = player.Stats.Attributes.AddModifier(AttributeModifier.Factor(DerivedStats.MovementSpeed, 0.25, default));
+            Assert.AreEqual(1f, player.Stats.MovementSpeed, 1e-4f);
             float slowed = 0f;
             yield return MeasureSpeed(player, d => slowed = d);
             Assert.AreEqual(1f, slowed, 0.3f, "A quarter of the speed.");
 
-            player.Attributes.RemoveModifier(handle);
+            player.Stats.Attributes.RemoveModifier(handle);
             float restored = 0f;
             yield return MeasureSpeed(player, d => restored = d);
             Assert.AreEqual(4f, restored, 0.8f);
@@ -198,12 +198,12 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             StatusDefinition slow = Slow(0.5);
             AbilityServices.Current.Statuses.Apply(new StatusApplication(player.Id, slow, default, default, 1d));
 
-            Assert.AreEqual(2f, player.MovementSpeed, 1e-4f);
+            Assert.AreEqual(2f, player.Stats.MovementSpeed, 1e-4f);
             float slowed = 0f;
             yield return MeasureSpeed(player, d => slowed = d);
 
             AbilityServices.Current.Statuses.Dispel(player.Id, slow);
-            Assert.AreEqual(4f, player.MovementSpeed, 1e-4f);
+            Assert.AreEqual(4f, player.Stats.MovementSpeed, 1e-4f);
             float normal = 0f;
             yield return MeasureSpeed(player, d => normal = d);
 
@@ -215,11 +215,11 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         public IEnumerator MaximumHealth_ChangeClampsCurrentHealth_NeverRaisesIt_AndRespawnUsesIt()
         {
             Character player = Spawn(PlayerPrefab, Vector3.zero, player: true);
-            player.Attributes.SetBase(PrimaryAttributes.Constitution, 5);
+            player.Stats.Attributes.SetBase(PrimaryAttributes.Constitution, 5);
             Assert.AreEqual(50, player.MaxHealth);
             Assert.AreEqual(50, player.Health, "Current health comes down with a lower maximum.");
 
-            player.Attributes.SetBase(PrimaryAttributes.Constitution, 20);
+            player.Stats.Attributes.SetBase(PrimaryAttributes.Constitution, 20);
             Assert.AreEqual(200, player.MaxHealth);
             Assert.AreEqual(50, player.Health, "A higher maximum does not heal.");
 
@@ -241,7 +241,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.AreEqual(75, enemy.MaxHealth);
             Assert.AreEqual(75, enemy.Health);
             Assert.IsTrue(services.Attributes.TryGetAttributes(source, out IAttributeReader reader), "The same registry the abilities read holds the enemy's stats.");
-            Assert.AreSame(enemy.Attributes, reader);
+            Assert.AreSame(enemy.Stats.Attributes, reader);
             Assert.AreEqual(12d, reader.Get(DerivedStats.PhysicalPower));
             Assert.AreEqual(2.5d, reader.Get(DerivedStats.MovementSpeed));
             Assert.AreEqual(0d, reader.Get(PrimaryAttributes.Strength), "No core attributes were needed.");
@@ -258,8 +258,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character enemy = Spawn(TargetPrefab, new Vector3(0f, 0f, 3f), player: false);
 
             Assert.AreEqual(100, enemy.MaxHealth);
-            Assert.AreEqual(10d, enemy.Attributes.Get(PrimaryAttributes.Strength));
-            Assert.AreEqual(0f, enemy.MovementSpeed);
+            Assert.AreEqual(10d, enemy.Stats.Attributes.Get(PrimaryAttributes.Strength));
+            Assert.AreEqual(0f, enemy.Stats.MovementSpeed);
             yield return null;
         }
     }

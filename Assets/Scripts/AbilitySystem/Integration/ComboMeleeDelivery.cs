@@ -229,7 +229,7 @@ namespace SimpleRPG.Abilities.Integration
 
         private ComboDefinition EquippedCombo()
         {
-            WeaponData weapon = Character.WeaponData;
+            WeaponData weapon = Character.Loadout.Weapon;
             ComboDefinition wielded = weapon != null ? weapon.Combo : null;
             return wielded != null && wielded.StepCount > 0 ? wielded : null;
         }

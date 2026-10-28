@@ -149,7 +149,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             while (attacks == 0 && Time.time < deadline) yield return null;
 
             Assert.GreaterOrEqual(attacks, 1, "The attack state should use the enemy's melee ability from its ability bar.");
-            GraphAbilitySlot meleeSlot = monster.AbilitySlots.OfType<GraphAbilitySlot>().Single(x => x.Definition.HasNode(NodeTypes.MeleeSwing));
+            GraphAbilitySlot meleeSlot = monster.Loadout.Slots.OfType<GraphAbilitySlot>().Single(x => x.Definition.HasNode(NodeTypes.MeleeSwing));
             Assert.Greater(meleeSlot.CooldownTimeLeft, -1f);
 
             // The clip's own events close the hit window, which ends the swing and releases the ability.

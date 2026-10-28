@@ -320,7 +320,7 @@ namespace SimpleRPG.Abilities.Integration
                 character.Id,
                 equipment.GetItemInstanceId(slot),
                 item.GrantedAbilities[abilityIndex],
-                character.Attributes,
+                character.Stats.Attributes,
                 new Position3(origin.x, origin.y, origin.z),
                 new Position3(direction.x, direction.y, direction.z));
 
@@ -397,7 +397,7 @@ namespace SimpleRPG.Abilities.Integration
                 return false;
             }
 
-            if (!Contains(character.GraphAbilities, ability))
+            if (!Contains(character.Loadout.Abilities, ability))
             {
                 Debug.LogWarning(name + " asked to use " + ability.name + ", which it does not have.");
                 return false;

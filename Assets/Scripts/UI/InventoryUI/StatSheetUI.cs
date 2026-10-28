@@ -106,7 +106,7 @@ namespace SimpleRPG.UI
             AddHeader("Vitals");
             AddRow("Health", () => character.Health + " / " + character.MaxHealth);
 
-            AttributeSet attributes = character.Attributes;
+            AttributeSet attributes = character.Stats.Attributes;
             if (attributes == null)
             {
                 return;
@@ -116,13 +116,13 @@ namespace SimpleRPG.UI
             foreach ((string label, AttributeId attribute) in Core)
             {
                 AttributeId id = attribute;
-                AddRow(label, () => Format(character.Attributes != null ? character.Attributes.Get(id) : 0d, false));
+                AddRow(label, () => Format(character.Stats.Attributes != null ? character.Stats.Attributes.Get(id) : 0d, false));
             }
 
             bool headerAdded = false;
             foreach ((string label, AttributeId stat, bool percent) in Derived)
             {
-                if (!character.HasDerivedStat(stat))
+                if (!character.Stats.HasDerivedStat(stat))
                 {
                     continue;
                 }
@@ -135,7 +135,7 @@ namespace SimpleRPG.UI
 
                 AttributeId id = stat;
                 bool asPercent = percent;
-                AddRow(label, () => Format(character.Attributes != null ? character.Attributes.Get(id) : 0d, asPercent));
+                AddRow(label, () => Format(character.Stats.Attributes != null ? character.Stats.Attributes.Get(id) : 0d, asPercent));
             }
         }
 

@@ -275,7 +275,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character character = instance.GetComponent<Character>();
             if (graphAbilities.Length > 0)
             {
-                typeof(Character).GetField("graphAbilities", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(character, graphAbilities.ToList());
+                typeof(CombatLoadout).GetField("abilities", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(character.Loadout, graphAbilities.ToList());
             }
 
             character.Initialize();

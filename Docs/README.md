@@ -13,6 +13,7 @@ For sound effects (Audacity MCP, sourcing, measuring, known tool quirks), start 
 - [Equipment and the paper doll](Equipment.md)
 - [HUD and inventory screens](InventoryScreens.md)
 - [The local player and the UI](LocalPlayerAndUI.md)
+- [How a character is put together](CharacterComposition.md)
 - [Upper-body articulation](UpperBodyArticulation.md)
 - [Character appearance](CharacterAppearance.md)
 - [Anatomical hit regions](HitRegions.md)

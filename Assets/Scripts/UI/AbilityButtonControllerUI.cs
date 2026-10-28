@@ -42,7 +42,7 @@ namespace SimpleRPG.UI
         public void BindLocalPlayer(Character character)
         {
             UnbindLocalPlayer();
-            CreateAbilityButtons(character.AbilitySlots);
+            CreateAbilityButtons(character.Loadout.Slots);
         }
 
         /// <inheritdoc/>

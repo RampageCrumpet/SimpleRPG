@@ -151,7 +151,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             Character player = Spawn(PlayerPrefab, position, player: true);
             player.gameObject.tag = "Player";
-            player.WeaponData = weaponData;
+            player.Loadout.DefaultWeapon = weaponData;
             ComboTestSupport.UseManualClock(player);
             return player;
         }
@@ -275,7 +275,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             Character player = SpawnPlayer();
             yield return null;
-            IAbilitySlot meleeSlot = player.AbilitySlots.OfType<GraphAbilitySlot>().First(s => s.Definition == melee);
+            IAbilitySlot meleeSlot = player.Loadout.Slots.OfType<GraphAbilitySlot>().First(s => s.Definition == melee);
             int activated = 0;
             meleeSlot.Activated += _ => activated++;
 
@@ -283,7 +283,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return null;
 
             Assert.IsFalse(Press(player), "The server refuses a melee press.");
-            foreach (AbilityDefinition ability in player.GraphAbilities)
+            foreach (AbilityDefinition ability in player.Loadout.Abilities)
             {
                 Assert.IsFalse(player.GetComponent<AbilityUser>().TryActivateOnServer(ability), ability.name + " must not run for a dead player.");
             }

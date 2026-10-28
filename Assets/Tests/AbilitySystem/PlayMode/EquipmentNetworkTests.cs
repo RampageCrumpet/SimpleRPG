@@ -107,23 +107,23 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         [Test]
         public void MainHandWeapon_BecomesTheCharactersWeapon()
         {
-            Assert.IsNull(character.WeaponData, "The test target has no starting weapon.");
+            Assert.IsNull(character.Loadout.Weapon, "The test target has no starting weapon.");
 
             equipment.Equip(EquipmentSlot.mainHand, sword, 100);
 
-            Assert.AreSame(sword, character.WeaponData);
+            Assert.AreSame(sword, character.Loadout.Weapon);
         }
 
         [Test]
         public void Unequip_ReturnsTheCharacterToItsStartingWeapon()
         {
-            character.WeaponData = dagger;
+            character.Loadout.DefaultWeapon = dagger;
             equipment.Equip(EquipmentSlot.mainHand, sword, 100);
-            Assert.AreSame(sword, character.WeaponData);
+            Assert.AreSame(sword, character.Loadout.Weapon);
 
             Assert.IsTrue(equipment.Unequip(EquipmentSlot.mainHand));
 
-            Assert.AreSame(dagger, character.WeaponData);
+            Assert.AreSame(dagger, character.Loadout.Weapon);
             Assert.IsNull(equipment.Get(EquipmentSlot.mainHand));
         }
 
@@ -137,17 +137,17 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             string mainHand = ((int)EquipmentSlot.mainHand).ToString();
             CollectionAssert.AreEqual(new[] { "unequipped 100 from " + mainHand + " (Replaced)", "equipped 101 in " + mainHand }, log);
-            Assert.AreSame(dagger, character.WeaponData);
+            Assert.AreSame(dagger, character.Loadout.Weapon);
         }
 
         [Test]
         public void ANonWeaponInTheMainHand_LeavesTheStartingWeaponInUse()
         {
-            character.WeaponData = dagger;
+            character.Loadout.DefaultWeapon = dagger;
 
             equipment.Equip(EquipmentSlot.mainHand, amulet, 100);
 
-            Assert.AreSame(dagger, character.WeaponData);
+            Assert.AreSame(dagger, character.Loadout.Weapon);
         }
 
         [Test]

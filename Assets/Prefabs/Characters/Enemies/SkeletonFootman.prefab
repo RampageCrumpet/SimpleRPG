@@ -1959,6 +1959,8 @@ GameObject:
   - component: {fileID: 2512760872946552752}
   - component: {fileID: 6882573695827128756}
   - component: {fileID: 3407008257685371376}
+  - component: {fileID: 1511403657937439}
+  - component: {fileID: 548648593203850907}
   m_Layer: 9
   m_Name: SkeletonFootman
   m_TagString: Untagged
@@ -2092,16 +2094,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Character
   ShowTopMostFoldoutHeaderGroup: 1
   fallbackMaxHealth: 75
-  graphAbilities:
-  - {fileID: 11400000, guid: 49664e7ac941459295ad0c76109a18fe, type: 2}
-  startingWeapon: {fileID: 11400000, guid: a148d8a79ce5f394aa7989dd779fda64, type: 2}
-  strength: 10
-  constitution: 10
-  dexterity: 10
-  agility: 10
-  willpower: 10
-  intelligence: 10
-  statProfile: {fileID: 11400000, guid: a1d6395f416f97148af49902836892fb, type: 2}
 --- !u!195 &3687092634510867613
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -2467,6 +2459,40 @@ MonoBehaviour:
   <InteractionText>k__BackingField: Search
   <InteractionTime>k__BackingField: 1
   lootTable: {fileID: 11400000, guid: 1e3f96a264f8ae748ba95145095b8513, type: 2}
+--- !u!114 &1511403657937439
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068973633357433497}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14cbcc12a156a2b468a04c78dea893d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.CharacterStats
+  strength: 10
+  constitution: 10
+  dexterity: 10
+  agility: 10
+  willpower: 10
+  intelligence: 10
+  statProfile: {fileID: 11400000, guid: a1d6395f416f97148af49902836892fb, type: 2}
+--- !u!114 &548648593203850907
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3068973633357433497}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9261a272b00267e48b14dcc903a73201, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.CombatLoadout
+  abilities:
+  - {fileID: 11400000, guid: 49664e7ac941459295ad0c76109a18fe, type: 2}
+  defaultWeapon: {fileID: 11400000, guid: a148d8a79ce5f394aa7989dd779fda64, type: 2}
 --- !u!1 &3109262660282379090
 GameObject:
   m_ObjectHideFlags: 0

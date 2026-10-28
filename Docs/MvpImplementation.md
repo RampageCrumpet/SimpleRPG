@@ -37,7 +37,7 @@ The AI states switch between one another with explicit calls (idle, chase, attac
 
 ## Add another conventional melee enemy
 
-1. Create a prefab with a NetworkObject, server-authoritative NetworkTransform, Character and starting WeaponData. Give Character a melee ability graph; the current reusable graph is `Assets/Abilities/Abilities/MeleeAttackGremlin.asset`.
+1. Create a prefab with a NetworkObject, server-authoritative NetworkTransform and Character (which brings its `CharacterStats` and `CombatLoadout`). Give the `CombatLoadout` a melee ability graph and a default weapon; the current reusable graph is `Assets/Abilities/Abilities/MeleeAttackGremlin.asset`.
 2. Add EnemyController, NavMeshAgent and a configured PrimarySense such as Blindsense. Configure range, speed, stopping distance and activation duration. Keep the prefab's agent disabled: the controller enables it on the server after spawn.
 3. Add Animator, AnimatableCharacter, MeleeDelivery and the graph AbilityUser component. Configure animation triggers and any activation/death presentation. Use in-place clips when the NavMeshAgent supplies movement. For rigs with animated bone translations, use transform clips and matching transform masks rather than humanoid retargeting.
 4. Place HurtBox trigger colliders on the HurtBox layer. Fit the standing body collider to the model.

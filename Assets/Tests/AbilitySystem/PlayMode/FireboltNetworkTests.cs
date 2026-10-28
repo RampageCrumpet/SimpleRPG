@@ -106,7 +106,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             if (graphAbilities.Length > 0)
             {
                 // Give the character exactly these abilities, as its prefab would.
-                typeof(Character).GetField("graphAbilities", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(character, graphAbilities.ToList());
+                typeof(CombatLoadout).GetField("abilities", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(character.Loadout, graphAbilities.ToList());
             }
 
             character.Initialize();

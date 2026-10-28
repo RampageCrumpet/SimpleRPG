@@ -163,7 +163,7 @@ namespace SimpleRPG.Audio
                 return;
             }
 
-            WeaponData weapon = character != null ? character.WeaponData : null;
+            WeaponData weapon = character != null ? character.Loadout.Weapon : null;
             AudioIdentity target = cue.Victim != null ? cue.Victim.GetComponent<AudioIdentity>() : null;
             AudioRouting routing = AudioRouting.Instance;
 
@@ -199,13 +199,13 @@ namespace SimpleRPG.Audio
 
         private AudioTag WeaponMaterial()
         {
-            WeaponData weapon = character != null ? character.WeaponData : null;
+            WeaponData weapon = character != null ? character.Loadout.Weapon : null;
             return weapon != null && weapon.AudioMaterial != null ? weapon.AudioMaterial : defaultSourceMaterial;
         }
 
         private ComboStep StepFor(int attackNumber)
         {
-            WeaponData weapon = character != null ? character.WeaponData : null;
+            WeaponData weapon = character != null ? character.Loadout.Weapon : null;
             ComboDefinition combo = weapon != null ? weapon.Combo : null;
             int index = attackNumber - 1;
             return combo != null && index >= 0 && index < combo.StepCount ? combo.Steps[index] : null;

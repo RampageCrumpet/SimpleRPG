@@ -222,7 +222,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return null;
             EquipmentOf(wielder).Equip(EquipmentSlot.mainHand, staff, 800);
 
-            Assert.IsFalse(wielder.GraphAbilities.Contains(staffBolt), "The staff's spell is not on the wielder's own bar.");
+            Assert.IsFalse(wielder.Loadout.Abilities.Contains(staffBolt), "The staff's spell is not on the wielder's own bar.");
             Assert.AreEqual(ItemCastResult.Cast, UserOf(wielder).TryActivateItemOnServer(EquipmentSlot.mainHand, 0));
         }
 
@@ -326,7 +326,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.AreEqual(3, EquipmentOf(wielder).GetCharges(EquipmentSlot.mainHand), "A refusal costs nothing.");
 
             EquipmentOf(wielder).Equip(EquipmentSlot.neck, ring, 803);
-            Assert.AreEqual(13d, wielder.Attributes.Get(PrimaryAttributes.Intelligence));
+            Assert.AreEqual(13d, wielder.Stats.Attributes.Get(PrimaryAttributes.Intelligence));
 
             Assert.AreEqual(ItemCastResult.Cast, UserOf(wielder).TryActivateItemOnServer(EquipmentSlot.mainHand, 0));
             Assert.AreEqual(2, EquipmentOf(wielder).GetCharges(EquipmentSlot.mainHand));

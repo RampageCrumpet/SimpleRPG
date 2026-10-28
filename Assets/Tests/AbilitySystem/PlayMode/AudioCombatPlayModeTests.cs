@@ -97,7 +97,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             GameObject go = Track(new GameObject("Attacker"));
             StubMelee melee = go.AddComponent<StubMelee>();
             SimpleRPG.Character character = go.GetComponent<SimpleRPG.Character>();
-            character.WeaponData = weapon;
+            character.Loadout.DefaultWeapon = weapon;
             go.SetActive(false);
             CombatAudio audio = go.AddComponent<CombatAudio>();
             if (defaultMaterial != null) SetField(audio, "defaultSourceMaterial", defaultMaterial);

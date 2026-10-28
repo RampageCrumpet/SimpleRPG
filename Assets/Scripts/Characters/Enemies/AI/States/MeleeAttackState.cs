@@ -29,7 +29,7 @@ namespace SimpleRPG.AI
             if (!controller.TrackTarget() || !controller.InAttackRange) { outsideRange(); return; }
             controller.FaceTarget();
             if (!controller.IsFacingTarget) return;
-            var slot = controller.Character.AbilitySlots.OfType<GraphAbilitySlot>()
+            var slot = controller.Character.Loadout.Slots.OfType<GraphAbilitySlot>()
                 .FirstOrDefault(s => s.Definition != null && s.Definition.HasNode(NodeTypes.MeleeSwing) && s.CooldownTimeLeft <= 0);
             slot?.Activate();
         }

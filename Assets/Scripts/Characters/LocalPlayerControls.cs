@@ -130,7 +130,7 @@ namespace SimpleRPG
             }
 
             EnsureAbilityActions();
-            IReadOnlyList<IAbilitySlot> slots = character.AbilitySlots;
+            IReadOnlyList<IAbilitySlot> slots = character.Loadout.Slots;
             for (int i = 0; i < slots.Count && i < 32; i++)
             {
                 uint bit = 1u << i;
@@ -159,7 +159,7 @@ namespace SimpleRPG
         /// </summary>
         private void EnsureAbilityActions()
         {
-            IReadOnlyList<IAbilitySlot> slots = character.AbilitySlots;
+            IReadOnlyList<IAbilitySlot> slots = character.Loadout.Slots;
             if (abilityActions != null && abilityActions.Length == slots.Count)
             {
                 return;

@@ -63,7 +63,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             Character character = playerObject.GetComponent<Character>();
             character.Initialize();
-            character.WeaponData = UnityEditor.AssetDatabase.LoadAssetAtPath<WeaponData>(WeaponPath);
+            character.Loadout.DefaultWeapon = UnityEditor.AssetDatabase.LoadAssetAtPath<WeaponData>(WeaponPath);
             playerObject.GetComponent<NetworkObject>().Spawn();
             articulation = playerObject.GetComponent<UpperBodyArticulation>();
             sword = playerObject.GetComponentInChildren<Hitbox>(true);

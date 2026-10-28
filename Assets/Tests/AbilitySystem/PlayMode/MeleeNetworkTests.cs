@@ -129,7 +129,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private Character SpawnAttacker(AnimatorCullingMode? culling = null)
         {
             Character attacker = Spawn(PlayerPrefab, Vector3.zero, culling);
-            attacker.WeaponData = weaponData;
+            attacker.Loadout.DefaultWeapon = weaponData;
             ComboTestSupport.UseManualClock(attacker);
             return attacker;
         }
@@ -324,7 +324,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character attacker = SpawnAttacker();
             WeaponData plain = ScriptableObject.CreateInstance<WeaponData>();
             created.Add(plain);
-            attacker.WeaponData = plain;
+            attacker.Loadout.DefaultWeapon = plain;
             yield return null;
             LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("no weapon with a combo"));
 
@@ -511,7 +511,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             ComboTestSupport.GiveCombo(other, otherCombo);
             created.Add(other);
             created.Add(otherCombo);
-            attacker.WeaponData = other;
+            attacker.Loadout.DefaultWeapon = other;
 
             Advance(attacker, ComboTestSupport.InsideChainWindow - ComboTestSupport.InsideHitWindow);
             // The new weapon's combo starts fresh, so the press is a fresh use and the cooldown applies.
@@ -544,7 +544,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character attacker = SpawnAttacker();
             Character victim = SpawnVictim();
             yield return null;
-            GraphAbilitySlot slot = attacker.AbilitySlots.OfType<GraphAbilitySlot>().Single(x => x.Definition == melee);
+            GraphAbilitySlot slot = attacker.Loadout.Slots.OfType<GraphAbilitySlot>().Single(x => x.Definition == melee);
             bool activated = false;
             slot.Activated += _ => activated = true;
 
@@ -563,7 +563,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             Character attacker = SpawnAttacker();
             yield return null;
-            GraphAbilitySlot slot = attacker.AbilitySlots.OfType<GraphAbilitySlot>().Single(x => x.Definition == melee);
+            GraphAbilitySlot slot = attacker.Loadout.Slots.OfType<GraphAbilitySlot>().Single(x => x.Definition == melee);
 
             slot.Activate();
             Advance(attacker, ComboTestSupport.InsideChainWindow);

@@ -56,7 +56,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             Assert.AreEqual(0d, set.Get(PrimaryAttributes.Strength));
 
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Characters/Enemies/SkeletonFootman.prefab");
-            Assert.AreSame(profile, new SerializedObject(prefab.GetComponent<Character>()).FindProperty("statProfile").objectReferenceValue);
+            Assert.AreSame(profile, new SerializedObject(prefab.GetComponent<CharacterStats>()).FindProperty("statProfile").objectReferenceValue);
         }
 
         [Test]

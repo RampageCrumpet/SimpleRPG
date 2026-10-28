@@ -243,7 +243,7 @@ namespace SimpleRPG
             direction.Normalize();
         
             // How fast the character moves is the server's resolved Movement Speed; the client only ever supplies a direction.
-            float speed = this.character != null ? this.character.MovementSpeed : 0f;
+            float speed = this.character != null ? this.character.Stats.MovementSpeed : 0f;
             characterController.SimpleMove(speed * direction);
         }
 

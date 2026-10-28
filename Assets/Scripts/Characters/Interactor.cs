@@ -69,7 +69,7 @@ namespace SimpleRPG
             character.OnDeath += StopInteraction;
 
             // Subscribe to the ability activation event.
-            foreach (IAbilitySlot slot in character.AbilitySlots)
+            foreach (IAbilitySlot slot in character.Loadout.Slots)
             {
                 slot.Activated += HandleAbilityActivated;
             }
@@ -192,7 +192,7 @@ namespace SimpleRPG
             character.OnDeath -= StopInteraction;
 
             // Unsubscribe from the ability activation event.
-            foreach (IAbilitySlot slot in character.AbilitySlots)
+            foreach (IAbilitySlot slot in character.Loadout.Slots)
             {
                 slot.Activated -= HandleAbilityActivated;
             }

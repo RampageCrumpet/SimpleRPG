@@ -2,7 +2,6 @@ using SimpleRPG.HitDetection;
 using SimpleRPG.Abilities;
 using SimpleRPG.Gameplay;
 using System.Collections.Generic;
-using System.Linq;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
@@ -10,10 +9,30 @@ using EntityId = SimpleRPG.Gameplay.EntityId;
 
 namespace SimpleRPG
 {
+    /// <summary>
+    /// A combatant: it has an identity, health, and a life that ends and can begin again. Its attributes live in <see cref="CharacterStats"/> and
+    /// what it fights with in <see cref="CombatLoadout"/>, which it requires; what it wears is <see cref="Equipment"/>.
+    /// </summary>
+    [RequireComponent(typeof(CharacterStats))]
+    [RequireComponent(typeof(CombatLoadout))]
     public class Character : NetworkBehaviour, ICombatant, IRegionDamageModifier
     {
         private HitAnatomy anatomy;
         private bool anatomyLooked;
+
+        private CharacterStats stats;
+
+        private CombatLoadout loadout;
+
+        /// <summary>
+        /// This character's attributes and derived stats.
+        /// </summary>
+        public CharacterStats Stats => stats != null ? stats : (stats = GetComponent<CharacterStats>());
+
+        /// <summary>
+        /// This character's abilities and default weapon.
+        /// </summary>
+        public CombatLoadout Loadout => loadout != null ? loadout : (loadout = GetComponent<CombatLoadout>());
 
         /// <summary>
         /// The maximum health of a character with no stat profile defining Maximum Health. Otherwise the resolved Maximum Health is used.
@@ -22,40 +41,6 @@ namespace SimpleRPG
         [UnityEngine.Serialization.FormerlySerializedAs("maxHealth")]
         [Tooltip("Maximum health for a character whose stat profile does not define Maximum Health. Ignored when it does.")]
         private int fallbackMaxHealth = 100;
-
-        /// <summary>
-        /// The abilities this character starts with, in ability bar order. The server checks every activation request against this list.
-        /// </summary>
-        [SerializeField]
-        [Tooltip("The abilities this character can use, in ability bar order.")]
-        private List<AbilityDefinition> graphAbilities = new List<AbilityDefinition>();
-
-        private List<IAbilitySlot> abilitySlots;
-
-        /// <summary>
-        /// The weapon this character starts with, used when nothing is equipped in the main hand.
-        /// </summary>
-        [SerializeField]
-        [UnityEngine.Serialization.FormerlySerializedAs("WeaponData")]
-        [Tooltip("The weapon this character fights with when nothing is equipped in the main hand.")]
-        private WeaponData startingWeapon;
-
-        private Equipment equipment;
-
-        /// <summary>
-        /// The weapon this character attacks with: the one equipped in the main hand, or the starting weapon if there is none.
-        /// </summary>
-        public WeaponData WeaponData
-        {
-            get
-            {
-                if (equipment == null) equipment = GetComponent<Equipment>();
-
-                WeaponData equipped = equipment != null ? equipment.MainHandWeapon : null;
-                return equipped != null ? equipped : startingWeapon;
-            }
-            set => startingWeapon = value;
-        }
 
         public delegate void NotifyDamageTaken();
 
@@ -71,29 +56,6 @@ namespace SimpleRPG
         /// Raised on every machine when a dead character starts its next life. Presentation and transient client state reset here.
         /// </summary>
         public event NotifyRevive OnRevive;
-
-        [Header("Attributes")]
-        [SerializeField] private int strength = 10;
-        [SerializeField] private int constitution = 10;
-        [SerializeField] private int dexterity = 10;
-        [SerializeField] private int agility = 10;
-        [UnityEngine.Serialization.FormerlySerializedAs("wisdom")]
-        [SerializeField] private int willpower = 10;
-        [SerializeField] private int intelligence = 10;
-
-        /// <summary>
-        /// This character's attributes: the six primaries plus whatever worn items grant. Only the server has them; they are what abilities read.
-        /// Null before the character spawns and on clients.
-        /// </summary>
-        public AttributeSet Attributes { get; private set; }
-
-        /// <summary>
-        /// How this character's derived stats (maximum health, movement speed and so on) are resolved: from the core attributes for a player,
-        /// or authored directly for an enemy. With none, the character has only its core attributes and nothing derived.
-        /// </summary>
-        [SerializeField]
-        [Tooltip("How this character's derived stats are resolved. Leave empty for a character that has none.")]
-        private StatProfile statProfile;
 
         /// <summary>
         /// The replicated health value. Only the server writes it; every client reads it, so late joiners receive the
@@ -143,43 +105,11 @@ namespace SimpleRPG
         public int MaxHealth => IsSpawned ? networkMaxHealth.Value : ResolveMaxHealth();
 
         /// <summary>
-        /// The movement speed the server moves this character at: its resolved Movement Speed, in units per second. Zero on a character with no Movement Speed stat
-        /// and on clients, which never decide it.
-        /// </summary>
-        public float MovementSpeed => Attributes != null ? (float)Mathf.Max(0f, (float)Attributes.Get(DerivedStats.MovementSpeed)) : 0f;
-
-        /// <summary>
-        /// True if this character's stat profile defines the derived stat, so a stat sheet can leave out stats the character does not have.
-        /// </summary>
-        public bool HasDerivedStat(AttributeId stat)
-        {
-            if (statProfile == null)
-            {
-                return false;
-            }
-
-            foreach (var rule in statProfile.Sheet.Rules)
-            {
-                if (rule.Stat == stat)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
         /// Maximum Health as the server resolves it: the stat rounded to a whole number and at least 1, or the fallback if the character has no such stat.
         /// </summary>
         private int ResolveMaxHealth()
         {
-            if (Attributes != null && HasDerivedStat(DerivedStats.MaximumHealth))
-            {
-                return Mathf.Max(1, Mathf.RoundToInt((float)Attributes.Get(DerivedStats.MaximumHealth)));
-            }
-
-            return fallbackMaxHealth;
+            return Stats.TryResolveMaxHealth(out int maxHealth) ? maxHealth : fallbackMaxHealth;
         }
 
         /// <summary>
@@ -231,27 +161,6 @@ namespace SimpleRPG
 
         Position3 ICombatant.Position => new Position3(transform.position.x, transform.position.y, transform.position.z);
 
-        /// <summary>
-        /// The abilities this character can use.
-        /// </summary>
-        public IReadOnlyList<AbilityDefinition> GraphAbilities => graphAbilities;
-
-        /// <summary>
-        /// Every ability on this character's bar, in order.
-        /// </summary>
-        public IReadOnlyList<IAbilitySlot> AbilitySlots
-        {
-            get
-            {
-                if (abilitySlots == null)
-                {
-                    abilitySlots = graphAbilities.Select(x => (IAbilitySlot)new GraphAbilitySlot(x, this)).ToList();
-                }
-
-                return abilitySlots;
-            }
-        }
-
         public override void OnNetworkSpawn()
         {
             if (IsServer)
@@ -262,23 +171,11 @@ namespace SimpleRPG
                 GameplayServices.Current.Combatants.Register(this);
 
                 // The character's attributes live on the server, where abilities read them and worn items add their grants to them.
-                Attributes = statProfile != null ? statProfile.CreateSet() : new AttributeSet();
-                GameplayServices.Current.Attributes.Register(SourceHandle.FromEntity(registeredId), Attributes);
-
-                // A character whose stats are authored directly has no core attributes to set.
-                if (statProfile == null || statProfile.Ownership == StatOwnership.Derived)
-                {
-                    Attributes.SetBase(PrimaryAttributes.Strength, strength);
-                    Attributes.SetBase(PrimaryAttributes.Constitution, constitution);
-                    Attributes.SetBase(PrimaryAttributes.Dexterity, dexterity);
-                    Attributes.SetBase(PrimaryAttributes.Agility, agility);
-                    Attributes.SetBase(PrimaryAttributes.Willpower, willpower);
-                    Attributes.SetBase(PrimaryAttributes.Intelligence, intelligence);
-                }
+                Stats.Initialize(registeredId);
 
                 networkMaxHealth.Value = ResolveMaxHealth();
                 networkHealth.Value = Mathf.Min(pendingInitialHealth ?? networkMaxHealth.Value, networkMaxHealth.Value);
-                Attributes.Modified += RefreshMaxHealth;
+                Stats.Modified += RefreshMaxHealth;
             }
 
             networkHealth.OnValueChanged += HandleHealthChanged;
@@ -294,9 +191,8 @@ namespace SimpleRPG
             {
                 // The network ID is already gone by now, so unregister under the ID it was registered with.
                 GameplayServices.Current.Combatants.Unregister(registeredId, this);
-                GameplayServices.Current.Attributes.Unregister(SourceHandle.FromEntity(registeredId));
-                if (Attributes != null) Attributes.Modified -= RefreshMaxHealth;
-                Attributes = null;
+                Stats.Modified -= RefreshMaxHealth;
+                Stats.Release(registeredId);
 
                 // Rules and state tied to this entity can be dropped.
                 GameplayEventDispatcher events = GameplayServices.Current.Events;

@@ -131,7 +131,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private Character SpawnFrozenPlayer(Vector3 position, float yaw = 0f)
         {
             Character player = Spawn(PlayerPrefab, position, yaw);
-            player.WeaponData = weaponData;
+            player.Loadout.DefaultWeapon = weaponData;
             ComboTestSupport.UseManualClock(player);
             return player;
         }

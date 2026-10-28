@@ -229,7 +229,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             // Kill with the player's real melee ability and animation-driven weapon, with the enemy planted in reach.
             enemy.enabled = false;
             agent.enabled = false;
-            var melee = player.AbilitySlots.OfType<GraphAbilitySlot>().First(s => s.Definition.HasNode(NodeTypes.MeleeSwing));
+            var melee = player.Loadout.Slots.OfType<GraphAbilitySlot>().First(s => s.Definition.HasNode(NodeTypes.MeleeSwing));
             deadline = Time.time + 20;
             float closest = float.PositiveInfinity;
             bool opened = false;

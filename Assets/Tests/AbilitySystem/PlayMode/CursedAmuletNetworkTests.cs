@@ -146,13 +146,13 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             Character wearer = SpawnWearer(Vector3.zero);
             yield return null;
-            Assert.AreEqual(BaseStat, wearer.Attributes.Get(PrimaryAttributes.Strength));
+            Assert.AreEqual(BaseStat, wearer.Stats.Attributes.Get(PrimaryAttributes.Strength));
 
             EquipmentOf(wearer).Equip(EquipmentSlot.neck, amulet, 900);
 
-            Assert.AreEqual(BaseStat + 3, wearer.Attributes.Get(PrimaryAttributes.Strength));
-            Assert.AreEqual(BaseStat + 2, wearer.Attributes.Get(PrimaryAttributes.Constitution));
-            Assert.AreEqual(BaseStat, wearer.Attributes.Get(PrimaryAttributes.Dexterity), "Other stats are untouched.");
+            Assert.AreEqual(BaseStat + 3, wearer.Stats.Attributes.Get(PrimaryAttributes.Strength));
+            Assert.AreEqual(BaseStat + 2, wearer.Stats.Attributes.Get(PrimaryAttributes.Constitution));
+            Assert.AreEqual(BaseStat, wearer.Stats.Attributes.Get(PrimaryAttributes.Dexterity), "Other stats are untouched.");
         }
 
         [UnityTest]
@@ -164,9 +164,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             EquipmentOf(wearer).Unequip(EquipmentSlot.neck);
 
-            Assert.AreEqual(BaseStat, wearer.Attributes.Get(PrimaryAttributes.Strength));
-            Assert.AreEqual(BaseStat, wearer.Attributes.Get(PrimaryAttributes.Constitution));
-            Assert.AreEqual(0, wearer.Attributes.ModifierCount);
+            Assert.AreEqual(BaseStat, wearer.Stats.Attributes.Get(PrimaryAttributes.Strength));
+            Assert.AreEqual(BaseStat, wearer.Stats.Attributes.Get(PrimaryAttributes.Constitution));
+            Assert.AreEqual(0, wearer.Stats.Attributes.ModifierCount);
         }
 
         [UnityTest]
@@ -312,7 +312,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Kill(wearer);
             yield return null;
 
-            Assert.AreEqual(BaseStat + 3, wearer.Attributes.Get(PrimaryAttributes.Strength), "A grant lasts as long as the item is worn, not as long as the wearer lives.");
+            Assert.AreEqual(BaseStat + 3, wearer.Stats.Attributes.Get(PrimaryAttributes.Strength), "A grant lasts as long as the item is worn, not as long as the wearer lives.");
         }
 
         [UnityTest]

@@ -150,7 +150,7 @@ namespace SimpleRPG.Animations
         }
 
         // The ready stance while a weapon is carried, nothing otherwise. A character with no weapon gets no weapon posture.
-        private int RestStateHash() => Animator.StringToHash(character.WeaponData != null ? AttackLayerReadyState : AttackLayerEmptyState);
+        private int RestStateHash() => Animator.StringToHash(character.Loadout.Weapon != null ? AttackLayerReadyState : AttackLayerEmptyState);
 
         // Moves every attack layer that is resting (not mid-attack) to the stance that matches what the character carries.
         private void RefreshStance()

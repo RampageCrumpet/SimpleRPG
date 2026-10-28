@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 3451314387634747234}
   - component: {fileID: 2024117589843666962}
   - component: {fileID: 3619820689415974521}
+  - component: {fileID: 9208060412620886409}
+  - component: {fileID: 7681768481215382361}
   m_Layer: 0
   m_Name: TestTarget
   m_TagString: Untagged
@@ -75,10 +77,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Character
   ShowTopMostFoldoutHeaderGroup: 1
-  maxHealth: 100
-  abilities: []
-  graphAbilities: []
-  startingWeapon: {fileID: 0}
+  fallbackMaxHealth: 100
 --- !u!114 &2024117589843666962
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -106,3 +105,36 @@ MonoBehaviour:
   m_EditorClassIdentifier: SimpleRPG.Abilities.Integration::SimpleRPG.Abilities.Integration.AbilityUser
   ShowTopMostFoldoutHeaderGroup: 1
   muzzleOffset: {x: 0, y: 1.2, z: 0.8}
+--- !u!114 &9208060412620886409
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3063479357768333819}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14cbcc12a156a2b468a04c78dea893d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.CharacterStats
+  strength: 10
+  constitution: 10
+  dexterity: 10
+  agility: 10
+  willpower: 10
+  intelligence: 10
+  statProfile: {fileID: 0}
+--- !u!114 &7681768481215382361
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3063479357768333819}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9261a272b00267e48b14dcc903a73201, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.CombatLoadout
+  abilities: []
+  defaultWeapon: {fileID: 0}
