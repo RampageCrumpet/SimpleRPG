@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using LevelGeneration;
 using NUnit.Framework;
 using SimpleRPG.Keys;
@@ -13,7 +14,7 @@ namespace SimpleRPG.Tests.PlayMode
 {
     /// <summary>
     /// Keys and locked doors with a real second NetworkManager acting as a client in the same process: the client picks up a key
-    /// and opens a door through the real RPCs, sees the host's changes, and a client that joins after a door opened sees it open.
+    /// and opens a door through the real RPCs, sees the host's changes, a client that joins after a door opened sees it open, and a late joiner is given every player's character.
     /// The host's NetworkManager is created first, so it is <c>NetworkManager.Singleton</c>, which the server side code reads.
     /// </summary>
     public class DungeonKeyClientTests
@@ -255,6 +256,36 @@ namespace SimpleRPG.Tests.PlayMode
 
             Assert.IsFalse(openedGate.activeSelf, "A door that opened before the client joined must be open for it.");
             Assert.IsTrue(lockedGate.activeSelf, "A door that is still locked must stay locked for the late joiner.");
+        }
+
+        [UnityTest]
+        public IEnumerator LateJoiningClient_IsGivenTheCharacterOfEveryPlayer_ItsOwnAndTheHosts()
+        {
+            // The host's player spawned its character before the client existed, so no RPC sent at that moment can reach the late joiner.
+            Player hostPlayer = host.LocalClient.PlayerObject.GetComponent<Player>();
+            yield return WaitFor(() => hostPlayer.character != null, "The host's player should have spawned its character.");
+            yield return null;
+
+            yield return Connect("LateClient");
+            NetworkManager late = clients[0];
+            Player ownPlayer = late.LocalClient.PlayerObject.GetComponent<Player>();
+            Player hostCopy = null;
+            yield return WaitFor(() =>
+            {
+                hostCopy = late.SpawnManager.SpawnedObjects.Values
+                    .Select(o => o.GetComponent<Player>())
+                    .FirstOrDefault(p => p != null && p.OwnerClientId == host.LocalClientId);
+                return hostCopy != null;
+            }, "The late joiner should see the host's player.");
+
+            yield return WaitFor(() => hostCopy.character != null, "The host's character, spawned before the join, should be bound on the late joiner.");
+            yield return WaitFor(() => ownPlayer.character != null, "The late joiner's own character should be bound.");
+
+            Assert.AreSame(late, hostCopy.character.NetworkManager, "the bound character is the late client's copy, not the host's object");
+            Assert.IsTrue(hostCopy.character.IsSpawned);
+            Assert.AreEqual(host.LocalClientId, hostCopy.character.OwnerClientId);
+            Assert.AreEqual(late.LocalClientId, ownPlayer.character.OwnerClientId);
+            Assert.AreNotSame(hostCopy.character, ownPlayer.character);
         }
 
         [UnityTest]

@@ -397,6 +397,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             // Hurtboxes are children of the bones, so wherever the animation takes a bone its region goes with it.
             HurtBox[] boxes = skeleton.GetComponentsInChildren<HurtBox>(true);
+            // Collider bounds follow the physics copy of each transform, which lags the animator until it is synced. Without this the offsets
+            // below would be measured against a stale pose and the check would fail for whichever bone the clip moves most.
+            Physics.SyncTransforms();
             Dictionary<HurtBox, Vector3> offsets = boxes.ToDictionary(b => b, b => b.transform.InverseTransformPoint(b.Shapes[0].bounds.center));
 
             for (int frame = 0; frame < 30; frame++) yield return null;
