@@ -66,6 +66,9 @@ namespace SimpleRPG
         {
             spawnTime = ServerClock.Now;
             this.hitBox = this.GetComponent<Hitbox>();
+
+            // Only the server acts on a character hit (see TargetHit), so a client's copy does not run the sweeps.
+            hitBox.enabled = Weapon.ResolvesHits;
             hitBox.HitboxCollisionEvent.AddListener(TargetHit);
         }
 

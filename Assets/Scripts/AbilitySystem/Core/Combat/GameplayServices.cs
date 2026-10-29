@@ -14,6 +14,7 @@ namespace SimpleRPG.Gameplay
             Combatants = new CombatantRegistry();
             Combat = new CombatResolver(Events, Combatants);
             ItemStates = new ItemStateStore();
+            ItemInstanceIds = new ItemInstanceIdSource();
             Attributes = new AttributeSetRegistry();
             Random = new SeededRandom(System.Environment.TickCount);
         }
@@ -38,6 +39,11 @@ namespace SimpleRPG.Gameplay
         /// The state of item instances, such as charges.
         /// </summary>
         public ItemStateStore ItemStates { get; }
+
+        /// <summary>
+        /// The source of item instance IDs, shared by every inventory in the session.
+        /// </summary>
+        public ItemInstanceIdSource ItemInstanceIds { get; }
 
         /// <summary>
         /// The attributes of entities, items and world objects, which ability bindings read.

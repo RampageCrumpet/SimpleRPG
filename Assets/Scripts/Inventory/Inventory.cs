@@ -51,24 +51,6 @@ namespace SimpleRPG.InventorySystem
         private readonly Dictionary<Item, uint> idsByItem = new Dictionary<Item, uint>();
 
         /// <summary>
-        /// Source of unique item instance IDs, shared by every inventory because items keep their ID when they move between inventories.
-        /// Only meaningful on the server (or offline). Restarts from zero for each <see cref="NetworkManager"/>, so a new session or test starts clean.
-        /// </summary>
-        private static uint lastInstanceId;
-        private static NetworkManager instanceIdOwner;
-
-        private static uint NextInstanceId()
-        {
-            if (instanceIdOwner != NetworkManager.Singleton)
-            {
-                instanceIdOwner = NetworkManager.Singleton;
-                lastInstanceId = 0;
-            }
-
-            return ++lastInstanceId;
-        }
-
-        /// <summary>
         /// True if this machine may change the contents directly: it's the server, or the inventory isn't networked.
         /// </summary>
         private bool CanMutate => !IsSpawned || IsServer;
@@ -160,9 +142,17 @@ namespace SimpleRPG.InventorySystem
         /// <param name="instanceId"> The existing ID of the item if it's moving from another inventory, 0 to assign a new one.</param>
         private void PlaceItem(Item item, Vector2Int location, uint instanceId = 0)
         {
+            // Every caller checks replicability first (CanPlaceAsAuthority, CanMoveBetween). An item with no id would reach clients as "unknown",
+            // so reaching this point with one is a bug to surface before anything changes, not a silent corrupt entry.
+            uint itemId = ItemIds.GetId(item);
+            if (IsSpawned && itemId == 0)
+            {
+                throw new InvalidOperationException($"{gameObject.name}: '{item.ItemName}' has no registry id, so it cannot be replicated. Check CanReplicate before placing it.");
+            }
+
             if (instanceId == 0)
             {
-                instanceId = NextInstanceId();
+                instanceId = SimpleRPG.Gameplay.GameplayServices.Current.ItemInstanceIds.Next();
             }
 
             FillCells(item, location);
@@ -174,8 +164,7 @@ namespace SimpleRPG.InventorySystem
                 entries.Add(new InventoryEntry
                 {
                     InstanceId = instanceId,
-                    // Callers check the registry (CanPlaceAsAuthority, CanMoveBetween) before placing; 0 would mean "unknown item".
-                    ItemId = ItemIds.GetId(item),
+                    ItemId = itemId,
                     Position = location
                 });
             }

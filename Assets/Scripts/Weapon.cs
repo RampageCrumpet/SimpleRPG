@@ -78,7 +78,7 @@ namespace SimpleRPG
         /// <summary>
         /// True where hits are resolved: on the server, or when no network session is running (offline play and tests).
         /// </summary>
-        private static bool ResolvesHits
+        internal static bool ResolvesHits
         {
             get
             {

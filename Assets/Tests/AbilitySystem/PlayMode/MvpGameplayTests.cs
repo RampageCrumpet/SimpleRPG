@@ -230,25 +230,50 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             enemy.enabled = false;
             agent.enabled = false;
             var melee = player.Loadout.Slots.OfType<GraphAbilitySlot>().First(s => s.Definition.HasNode(NodeTypes.MeleeSwing));
+            // Record what each swing did, so a failure says whether the blade opened, how near it came to any of the skeleton's hurtboxes, and what it hit.
+            var enemyHurtColliders = enemy.GetComponentsInChildren<HurtBox>().SelectMany(h => h.Shapes).ToArray();
+            var enemyHits = new System.Collections.Generic.List<string>();
+            var swings = new System.Collections.Generic.List<string>();
+            var enemyId = enemy.Character.Id;
+            var hitSubscription = SimpleRPG.Gameplay.GameplayServices.Current.Events.Subscribe<SimpleRPG.Gameplay.DamageResolvedEvent>(e =>
+            {
+                if (e.Request.Target == enemyId) enemyHits.Add($"{e.Request.Amount}@{e.Request.BodyLocation} {e.HealthBefore}->{e.HealthAfter}");
+            });
             deadline = Time.time + 20;
-            float closest = float.PositiveInfinity;
-            bool opened = false;
             while (enemy.Character.IsAlive && Time.time < deadline)
             {
                 player.transform.position = enemy.transform.position - enemy.transform.forward * 1.1f + Vector3.up * 0.65f;
                 player.transform.rotation = enemy.transform.rotation;
+                Physics.SyncTransforms();
+                int hitsBefore = enemyHits.Count;
+                bool accepted = false;
+                System.Action<IAbilitySlot> onActivated = _ => accepted = true;
+                melee.Activated += onActivated;
                 melee.Activate();
+                melee.Activated -= onActivated;
                 float end = Time.time + 1.8f;
+                int windowFrames = 0;
+                float closestInSwing = float.PositiveInfinity;
+                var blade = player.GetComponentInChildren<Hitbox>();
                 while (Time.time < end)
                 {
-                    var blade = player.GetComponentInChildren<Hitbox>();
-                    opened |= blade.enabled;
                     if (blade.enabled)
-                        closest = Mathf.Min(closest, Vector3.Distance(blade.transform.position, enemy.GetComponentInChildren<HurtBox>().transform.position));
+                    {
+                        windowFrames++;
+                        Vector3 bladePoint = blade.transform.position;
+                        foreach (Collider hurt in enemyHurtColliders)
+                            closestInSwing = Mathf.Min(closestInSwing, Vector3.Distance(hurt.ClosestPoint(bladePoint), bladePoint));
+                    }
+
                     yield return null;
                 }
+
+                swings.Add($"#{swings.Count + 1} accepted={accepted} windowFrames={windowFrames} closest={closestInSwing:F2} hits={enemyHits.Count - hitsBefore}");
             }
-            Assert.IsFalse(enemy.Character.IsAlive, $"The player's animated sword should kill the skeleton. Health={enemy.Character.Health}, window={opened}, closest={closest}.");
+
+            SimpleRPG.Gameplay.GameplayServices.Current.Events.Unsubscribe(hitSubscription);
+            Assert.IsFalse(enemy.Character.IsAlive,
+                $"The player's animated sword should kill the skeleton. Health={enemy.Character.Health}. Swings: [{string.Join("; ", swings)}]. Hits on the skeleton: [{string.Join(", ", enemyHits)}].");
             Assert.IsTrue(enemy.IsDead);
             Assert.IsFalse(agent.enabled);
             yield return new WaitForSeconds(2);

@@ -40,7 +40,8 @@ namespace SimpleRPG
             if (IsServer)
             {
                 int seed = UseRandomSeed ? CreateSeed() : Seed;
-                // One logged seed reproduces the layout and every loot and combat roll that follows.
+                // The logged seed fixes the layout, the population and the gameplay stream's starting state. Loot and combat share that one stream, so a later
+                // roll is only repeatable if the rolls before it happened in the same order.
                 Debug.Log($"Session seed: {seed}");
                 GameplayServices.Current.Random = new SeededRandom(seed);
                 levelGeneratorController.GenerateLevelAcrossNetwork(seed);

@@ -1,7 +1,6 @@
 using SimpleRPG;
 using SimpleRPG.Abilities;
 using SimpleRPG.Gameplay;
-using System.Linq;
 using UnityEngine;
 
 namespace SimpleRPG
@@ -30,6 +29,8 @@ namespace SimpleRPG
 
         private double recoveryUntil;
 
+        private readonly System.Collections.Generic.List<Swing> expired = new System.Collections.Generic.List<Swing>();
+
         /// <summary>
         /// True if a new attack may start: the last one's recovery is over and none is still in progress.
         /// </summary>
@@ -53,9 +54,20 @@ namespace SimpleRPG
             }
 
             // A swing whose animation never closed its hit window (it was interrupted) must not hold its ability open forever.
-            foreach (Swing swing in Swings.Values.Where(s => ServerClock.Now - s.StartedAt > independentAttacks[s.AttackNumber - 1].Duration + SwingTimeoutSlack).ToList())
+            // Finishing removes the swing, so the expired ones are collected first.
+            double now = ServerClock.Now;
+            expired.Clear();
+            foreach (Swing swing in Swings.Values)
             {
-                Finish(swing);
+                if (now - swing.StartedAt > independentAttacks[swing.AttackNumber - 1].Duration + SwingTimeoutSlack)
+                {
+                    expired.Add(swing);
+                }
+            }
+
+            for (int i = 0; i < expired.Count; i++)
+            {
+                Finish(expired[i]);
             }
         }
 
