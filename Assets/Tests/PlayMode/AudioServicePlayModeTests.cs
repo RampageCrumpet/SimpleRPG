@@ -322,7 +322,7 @@ namespace SimpleRPG.Tests.PlayMode
         [Test]
         public void WithNoAudioListenerNothingIsStartedAndTheGameIsNotSpammed()
         {
-            Object.DestroyImmediate(Object.FindFirstObjectByType<AudioListener>().gameObject);
+            Object.DestroyImmediate(Object.FindAnyObjectByType<AudioListener>().gameObject);
             now += 5f;
             AudioHandle handle = service.Play(OneShot("Unheard"), AudioPlacement.None);
             Assert.IsFalse(handle.IsValid, "no listener, nothing can be heard");

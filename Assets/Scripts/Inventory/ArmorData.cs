@@ -35,12 +35,16 @@ namespace SimpleRPG.InventorySystem
         /// </summary>
         public static bool IsArmorSlot(EquipmentSlot slot) => System.Array.IndexOf(ArmorSlots, slot) >= 0;
 
-        private void OnValidate()
+#if UNITY_EDITOR
+        protected override void OnValidate()
         {
+            base.OnValidate();
+
             if (!IsArmorSlot(slot))
             {
                 Debug.LogWarning($"{name}: armor must use the Head, Chest, Hands, Legs or Feet slot, not {slot}.", this);
             }
         }
+#endif
     }
 }

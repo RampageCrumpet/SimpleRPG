@@ -388,7 +388,7 @@ namespace SimpleRPG.Audio
             if (now - listenerSearchedAt >= 1f)
             {
                 listenerSearchedAt = now;
-                listener = FindFirstObjectByType<AudioListener>();
+                listener = FindAnyObjectByType<AudioListener>();
             }
 
             return listener != null && listener.isActiveAndEnabled;

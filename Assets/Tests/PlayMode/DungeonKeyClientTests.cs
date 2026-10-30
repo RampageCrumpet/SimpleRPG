@@ -67,7 +67,7 @@ namespace SimpleRPG.Tests.PlayMode
         {
             // Every owned character parents the one MainCamera to itself, so whichever is destroyed first takes the camera with it
             // while the other is still looking through it.
-            foreach (FirstPersonCharacterController controller in Object.FindObjectsByType<FirstPersonCharacterController>(FindObjectsSortMode.None))
+            foreach (FirstPersonCharacterController controller in Object.FindObjectsByType<FirstPersonCharacterController>())
             {
                 controller.enabled = false;
             }

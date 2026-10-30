@@ -34,12 +34,18 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private Hitbox sword;
         private HurtBox head;
         private Transform spineTop;
+        private InputSettings.EditorInputBehaviorInPlayMode previousEditorInputBehavior;
 
         [UnitySetUp]
         public IEnumerator SetUp()
         {
             GameplayServices.Reset();
             AbilityServices.Reset();
+            // A menu left open by an earlier test would keep the owner's controller disabled, and the Editor drops keyboard input while the
+            // Game view is not focused, so a walking test would see no movement.
+            LocalPlayer.Reset();
+            previousEditorInputBehavior = InputSystem.settings.editorInputBehaviorInPlayMode;
+            InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
             floorObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
             floorObject.transform.position = new Vector3(0f, -1.13f, 0f);
             floorObject.transform.localScale = new Vector3(200f, 1f, 200f);
@@ -91,6 +97,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             if (managerObject != null) Object.Destroy(managerObject);
             GameplayServices.Reset();
             AbilityServices.Reset();
+            LocalPlayer.Reset();
+            InputSystem.settings.editorInputBehaviorInPlayMode = previousEditorInputBehavior;
             yield return null;
         }
 
@@ -247,6 +255,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         [DefaultExecutionOrder(10000)]
         private sealed class CameraViewProbe : MonoBehaviour
         {
+            [System.NonSerialized]
             public FirstPersonLook Look;
             public int Samples { get; private set; }
             public float AngleToView { get; private set; }

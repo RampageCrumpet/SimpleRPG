@@ -122,7 +122,7 @@ namespace SimpleRPG.Audio
         {
             if (listener == null)
             {
-                AudioListener found = FindFirstObjectByType<AudioListener>();
+                AudioListener found = FindAnyObjectByType<AudioListener>();
                 listener = found != null ? found.transform : null;
             }
 

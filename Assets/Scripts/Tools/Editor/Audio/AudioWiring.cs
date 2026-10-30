@@ -184,7 +184,7 @@ namespace SimpleRPG.AudioTools
 
         private static void WireScene()
         {
-            AmbienceController existing = Object.FindFirstObjectByType<AmbienceController>();
+            AmbienceController existing = Object.FindAnyObjectByType<AmbienceController>();
             if (existing != null) return;
 
             GameObject host = new GameObject("Ambience");
