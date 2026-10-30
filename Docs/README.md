@@ -8,6 +8,7 @@ For sound effects (Audacity MCP, sourcing, measuring, known tool quirks), start 
 - [MVP implementation](MvpImplementation.md)
 - [Ability system](AbilitySystem.md) and [ability editor](AbilityEditor.md)
 - [Dungeon generation](DungeonGeneration.md)
+- [Lighting and the torch flicker](Lighting.md)
 - [Skeleton animation](SkeletonAnimationPlan.md)
 - [Network authority](NetworkAuthority.md)
 - [Equipment and the paper doll](Equipment.md)
