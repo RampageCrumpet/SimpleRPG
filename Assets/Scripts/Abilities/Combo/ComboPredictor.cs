@@ -35,6 +35,34 @@ namespace SimpleRPG.Abilities
     }
 
     /// <summary>
+    /// What a client must do after a guess is given up.
+    /// </summary>
+    public readonly struct PredictionRollback
+    {
+        public PredictionRollback(bool undone, int resumeAttack = 0, float secondsIntoResume = 0f)
+        {
+            Undone = undone;
+            ResumeAttack = resumeAttack;
+            SecondsIntoResume = secondsIntoResume;
+        }
+
+        /// <summary>No guess was shown for this, so nothing changes.</summary>
+        public static PredictionRollback Nothing => default;
+
+        /// <summary>True if an attack the client showed must now be taken back.</summary>
+        public bool Undone { get; }
+
+        /// <summary>
+        /// The attack (counting from 1) that was running before the taken-back press, which the client should go back to showing, or 0 if
+        /// nothing was running and the client should fall back to rest. A refused chain press must not cut the swing it tried to chain from.
+        /// </summary>
+        public int ResumeAttack { get; }
+
+        /// <summary>How far into <see cref="ResumeAttack"/> the swing is.</summary>
+        public float SecondsIntoResume { get; }
+    }
+
+    /// <summary>
     /// The owning player's guess about what the server will do with a press, so the swing can start on the click instead of a round trip later.
     /// It runs the same <see cref="ComboMachine"/> the server runs, on the client's own clock, remembers which guesses the server has not
     /// answered, and says when a guess turned out wrong. It has no engine or network types.
@@ -46,12 +74,19 @@ namespace SimpleRPG.Abilities
     {
         private readonly struct Pending
         {
-            public Pending(int pressId, int attackNumber, double madeAt)
+            public Pending(int pressId, int attackNumber, double madeAt, int previousStep, double previousStart)
             {
                 PressId = pressId;
                 AttackNumber = attackNumber;
                 MadeAt = madeAt;
+                PreviousStep = previousStep;
+                PreviousStart = previousStart;
             }
+
+            /// <summary>The step (counting from 0) this press cut short, or -1 if it started a fresh chain.</summary>
+            public int PreviousStep { get; }
+
+            public double PreviousStart { get; }
 
             public int PressId { get; }
 
@@ -104,9 +139,11 @@ namespace SimpleRPG.Abilities
                 return new PredictedPress(id, 0);
             }
 
+            int previousStep = machine.IsRunning ? machine.CurrentStep : -1;
+            double previousStart = machine.CurrentStepStart;
             ComboPressResult result = machine.Press(now, events);
             int attack = result.Step + 1;
-            pending.Add(new Pending(id, attack, now));
+            pending.Add(new Pending(id, attack, now, result.Outcome == ComboPressOutcome.Chained ? previousStep : -1, previousStart));
             return new PredictedPress(id, attack);
         }
 
@@ -136,31 +173,25 @@ namespace SimpleRPG.Abilities
         /// <summary>
         /// The server refused a press.
         /// </summary>
-        /// <returns>True if the client had shown an attack for it, which must now be taken back.</returns>
-        public bool Reject(int pressId, double now, List<ComboEvent> events)
+        /// <returns>What to take back, if the client had shown an attack for it.</returns>
+        public PredictionRollback Reject(int pressId, double now, List<ComboEvent> events)
         {
-            if (!pending.Exists(p => p.PressId == pressId))
-            {
-                return false;
-            }
-
-            RollBack(now, events);
-            return true;
+            int index = pending.FindIndex(p => p.PressId == pressId);
+            return index < 0 ? PredictionRollback.Nothing : RollBack(index, now, events);
         }
 
         /// <summary>
         /// Gives up guesses the server never answered.
         /// </summary>
-        /// <returns>True if an attack the client showed must now be taken back.</returns>
-        public bool Expire(double now, List<ComboEvent> events)
+        /// <returns>What to take back, if an attack the client showed must now be undone.</returns>
+        public PredictionRollback Expire(double now, List<ComboEvent> events)
         {
             if (pending.Count == 0 || now - pending[0].MadeAt <= timeoutSeconds)
             {
-                return false;
+                return PredictionRollback.Nothing;
             }
 
-            RollBack(now, events);
-            return true;
+            return RollBack(0, now, events);
         }
 
         /// <summary>
@@ -172,10 +203,29 @@ namespace SimpleRPG.Abilities
             machine.Interrupt(now, events);
         }
 
-        private void RollBack(double now, List<ComboEvent> events)
+        // Undoes the guess at an index and every later one, which built on it. Earlier guesses stand. A refused chain press goes back to the
+        // step it cut short if that step is still running, because the server never stopped it; only a press that started the chain, or whose
+        // earlier step has run out, leaves nothing to resume.
+        private PredictionRollback RollBack(int index, double now, List<ComboEvent> events)
         {
-            pending.Clear();
+            Pending undone = pending[index];
+            pending.RemoveRange(index, pending.Count - index);
+
+            if (undone.PreviousStep >= 0)
+            {
+                // The machine's own timing is the only place a step's length is known, so ask it by resuming and seeing if it runs out.
+                machine.Resync(undone.PreviousStep, undone.PreviousStart, events);
+                machine.Advance(now, events);
+                if (machine.IsRunning)
+                {
+                    return new PredictionRollback(true, undone.PreviousStep + 1, (float)(now - undone.PreviousStart));
+                }
+
+                return new PredictionRollback(true);
+            }
+
             machine.Interrupt(now, events);
+            return new PredictionRollback(true);
         }
     }
 }

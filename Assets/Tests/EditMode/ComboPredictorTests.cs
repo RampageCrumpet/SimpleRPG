@@ -156,11 +156,54 @@ namespace SimpleRPG.Tests.EditMode
         {
             PredictedPress press = Press(Start);
 
-            bool takeBack = predictor.Reject(press.PressId, Start + 0.125, events);
+            PredictionRollback takeBack = predictor.Reject(press.PressId, Start + 0.125, events);
 
-            Assert.IsTrue(takeBack);
+            Assert.IsTrue(takeBack.Undone);
+            Assert.AreEqual(0, takeBack.ResumeAttack, "Nothing was running before it, so the client falls back to rest.");
             Assert.IsFalse(predictor.HasPendingPrediction);
             Assert.IsFalse(predictor.Machine.IsRunning);
+        }
+
+        [Test]
+        public void ARejectedChainPress_ResumesTheSwingItTriedToCutShort()
+        {
+            PredictedPress first = Press(Start);
+            predictor.Confirm(first.PressId, 1, 0, Start + 0.0625, events);
+            PredictedPress chained = Press(Start + 0.75);
+
+            PredictionRollback takeBack = predictor.Reject(chained.PressId, Start + 0.8125, events);
+
+            Assert.IsTrue(takeBack.Undone);
+            Assert.AreEqual(1, takeBack.ResumeAttack);
+            Assert.AreEqual(0.8125f, takeBack.SecondsIntoResume, 1e-4f);
+            Assert.AreEqual(0, predictor.Machine.CurrentStep, "The server never stopped step one, so the client's machine goes back to it.");
+            Assert.AreEqual(Start, predictor.Machine.CurrentStepStart);
+        }
+
+        [Test]
+        public void ARejectedChainPress_AfterTheEarlierSwingRanOut_ResumesNothing()
+        {
+            PredictedPress first = Press(Start);
+            predictor.Confirm(first.PressId, 1, 0, Start + 0.0625, events);
+            PredictedPress chained = Press(Start + 0.75);
+
+            PredictionRollback takeBack = predictor.Reject(chained.PressId, Start + 1.25, events);
+
+            Assert.IsTrue(takeBack.Undone);
+            Assert.AreEqual(0, takeBack.ResumeAttack);
+            Assert.IsFalse(predictor.Machine.IsRunning);
+        }
+
+        [Test]
+        public void ARejectedPress_KeepsEarlierPendingGuesses()
+        {
+            Press(Start);
+            PredictedPress chained = Press(Start + 0.75);
+
+            predictor.Reject(chained.PressId, Start + 0.8125, events);
+
+            Assert.IsTrue(predictor.HasPendingPrediction, "The first guess is still waiting on the server.");
+            Assert.AreEqual(0, predictor.Machine.CurrentStep);
         }
 
         [Test]
@@ -169,9 +212,9 @@ namespace SimpleRPG.Tests.EditMode
             Press(Start);
             PredictedPress early = Press(Start + 0.25);
 
-            bool takeBack = predictor.Reject(early.PressId, Start + 0.3125, events);
+            PredictionRollback takeBack = predictor.Reject(early.PressId, Start + 0.3125, events);
 
-            Assert.IsFalse(takeBack);
+            Assert.IsFalse(takeBack.Undone);
             Assert.IsTrue(predictor.Machine.IsRunning, "The attack that was predicted and not rejected keeps going.");
         }
 
@@ -191,8 +234,8 @@ namespace SimpleRPG.Tests.EditMode
         {
             Press(Start);
 
-            Assert.IsFalse(predictor.Expire(Start + Timeout, events), "Still within the timeout.");
-            Assert.IsTrue(predictor.Expire(Start + Timeout + 0.0625, events));
+            Assert.IsFalse(predictor.Expire(Start + Timeout, events).Undone, "Still within the timeout.");
+            Assert.IsTrue(predictor.Expire(Start + Timeout + 0.0625, events).Undone);
             Assert.IsFalse(predictor.HasPendingPrediction);
             Assert.IsFalse(predictor.Machine.IsRunning);
         }
@@ -200,7 +243,7 @@ namespace SimpleRPG.Tests.EditMode
         [Test]
         public void Expire_WithNothingPending_DoesNothing()
         {
-            Assert.IsFalse(predictor.Expire(Start + 100, events));
+            Assert.IsFalse(predictor.Expire(Start + 100, events).Undone);
         }
 
         [Test]
@@ -209,7 +252,7 @@ namespace SimpleRPG.Tests.EditMode
             PredictedPress press = Press(Start);
             predictor.Confirm(press.PressId, 1, 0, Start + 0.125, events);
 
-            Assert.IsFalse(predictor.Expire(Start + 100, events));
+            Assert.IsFalse(predictor.Expire(Start + 100, events).Undone);
         }
 
         [Test]

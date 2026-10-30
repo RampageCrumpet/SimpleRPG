@@ -112,6 +112,12 @@ namespace SimpleRPG
         /// <inheritdoc/>
         public abstract bool Begin(in MeleeSwingLaunch launch, IMeleeEvents events);
 
+        /// <summary>
+        /// True while a chain of swings is running as this machine sees it, so a press now would continue it rather than start a fresh use.
+        /// On an owning client this follows its prediction.
+        /// </summary>
+        public virtual bool IsChainRunning => false;
+
         /// <inheritdoc/>
         public virtual int BeginClientPress(bool freshAllowed) => 0;
 

@@ -73,6 +73,20 @@ namespace SimpleRPG.Abilities.Integration
         /// </summary>
         public int CurrentAttack => machine != null && machine.IsRunning ? machine.CurrentStep + 1 : 0;
 
+        /// <inheritdoc/>
+        public override bool IsChainRunning
+        {
+            get
+            {
+                if (IsServer)
+                {
+                    return machine != null && machine.IsRunning;
+                }
+
+                return Predicts && predictor != null && predictor.Machine.IsRunning;
+            }
+        }
+
         // True on the client of the player who owns this character, which guesses the server's answers. A host already is the server.
         private bool Predicts => IsSpawned && IsOwner && !IsServer;
 
@@ -135,12 +149,9 @@ namespace SimpleRPG.Abilities.Integration
             {
                 double now = NetworkManager.LocalTime.Time;
                 predictor.Advance(now, events);
-                bool gaveUp = predictor.Expire(now, events);
+                PredictionRollback gaveUp = predictor.Expire(now, events);
                 events.Clear();
-                if (gaveUp)
-                {
-                    RaiseAttackCancelled();
-                }
+                ShowRollback(gaveUp);
             }
         }
 
@@ -194,9 +205,24 @@ namespace SimpleRPG.Abilities.Integration
                 return;
             }
 
-            bool takeBack = predictor.Reject(pressId, NetworkManager.LocalTime.Time, events);
+            PredictionRollback takeBack = predictor.Reject(pressId, NetworkManager.LocalTime.Time, events);
             events.Clear();
-            if (takeBack)
+            ShowRollback(takeBack);
+        }
+
+        // A refused chain press goes back to the swing it tried to cut short, which the server never stopped; anything else fades to rest.
+        private void ShowRollback(PredictionRollback rollback)
+        {
+            if (!rollback.Undone)
+            {
+                return;
+            }
+
+            if (rollback.ResumeAttack > 0)
+            {
+                RaiseAttackStarted(rollback.ResumeAttack, rollback.SecondsIntoResume);
+            }
+            else
             {
                 RaiseAttackCancelled();
             }

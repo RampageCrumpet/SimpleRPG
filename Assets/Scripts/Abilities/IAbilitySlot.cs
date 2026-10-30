@@ -79,12 +79,21 @@ namespace SimpleRPG.Abilities
                 return;
             }
 
+            // Only a press that starts a fresh use pays the cooldown, as on the server: a press that continues a combo, or one the combo
+            // ignores, must not push the shown cooldown out, or this display drifts from the server's and wrongly refuses the next fresh chain.
+            MeleeDeliveryBase melee = character.GetComponent<MeleeDeliveryBase>();
+            bool continuesChain = definition.HasNode(NodeTypes.MeleeSwing) && melee != null && melee.IsChainRunning;
+
             if (!activator.RequestActivate(definition, cooledDown))
             {
                 return;
             }
 
-            lastActivationTime = Time.time;
+            if (cooledDown && !continuesChain)
+            {
+                lastActivationTime = Time.time;
+            }
+
             Activated?.Invoke(this);
         }
     }
