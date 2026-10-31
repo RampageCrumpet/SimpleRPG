@@ -33,7 +33,7 @@ namespace SimpleRPG.Tests.EditMode
                 Room(0, "DeadEnd", null, West(0)),
                 Room(1, "Corridor", extraCells, West(0), East(1)),
                 Room(2, "Corner", null, West(0), North(1)),
-                Room(3, "Crossroads", extraCells, West(0), East(1), North(2), South(3)),
+                Room(3, "Crossroads", null, West(0), East(1), North(2), South(3)),
             };
         }
 
@@ -66,7 +66,9 @@ namespace SimpleRPG.Tests.EditMode
         [Test]
         public void RoomsThatClaimExtraCells_NeverOverlap()
         {
-            var alcove = new[] { new Vector2Int(4, 0), new Vector2Int(-1, 3) };
+            // Put the corridor's alcoves on its solid sides. Claims beside a flush doorway occupy
+            // the neighboring room's rectangle, so such a doorway cannot connect another 4x4 room.
+            var alcove = new[] { new Vector2Int(0, 4), new Vector2Int(3, -1) };
 
             for (int seed = 0; seed < Seeds; seed++)
             {

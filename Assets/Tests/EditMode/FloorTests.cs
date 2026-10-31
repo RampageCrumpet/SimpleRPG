@@ -377,8 +377,8 @@ namespace SimpleRPG.Tests.EditMode
                 ConnectionBlueprint lower = room.Connections.Single(door => door.Level == 0);
                 ConnectionBlueprint upper = room.Connections.Single(door => door.Level == 1);
 
-                Assert.IsTrue(UnityEngine.AI.NavMesh.SamplePosition(lower.transform.position + lower.transform.forward * 2f, out UnityEngine.AI.NavMeshHit start, 1.2f, -1), "Floor outside the lower door");
-                Assert.IsTrue(UnityEngine.AI.NavMesh.SamplePosition(upper.transform.position + upper.transform.forward * 2f, out UnityEngine.AI.NavMeshHit end, 1.2f, -1), "Floor outside the upper door");
+                Assert.IsTrue(UnityEngine.AI.NavMesh.SamplePosition(lower.transform.position - lower.transform.forward * 0.25f, out UnityEngine.AI.NavMeshHit start, 1.2f, -1), "Floor inside the lower door");
+                Assert.IsTrue(UnityEngine.AI.NavMesh.SamplePosition(upper.transform.position - upper.transform.forward * 2f, out UnityEngine.AI.NavMeshHit end, 1.2f, -1), "Floor inside the upper door");
 
                 var path = new UnityEngine.AI.NavMeshPath();
                 UnityEngine.AI.NavMesh.CalculatePath(start.position, end.position, -1, path);

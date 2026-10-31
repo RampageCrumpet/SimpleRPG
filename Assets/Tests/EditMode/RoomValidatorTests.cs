@@ -222,6 +222,21 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
+        public void ModularDungeonRooms_UseChamberEdgesForFlushDoors()
+        {
+            Roomset roomset = AssetDatabase.LoadAssetAtPath<Roomset>("Assets/Prefabs/World/TileSets/ModularDungeon/ModularDungeon.asset");
+            Assert.IsNotNull(roomset);
+            RoomBlueprint crossroads = roomset.RoomCollection.Single(room => room.name == "Room_Crossroads");
+            Assert.That(crossroads.Size, Is.EqualTo(new Vector2Int(6, 6)), "The crossroads footprint must stop at the chamber walls.");
+
+            foreach (RoomBlueprint room in roomset.RoomCollection)
+            {
+                Assert.That(room.transform.Cast<Transform>().Any(child => child.name == "Connection" || child.name.StartsWith("Connection (")), Is.False, room.name);
+                Assert.That(room.Connections.All(door => door.ConnectionLength == 0 && door.DoorObject != null), Is.True, room.name);
+            }
+        }
+
+        [Test]
         public void ModularDungeonDoors_AllHaveALockObject()
         {
             Roomset roomset = AssetDatabase.LoadAssetAtPath<Roomset>("Assets/Prefabs/World/TileSets/ModularDungeon/ModularDungeon.asset");
