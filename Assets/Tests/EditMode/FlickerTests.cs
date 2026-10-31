@@ -94,6 +94,54 @@ namespace SimpleRPG.Tests
         }
 
         [Test]
+        public void Extinguish_FadesDownThenSwitchesTheLightOff()
+        {
+            Flicker flicker = Make(new Vector3(3f, 1f, 5f));
+            Light light = host.GetComponent<Light>();
+            flicker.Apply(0f, 0.016f);
+            flicker.Extinguish();
+            Assert.IsFalse(flicker.IsLit);
+
+            flicker.Apply(0.1f, 0.1f);
+            Assert.IsTrue(light.enabled, "it should still be burning part way through the fade");
+            Assert.IsFalse(flicker.IsDark);
+
+            for (int i = 0; i < 20; i++) flicker.Apply(0.2f + i * 0.1f, 0.1f);
+            Assert.IsFalse(light.enabled);
+            Assert.IsTrue(flicker.IsDark);
+        }
+
+        [Test]
+        public void Ignite_FadesBackUp()
+        {
+            Flicker flicker = Make(new Vector3(3f, 1f, 5f));
+            Light light = host.GetComponent<Light>();
+            flicker.Extinguish();
+            for (int i = 0; i < 20; i++) flicker.Apply(i * 0.1f, 0.1f);
+            Assert.IsTrue(flicker.IsDark);
+
+            flicker.Ignite();
+            flicker.Apply(2.1f, 0.1f);
+            Assert.IsTrue(light.enabled);
+            Assert.That(light.intensity, Is.GreaterThan(0f).And.LessThan(2f * 0.85f), "still fading up");
+
+            for (int i = 0; i < 20; i++) flicker.Apply(2.2f + i * 0.1f, 0.1f);
+            Assert.That(light.intensity, Is.InRange(2f * 0.85f - 1e-4f, 2f * 1.08f + 1e-4f));
+        }
+
+        [Test]
+        public void StartUnlit_BeginsDark()
+        {
+            host = new GameObject("torch");
+            Light light = host.AddComponent<Light>();
+            Flicker flicker = host.AddComponent<Flicker>();
+            typeof(Flicker).GetField("startLit", Flags).SetValue(flicker, false);
+            typeof(Flicker).GetMethod("OnEnable", Flags).Invoke(flicker, null);
+            Assert.IsFalse(light.enabled);
+            Assert.IsTrue(flicker.IsDark);
+        }
+
+        [Test]
         public void Apply_KeepsTheLightNearItsMount()
         {
             Flicker flicker = Make(new Vector3(3f, 1f, 5f));

@@ -19,6 +19,19 @@ namespace SimpleRPG
         private const float NoiseLow = 0.25f;
         private const float NoiseHigh = 0.75f;
 
+        [Header("Lighting")]
+
+        [Tooltip("Whether the light is burning when it appears. Off leaves it dark until Ignite or SetLit(true).")]
+        [SerializeField] private bool startLit = true;
+
+        [Tooltip("Seconds the light takes to fade up when ignited. 0 is instant.")]
+        [Min(0f)]
+        [SerializeField] private float fadeInSeconds = 0.4f;
+
+        [Tooltip("Seconds the light takes to fade out when extinguished. 0 is instant.")]
+        [Min(0f)]
+        [SerializeField] private float fadeOutSeconds = 0.8f;
+
         [Header("Intensity")]
 
         [Tooltip("Intensity multiplier at the dimmest point of the flicker. 1 is the light's own intensity.")]
@@ -81,6 +94,34 @@ namespace SimpleRPG
         private float activeSeed;
         private float smoothedFlame;
         private bool smoothedReady;
+        private bool baseLightEnabled;
+        private bool lit;
+        private float fade;
+
+        /// <summary>Whether the light is burning or fading up. False once it is put out, even while it is still fading down.</summary>
+        public bool IsLit => lit;
+
+        /// <summary>True once the light has fully faded out and its Light component is switched off.</summary>
+        public bool IsDark => captured && !lit && fade <= 0f;
+
+        /// <summary>Lights the flame, fading up over <c>fadeInSeconds</c>.</summary>
+        public void Ignite() => SetLit(true);
+
+        /// <summary>Puts the flame out, fading down over <c>fadeOutSeconds</c>.</summary>
+        public void Extinguish() => SetLit(false);
+
+        /// <summary>
+        /// Lights or puts out the flame. This is the local visual only: whatever owns the light source's state (an interactable, replicated
+        /// from the server) calls it when that state changes.
+        /// </summary>
+        public void SetLit(bool value)
+        {
+            lit = value;
+            if (value && captured)
+            {
+                flickerLight.enabled = true;
+            }
+        }
 
         /// <summary>
         /// A flame value between 0 (dimmest) and 1 (brightest) for the given time. Slow sway and fast crackle are mixed by
@@ -135,9 +176,18 @@ namespace SimpleRPG
                 Capture();
             }
 
+            fade = Mathf.MoveTowards(fade, lit ? 1f : 0f, FadeStep(deltaTime));
+            if (fade <= 0f)
+            {
+                flickerLight.enabled = false;
+                transform.localPosition = baseLocalPosition;
+                return;
+            }
+
+            flickerLight.enabled = true;
             float target = Sample(time, activeSeed, swaySpeed, crackleSpeed, crackleAmount);
             float flame = Smooth(target, deltaTime);
-            flickerLight.intensity = baseIntensity * Mathf.Lerp(minIntensity, maxIntensity, flame);
+            flickerLight.intensity = baseIntensity * Mathf.Lerp(minIntensity, maxIntensity, flame) * Mathf.SmoothStep(0f, 1f, fade);
             flickerLight.range = baseRange * (1f + rangeVariation * (flame * 2f - 1f));
 
             if (tintWithFlicker)
@@ -152,6 +202,12 @@ namespace SimpleRPG
                 float z = Mathf.PerlinNoise(activeSeed + 307.9f, time * swaySpeed) - 0.5f;
                 transform.localPosition = baseLocalPosition + new Vector3(x, y, z) * (2f * wander);
             }
+        }
+
+        private float FadeStep(float deltaTime)
+        {
+            float seconds = lit ? fadeInSeconds : fadeOutSeconds;
+            return seconds <= 0f ? 1f : deltaTime / seconds;
         }
 
         private float Smooth(float target, float deltaTime)
@@ -175,6 +231,10 @@ namespace SimpleRPG
             baseIntensity = flickerLight.intensity;
             baseRange = flickerLight.range;
             baseColor = flickerLight.color;
+            baseLightEnabled = flickerLight.enabled;
+            lit = startLit;
+            fade = startLit ? 1f : 0f;
+            flickerLight.enabled = baseLightEnabled && startLit;
             baseLocalPosition = transform.localPosition;
             activeSeed = seedFromPosition ? SeedFromPosition(transform.position) : seed;
             smoothedReady = false;
@@ -191,6 +251,7 @@ namespace SimpleRPG
             flickerLight.intensity = baseIntensity;
             flickerLight.range = baseRange;
             flickerLight.color = baseColor;
+            flickerLight.enabled = baseLightEnabled;
             transform.localPosition = baseLocalPosition;
             captured = false;
         }
@@ -202,6 +263,8 @@ namespace SimpleRPG
             swaySpeed = Mathf.Max(0f, swaySpeed);
             crackleSpeed = Mathf.Max(0f, crackleSpeed);
             smoothing = Mathf.Max(0f, smoothing);
+            fadeInSeconds = Mathf.Max(0f, fadeInSeconds);
+            fadeOutSeconds = Mathf.Max(0f, fadeOutSeconds);
         }
     }
 }
