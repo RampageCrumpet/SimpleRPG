@@ -21,6 +21,21 @@ namespace SimpleRPG.LevelGeneration
 
             Size = GridMath.RotateSize(definition.Size, Turns);
             Min = position + GridMath.RotatedFootprintMin(definition.Size, Turns);
+
+            var extra = new List<Vector2Int>(definition.ExtraCells.Count);
+            foreach (Vector2Int cell in definition.ExtraCells)
+            {
+                // A cell the rectangle already covers, or one listed twice, would put two copies of it in the grid.
+                Vector2Int placed = position + GridMath.RotateCell(cell, Turns);
+                bool inRectangle = placed.x >= Min.x && placed.x < Min.x + Size.x && placed.y >= Min.y && placed.y < Min.y + Size.y;
+                if (!inRectangle && !extra.Contains(placed))
+                {
+                    extra.Add(placed);
+                }
+            }
+
+            ExtraCells = extra;
+            extraSet = extra.Count > 0 ? new HashSet<Vector2Int>(extra) : null;
             var doors = new List<PlacedDoor>(definition.Doors.Count);
             for (int i = 0; i < definition.Doors.Count; i++)
             {
@@ -69,9 +84,16 @@ namespace SimpleRPG.LevelGeneration
 
         public IReadOnlyList<PlacedDoor> Doors { get; }
 
+        /// <summary>
+        /// The cells the room claims beyond its rectangle, in layout coordinates.
+        /// </summary>
+        public IReadOnlyList<Vector2Int> ExtraCells { get; }
+
+        private readonly HashSet<Vector2Int> extraSet;
+
         public bool Contains(Vector2Int cell)
         {
-            return cell.x >= Min.x && cell.x < Min.x + Size.x && cell.y >= Min.y && cell.y < Min.y + Size.y;
+            return (cell.x >= Min.x && cell.x < Min.x + Size.x && cell.y >= Min.y && cell.y < Min.y + Size.y) || (extraSet != null && extraSet.Contains(cell));
         }
 
         /// <summary>
@@ -101,6 +123,11 @@ namespace SimpleRPG.LevelGeneration
                 {
                     yield return new Vector2Int(Min.x + x, Min.y + y);
                 }
+            }
+
+            foreach (Vector2Int cell in ExtraCells)
+            {
+                yield return cell;
             }
         }
 

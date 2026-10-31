@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace SimpleRPG.LevelGeneration
 {
@@ -45,6 +46,13 @@ namespace SimpleRPG.LevelGeneration
                 hash.Add(room.MinCount);
                 hash.Add((int)room.Role);
                 hash.Add(room.Height);
+                hash.Add(room.ExtraCells.Count);
+                foreach (Vector2Int cell in room.ExtraCells)
+                {
+                    hash.Add(cell.x);
+                    hash.Add(cell.y);
+                }
+
                 hash.Add(room.Doors.Count);
 
                 foreach (DoorDefinition door in room.Doors)

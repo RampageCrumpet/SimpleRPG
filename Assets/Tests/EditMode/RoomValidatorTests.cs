@@ -277,13 +277,104 @@ namespace SimpleRPG.Tests.EditMode
 
         [TestCase(12f)]
         [TestCase(2f)]
-        [TestCase(0f)]
+        [TestCase(-5f)]
         public void DoorLengthNotAWholeNumberOfCells_IsReported(float length)
         {
             RoomBlueprint room = CreateValidRoom();
             AddDoor(room, new Vector3(15.5f, 0, 20), new Vector2Int(0, 1), length);
 
             AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleDoorLength);
+        }
+
+        [Test]
+        public void FlushDoorWithoutADoorObject_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddDoor(room, new Vector3(15, 0, 30), new Vector2Int(0, 1), 0f);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleDoorFlushNeedsDoorObject);
+        }
+
+        [Test]
+        public void FlushDoorWithADoorObject_IsAccepted()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            ConnectionBlueprint door = AddDoor(room, new Vector3(15, 0, 30), new Vector2Int(0, 1), 0f);
+            GameObject leaf = new GameObject("DoorLeaf");
+            leaf.transform.SetParent(room.transform, false);
+            leaf.transform.position = door.transform.position;
+            spawned.Add(leaf);
+            door.DoorObject = leaf;
+
+            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule.StartsWith("door-")), Is.Empty);
+        }
+
+        [Test]
+        public void ClaimedCellOutsideTheRectangle_IsPlannedAndAccepted()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+            AddClaimedCell(room, new Vector3(32.5f, 0, 2.5f));
+
+            RoomPlan plan = RoomPlanner.Plan(room, CellSize);
+
+            Assert.That(plan.ExtraCells, Is.EqualTo(new[] { new Vector2Int(6, 0) }));
+            Assert.That(plan.Size, Is.EqualTo(new Vector2Int(6, 6)), "A marker must not stretch the room.");
+            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule.StartsWith("claimed-")), Is.Empty);
+        }
+
+        [Test]
+        public void GeometryInAClaimedCell_IsAccepted()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+            GameObject alcove = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            alcove.transform.SetParent(room.transform, false);
+            alcove.transform.position = new Vector3(32.5f, 0, 2.5f);
+            alcove.transform.localScale = new Vector3(5, 1, 5);
+            AddClaimedCell(room, new Vector3(32.5f, 0, 2.5f));
+
+            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule.StartsWith("geometry-")), Is.Empty);
+        }
+
+        [Test]
+        public void GeometryInAnUnclaimedCell_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+            GameObject alcove = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            alcove.transform.SetParent(room.transform, false);
+            alcove.transform.position = new Vector3(32.5f, 0, 2.5f);
+            alcove.transform.localScale = new Vector3(5, 1, 5);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleGeometryOutsideFootprint);
+        }
+
+        [Test]
+        public void ClaimedCellInsideTheRectangle_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddClaimedCell(room, new Vector3(12.5f, 0, 12.5f));
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleClaimedCellInsideFootprint);
+        }
+
+        [Test]
+        public void ClaimedCellAwayFromTheRoom_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddClaimedCell(room, new Vector3(42.5f, 0, 2.5f));
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleClaimedCellDetached);
+        }
+
+        private void AddClaimedCell(RoomBlueprint room, Vector3 position)
+        {
+            GameObject marker = new GameObject("Claim");
+            marker.transform.SetParent(room.transform, false);
+            marker.transform.position = position;
+            marker.AddComponent<RoomClaimedCell>();
+            spawned.Add(marker);
         }
 
         [Test]

@@ -62,6 +62,15 @@ namespace SimpleRPG.LevelGeneration
                 Seal(door, instances[door.Room.Id]);
             }
 
+            // Doors that join flush share a plane, and each room draws its own door there: the lower-numbered room's draws the pair.
+            foreach ((PlacedDoor first, PlacedDoor second) in LockSolver.Joins(layout.Rooms, layout.SealedDoors))
+            {
+                if (first.LengthCells == 0)
+                {
+                    HideDoor(second, instances[second.Room.Id]);
+                }
+            }
+
             foreach (LockedDoor locked in layout.Locks)
             {
                 Lock(locked.Door, instances[locked.Door.Room.Id]);
@@ -71,6 +80,15 @@ namespace SimpleRPG.LevelGeneration
             }
 
             return instances;
+        }
+
+        private static void HideDoor(PlacedDoor door, RoomBlueprint instance)
+        {
+            ConnectionBlueprint connection = instance.Connections.ElementAtOrDefault(door.Index);
+            if (connection == null || !connection.TryHideDoor())
+            {
+                Debug.LogWarning($"{door} joins flush but '{instance.name}' has no door object for door {door.Index}, so the two doors will z-fight.", instance);
+            }
         }
 
         private static void Lock(PlacedDoor door, RoomBlueprint instance)

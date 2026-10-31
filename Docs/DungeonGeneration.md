@@ -26,7 +26,9 @@ Only the spawner creates objects, so the server and clients reach the same `Layo
 - Everything is in whole cells. Rotation is a quarter turn (`GridMath`), exact integer maths; turns match `Quaternion.Euler(0, 90 * turns, 0)`.
 - A room's `Size` and its door locations are measured from its **lowest corner**. `OriginOffset` is where that corner sits relative to the prefab root (never positive).
 - A door stands on a **grid point** (a cell corner), centred on the line between cells, so it covers an **even** number of cells across (`WidthCells`, at least 2).
-- A door is `LengthCells` long. It joins the door standing at `Far` (point + direction × length) that faces back, has the same length and the same type.
+- A door is `LengthCells` long, which may be **zero**. It joins the door standing at `Far` (point + direction × length) that faces back, has the same length and the same type.
+- A **flush join** (length 0) puts the two rooms edge to edge with no corridor between. The doors stand on the same line, so both rooms draw a door in the same place; the spawner switches off the `DoorObject` of the higher-numbered room so the pair is drawn once. A zero-length door must name its `DoorObject` (`door-flush-needs-door-object`), and its point must sit on the room's edge (a door that opens onto its own footprint is rejected as before).
+- A room can **claim cells beyond its rectangle**, for alcoves that stick out through a wall: put a `RoomClaimedCell` marker anywhere in each such cell. The packer stores them as `RoomBlueprint.ExtraCells` (from the lowest corner, like door points), they turn with the room, and no other room may stand in them. Markers do not count towards the room's size. A claimed cell must lie outside the rectangle and touch it or another claimed cell.
 - The **passage** is the row of cells across the door for each cell of its length, plus one more row past its end. Cells in it must be empty, or belong to the room the door joins. When two doors join, any cells between the two rooms are reserved so nothing is placed in the gap.
 
 ## Floors
@@ -53,7 +55,7 @@ Only the spawner creates objects, so the server and clients reach the same `Layo
 ## Authoring and tooling
 
 - Select a **Roomset** asset: **Validate Roomset** checks every room and the set as a whole; **Package Rooms** packs all rooms or none.
-- Room rules (`RoomValidator`): drawn geometry within `GeometryTolerance` (0.02 cells) of the packed footprint on every side (past it overlaps the next room and z-fights; short of it leaves a gap), doors within `GridTolerance` (0.02 cells) of the grid, axis-aligned, not opening into their own room, no duplicates, a `SealingObject` that belongs to the room and starts inactive, whole-cell door length, positive width, identity root transform, no stray pivots outside the geometry, packed data up to date.
+- Room rules (`RoomValidator`): every mesh within the cells the room claims (a mesh in another cell overlaps the room placed there and z-fights) and the geometry as a whole reaching the rectangle's edges within `GeometryTolerance` (0.02 cells; short of it leaves a gap), doors within `GridTolerance` (0.02 cells) of the grid, axis-aligned, not opening into their own room, no duplicates, a `SealingObject` that belongs to the room and starts inactive, whole-cell door length, positive width, identity root transform, no stray pivots outside the geometry, packed data up to date.
 - Roomset rules: not empty, no duplicates, no room without doors, a placeable dead end, something placeable besides start rooms, one length per door type, unique type names.
 - Rooms in a roomset are re-packed automatically when their prefab changes and the packed data is stale (**Tools > Rooms > Auto-pack changed rooms** to switch off). Selecting a room in the scene shows its footprint, door points, reach and the cells past each door.
 - Builds fail if a roomset the build scenes depend on has problems (`RoomsetBuildGate`). Run the same check from the command line:
@@ -68,6 +70,5 @@ Only the spawner creates objects, so the server and clients reach the same `Layo
 - A vertical `ConnectionType` asset and a ladder/shaft room are supported and tested with synthetic rooms but not yet authored; the only real vertical room is `Room_Stairwell`.
 - Nothing makes a multi-floor dungeon *use* its lower floors; they are reached when the dice pick a stairwell.
 - A boss room role.
-- Joining rooms without a connecting corridor: the purchased door meshes render on both sides, so joined doors z-fight and the roomset uses corridors to keep them apart.
-- Rooms whose geometry reaches outside their rectangle (alcoves) cannot yet claim just that extra cell.
+- The existing rooms still use connecting corridors (door length above zero) to keep the purchased double-sided door meshes apart. Rooms authored for flush joins need a `DoorObject` on each door and their geometry within their claimed cells; re-author and re-pack them to drop the corridors.
 - Legacy `Dungeon` and `TestDungeon` roomsets still contain unpacked rooms; they are not referenced by a build scene, so the build gate ignores them.

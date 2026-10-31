@@ -24,12 +24,18 @@ namespace SimpleRPG.LevelGeneration
     /// </summary>
     public sealed class RoomPlan
     {
-        public RoomPlan(Vector2Int originOffset, Vector2Int size, IReadOnlyList<DoorPlan> doors)
+        public RoomPlan(Vector2Int originOffset, Vector2Int size, IReadOnlyList<DoorPlan> doors, IReadOnlyList<Vector2Int> extraCells = null)
         {
             OriginOffset = originOffset;
             Size = size;
             Doors = doors;
+            ExtraCells = extraCells ?? new Vector2Int[0];
         }
+
+        /// <summary>
+        /// The cells claimed beyond the rectangle by <see cref="RoomClaimedCell"/> markers, from the room's lowest corner, without repeats.
+        /// </summary>
+        public IReadOnlyList<Vector2Int> ExtraCells { get; }
 
         public Vector2Int OriginOffset { get; }
         public Vector2Int Size { get; }
@@ -63,7 +69,27 @@ namespace SimpleRPG.LevelGeneration
                 .Select(door => new DoorPlan(door, DoorLocation(room, door, cellSize, origin)))
                 .ToList();
 
-            return new RoomPlan(origin, size, doors);
+            return new RoomPlan(origin, size, doors, ClaimedCells(room, cellSize, origin));
+        }
+
+        /// <summary>
+        /// The cell each <see cref="RoomClaimedCell"/> marker stands in, measured from the room's lowest corner. Cells inside the
+        /// rectangle are left in so the validator can point them out.
+        /// </summary>
+        public static List<Vector2Int> ClaimedCells(RoomBlueprint room, float cellSize, Vector2Int originOffset)
+        {
+            var cells = new List<Vector2Int>();
+            foreach (RoomClaimedCell marker in room.GetComponentsInChildren<RoomClaimedCell>())
+            {
+                Vector2 grid = GridPosition(room, marker.transform, cellSize);
+                var cell = new Vector2Int(Mathf.FloorToInt(grid.x) - originOffset.x, Mathf.FloorToInt(grid.y) - originOffset.y);
+                if (!cells.Contains(cell))
+                {
+                    cells.Add(cell);
+                }
+            }
+
+            return cells;
         }
 
         /// <summary>
@@ -127,6 +153,7 @@ namespace SimpleRPG.LevelGeneration
         private static List<Vector3> Pivots(RoomBlueprint room)
         {
             return room.GetComponentsInChildren<Transform>()
+                .Where(transform => transform.GetComponent<RoomClaimedCell>() == null)
                 .Select(transform => transform.position - room.transform.position)
                 .ToList();
         }

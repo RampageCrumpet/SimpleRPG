@@ -53,6 +53,11 @@ namespace SimpleRPG.LevelGeneration
         public const string RuleStrayPivot = "stray-pivot";
         public const string RuleGeometryOutsideFootprint = "geometry-outside-footprint";
         public const string RuleGeometryShortOfFootprint = "geometry-short-of-footprint";
+        public const string RuleClaimedCellInsideFootprint = "claimed-cell-inside-footprint";
+        public const string RuleClaimedCellDetached = "claimed-cell-detached";
+        public const string RulePackedClaimedCells = "packed-claimed-cells";
+        public const string RuleDoorFlushNeedsDoorObject = "door-flush-needs-door-object";
+        public const string RuleDoorObjectOutsideRoom = "door-object-outside-room";
         public const string RuleRoomsetEmpty = "roomset-empty";
         public const string RuleRoomsetDuplicate = "roomset-duplicate";
         public const string RuleRoomsetRoomWeight = "roomset-room-weight";
@@ -288,7 +293,8 @@ namespace SimpleRPG.LevelGeneration
 
             CheckRootTransform(room, errors);
             CheckStrayPivots(room, cellSize, errors);
-            CheckGeometryFit(room, cellSize, origin, size, errors);
+            CheckClaimedCells(room, plan, errors);
+            CheckGeometryFit(room, cellSize, plan, errors);
 
             if (room.Floors < 1)
             {
@@ -344,10 +350,10 @@ namespace SimpleRPG.LevelGeneration
                     forward.x < 0 ? target.x - 1 : target.x,
                     forward.y < 0 ? target.y - 1 : target.y);
 
-                if (facingCell.x >= 0 && facingCell.x < size.x && facingCell.y >= 0 && facingCell.y < size.y)
+                if ((facingCell.x >= 0 && facingCell.x < size.x && facingCell.y >= 0 && facingCell.y < size.y) || plan.ExtraCells.Contains(facingCell))
                 {
                     errors.Add(new RoomValidationError(roomName, RuleDoorTargetInFootprint,
-                        $"'{connection.name}' opens onto cell {facingCell}, which is inside the room's own footprint of size {size}."));
+                        $"'{connection.name}' opens onto cell {facingCell}, which is inside the room's own footprint of size {size} (or a cell it claims)."));
                 }
             }
 
@@ -384,6 +390,12 @@ namespace SimpleRPG.LevelGeneration
             {
                 errors.Add(new RoomValidationError(roomName, RuleSizeVsGeometry,
                     $"Size is {room.Size} but the geometry gives {plan.Size}. Pack the room again."));
+            }
+
+            if (!new HashSet<Vector2Int>(room.ExtraCells ?? new List<Vector2Int>()).SetEquals(plan.ExtraCells))
+            {
+                errors.Add(new RoomValidationError(roomName, RulePackedClaimedCells,
+                    $"The packed claimed cells ({room.ExtraCells?.Count ?? 0}) do not match the RoomClaimedCell markers ({plan.ExtraCells.Count}). Pack the room again."));
             }
 
             Dictionary<ConnectionBlueprint, Vector2Int> expected = plan.Doors.ToDictionary(door => door.Door, door => door.Location);
@@ -424,10 +436,26 @@ namespace SimpleRPG.LevelGeneration
             string roomName = room.name;
             float lengthInCells = connection.ConnectionLength / cellSize;
 
-            if (lengthInCells < 1f - LengthTolerance || Mathf.Abs(lengthInCells - Mathf.Round(lengthInCells)) > LengthTolerance)
+            if (lengthInCells < -LengthTolerance || Mathf.Abs(lengthInCells - Mathf.Round(lengthInCells)) > LengthTolerance)
             {
                 errors.Add(new RoomValidationError(roomName, RuleDoorLength,
-                    $"'{connection.name}' is {connection.ConnectionLength} units long, which is {lengthInCells} cells. It must be a whole number of cells, at least one."));
+                    $"'{connection.name}' is {connection.ConnectionLength} units long, which is {lengthInCells} cells. It must be a whole number of cells; zero joins flush with the next room."));
+            }
+
+            // A flush join puts two doors on the same plane. Both rooms draw their own door, so one of them has to be switched off or they z-fight.
+            if (Mathf.RoundToInt(lengthInCells) == 0)
+            {
+                GameObject doorObject = connection.DoorObject;
+                if (doorObject == null)
+                {
+                    errors.Add(new RoomValidationError(roomName, RuleDoorFlushNeedsDoorObject,
+                        $"'{connection.name}' is zero cells long, so it joins flush against another room's door. Set its DoorObject so the generator can hide one of the pair."));
+                }
+                else if (!doorObject.transform.IsChildOf(room.transform))
+                {
+                    errors.Add(new RoomValidationError(roomName, RuleDoorObjectOutsideRoom,
+                        $"The DoorObject of '{connection.name}' is not part of this room, so hiding it would change something else."));
+                }
             }
 
             if (connection.Level < 0 || connection.Level >= Mathf.Max(1, room.Floors))
@@ -489,7 +517,7 @@ namespace SimpleRPG.LevelGeneration
                 Vector3 position = child.position;
                 bool outside = position.x < min.x || position.x > max.x || position.z < min.z || position.z > max.z;
 
-                if (child != room.transform && outside)
+                if (child != room.transform && outside && child.GetComponent<RoomClaimedCell>() == null)
                 {
                     errors.Add(new RoomValidationError(room.name, RuleStrayPivot,
                         $"'{child.name}' sits at {(position - root) / cellSize} cells, more than a cell outside the room's geometry, so it stretches the room's Size."));
@@ -498,55 +526,157 @@ namespace SimpleRPG.LevelGeneration
         }
 
         /// <summary>
-        /// The packed footprint is worked out from transform pivots, so nothing else ties it to what is drawn. Compares the bounds of the
-        /// room's meshes with the footprint on each side: geometry past the footprint overlaps the room placed next to it and z-fights,
-        /// and geometry that stops short leaves a visible gap between rooms. Rooms with no meshes are skipped.
+        /// Claimed cells have to lie outside the rectangle (inside it they mean nothing) and join up with the room, or the room would be in two pieces.
         /// </summary>
-        private static void CheckGeometryFit(RoomBlueprint room, float cellSize, Vector2Int origin, Vector2Int size, List<RoomValidationError> errors)
+        private static void CheckClaimedCells(RoomBlueprint room, RoomPlan plan, List<RoomValidationError> errors)
         {
-            if (!TryGetMeshBounds(room, out Bounds drawn))
+            var claimed = new HashSet<Vector2Int>();
+            foreach (Vector2Int cell in plan.ExtraCells)
+            {
+                if (cell.x >= 0 && cell.x < plan.Size.x && cell.y >= 0 && cell.y < plan.Size.y)
+                {
+                    errors.Add(new RoomValidationError(room.name, RuleClaimedCellInsideFootprint,
+                        $"A RoomClaimedCell stands in cell {cell}, which the room's rectangle already covers. Move it to the cell it should claim, or remove it."));
+                }
+                else
+                {
+                    claimed.Add(cell);
+                }
+            }
+
+            // Grow outwards from the rectangle one touching cell at a time; whatever is left over is detached.
+            var joined = new HashSet<Vector2Int>();
+            bool grew = true;
+            while (grew)
+            {
+                grew = false;
+                foreach (Vector2Int cell in claimed)
+                {
+                    if (joined.Contains(cell))
+                    {
+                        continue;
+                    }
+
+                    foreach (Vector2Int step in new[] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right })
+                    {
+                        Vector2Int next = cell + step;
+                        bool touchesRectangle = next.x >= 0 && next.x < plan.Size.x && next.y >= 0 && next.y < plan.Size.y;
+                        if (touchesRectangle || joined.Contains(next))
+                        {
+                            joined.Add(cell);
+                            grew = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            foreach (Vector2Int cell in claimed.Where(cell => !joined.Contains(cell)))
+            {
+                errors.Add(new RoomValidationError(room.name, RuleClaimedCellDetached,
+                    $"The claimed cell {cell} does not touch the room's rectangle or another claimed cell, so the room would be in two pieces."));
+            }
+        }
+
+        /// <summary>
+        /// The packed footprint is worked out from transform pivots, so nothing else ties it to what is drawn. Every mesh has to stay inside
+        /// the cells the room claims: its rectangle plus any claimed cells. A mesh that enters another cell overlaps the room placed there
+        /// and z-fights. The room's geometry as a whole must also reach the rectangle's edges, or it leaves a gap between rooms.
+        /// Rooms with no meshes are skipped.
+        /// </summary>
+        private static void CheckGeometryFit(RoomBlueprint room, float cellSize, RoomPlan plan, List<RoomValidationError> errors)
+        {
+            List<(string name, Bounds bounds)> meshes = GetMeshBounds(room);
+            if (meshes.Count == 0)
             {
                 return;
             }
 
             Vector3 root = room.transform.position;
             float tolerance = GeometryTolerance * cellSize;
-            float footprintMinX = root.x + origin.x * cellSize;
-            float footprintMinZ = root.z + origin.y * cellSize;
-            float footprintMaxX = footprintMinX + size.x * cellSize;
-            float footprintMaxZ = footprintMinZ + size.y * cellSize;
+            var claimed = new HashSet<Vector2Int>(plan.ExtraCells);
 
-            // (side, how far the geometry sticks out past the footprint on that side; negative when it stops short)
-            (string side, float outside)[] sides =
+            foreach ((string name, Bounds bounds) in meshes)
             {
-                ("west (-x)", footprintMinX - drawn.min.x),
-                ("east (+x)", drawn.max.x - footprintMaxX),
-                ("south (-z)", footprintMinZ - drawn.min.z),
-                ("north (+z)", drawn.max.z - footprintMaxZ),
+                // The range of cells the mesh reaches into, ignoring slivers within the tolerance of a cell edge.
+                int firstX = Mathf.FloorToInt((bounds.min.x - root.x + tolerance) / cellSize) - plan.OriginOffset.x;
+                int lastX = Mathf.CeilToInt((bounds.max.x - root.x - tolerance) / cellSize) - 1 - plan.OriginOffset.x;
+                int firstY = Mathf.FloorToInt((bounds.min.z - root.z + tolerance) / cellSize) - plan.OriginOffset.y;
+                int lastY = Mathf.CeilToInt((bounds.max.z - root.z - tolerance) / cellSize) - 1 - plan.OriginOffset.y;
+
+                bool reported = false;
+                for (int x = firstX; x <= lastX && !reported; x++)
+                {
+                    for (int y = firstY; y <= lastY && !reported; y++)
+                    {
+                        bool inRectangle = x >= 0 && x < plan.Size.x && y >= 0 && y < plan.Size.y;
+                        if (!inRectangle && !claimed.Contains(new Vector2Int(x, y)))
+                        {
+                            errors.Add(new RoomValidationError(room.name, RuleGeometryOutsideFootprint,
+                                $"'{name}' reaches into cell ({x}, {y}), which the room does not claim, so it will overlap the room placed there and z-fight. Pull it back to the cell edge, or put a RoomClaimedCell in that cell if the room needs it."));
+                            reported = true;
+                        }
+                    }
+                }
+            }
+
+            Bounds drawn = meshes[0].bounds;
+            foreach ((string name, Bounds bounds) in meshes)
+            {
+                drawn.Encapsulate(bounds);
+            }
+
+            float footprintMinX = root.x + plan.OriginOffset.x * cellSize;
+            float footprintMinZ = root.z + plan.OriginOffset.y * cellSize;
+            float footprintMaxX = footprintMinX + plan.Size.x * cellSize;
+            float footprintMaxZ = footprintMinZ + plan.Size.y * cellSize;
+
+            // (side, how far the geometry stops short of the footprint on that side)
+            (string side, float gap)[] sides =
+            {
+                ("west (-x)", drawn.min.x - footprintMinX),
+                ("east (+x)", footprintMaxX - drawn.max.x),
+                ("south (-z)", drawn.min.z - footprintMinZ),
+                ("north (+z)", footprintMaxZ - drawn.max.z),
             };
 
-            foreach ((string side, float outside) in sides)
+            foreach ((string side, float shortBy) in sides)
             {
-                if (outside > tolerance)
-                {
-                    errors.Add(new RoomValidationError(room.name, RuleGeometryOutsideFootprint,
-                        $"The geometry sticks out {outside / cellSize:0.###} cells past the footprint on the {side} side, so it will overlap the neighbouring room and z-fight. Pull it back to the cell edge."));
-                }
-                else if (-outside > tolerance)
+                if (shortBy > tolerance)
                 {
                     errors.Add(new RoomValidationError(room.name, RuleGeometryShortOfFootprint,
-                        $"The geometry stops {-outside / cellSize:0.###} cells short of the footprint on the {side} side, which leaves a gap between this room and the next. Extend it to the cell edge."));
+                        $"The geometry stops {shortBy / cellSize:0.###} cells short of the footprint on the {side} side, which leaves a gap between this room and the next. Extend it to the cell edge."));
                 }
             }
         }
 
         /// <summary>
-        /// The bounds of every mesh in the room, in the room's space. Works on prefab assets as well as instances.
+        /// The bounds of every mesh in the room taken together. Works on prefab assets as well as instances.
         /// </summary>
         private static bool TryGetMeshBounds(RoomBlueprint room, out Bounds bounds)
         {
             bounds = default;
-            bool found = false;
+            List<(string name, Bounds bounds)> meshes = GetMeshBounds(room);
+            if (meshes.Count == 0)
+            {
+                return false;
+            }
+
+            bounds = meshes[0].bounds;
+            foreach ((string name, Bounds mesh) in meshes)
+            {
+                bounds.Encapsulate(mesh);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// The world bounds of each mesh in the room, with the name of the object that carries it.
+        /// </summary>
+        private static List<(string name, Bounds bounds)> GetMeshBounds(RoomBlueprint room)
+        {
+            var result = new List<(string, Bounds)>();
 
             foreach (MeshFilter filter in room.GetComponentsInChildren<MeshFilter>())
             {
@@ -557,6 +687,7 @@ namespace SimpleRPG.LevelGeneration
 
                 Bounds local = filter.sharedMesh.bounds;
                 Matrix4x4 toRoom = filter.transform.localToWorldMatrix;
+                Bounds bounds = default;
 
                 for (int corner = 0; corner < 8; corner++)
                 {
@@ -566,19 +697,20 @@ namespace SimpleRPG.LevelGeneration
                         (corner & 4) == 0 ? -1 : 1));
                     Vector3 world = toRoom.MultiplyPoint3x4(point);
 
-                    if (!found)
+                    if (corner == 0)
                     {
                         bounds = new Bounds(world, Vector3.zero);
-                        found = true;
                     }
                     else
                     {
                         bounds.Encapsulate(world);
                     }
                 }
+
+                result.Add((filter.name, bounds));
             }
 
-            return found;
+            return result;
         }
 
         private static bool IsAxisAligned(Vector3 direction)

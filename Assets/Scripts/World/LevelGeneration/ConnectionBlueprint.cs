@@ -62,6 +62,24 @@ namespace SimpleRPG
         /// </summary>
         public Vector2Int location;
 
+        [Tooltip("The door's own mesh (frame and leaf). Needed on a door with a length of zero: when two rooms join flush, the generator hides the DoorObject of one of them so the pair is drawn once instead of z-fighting.")]
+        public GameObject DoorObject;
+
+        /// <summary>
+        /// Hide this door's own mesh, because the door it joins draws the pair.
+        /// </summary>
+        /// <returns> False if there is no door object to hide.</returns>
+        public bool TryHideDoor()
+        {
+            if (DoorObject == null)
+            {
+                return false;
+            }
+
+            DoorObject.SetActive(false);
+            return true;
+        }
+
         [Tooltip("The object switched on when the generator locks this door (a gate, a padlock). Leave empty if the room has no locked look.")]
         public GameObject LockObject;
 

@@ -26,6 +26,12 @@ namespace SimpleRPG.LevelGeneration
         public Vector2Int OriginOffset;
 
         /// <summary>
+        /// Cells the room claims beyond its rectangle, such as alcoves that stick out of a wall, measured like door locations from the
+        /// room's lowest corner. Written by the packer from the <see cref="RoomClaimedCell"/> markers in the room. May be negative or past <see cref="Size"/>.
+        /// </summary>
+        public List<Vector2Int> ExtraCells = new List<Vector2Int>();
+
+        /// <summary>
         /// How likely this room is to be picked compared with the others in its roomset. Zero means never.
         /// </summary>
         [Tooltip("How likely this room is to be picked compared with the others in its roomset. Zero means never.")]
