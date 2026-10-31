@@ -234,7 +234,8 @@ namespace SimpleRPG
         private void MoveCharacterServerRPC(Vector3 direction)
         {
             // The server decides whether the character may move, whatever the client sends.
-            if (!this.IsAlive)
+            // A client can send anything, including NaN or Infinity, which survive Normalize and would poison the character's position.
+            if (!this.IsAlive || !IsFinite(direction))
             {
                 direction = Vector3.zero;
             }
@@ -245,6 +246,14 @@ namespace SimpleRPG
             // How fast the character moves is the server's resolved Movement Speed; the client only ever supplies a direction.
             float speed = this.character != null ? this.character.Stats.MovementSpeed : 0f;
             characterController.SimpleMove(speed * direction);
+        }
+
+        /// <summary>
+        /// True when every component of the vector is a real number, not NaN or infinite.
+        /// </summary>
+        private static bool IsFinite(Vector3 v)
+        {
+            return float.IsFinite(v.x) && float.IsFinite(v.y) && float.IsFinite(v.z);
         }
 
         /// <summary>
