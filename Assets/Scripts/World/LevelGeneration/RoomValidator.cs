@@ -51,6 +51,8 @@ namespace SimpleRPG.LevelGeneration
         public const string RuleLockStartsActive = "lock-starts-active";
         public const string RuleRoomsetDoorNoLock = "roomset-door-no-lock";
         public const string RuleStrayPivot = "stray-pivot";
+        public const string RuleGeometryOutsideFootprint = "geometry-outside-footprint";
+        public const string RuleGeometryShortOfFootprint = "geometry-short-of-footprint";
         public const string RuleRoomsetEmpty = "roomset-empty";
         public const string RuleRoomsetDuplicate = "roomset-duplicate";
         public const string RuleRoomsetRoomWeight = "roomset-room-weight";
@@ -66,13 +68,22 @@ namespace SimpleRPG.LevelGeneration
         public const string RuleRoomsetFloorHeight = "roomset-floor-height";
         public const string RuleRoomsetVerticalUnpaired = "roomset-vertical-unpaired";
 
-        /// <summary>How far, in cells, a door pivot may sit from a grid point. Authored pillar doors are about 0.1 cells off.</summary>
-        public const float GridTolerance = 0.25f;
+        /// <summary>
+        /// How far, in cells, a door pivot may sit from a grid point. The packer snaps the door to the point, so whatever is left over is
+        /// a seam where two joined rooms meet; keep it to modelling noise.
+        /// </summary>
+        public const float GridTolerance = 0.02f;
+
+        /// <summary>
+        /// How far, in cells, the room's drawn geometry may differ from its footprint on any side. Past the footprint it overlaps the
+        /// neighbouring room and z-fights; short of it, it leaves a gap.
+        /// </summary>
+        public const float GeometryTolerance = 0.02f;
 
         private const float AxisTolerance = 0.01f;
 
         /// <summary>How far, in cells, a door length may be from a whole number of cells.</summary>
-        private const float LengthTolerance = 0.05f;
+        private const float LengthTolerance = 0.01f;
 
         /// <summary>
         /// Validates every room in a roomset, both the authored geometry and the values already packed onto it.
@@ -277,6 +288,7 @@ namespace SimpleRPG.LevelGeneration
 
             CheckRootTransform(room, errors);
             CheckStrayPivots(room, cellSize, errors);
+            CheckGeometryFit(room, cellSize, origin, size, errors);
 
             if (room.Floors < 1)
             {
@@ -481,6 +493,49 @@ namespace SimpleRPG.LevelGeneration
                 {
                     errors.Add(new RoomValidationError(room.name, RuleStrayPivot,
                         $"'{child.name}' sits at {(position - root) / cellSize} cells, more than a cell outside the room's geometry, so it stretches the room's Size."));
+                }
+            }
+        }
+
+        /// <summary>
+        /// The packed footprint is worked out from transform pivots, so nothing else ties it to what is drawn. Compares the bounds of the
+        /// room's meshes with the footprint on each side: geometry past the footprint overlaps the room placed next to it and z-fights,
+        /// and geometry that stops short leaves a visible gap between rooms. Rooms with no meshes are skipped.
+        /// </summary>
+        private static void CheckGeometryFit(RoomBlueprint room, float cellSize, Vector2Int origin, Vector2Int size, List<RoomValidationError> errors)
+        {
+            if (!TryGetMeshBounds(room, out Bounds drawn))
+            {
+                return;
+            }
+
+            Vector3 root = room.transform.position;
+            float tolerance = GeometryTolerance * cellSize;
+            float footprintMinX = root.x + origin.x * cellSize;
+            float footprintMinZ = root.z + origin.y * cellSize;
+            float footprintMaxX = footprintMinX + size.x * cellSize;
+            float footprintMaxZ = footprintMinZ + size.y * cellSize;
+
+            // (side, how far the geometry sticks out past the footprint on that side; negative when it stops short)
+            (string side, float outside)[] sides =
+            {
+                ("west (-x)", footprintMinX - drawn.min.x),
+                ("east (+x)", drawn.max.x - footprintMaxX),
+                ("south (-z)", footprintMinZ - drawn.min.z),
+                ("north (+z)", drawn.max.z - footprintMaxZ),
+            };
+
+            foreach ((string side, float outside) in sides)
+            {
+                if (outside > tolerance)
+                {
+                    errors.Add(new RoomValidationError(room.name, RuleGeometryOutsideFootprint,
+                        $"The geometry sticks out {outside / cellSize:0.###} cells past the footprint on the {side} side, so it will overlap the neighbouring room and z-fight. Pull it back to the cell edge."));
+                }
+                else if (-outside > tolerance)
+                {
+                    errors.Add(new RoomValidationError(room.name, RuleGeometryShortOfFootprint,
+                        $"The geometry stops {-outside / cellSize:0.###} cells short of the footprint on the {side} side, which leaves a gap between this room and the next. Extend it to the cell edge."));
                 }
             }
         }

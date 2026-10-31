@@ -56,12 +56,55 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
-        public void DoorOffGrid_AllowsAuthoredPillarOffset()
+        public void DoorOffGrid_AllowsModellingNoise()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddDoor(room, new Vector3(15.05f, 0, 20), new Vector2Int(0, 1));
+
+            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule == RoomValidator.RuleDoorOffGrid), Is.Empty);
+        }
+
+        [Test]
+        public void DoorAPillarWidthOffGrid_IsReported()
         {
             RoomBlueprint room = CreateValidRoom();
             AddDoor(room, new Vector3(15.5f, 0, 20), new Vector2Int(0, 1));
 
-            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule == RoomValidator.RuleDoorOffGrid), Is.Empty);
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleDoorOffGrid);
+        }
+
+        [Test]
+        public void GeometryThatFillsTheFootprint_IsAccepted()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+
+            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule.StartsWith("geometry-")), Is.Empty);
+        }
+
+        [Test]
+        public void GeometryPastTheFootprint_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+            GameObject trim = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            trim.transform.SetParent(room.transform, false);
+            trim.transform.position = new Vector3(31f, 0, 15);
+            trim.transform.localScale = new Vector3(2, 1, 30);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleGeometryOutsideFootprint);
+        }
+
+        [Test]
+        public void GeometryShortOfTheFootprint_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            floor.transform.SetParent(room.transform, false);
+            floor.transform.position = new Vector3(14.5f, 0, 15);
+            floor.transform.localScale = new Vector3(29, 1, 30);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleGeometryShortOfFootprint);
         }
 
         [Test]
