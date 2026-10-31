@@ -21,7 +21,13 @@ namespace SimpleRPG.LevelGeneration
 
             Size = GridMath.RotateSize(definition.Size, Turns);
             Min = position + GridMath.RotatedFootprintMin(definition.Size, Turns);
-            Doors = definition.Doors.Select(door => new PlacedDoor(this, door)).ToList();
+            var doors = new List<PlacedDoor>(definition.Doors.Count);
+            for (int i = 0; i < definition.Doors.Count; i++)
+            {
+                doors.Add(new PlacedDoor(this, definition.Doors[i]));
+            }
+
+            Doors = doors;
         }
 
         /// <summary>

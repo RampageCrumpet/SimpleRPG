@@ -211,6 +211,12 @@ namespace SimpleRPG.LevelGeneration
             private readonly Dictionary<(Vector2Int point, Side side, int floor), PlacedDoor> openLookup = new Dictionary<(Vector2Int, Side, int), PlacedDoor>();
             private readonly List<PlacedDoor> sealedDoors = new List<PlacedDoor>();
 
+            // Open doors by each cell their passage covers, so a candidate room finds the doors that face it from its own cells
+            // instead of walking every open door's passage.
+            private readonly Dictionary<Vector3Int, List<PlacedDoor>> openPassages = new Dictionary<Vector3Int, List<PlacedDoor>>();
+            private static readonly List<RoomDefinition> NoRooms = new List<RoomDefinition>();
+            private readonly bool anyRequired;
+
             private readonly IRoomSelector selector;
             private readonly Dictionary<RoomDefinition, int> placedCounts = new Dictionary<RoomDefinition, int>();
 
@@ -220,6 +226,7 @@ namespace SimpleRPG.LevelGeneration
                 loopReach = definitions.Max(definition => Math.Max(definition.Size.x, definition.Size.y) + definition.Doors.Select(door => door.LengthCells).DefaultIfEmpty(0).Max()) + 2;
                 this.floorCount = floorCount;
                 this.definitions = definitions;
+                anyRequired = definitions.Any(definition => definition.MinCount > 0 && definition.Weight > 0);
                 this.selector = selector;
                 roomRandom = new System.Random(StreamSeed(attemptSeed, RoomStream));
                 doorRandom = new System.Random(StreamSeed(attemptSeed, DoorStream));
@@ -243,6 +250,7 @@ namespace SimpleRPG.LevelGeneration
                 sealedDoors.AddRange(openDoors);
                 openDoors.Clear();
                 openLookup.Clear();
+                openPassages.Clear();
             }
 
             /// <summary>
@@ -450,6 +458,11 @@ namespace SimpleRPG.LevelGeneration
             /// </summary>
             private List<RoomDefinition> UnmetRequired()
             {
+                if (!anyRequired)
+                {
+                    return NoRooms;
+                }
+
                 var owed = new List<RoomDefinition>();
                 foreach (RoomDefinition definition in definitions.Where(definition => definition.MinCount > 0 && definition.Weight > 0))
                 {
@@ -481,9 +494,10 @@ namespace SimpleRPG.LevelGeneration
                 }
 
                 Dictionary<PlacedRoom, int> distances = DistancesFromStart();
+                var sealedSet = new HashSet<PlacedDoor>(sealedDoors);
                 List<PlacedRoom> deadEnds = rooms
                     .Skip(1)
-                    .Where(room => room.Doors.Count == 1 && !sealedDoors.Contains(room.Doors[0]) && distances.ContainsKey(room))
+                    .Where(room => room.Doors.Count == 1 && !sealedSet.Contains(room.Doors[0]) && distances.ContainsKey(room))
                     .OrderByDescending(room => distances[room])
                     .ThenBy(room => room.Id)
                     .ToList();
@@ -532,7 +546,8 @@ namespace SimpleRPG.LevelGeneration
             private Dictionary<PlacedRoom, int> DistancesFromStart()
             {
                 var byPosition = new Dictionary<(Vector2Int, Side, int), PlacedDoor>();
-                foreach (PlacedDoor door in rooms.SelectMany(room => room.Doors).Where(door => !sealedDoors.Contains(door)))
+                var sealedSet = new HashSet<PlacedDoor>(sealedDoors);
+                foreach (PlacedDoor door in rooms.SelectMany(room => room.Doors).Where(door => !sealedSet.Contains(door)))
                 {
                     byPosition[(door.Point, door.Side, door.Floor)] = door;
                 }
@@ -579,8 +594,7 @@ namespace SimpleRPG.LevelGeneration
                     }
                 }
 
-                openDoors.Add(mate);
-                openLookup[(mate.Point, mate.Side, mate.Floor)] = mate;
+                AddOpen(mate);
 
                 rooms.Remove(room);
                 placedCounts[room.Definition]--;
@@ -593,7 +607,7 @@ namespace SimpleRPG.LevelGeneration
             /// <param name="replaceIndex"> Where in the room list it takes its place.</param>
             private bool TryPlaceAgainst(PlacedDoor target, RoomDefinition definition, int minimumNumberOfRooms, int replaceId = -1, int replaceIndex = -1, bool requireLoop = false)
             {
-                int[] turnOrder = Enumerable.Range(0, 4).OrderBy(_ => turnRandom.Next()).ToArray();
+                int[] turnOrder = TurnOrder();
 
                 foreach (int turns in turnOrder)
                 {
@@ -697,12 +711,19 @@ namespace SimpleRPG.LevelGeneration
                 }
 
                 // An open door must not end up facing into the new room unless the room has the door that joins it.
-                foreach (PlacedDoor open in openDoors)
+                foreach (Vector3Int cell in candidate.Cells3D())
                 {
-                    bool facesRoom = open.PassageCells3D().Any(passage => candidate.Contains(passage.cell));
-                    if (facesRoom && !candidate.Doors.Any(open.Mates))
+                    if (!openPassages.TryGetValue(cell, out List<PlacedDoor> facing))
                     {
-                        return false;
+                        continue;
+                    }
+
+                    foreach (PlacedDoor open in facing)
+                    {
+                        if (!candidate.Doors.Any(open.Mates))
+                        {
+                            return false;
+                        }
                     }
                 }
 
@@ -745,8 +766,7 @@ namespace SimpleRPG.LevelGeneration
                     }
                     else
                     {
-                        openDoors.Add(door);
-                        openLookup[(door.Point, door.Side, door.Floor)] = door;
+                        AddOpen(door);
                     }
                 }
 
@@ -782,6 +802,51 @@ namespace SimpleRPG.LevelGeneration
                 loopSearchExhausted = false;
                 openDoors.Remove(door);
                 openLookup.Remove((door.Point, door.Side, door.Floor));
+
+                foreach ((int slice, Vector3Int cell) in door.PassageCells3D())
+                {
+                    if (openPassages.TryGetValue(cell, out List<PlacedDoor> facing) && facing.Remove(door) && facing.Count == 0)
+                    {
+                        openPassages.Remove(cell);
+                    }
+                }
+            }
+
+            private void AddOpen(PlacedDoor door)
+            {
+                openDoors.Add(door);
+                openLookup[(door.Point, door.Side, door.Floor)] = door;
+
+                foreach ((int slice, Vector3Int cell) in door.PassageCells3D())
+                {
+                    if (!openPassages.TryGetValue(cell, out List<PlacedDoor> facing))
+                    {
+                        openPassages[cell] = facing = new List<PlacedDoor>(1);
+                    }
+
+                    facing.Add(door);
+                }
+            }
+
+            /// <summary>
+            /// The four turns in a random order. Draws one number per turn and sorts by it, the same as ordering by a random key.
+            /// </summary>
+            private int[] TurnOrder()
+            {
+                int[] order = { 0, 1, 2, 3 };
+                int[] keys = { turnRandom.Next(), turnRandom.Next(), turnRandom.Next(), turnRandom.Next() };
+
+                // Insertion sort is stable, matching OrderBy, so equal keys keep their turn order.
+                for (int i = 1; i < 4; i++)
+                {
+                    for (int j = i; j > 0 && keys[j - 1] > keys[j]; j--)
+                    {
+                        (keys[j - 1], keys[j]) = (keys[j], keys[j - 1]);
+                        (order[j - 1], order[j]) = (order[j], order[j - 1]);
+                    }
+                }
+
+                return order;
             }
         }
     }
