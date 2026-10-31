@@ -347,8 +347,8 @@ namespace SimpleRPG.Tests.EditMode
             // A wall 2 cells wide and a little over half a cell deep, standing on the east edge.
             GameObject alcove = GameObject.CreatePrimitive(PrimitiveType.Cube);
             alcove.transform.SetParent(room.transform, false);
-            alcove.transform.position = new Vector3(32.75f, 0, 5f);
-            alcove.transform.localScale = new Vector3(5.5f, 1, 10f);
+            alcove.transform.position = new Vector3(31.375f, 0, 5f);
+            alcove.transform.localScale = new Vector3(2.75f, 1, 10f);
             alcove.AddComponent<RoomClaimedCell>();
 
             RoomPlan plan = RoomPlanner.Plan(room, CellSize);
