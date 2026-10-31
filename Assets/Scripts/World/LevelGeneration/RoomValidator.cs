@@ -583,12 +583,20 @@ namespace SimpleRPG.LevelGeneration
         /// across it, so its frame spills into the doorway cells of the room it joins; that is the doorway the two rooms share, not a
         /// mistake. Only meshes under the door's own object count, so the rest of the room still has to stay home.
         /// </summary>
-        private static HashSet<Vector2Int> DoorSpace(MeshFilter filter, RoomPlan plan, float cellSize)
+        private static HashSet<Vector2Int> DoorSpace(MeshFilter filter, RoomPlan plan, float cellSize, out string description)
         {
             var cells = new HashSet<Vector2Int>();
             ConnectionBlueprint door = filter.GetComponentInParent<ConnectionBlueprint>();
-            if (door == null || !IsAxisAligned(door.transform.forward))
+            description = "It is not part of a door.";
+
+            if (door == null)
             {
+                return cells;
+            }
+
+            if (!IsAxisAligned(door.transform.forward))
+            {
+                description = $"It is part of door '{door.name}', which does not face along an axis.";
                 return cells;
             }
 
@@ -603,15 +611,25 @@ namespace SimpleRPG.LevelGeneration
                 int length = Mathf.Max(0, Mathf.RoundToInt(door.ConnectionLength / cellSize));
                 int width = Mathf.Max(2, 2 * Mathf.CeilToInt(door.ConnectionWidth / cellSize / 2f));
 
+                // Both sides of the door's line, so a frame drawn across the line is covered whichever way the door faces.
                 for (int distance = 0; distance <= length; distance++)
                 {
                     foreach (Vector2Int cell in GridMath.CellsAcross(planned.Location, side, distance, width))
                     {
                         cells.Add(cell);
                     }
+
+                    foreach (Vector2Int cell in GridMath.CellsAcross(planned.Location, GridMath.Opposite(side), distance, width))
+                    {
+                        cells.Add(cell);
+                    }
                 }
+
+                description = $"It is part of door '{door.name}' at {planned.Location} facing {side}, width {width} cells and length {length}, so the doorway covers {cells.Count} cells and this is not one of them.";
+                return cells;
             }
 
+            description = $"It is part of door '{door.name}', but that door has no SealingObject, so the packer does not count it as a door.";
             return cells;
         }
 
@@ -635,7 +653,7 @@ namespace SimpleRPG.LevelGeneration
 
             foreach ((string name, Bounds bounds, MeshFilter filter) in RoomGeometry.MeshesWithOwners(room.transform))
             {
-                HashSet<Vector2Int> sharedWithDoor = DoorSpace(filter, plan, cellSize);
+                HashSet<Vector2Int> sharedWithDoor = DoorSpace(filter, plan, cellSize, out string doorDescription);
                 // The range of cells the mesh reaches into, ignoring slivers within the tolerance of a cell edge.
                 (int firstX, int lastX, int firstY, int lastY) = RoomGeometry.CellRange(bounds, root, plan.OriginOffset, cellSize, tolerance);
 
@@ -648,7 +666,7 @@ namespace SimpleRPG.LevelGeneration
                         if (!inRectangle && !claimed.Contains(new Vector2Int(x, y)) && !sharedWithDoor.Contains(new Vector2Int(x, y)))
                         {
                             errors.Add(new RoomValidationError(room.name, RuleGeometryOutsideFootprint,
-                                $"'{name}' reaches into cell ({x}, {y}), which the room does not claim, so it will overlap the room placed there and z-fight. Pull it back to the cell edge, or put a RoomClaimedCell in that cell if the room needs it."));
+                                $"'{name}' reaches into cell ({x}, {y}), which the room does not claim, so it will overlap the room placed there and z-fight. Pull it back to the cell edge, or put a RoomClaimedCell in that cell if the room needs it. {doorDescription}"));
                             reported = true;
                         }
                     }
