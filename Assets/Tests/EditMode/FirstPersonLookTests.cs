@@ -156,6 +156,16 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
+        public void Yaw_AHitchFrameTurnsNoFurtherThanTheServerWillAccept()
+        {
+            // 5 * 100 * 0.5 = 250 degrees in one frame; the server clamps each message to 180, so the camera must stop there too or the two stay apart.
+            look.Look(5f, 0f, 0.5f);
+
+            Assert.AreEqual(180f, Mathf.Abs(viewSink.Looks[0].YawDelta), 0.0001f);
+            Assert.AreEqual(180f, Mathf.Abs(look.Yaw), 0.0001f);
+        }
+
+        [Test]
         public void View_ReportsThePitchAlongWithTheYaw()
         {
             look.Look(0f, 2f, 0.05f);

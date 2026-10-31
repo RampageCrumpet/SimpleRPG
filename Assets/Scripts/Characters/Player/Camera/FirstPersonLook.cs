@@ -24,6 +24,7 @@ namespace SimpleRPG
         private readonly float rotationSpeed;
         private readonly float minimumPitch;
         private readonly float maximumPitch;
+        private readonly float maximumYawStep;
 
         /// <summary>
         /// The current view pitch in degrees, positive downward.
@@ -43,12 +44,15 @@ namespace SimpleRPG
         /// <param name="minimumPitch"> The lowest allowed pitch in degrees.</param>
         /// <param name="maximumPitch"> The highest allowed pitch in degrees.</param>
         /// <param name="initialYaw"> The world yaw the view starts at.</param>
-        public FirstPersonLook(IViewSink viewSink, float rotationSpeed, float minimumPitch, float maximumPitch, float initialYaw = 0f)
+        /// <param name="maximumYawStep"> The most the view may turn in one call. The server clamps each yaw message to the same amount, so a larger
+        /// step here (a hitch frame with a backlog of mouse movement) would turn the camera by more than the server's view and leave them apart for good.</param>
+        public FirstPersonLook(IViewSink viewSink, float rotationSpeed, float minimumPitch, float maximumPitch, float initialYaw = 0f, float maximumYawStep = 180f)
         {
             this.viewSink = viewSink;
             this.rotationSpeed = rotationSpeed;
             this.minimumPitch = minimumPitch;
             this.maximumPitch = maximumPitch;
+            this.maximumYawStep = maximumYawStep;
             this.Yaw = initialYaw;
         }
 
@@ -61,7 +65,7 @@ namespace SimpleRPG
         public void Look(float mouseX, float mouseY, float deltaTime)
         {
             this.Pitch = FirstPersonLookMath.StepPitch(this.Pitch, mouseY, this.rotationSpeed, deltaTime, this.minimumPitch, this.maximumPitch);
-            float yawStep = FirstPersonLookMath.YawStep(mouseX, this.rotationSpeed, deltaTime);
+            float yawStep = UnityEngine.Mathf.Clamp(FirstPersonLookMath.YawStep(mouseX, this.rotationSpeed, deltaTime), -this.maximumYawStep, this.maximumYawStep);
             this.Yaw = UnityEngine.Mathf.Repeat(this.Yaw + yawStep + 180f, 360f) - 180f;
 
             this.viewSink.Look(yawStep, this.Pitch);

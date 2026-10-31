@@ -123,7 +123,7 @@ namespace SimpleRPG
 
                 // Start from the yaw the articulation already holds, not the transform's: the two are read at different moments and a respawn or
                 // placement in between left the view and the server's body a fixed angle apart, so movement and the camera disagreed with the body.
-                this.look = new FirstPersonLook(this, rotationSpeed, minimumPitch, maximumPitch, this.articulation.ViewYaw);
+                this.look = new FirstPersonLook(this, rotationSpeed, minimumPitch, maximumPitch, this.articulation.ViewYaw, this.articulation.Settings.maxYawPerMessage);
                 this.articulation.ViewReset += this.look.ResetYaw;
 
                 // A menu with the player's attention holds the camera and movement back, whatever the menu is.

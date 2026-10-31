@@ -54,7 +54,9 @@ namespace SimpleRPG.Abilities.Integration
         {
             get
             {
-                if (current == null || !ReferenceEquals(current.gameplay, GameplayServices.Current) || current.manager != NetworkManager.Singleton)
+                // The manager is compared by reference: with the domain kept between plays, a destroyed manager from the last play can compare
+                // equal to the new one by Unity's operator, which would leave a clock that reads a tick rate of zero.
+                if (current == null || !ReferenceEquals(current.gameplay, GameplayServices.Current) || !ReferenceEquals(current.manager, NetworkManager.Singleton))
                 {
                     current?.Shutdown();
                     current = new AbilityServices(GameplayServices.Current, NetworkManager.Singleton);
@@ -107,6 +109,14 @@ namespace SimpleRPG.Abilities.Integration
             Grants.Dispose();
             Statuses.Dispose();
             if (driver != null) driver.Remove();
+        }
+
+        // Entering play with the domain kept (as this project does) leaves the last play's services behind, wired to a destroyed network manager.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetForPlay()
+        {
+            Reset();
+            GameplayServices.Reset();
         }
 
         /// <summary>
