@@ -70,10 +70,27 @@ namespace SimpleRPG.Tests
             Light light = host.GetComponent<Light>();
             for (int i = 0; i < 500; i++)
             {
-                flicker.Apply(i * 0.1f);
-                Assert.That(light.intensity, Is.InRange(2f * 0.75f - 1e-4f, 2f * 1.15f + 1e-4f));
+                flicker.Apply(i * 0.1f, 0.1f);
+                Assert.That(light.intensity, Is.InRange(2f * 0.85f - 1e-4f, 2f * 1.08f + 1e-4f));
                 Assert.That(light.range, Is.InRange(8f * 0.94f - 1e-4f, 8f * 1.06f + 1e-4f));
             }
+        }
+
+        [Test]
+        public void Smoothing_LimitsHowFastTheLightCanChangeBetweenFrames()
+        {
+            Flicker flicker = Make(new Vector3(3f, 1f, 5f));
+            Light light = host.GetComponent<Light>();
+            flicker.Apply(0f, 0.016f);
+            float previous = light.intensity;
+            float largestStep = 0f;
+            for (int i = 1; i < 1000; i++)
+            {
+                flicker.Apply(i * 0.016f, 0.016f);
+                largestStep = Mathf.Max(largestStep, Mathf.Abs(light.intensity - previous));
+                previous = light.intensity;
+            }
+            Assert.That(largestStep, Is.LessThan(0.06f), "no frame should visibly pop");
         }
 
         [Test]
@@ -82,7 +99,7 @@ namespace SimpleRPG.Tests
             Flicker flicker = Make(new Vector3(3f, 1f, 5f));
             for (int i = 0; i < 500; i++)
             {
-                flicker.Apply(i * 0.1f);
+                flicker.Apply(i * 0.1f, 0.1f);
                 Assert.That(Vector3.Distance(host.transform.position, new Vector3(3f, 1f, 5f)), Is.LessThan(0.06f));
             }
         }
@@ -93,7 +110,7 @@ namespace SimpleRPG.Tests
             Flicker flicker = Make(new Vector3(3f, 1f, 5f));
             Light light = host.GetComponent<Light>();
             Color authored = light.color;
-            flicker.Apply(1.7f);
+            flicker.Apply(1.7f, 0.016f);
             typeof(Flicker).GetMethod("OnDisable", Flags).Invoke(flicker, null);
             Assert.AreEqual(2f, light.intensity, 1e-5f);
             Assert.AreEqual(8f, light.range, 1e-5f);

@@ -8,7 +8,7 @@ Dungeon rooms are generated at runtime, so nothing can be baked: every light is 
 
 `Flicker` (`Assets/Scripts/World/Flicker.cs`) is the generic flame primitive; braziers, candles and lanterns reuse it with different numbers.
 
-- Intensity, range, colour and position drift on layered Perlin noise: a slow sway plus a fast crackle (`crackleAmount` mixes them).
+- Intensity, range, colour and position drift on layered Perlin noise: a slow sway plus a fast crackle (`crackleAmount` mixes them). The flame value is then eased toward the noise over `smoothing` seconds (frame-rate independent), so it breathes instead of popping. Defaults are deliberately calm: a 0.85 to 1.08 intensity band, sway 0.7 Hz and crackle 3.5 Hz.
 - The seed comes from the light's world position, so neighbouring torches burn out of step. It uses no random numbers, so it never touches the gameplay random stream, and the same torch looks the same on every client.
 - It is cosmetic and client-side. With no graphics device (dedicated server) it disables itself.
 - The authored light values are the baseline; disabling the component restores them.
