@@ -50,7 +50,7 @@ namespace SimpleRPG.LevelGeneration
         /// <summary>
         /// Raised whenever a change to the generator would give an existing seed a different layout.
         /// </summary>
-        public const int AlgorithmVersion = 6;
+        public const int AlgorithmVersion = 7;
 
         private const int RoomStream = 1;
         private const int DoorStream = 2;
@@ -217,6 +217,9 @@ namespace SimpleRPG.LevelGeneration
             private static readonly List<RoomDefinition> NoRooms = new List<RoomDefinition>();
             private readonly bool anyRequired;
 
+            // The (type, length, climb) of every door a placeable room has. An open door whose mate is not in here can never be joined.
+            private readonly HashSet<(int type, int length, int delta)> joinable = new HashSet<(int, int, int)>();
+
             private readonly IRoomSelector selector;
             private readonly Dictionary<RoomDefinition, int> placedCounts = new Dictionary<RoomDefinition, int>();
 
@@ -227,6 +230,14 @@ namespace SimpleRPG.LevelGeneration
                 this.floorCount = floorCount;
                 this.definitions = definitions;
                 anyRequired = definitions.Any(definition => definition.MinCount > 0 && definition.Weight > 0);
+
+                foreach (RoomDefinition definition in definitions.Where(definition => definition.Weight > 0 && (definition.Role & (RoomRole.Start | RoomRole.Exit)) == 0))
+                {
+                    foreach (DoorDefinition door in definition.Doors)
+                    {
+                        joinable.Add((door.TypeId, door.LengthCells, door.FloorDelta));
+                    }
+                }
                 this.selector = selector;
                 roomRandom = new System.Random(StreamSeed(attemptSeed, RoomStream));
                 doorRandom = new System.Random(StreamSeed(attemptSeed, DoorStream));
@@ -297,6 +308,15 @@ namespace SimpleRPG.LevelGeneration
                     }
 
                     PlacedDoor target = openDoors[doorRandom.Next(openDoors.Count)];
+
+                    // No room in the set has a door that could join this one, so waiting for luck would only waste attempts.
+                    if (!joinable.Contains((target.TypeId, target.LengthCells, -target.FloorDelta)))
+                    {
+                        Remove(target);
+                        sealedDoors.Add(target);
+                        continue;
+                    }
+
                     var context = new SelectionContext(rooms.Count, minimumNumberOfRooms, openDoors.Count, placedCounts, target, floorCount, UnmetRequired(), style.JunctionFactor);
                     RoomDefinition definition = selector.Select(roomRandom, definitions, context);
 
@@ -352,6 +372,7 @@ namespace SimpleRPG.LevelGeneration
 
                 List<(PlacedDoor a, PlacedDoor b)> joins = LockSolver.Joins(rooms, sealedDoors);
                 PlacedRoom exit = rooms.FirstOrDefault(room => (room.Definition.Role & RoomRole.Exit) != 0);
+                var cuts = new LockSolver.BridgeCuts(rooms, joins);
 
                 for (int keyId = 1; keyId <= style.LockedDoors; keyId++)
                 {
@@ -363,33 +384,34 @@ namespace SimpleRPG.LevelGeneration
                     // The first lock stands between the player and the exit, when there is a join that can.
                     if (keyId == 1 && exit != null)
                     {
-                        List<(PlacedDoor a, PlacedDoor b)> gating = candidates.Where(join => !LockSolver.Connected(rooms, joins, join).Contains(exit)).ToList();
+                        List<(PlacedDoor a, PlacedDoor b)> gating = candidates.Where(join => cuts.IsCutOff(join, exit)).ToList();
                         if (gating.Count > 0)
                         {
                             candidates = gating;
                         }
                     }
 
-                    if (!TryLock(keyId, candidates, joins, exit))
+                    if (!TryLock(keyId, candidates, joins, cuts))
                     {
                         return;
                     }
                 }
             }
 
-            private bool TryLock(int keyId, List<(PlacedDoor a, PlacedDoor b)> candidates, List<(PlacedDoor a, PlacedDoor b)> joins, PlacedRoom exit)
+            private bool TryLock(int keyId, List<(PlacedDoor a, PlacedDoor b)> candidates, List<(PlacedDoor a, PlacedDoor b)> joins, LockSolver.BridgeCuts cuts)
             {
+                PlacedRoom exit = rooms.FirstOrDefault(room => (room.Definition.Role & RoomRole.Exit) != 0);
+
                 foreach ((PlacedDoor a, PlacedDoor b) join in candidates)
                 {
-                    HashSet<PlacedRoom> startSide = LockSolver.Connected(rooms, joins, join);
-                    if (startSide.Count == rooms.Count)
+                    if (!cuts.IsBridge(join))
                     {
                         // Not a bridge: another route leads round, so a lock here would guard nothing.
                         continue;
                     }
 
                     List<PlacedRoom> keyRooms = rooms
-                        .Where(room => startSide.Contains(room) && room != rooms[0] && room != exit && !locks.Any(locked => locked.KeyRoom == room))
+                        .Where(room => !cuts.IsCutOff(join, room) && room != rooms[0] && room != exit && !locks.Any(locked => locked.KeyRoom == room))
                         .OrderBy(_ => lockRandom.Next())
                         .ToList();
 
@@ -421,10 +443,23 @@ namespace SimpleRPG.LevelGeneration
 
                 int offset = loopRandom.Next(definitions.Count);
 
+                // Open doors sorted into squares as wide as a room's reach, so the nearby ones are found without comparing every pair.
+                var nearby = new Dictionary<Vector2Int, List<PlacedDoor>>();
+                foreach (PlacedDoor open in openDoors)
+                {
+                    var square = new Vector2Int(FloorDivide(open.Point.x, loopReach), FloorDivide(open.Point.y, loopReach));
+                    if (!nearby.TryGetValue(square, out List<PlacedDoor> inSquare))
+                    {
+                        nearby[square] = inSquare = new List<PlacedDoor>();
+                    }
+
+                    inSquare.Add(open);
+                }
+
                 foreach (PlacedDoor target in openDoors.ToList())
                 {
                     // The second door the room joins has to be within a room's reach of where the target ends, or it cannot be it.
-                    if (!openDoors.Any(other => other != target && Math.Abs(other.Point.x - target.Far.x) + Math.Abs(other.Point.y - target.Far.y) <= loopReach))
+                    if (!HasDoorWithinReach(nearby, target))
                     {
                         continue;
                     }
@@ -450,6 +485,42 @@ namespace SimpleRPG.LevelGeneration
                 }
 
                 loopSearchExhausted = true;
+                return false;
+            }
+
+            private static int FloorDivide(int value, int divisor)
+            {
+                int quotient = value / divisor;
+                return value % divisor < 0 ? quotient - 1 : quotient;
+            }
+
+            /// <summary>
+            /// True if another open door stands within a room's reach of where the target ends.
+            /// </summary>
+            private bool HasDoorWithinReach(Dictionary<Vector2Int, List<PlacedDoor>> nearby, PlacedDoor target)
+            {
+                int squareX = FloorDivide(target.Far.x, loopReach);
+                int squareY = FloorDivide(target.Far.y, loopReach);
+
+                for (int x = squareX - 1; x <= squareX + 1; x++)
+                {
+                    for (int y = squareY - 1; y <= squareY + 1; y++)
+                    {
+                        if (!nearby.TryGetValue(new Vector2Int(x, y), out List<PlacedDoor> inSquare))
+                        {
+                            continue;
+                        }
+
+                        foreach (PlacedDoor other in inSquare)
+                        {
+                            if (other != target && Math.Abs(other.Point.x - target.Far.x) + Math.Abs(other.Point.y - target.Far.y) <= loopReach)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+
                 return false;
             }
 

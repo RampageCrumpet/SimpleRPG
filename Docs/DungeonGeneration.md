@@ -40,7 +40,10 @@ Only the spawner creates objects, so the server and clients reach the same `Layo
 
 ## Generation rules
 
-- Rooms are added freely until `MinimumNumberOfRooms`. After that only rooms that close more doors than they open are accepted, and the dungeon stops growing at `MaximumNumberOfRooms` (default: twice the minimum, at least four more).
+- Rooms are added freely until `MinimumNumberOfRooms`. After that only rooms that close more doors than they open are accepted, and the dungeon stops growing at `MaximumNumberOfRooms` (default: the minimum plus a tenth of it, at least two more).
+- `LayoutStyle` shapes the result: `LoopRatio` (above 0.5 the generator hunts for rooms that join two open doors, below it some are refused), `Branching` (favours junctions or corridors) and `LockedDoors` (locks on bridges, each with its key in a room the player can reach first; placement is checked by `LockSolver`, with bridges found in one pass by `LockSolver.BridgeCuts`).
+- `RoomRole.Exit` rooms are swapped in for the dead end farthest from the start. `MinCount` makes a room mandatory.
+- A door that no placeable room has a mate for (type, length, climb) is sealed as soon as it is picked rather than after repeated misses.
 - A door no room fits after enough tries is sealed with its `SealingObject`. Sealing is normal, not a failure.
 - If an attempt cannot reach the minimum or fails validation, another attempt runs from a seed derived from `(Seed, attempt)`. All machines run the same sequence.
 - Room choice (`IRoomSelector`): weights, per-room `MaxCount`, a `Start` role that is used only to begin, a bias toward dead ends once the minimum is reached, and only rooms with a door that can join the target.
@@ -50,7 +53,7 @@ Only the spawner creates objects, so the server and clients reach the same `Layo
 ## Authoring and tooling
 
 - Select a **Roomset** asset: **Validate Roomset** checks every room and the set as a whole; **Package Rooms** packs all rooms or none.
-- Room rules (`RoomValidator`): doors on the grid, axis-aligned, not opening into their own room, no duplicates, a `SealingObject` that belongs to the room and starts inactive, whole-cell door length, positive width, identity root transform, no stray pivots outside the geometry, packed data up to date.
+- Room rules (`RoomValidator`): drawn geometry within `GeometryTolerance` (0.02 cells) of the packed footprint on every side (past it overlaps the next room and z-fights; short of it leaves a gap), doors within `GridTolerance` (0.02 cells) of the grid, axis-aligned, not opening into their own room, no duplicates, a `SealingObject` that belongs to the room and starts inactive, whole-cell door length, positive width, identity root transform, no stray pivots outside the geometry, packed data up to date.
 - Roomset rules: not empty, no duplicates, no room without doors, a placeable dead end, something placeable besides start rooms, one length per door type, unique type names.
 - Rooms in a roomset are re-packed automatically when their prefab changes and the packed data is stale (**Tools > Rooms > Auto-pack changed rooms** to switch off). Selecting a room in the scene shows its footprint, door points, reach and the cells past each door.
 - Builds fail if a roomset the build scenes depend on has problems (`RoomsetBuildGate`). Run the same check from the command line:
@@ -64,5 +67,7 @@ Only the spawner creates objects, so the server and clients reach the same `Layo
 
 - A vertical `ConnectionType` asset and a ladder/shaft room are supported and tested with synthetic rooms but not yet authored; the only real vertical room is `Room_Stairwell`.
 - Nothing makes a multi-floor dungeon *use* its lower floors; they are reached when the dice pick a stairwell.
-- Exit and boss room roles.
+- A boss room role.
+- Joining rooms without a connecting corridor: the purchased door meshes render on both sides, so joined doors z-fight and the roomset uses corridors to keep them apart.
+- Rooms whose geometry reaches outside their rectangle (alcoves) cannot yet claim just that extra cell.
 - Legacy `Dungeon` and `TestDungeon` roomsets still contain unpacked rooms; they are not referenced by a build scene, so the build gate ignores them.
