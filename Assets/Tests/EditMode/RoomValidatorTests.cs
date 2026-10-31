@@ -339,6 +339,26 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
+        public void MarkerOnAnAlcoveWall_ClaimsEveryCellTheWallFills()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+
+            // A wall 2 cells wide and a little over half a cell deep, standing on the east edge.
+            GameObject alcove = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            alcove.transform.SetParent(room.transform, false);
+            alcove.transform.position = new Vector3(31.375f, 0, 5f);
+            alcove.transform.localScale = new Vector3(2.75f, 1, 10f);
+            alcove.AddComponent<RoomClaimedCell>();
+
+            RoomPlan plan = RoomPlanner.Plan(room, CellSize);
+
+            Assert.That(plan.Size, Is.EqualTo(new Vector2Int(6, 6)), "The marked wall's own pivot must not stretch the room.");
+            Assert.That(plan.ExtraCells, Is.EquivalentTo(new[] { new Vector2Int(6, 0), new Vector2Int(6, 1) }));
+            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule.StartsWith("geometry-") || error.Rule.StartsWith("claimed-")), Is.Empty);
+        }
+
+        [Test]
         public void GeometryInAClaimedCell_IsAccepted()
         {
             RoomBlueprint room = CreateValidRoom();

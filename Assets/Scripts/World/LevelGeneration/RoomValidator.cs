@@ -599,10 +599,7 @@ namespace SimpleRPG.LevelGeneration
             foreach ((string name, Bounds bounds) in meshes)
             {
                 // The range of cells the mesh reaches into, ignoring slivers within the tolerance of a cell edge.
-                int firstX = Mathf.FloorToInt((bounds.min.x - root.x + tolerance) / cellSize) - plan.OriginOffset.x;
-                int lastX = Mathf.CeilToInt((bounds.max.x - root.x - tolerance) / cellSize) - 1 - plan.OriginOffset.x;
-                int firstY = Mathf.FloorToInt((bounds.min.z - root.z + tolerance) / cellSize) - plan.OriginOffset.y;
-                int lastY = Mathf.CeilToInt((bounds.max.z - root.z - tolerance) / cellSize) - 1 - plan.OriginOffset.y;
+                (int firstX, int lastX, int firstY, int lastY) = RoomGeometry.CellRange(bounds, root, plan.OriginOffset, cellSize, tolerance);
 
                 bool reported = false;
                 for (int x = firstX; x <= lastX && !reported; x++)
@@ -671,47 +668,7 @@ namespace SimpleRPG.LevelGeneration
             return true;
         }
 
-        /// <summary>
-        /// The world bounds of each mesh in the room, with the name of the object that carries it.
-        /// </summary>
-        private static List<(string name, Bounds bounds)> GetMeshBounds(RoomBlueprint room)
-        {
-            var result = new List<(string, Bounds)>();
-
-            foreach (MeshFilter filter in room.GetComponentsInChildren<MeshFilter>())
-            {
-                if (filter.sharedMesh == null)
-                {
-                    continue;
-                }
-
-                Bounds local = filter.sharedMesh.bounds;
-                Matrix4x4 toRoom = filter.transform.localToWorldMatrix;
-                Bounds bounds = default;
-
-                for (int corner = 0; corner < 8; corner++)
-                {
-                    Vector3 point = local.center + Vector3.Scale(local.extents, new Vector3(
-                        (corner & 1) == 0 ? -1 : 1,
-                        (corner & 2) == 0 ? -1 : 1,
-                        (corner & 4) == 0 ? -1 : 1));
-                    Vector3 world = toRoom.MultiplyPoint3x4(point);
-
-                    if (corner == 0)
-                    {
-                        bounds = new Bounds(world, Vector3.zero);
-                    }
-                    else
-                    {
-                        bounds.Encapsulate(world);
-                    }
-                }
-
-                result.Add((filter.name, bounds));
-            }
-
-            return result;
-        }
+        private static List<(string name, Bounds bounds)> GetMeshBounds(RoomBlueprint room) => RoomGeometry.MeshBounds(room.transform);
 
         private static bool IsAxisAligned(Vector3 direction)
         {
