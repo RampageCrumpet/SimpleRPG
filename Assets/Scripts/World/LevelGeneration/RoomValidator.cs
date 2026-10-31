@@ -586,11 +586,32 @@ namespace SimpleRPG.LevelGeneration
         private static HashSet<Vector2Int> DoorSpace(MeshFilter filter, RoomPlan plan, float cellSize, out string description)
         {
             var cells = new HashSet<Vector2Int>();
-            ConnectionBlueprint door = filter.GetComponentInParent<ConnectionBlueprint>();
-            description = "It is not part of a door.";
+            ConnectionBlueprint door = filter.GetComponentInParent<ConnectionBlueprint>(true);
 
+            // A door's DoorObject is its mesh by definition, wherever it sits in the hierarchy.
             if (door == null)
             {
+                foreach (DoorPlan planned in plan.Doors)
+                {
+                    GameObject doorObject = planned.Door.DoorObject;
+                    if (doorObject != null && filter.transform.IsChildOf(doorObject.transform))
+                    {
+                        door = planned.Door;
+                        break;
+                    }
+                }
+            }
+
+            description = "It is not part of a door.";
+            if (door == null)
+            {
+                var chain = new List<string>();
+                for (Transform parent = filter.transform; parent != null; parent = parent.parent)
+                {
+                    chain.Add(parent.name);
+                }
+
+                description = $"It is not under a door and is not any door's DoorObject (hierarchy: {string.Join(" > ", chain)}).";
                 return cells;
             }
 
