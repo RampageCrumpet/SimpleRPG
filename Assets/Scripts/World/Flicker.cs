@@ -22,30 +22,34 @@ namespace SimpleRPG
         [Header("Intensity")]
 
         [Tooltip("Intensity multiplier at the dimmest point of the flicker. 1 is the light's own intensity.")]
-        [SerializeField] private float minIntensity = 0.75f;
+        [SerializeField] private float minIntensity = 0.85f;
 
         [Tooltip("Intensity multiplier at the brightest point of the flicker.")]
-        [SerializeField] private float maxIntensity = 1.15f;
+        [SerializeField] private float maxIntensity = 1.08f;
 
         [Header("Motion")]
 
         [Tooltip("Swells per second of the slow drift that gives the flame its breathing.")]
-        [SerializeField] private float swaySpeed = 1.2f;
+        [SerializeField] private float swaySpeed = 0.7f;
 
         [Tooltip("Flickers per second of the fast crackle laid over the sway.")]
-        [SerializeField] private float crackleSpeed = 11f;
+        [SerializeField] private float crackleSpeed = 3.5f;
 
         [Tooltip("How much of the flicker is crackle rather than sway, from 0 (a slow breathing glow) to 1 (all crackle).")]
         [Range(0f, 1f)]
-        [SerializeField] private float crackleAmount = 0.35f;
+        [SerializeField] private float crackleAmount = 0.3f;
+
+        [Tooltip("Seconds the flame takes to follow the noise. Higher is smoother and calmer; 0 follows the noise exactly.")]
+        [Min(0f)]
+        [SerializeField] private float smoothing = 0.12f;
 
         [Header("Colour")]
 
         [Tooltip("Colour tint when the flame is at its dimmest. Leave white to skip tinting.")]
-        [SerializeField] private Color dimTint = new Color(0.92f, 0.45f, 0.18f, 1f);
+        [SerializeField] private Color dimTint = new Color(0.95f, 0.5f, 0.2f, 1f);
 
         [Tooltip("Colour tint when the flame is at its brightest.")]
-        [SerializeField] private Color brightTint = new Color(1f, 0.72f, 0.4f, 1f);
+        [SerializeField] private Color brightTint = new Color(1f, 0.68f, 0.34f, 1f);
 
         [Tooltip("Tint the light between the two colours with the flicker. Off keeps the light's own colour.")]
         [SerializeField] private bool tintWithFlicker = true;
@@ -75,6 +79,8 @@ namespace SimpleRPG
         private Color baseColor;
         private Vector3 baseLocalPosition;
         private float activeSeed;
+        private float smoothedFlame;
+        private bool smoothedReady;
 
         /// <summary>
         /// A flame value between 0 (dimmest) and 1 (brightest) for the given time. Slow sway and fast crackle are mixed by
@@ -115,18 +121,22 @@ namespace SimpleRPG
 
         private void Update()
         {
-            Apply(Time.time);
+            Apply(Time.time, Time.deltaTime);
         }
 
-        /// <summary>Sets the light as it looks at the given time. Update calls this every frame.</summary>
-        public void Apply(float time)
+        /// <summary>
+        /// Sets the light as it looks at the given time, easing the flame toward the noise over <c>smoothing</c> seconds so it never jumps.
+        /// Update calls this every frame.
+        /// </summary>
+        public void Apply(float time, float deltaTime)
         {
             if (!captured)
             {
                 Capture();
             }
 
-            float flame = Sample(time, activeSeed, swaySpeed, crackleSpeed, crackleAmount);
+            float target = Sample(time, activeSeed, swaySpeed, crackleSpeed, crackleAmount);
+            float flame = Smooth(target, deltaTime);
             flickerLight.intensity = baseIntensity * Mathf.Lerp(minIntensity, maxIntensity, flame);
             flickerLight.range = baseRange * (1f + rangeVariation * (flame * 2f - 1f));
 
@@ -144,6 +154,21 @@ namespace SimpleRPG
             }
         }
 
+        private float Smooth(float target, float deltaTime)
+        {
+            if (!smoothedReady || smoothing <= 0f)
+            {
+                smoothedFlame = target;
+                smoothedReady = true;
+            }
+            else
+            {
+                // Frame-rate independent exponential ease.
+                smoothedFlame = Mathf.Lerp(smoothedFlame, target, 1f - Mathf.Exp(-deltaTime / smoothing));
+            }
+            return smoothedFlame;
+        }
+
         private void Capture()
         {
             flickerLight = GetComponent<Light>();
@@ -152,6 +177,7 @@ namespace SimpleRPG
             baseColor = flickerLight.color;
             baseLocalPosition = transform.localPosition;
             activeSeed = seedFromPosition ? SeedFromPosition(transform.position) : seed;
+            smoothedReady = false;
             captured = true;
         }
 
@@ -175,6 +201,7 @@ namespace SimpleRPG
             maxIntensity = Mathf.Max(minIntensity, maxIntensity);
             swaySpeed = Mathf.Max(0f, swaySpeed);
             crackleSpeed = Mathf.Max(0f, crackleSpeed);
+            smoothing = Mathf.Max(0f, smoothing);
         }
     }
 }

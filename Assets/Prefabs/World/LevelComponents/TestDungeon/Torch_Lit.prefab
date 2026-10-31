@@ -130,13 +130,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a554ad3df9ea9348971021dc311f5da, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  minIntensity: 0.75
-  maxIntensity: 1.15
-  swaySpeed: 1.2
-  crackleSpeed: 11
-  crackleAmount: 0.35
-  dimTint: {r: 0.92, g: 0.45, b: 0.18, a: 1}
-  brightTint: {r: 1, g: 0.72, b: 0.4, a: 1}
+  minIntensity: 0.85
+  maxIntensity: 1.08
+  swaySpeed: 0.7
+  crackleSpeed: 3.5
+  crackleAmount: 0.3
+  smoothing: 0.12
+  dimTint: {r: 0.95, g: 0.5, b: 0.2, a: 1}
+  brightTint: {r: 1, g: 0.68, b: 0.34, a: 1}
   tintWithFlicker: 1
   rangeVariation: 0.06
   wander: 0.03
