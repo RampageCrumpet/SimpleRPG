@@ -62,7 +62,7 @@ namespace SimpleRPG
         /// </summary>
         public Vector2Int location;
 
-        [Tooltip("The door's own mesh (frame and leaf). Needed on a door with a length of zero: when two rooms join flush, the generator hides the DoorObject of one of them so the pair is drawn once instead of z-fighting.")]
+        [Tooltip("The door's own mesh (frame and leaf). Needed on a door with a length of zero: when two rooms join shared, the generator hides the DoorObject of one of them so the pair is drawn once instead of z-fighting.")]
         public GameObject DoorObject;
 
         /// <summary>

@@ -9,7 +9,7 @@ namespace SimpleRPG.Tests.EditMode
     /// <summary>
     /// Rooms that join with no corridor between them (doors of length zero) and rooms that claim cells beyond their rectangle.
     /// </summary>
-    public class FlushJoinTests
+    public class SharedJoinTests
     {
         private const int Seeds = 100;
 
@@ -26,7 +26,7 @@ namespace SimpleRPG.Tests.EditMode
         /// <summary>
         /// 4x4 rooms whose doors stand on the edge and are zero cells long, so joined rooms touch.
         /// </summary>
-        private static List<RoomDefinition> FlushSet(IReadOnlyList<Vector2Int> extraCells = null)
+        private static List<RoomDefinition> SharedSet(IReadOnlyList<Vector2Int> extraCells = null)
         {
             return new List<RoomDefinition>
             {
@@ -38,11 +38,11 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
-        public void FlushRooms_AlwaysGiveValidLayouts()
+        public void SharedRooms_AlwaysGiveValidLayouts()
         {
             for (int seed = 0; seed < Seeds; seed++)
             {
-                GenerationResult result = new LayoutGenerator(seed, FlushSet()).Generate(15);
+                GenerationResult result = new LayoutGenerator(seed, SharedSet()).Generate(15);
 
                 Assert.IsTrue(result.Success, $"seed {seed}: {result}");
                 Assert.That(result.Layout.Rooms.Count, Is.GreaterThanOrEqualTo(15));
@@ -51,28 +51,28 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
-        public void FlushRooms_TouchWhereTheyJoin()
+        public void SharedRooms_TouchWhereTheyJoin()
         {
-            GenerationResult result = new LayoutGenerator(3, FlushSet()).Generate(15);
+            GenerationResult result = new LayoutGenerator(3, SharedSet()).Generate(15);
             List<(PlacedDoor a, PlacedDoor b)> joins = LockSolver.Joins(result.Layout.Rooms, result.Layout.SealedDoors);
 
             Assert.That(joins, Is.Not.Empty);
             foreach ((PlacedDoor a, PlacedDoor b) in joins)
             {
-                Assert.That(a.Point, Is.EqualTo(b.Point), "Both doors of a flush join stand on the same line.");
+                Assert.That(a.Point, Is.EqualTo(b.Point), "Both doors of a shared join stand on the same line.");
             }
         }
 
         [Test]
         public void RoomsThatClaimExtraCells_NeverOverlap()
         {
-            // Put the corridor's alcoves on its solid sides. Claims beside a flush doorway occupy
+            // Put the corridor's alcoves on its solid sides. Claims beside a shared doorway occupy
             // the neighboring room's rectangle, so such a doorway cannot connect another 4x4 room.
             var alcove = new[] { new Vector2Int(0, 4), new Vector2Int(3, -1) };
 
             for (int seed = 0; seed < Seeds; seed++)
             {
-                GenerationResult result = new LayoutGenerator(seed, FlushSet(alcove)).Generate(15);
+                GenerationResult result = new LayoutGenerator(seed, SharedSet(alcove)).Generate(15);
 
                 Assert.IsTrue(result.Success, $"seed {seed}: {result}");
                 Assert.That(LayoutValidator.Validate(result.Layout), Is.Empty, $"seed {seed}");
@@ -82,7 +82,7 @@ namespace SimpleRPG.Tests.EditMode
         [Test]
         public void ClaimedCells_TurnWithTheRoom([NUnit.Framework.Range(0, 3)] int turns)
         {
-            RoomDefinition definition = FlushSet(new[] { new Vector2Int(4, 0) })[1];
+            RoomDefinition definition = SharedSet(new[] { new Vector2Int(4, 0) })[1];
             var room = new PlacedRoom(0, definition, new Vector2Int(10, 10), turns);
 
             List<Vector2Int> cells = room.Cells().ToList();
@@ -102,7 +102,7 @@ namespace SimpleRPG.Tests.EditMode
         [Test]
         public void ClaimedCellInsideTheRectangle_IsIgnored()
         {
-            RoomDefinition definition = FlushSet(new[] { new Vector2Int(1, 1) })[1];
+            RoomDefinition definition = SharedSet(new[] { new Vector2Int(1, 1) })[1];
             var room = new PlacedRoom(0, definition, Vector2Int.zero, 0);
 
             Assert.That(room.Cells().Count(), Is.EqualTo(16));

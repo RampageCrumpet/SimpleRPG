@@ -222,7 +222,7 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
-        public void ModularDungeonRooms_UseChamberEdgesForFlushDoors()
+        public void ModularDungeonRooms_UseChamberEdgesForSharedDoors()
         {
             Roomset roomset = AssetDatabase.LoadAssetAtPath<Roomset>("Assets/Prefabs/World/TileSets/ModularDungeon/ModularDungeon.asset");
             Assert.IsNotNull(roomset);
@@ -302,16 +302,16 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
-        public void FlushDoorWithoutADoorObject_IsReported()
+        public void SharedDoorWithoutADoorObject_IsReported()
         {
             RoomBlueprint room = CreateValidRoom();
             AddDoor(room, new Vector3(15, 0, 30), new Vector2Int(0, 1), 0f);
 
-            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleDoorFlushNeedsDoorObject);
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleDoorSharedNeedsDoorObject);
         }
 
         [Test]
-        public void FlushDoorWithADoorObject_IsAccepted()
+        public void SharedDoorWithADoorObject_IsAccepted()
         {
             RoomBlueprint room = CreateValidRoom();
             ConnectionBlueprint door = AddDoor(room, new Vector3(15, 0, 30), new Vector2Int(0, 1), 0f);
@@ -322,6 +322,34 @@ namespace SimpleRPG.Tests.EditMode
             door.DoorObject = leaf;
 
             Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule.StartsWith("door-")), Is.Empty);
+        }
+
+        [Test]
+        public void DoorFrameThatSpillsIntoTheSharedDoorway_IsAccepted()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+            ConnectionBlueprint door = AddDoor(room, new Vector3(15, 0, 30), new Vector2Int(0, 1), 0f);
+            GameObject frame = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            frame.transform.SetParent(door.transform, false);
+            frame.transform.position = new Vector3(15, 0, 30);
+            frame.transform.localScale = new Vector3(8, 1, 1);
+            door.DoorObject = frame;
+
+            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule.StartsWith("geometry-")), Is.Empty);
+        }
+
+        [Test]
+        public void SameMeshOutsideADoor_IsStillReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+            GameObject frame = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            frame.transform.SetParent(room.transform, false);
+            frame.transform.position = new Vector3(15, 0, 30);
+            frame.transform.localScale = new Vector3(8, 1, 1);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleGeometryOutsideFootprint);
         }
 
         [Test]

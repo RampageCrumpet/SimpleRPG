@@ -15,6 +15,20 @@ namespace SimpleRPG.LevelGeneration
         public static List<(string name, Bounds bounds)> MeshBounds(Transform root)
         {
             var result = new List<(string, Bounds)>();
+            foreach ((string name, Bounds bounds, MeshFilter filter) in MeshesWithOwners(root))
+            {
+                result.Add((name, bounds));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// <see cref="MeshBounds"/> with the mesh filter that carries each mesh, so the caller can tell what it belongs to.
+        /// </summary>
+        public static List<(string name, Bounds bounds, MeshFilter filter)> MeshesWithOwners(Transform root)
+        {
+            var result = new List<(string, Bounds, MeshFilter)>();
 
             foreach (MeshFilter filter in root.GetComponentsInChildren<MeshFilter>())
             {
@@ -45,7 +59,7 @@ namespace SimpleRPG.LevelGeneration
                     }
                 }
 
-                result.Add((filter.name, bounds));
+                result.Add((filter.name, bounds, filter));
             }
 
             return result;

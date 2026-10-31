@@ -56,7 +56,7 @@ namespace SimpleRPG.LevelGeneration
         public const string RuleClaimedCellInsideFootprint = "claimed-cell-inside-footprint";
         public const string RuleClaimedCellDetached = "claimed-cell-detached";
         public const string RulePackedClaimedCells = "packed-claimed-cells";
-        public const string RuleDoorFlushNeedsDoorObject = "door-flush-needs-door-object";
+        public const string RuleDoorSharedNeedsDoorObject = "door-shared-needs-door-object";
         public const string RuleDoorObjectOutsideRoom = "door-object-outside-room";
         public const string RuleRoomsetEmpty = "roomset-empty";
         public const string RuleRoomsetDuplicate = "roomset-duplicate";
@@ -439,17 +439,17 @@ namespace SimpleRPG.LevelGeneration
             if (lengthInCells < -LengthTolerance || Mathf.Abs(lengthInCells - Mathf.Round(lengthInCells)) > LengthTolerance)
             {
                 errors.Add(new RoomValidationError(roomName, RuleDoorLength,
-                    $"'{connection.name}' is {connection.ConnectionLength} units long, which is {lengthInCells} cells. It must be a whole number of cells; zero joins flush with the next room."));
+                    $"'{connection.name}' is {connection.ConnectionLength} units long, which is {lengthInCells} cells. It must be a whole number of cells; zero shares the doorway with the next room."));
             }
 
-            // A flush join puts two doors on the same plane. Both rooms draw their own door, so one of them has to be switched off or they z-fight.
+            // A shared doorway puts two doors on the same plane. Both rooms draw their own door, so one of them has to be switched off or they z-fight.
             if (Mathf.RoundToInt(lengthInCells) == 0)
             {
                 GameObject doorObject = connection.DoorObject;
                 if (doorObject == null)
                 {
-                    errors.Add(new RoomValidationError(roomName, RuleDoorFlushNeedsDoorObject,
-                        $"'{connection.name}' is zero cells long, so it joins flush against another room's door. Set its DoorObject so the generator can hide one of the pair."));
+                    errors.Add(new RoomValidationError(roomName, RuleDoorSharedNeedsDoorObject,
+                        $"'{connection.name}' is zero cells long, so it shares its doorway with another room's door. Set its DoorObject so the generator can hide one of the pair."));
                 }
                 else if (!doorObject.transform.IsChildOf(room.transform))
                 {
@@ -579,6 +579,43 @@ namespace SimpleRPG.LevelGeneration
         }
 
         /// <summary>
+        /// The cells in front of a door that the door's own meshes may reach into. A door stands on the line between two rooms and is drawn
+        /// across it, so its frame spills into the doorway cells of the room it joins; that is the doorway the two rooms share, not a
+        /// mistake. Only meshes under the door's own object count, so the rest of the room still has to stay home.
+        /// </summary>
+        private static HashSet<Vector2Int> DoorSpace(MeshFilter filter, RoomPlan plan, float cellSize)
+        {
+            var cells = new HashSet<Vector2Int>();
+            ConnectionBlueprint door = filter.GetComponentInParent<ConnectionBlueprint>();
+            if (door == null || !IsAxisAligned(door.transform.forward))
+            {
+                return cells;
+            }
+
+            foreach (DoorPlan planned in plan.Doors)
+            {
+                if (planned.Door != door)
+                {
+                    continue;
+                }
+
+                Side side = GridMath.FromDirection(Forward(door.transform.forward));
+                int length = Mathf.Max(0, Mathf.RoundToInt(door.ConnectionLength / cellSize));
+                int width = Mathf.Max(2, 2 * Mathf.CeilToInt(door.ConnectionWidth / cellSize / 2f));
+
+                for (int distance = 0; distance <= length; distance++)
+                {
+                    foreach (Vector2Int cell in GridMath.CellsAcross(planned.Location, side, distance, width))
+                    {
+                        cells.Add(cell);
+                    }
+                }
+            }
+
+            return cells;
+        }
+
+        /// <summary>
         /// The packed footprint is worked out from transform pivots, so nothing else ties it to what is drawn. Every mesh has to stay inside
         /// the cells the room claims: its rectangle plus any claimed cells. A mesh that enters another cell overlaps the room placed there
         /// and z-fights. The room's geometry as a whole must also reach the rectangle's edges, or it leaves a gap between rooms.
@@ -596,8 +633,9 @@ namespace SimpleRPG.LevelGeneration
             float tolerance = GeometryTolerance * cellSize;
             var claimed = new HashSet<Vector2Int>(plan.ExtraCells);
 
-            foreach ((string name, Bounds bounds) in meshes)
+            foreach ((string name, Bounds bounds, MeshFilter filter) in RoomGeometry.MeshesWithOwners(room.transform))
             {
+                HashSet<Vector2Int> sharedWithDoor = DoorSpace(filter, plan, cellSize);
                 // The range of cells the mesh reaches into, ignoring slivers within the tolerance of a cell edge.
                 (int firstX, int lastX, int firstY, int lastY) = RoomGeometry.CellRange(bounds, root, plan.OriginOffset, cellSize, tolerance);
 
@@ -607,7 +645,7 @@ namespace SimpleRPG.LevelGeneration
                     for (int y = firstY; y <= lastY && !reported; y++)
                     {
                         bool inRectangle = x >= 0 && x < plan.Size.x && y >= 0 && y < plan.Size.y;
-                        if (!inRectangle && !claimed.Contains(new Vector2Int(x, y)))
+                        if (!inRectangle && !claimed.Contains(new Vector2Int(x, y)) && !sharedWithDoor.Contains(new Vector2Int(x, y)))
                         {
                             errors.Add(new RoomValidationError(room.name, RuleGeometryOutsideFootprint,
                                 $"'{name}' reaches into cell ({x}, {y}), which the room does not claim, so it will overlap the room placed there and z-fight. Pull it back to the cell edge, or put a RoomClaimedCell in that cell if the room needs it."));
