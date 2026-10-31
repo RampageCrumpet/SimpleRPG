@@ -79,6 +79,9 @@ namespace SimpleRPG.LevelGeneration
                 KeyRoomAssigned?.Invoke(locked.KeyId, instances[locked.KeyRoom.Id]);
             }
 
+            // Rooms that share an edge each draw the same flat wall there; leave one.
+            CoincidentGeometry.HideDuplicates(instances);
+
             return instances;
         }
 

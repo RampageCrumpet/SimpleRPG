@@ -69,27 +69,57 @@ namespace SimpleRPG.LevelGeneration
                 .Select(door => new DoorPlan(door, DoorLocation(room, door, cellSize, origin)))
                 .ToList();
 
-            return new RoomPlan(origin, size, doors, ClaimedCells(room, cellSize, origin));
+            return new RoomPlan(origin, size, doors, ClaimedCells(room, cellSize, origin, size));
         }
 
         /// <summary>
-        /// The cell each <see cref="RoomClaimedCell"/> marker stands in, measured from the room's lowest corner. Cells inside the
-        /// rectangle are left in so the validator can point them out.
+        /// The cells the room's <see cref="RoomClaimedCell"/> markers claim, measured from the room's lowest corner.
+        /// A marker on an object with meshes claims every cell outside the rectangle that those meshes reach into, so an alcove wall
+        /// claims exactly what it fills. A marker with no mesh claims the cell it stands in; if that is inside the rectangle it is kept
+        /// so the validator can point it out.
         /// </summary>
-        public static List<Vector2Int> ClaimedCells(RoomBlueprint room, float cellSize, Vector2Int originOffset)
+        public static List<Vector2Int> ClaimedCells(RoomBlueprint room, float cellSize, Vector2Int originOffset, Vector2Int size)
         {
             var cells = new List<Vector2Int>();
+            Vector3 root = room.transform.position;
+
             foreach (RoomClaimedCell marker in room.GetComponentsInChildren<RoomClaimedCell>())
             {
-                Vector2 grid = GridPosition(room, marker.transform, cellSize);
-                var cell = new Vector2Int(Mathf.FloorToInt(grid.x) - originOffset.x, Mathf.FloorToInt(grid.y) - originOffset.y);
-                if (!cells.Contains(cell))
+                List<(string name, Bounds bounds)> meshes = RoomGeometry.MeshBounds(marker.transform);
+
+                if (meshes.Count == 0)
                 {
-                    cells.Add(cell);
+                    Vector2 grid = GridPosition(room, marker.transform, cellSize);
+                    AddOnce(cells, new Vector2Int(Mathf.FloorToInt(grid.x) - originOffset.x, Mathf.FloorToInt(grid.y) - originOffset.y));
+                    continue;
+                }
+
+                foreach ((string name, Bounds bounds) in meshes)
+                {
+                    (int firstX, int lastX, int firstY, int lastY) = RoomGeometry.CellRange(bounds, root, originOffset, cellSize, RoomValidator.GeometryTolerance * cellSize);
+                    for (int x = firstX; x <= lastX; x++)
+                    {
+                        for (int y = firstY; y <= lastY; y++)
+                        {
+                            bool inRectangle = x >= 0 && x < size.x && y >= 0 && y < size.y;
+                            if (!inRectangle)
+                            {
+                                AddOnce(cells, new Vector2Int(x, y));
+                            }
+                        }
+                    }
                 }
             }
 
             return cells;
+        }
+
+        private static void AddOnce(List<Vector2Int> cells, Vector2Int cell)
+        {
+            if (!cells.Contains(cell))
+            {
+                cells.Add(cell);
+            }
         }
 
         /// <summary>
