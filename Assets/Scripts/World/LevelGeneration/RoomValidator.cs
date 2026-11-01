@@ -120,6 +120,7 @@ namespace SimpleRPG.LevelGeneration
 
                 errors.AddRange(Validate(room, roomset.cellSize));
                 errors.AddRange(CheckPackedData(room, roomset.cellSize));
+                errors.AddRange(SimpleRPG.RoomGeneration.ProceduralRoomChecks.Check(room, roomset));
             }
 
             bool spansFloors = roomset.RoomCollection.Any(room => room != null

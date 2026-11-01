@@ -33,6 +33,8 @@ Only the spawner creates objects, so the server and clients reach the same `Layo
 - **Joined doors:** each room draws its own door, so when two doors join the spawner switches off the `DoorObject` of the higher-numbered room's door, whatever the door length.
 - The **passage** is the row of cells across the door for each cell of its length, plus one more row past its end. Cells in it must be empty, or belong to the room the door joins. When two doors join, any cells between the two rooms are reserved so nothing is placed in the gap.
 
+Rooms whose prefab carries a `ProceduralRoomSettings` build their own structure after the layout is final; see [Procedural room geometry](ProceduralRooms.md). The layout code is unchanged by them.
+
 ## Floors
 
 - Cells are `(x, y, floor)`. A room is `Floors` high (`RoomBlueprint.Floors`, default 1) and occupies its footprint on every one of them, so a stairwell room is 2. Floors are world height `Roomset.floorHeight` apart (8 for ModularDungeon: two wall heights, so a vaulted room fits under the floor above); the spawner puts floor `n` at `n * floorHeight` above the prefab's own height.

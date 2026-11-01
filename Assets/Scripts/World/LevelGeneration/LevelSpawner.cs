@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SimpleRPG.RoomGeneration;
 using UnityEngine;
 
 namespace SimpleRPG.LevelGeneration
@@ -14,6 +15,12 @@ namespace SimpleRPG.LevelGeneration
         private readonly IReadOnlyList<RoomBlueprint> prefabs;
         private readonly float cellSize;
         private readonly float floorHeight;
+        private readonly ProceduralRoomBuilder procedural;
+
+        /// <summary>
+        /// The rooms whose structure was generated, with how each came out, in layout order. Empty for a roomset of authored rooms.
+        /// </summary>
+        public IReadOnlyList<(PlacedRoom room, RoomGenerationResult result)> ProceduralResults => procedural.Results;
 
         /// <summary>
         /// Called with each room's root GameObject right after it is instantiated, before any other code can see it.
@@ -38,6 +45,7 @@ namespace SimpleRPG.LevelGeneration
             this.floorHeight = floorHeight;
             this.prefabs = prefabs;
             this.cellSize = cellSize;
+            procedural = new ProceduralRoomBuilder(cellSize, floorHeight);
         }
 
         /// <summary>
@@ -54,6 +62,9 @@ namespace SimpleRPG.LevelGeneration
             {
                 RoomBlueprint instance = Instantiate(room, parent);
                 instances.Add(instance);
+
+                // Only an accepted placement reaches here, so the layout search never generates geometry.
+                procedural.Build(layout, room, instance);
                 RoomInstantiated?.Invoke(instance.gameObject);
             }
 
