@@ -50,7 +50,7 @@ namespace SimpleRPG.LevelGeneration
         /// <summary>
         /// Raised whenever a change to the generator would give an existing seed a different layout.
         /// </summary>
-        public const int AlgorithmVersion = 8;
+        public const int AlgorithmVersion = 9;
 
         private const int RoomStream = 1;
         private const int DoorStream = 2;
@@ -681,60 +681,76 @@ namespace SimpleRPG.LevelGeneration
             /// <param name="replaceIndex"> Where in the room list it takes its place.</param>
             private bool TryPlaceAgainst(PlacedDoor target, RoomDefinition definition, int minimumNumberOfRooms, int replaceId = -1, int replaceIndex = -1, bool requireLoop = false)
             {
-                int[] turnOrder = TurnOrder();
-
-                foreach (int turns in turnOrder)
+                // Every door of the room that could stand against the target, in a random order, so a room with two doors on one wall
+                // does not always join through the first.
+                foreach ((DoorDefinition door, int turns) in JoiningDoors(target, definition))
                 {
-                    foreach (DoorDefinition door in definition.Doors)
+                    // The new door has to stand where the open door ends.
+                    Vector2Int position = target.Far - GridMath.RotatePoint(door.Point, turns);
+                    var candidate = new PlacedRoom(replaceId >= 0 ? replaceId : rooms.Count, definition, position, turns, target.FarFloor - door.Level);
+
+                    // Looking for a loop: skip the full check unless the room would join a second open door.
+                    if (requireLoop && candidate.Doors.Count(candidateDoor => FindOpenMate(candidateDoor) != null) < 2)
                     {
-                        if (GridMath.Rotate(door.Side, turns) != GridMath.Opposite(target.Side)
-                            || door.LengthCells != target.LengthCells
-                            || door.TypeId != target.TypeId
-                            || door.FloorDelta != -target.FloorDelta)
-                        {
-                            continue;
-                        }
-
-                        // The new door has to stand where the open door ends.
-                        Vector2Int position = target.Far - GridMath.RotatePoint(door.Point, turns);
-                        var candidate = new PlacedRoom(replaceId >= 0 ? replaceId : rooms.Count, definition, position, turns, target.FarFloor - door.Level);
-
-                        // Looking for a loop: skip the full check unless the room would join a second open door.
-                        if (requireLoop && candidate.Doors.Count(candidateDoor => FindOpenMate(candidateDoor) != null) < 2)
-                        {
-                            continue;
-                        }
-
-                        if (!Fits(candidate, out int openAfter, out int joined))
-                        {
-                            continue;
-                        }
-
-                        // A room that joins two or more open doors closes a loop. Below the natural ratio some of them are refused.
-                        if (requireLoop && joined < 2)
-                        {
-                            continue;
-                        }
-
-                        if (joined >= 2 && !requireLoop && replaceId < 0 && style.LoopRatio < LayoutStyle.Natural
-                            && loopRandom.NextDouble() >= style.LoopRatio / LayoutStyle.Natural)
-                        {
-                            continue;
-                        }
-
-                        // Before the minimum, keep at least one door open to build on. After it, only accept rooms that close more than they open.
-                        bool wanted = replaceId >= 0 || (rooms.Count < minimumNumberOfRooms ? openAfter != 0 : openAfter < openDoors.Count);
-                        if (!wanted)
-                        {
-                            continue;
-                        }
-
-                        Place(candidate, replaceIndex);
-                        return true;
+                        continue;
                     }
+
+                    if (!Fits(candidate, out int openAfter, out int joined))
+                    {
+                        continue;
+                    }
+
+                    // A room that joins two or more open doors closes a loop. Below the natural ratio some of them are refused.
+                    if (requireLoop && joined < 2)
+                    {
+                        continue;
+                    }
+
+                    if (joined >= 2 && !requireLoop && replaceId < 0 && style.LoopRatio < LayoutStyle.Natural
+                        && loopRandom.NextDouble() >= style.LoopRatio / LayoutStyle.Natural)
+                    {
+                        continue;
+                    }
+
+                    // Before the minimum, keep at least one door open to build on. After it, only accept rooms that close more than they open.
+                    bool wanted = replaceId >= 0 || (rooms.Count < minimumNumberOfRooms ? openAfter != 0 : openAfter < openDoors.Count);
+                    if (!wanted)
+                    {
+                        continue;
+                    }
+
+                    Place(candidate, replaceIndex);
+                    return true;
                 }
 
                 return false;
+            }
+
+            /// <summary>
+            /// The doors of a room that could join a target door, each with the quarter turns that make it face the target, shuffled.
+            /// A door joins at exactly one turn, so the doors, not the turns, are what is put in order.
+            /// </summary>
+            private List<(DoorDefinition door, int turns)> JoiningDoors(PlacedDoor target, RoomDefinition definition)
+            {
+                var options = new List<(DoorDefinition door, int turns)>(definition.Doors.Count);
+                Side facing = GridMath.Opposite(target.Side);
+
+                foreach (DoorDefinition door in definition.Doors)
+                {
+                    if (door.LengthCells == target.LengthCells && door.TypeId == target.TypeId && door.FloorDelta == -target.FloorDelta)
+                    {
+                        options.Add((door, ((int)facing - (int)door.Side + 4) & 3));
+                    }
+                }
+
+                // Fisher-Yates, drawing from the turn stream.
+                for (int i = options.Count - 1; i > 0; i--)
+                {
+                    int j = turnRandom.Next(i + 1);
+                    (options[i], options[j]) = (options[j], options[i]);
+                }
+
+                return options;
             }
 
             /// <summary>
@@ -943,27 +959,6 @@ namespace SimpleRPG.LevelGeneration
 
                     facing.Add(door);
                 }
-            }
-
-            /// <summary>
-            /// The four turns in a random order. Draws one number per turn and sorts by it, the same as ordering by a random key.
-            /// </summary>
-            private int[] TurnOrder()
-            {
-                int[] order = { 0, 1, 2, 3 };
-                int[] keys = { turnRandom.Next(), turnRandom.Next(), turnRandom.Next(), turnRandom.Next() };
-
-                // Insertion sort is stable, matching OrderBy, so equal keys keep their turn order.
-                for (int i = 1; i < 4; i++)
-                {
-                    for (int j = i; j > 0 && keys[j - 1] > keys[j]; j--)
-                    {
-                        (keys[j - 1], keys[j]) = (keys[j], keys[j - 1]);
-                        (order[j - 1], order[j]) = (order[j], order[j - 1]);
-                    }
-                }
-
-                return order;
             }
         }
     }
