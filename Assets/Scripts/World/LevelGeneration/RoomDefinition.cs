@@ -89,7 +89,7 @@ namespace SimpleRPG.LevelGeneration
     public sealed class RoomDefinition
     {
         public RoomDefinition(int index, string name, Vector2Int size, Vector2Int originOffset, IReadOnlyList<DoorDefinition> doors,
-            float weight = 1f, int maxCount = 0, RoomRole role = RoomRole.None, int height = 1, int minCount = 0)
+            float weight = 1f, int maxCount = 0, RoomRole role = RoomRole.None, int height = 1, int minCount = 0, IReadOnlyList<Vector2Int> extraCells = null)
         {
             Index = index;
             Name = name;
@@ -101,7 +101,13 @@ namespace SimpleRPG.LevelGeneration
             MinCount = Math.Max(0, minCount);
             Role = role;
             Height = Math.Max(1, height);
+            ExtraCells = extraCells ?? new Vector2Int[0];
         }
+
+        /// <summary>
+        /// Cells the room claims beyond its rectangle (alcoves), measured from the room's lowest corner like door points. Each is a cell index.
+        /// </summary>
+        public IReadOnlyList<Vector2Int> ExtraCells { get; }
 
         /// <summary>
         /// How many floors high the room is. Every cell of its footprint is occupied on each of them.

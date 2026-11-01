@@ -26,7 +26,11 @@ Only the spawner creates objects, so the server and clients reach the same `Layo
 - Everything is in whole cells. Rotation is a quarter turn (`GridMath`), exact integer maths; turns match `Quaternion.Euler(0, 90 * turns, 0)`.
 - A room's `Size` and its door locations are measured from its **lowest corner**. `OriginOffset` is where that corner sits relative to the prefab root (never positive).
 - A door stands on a **grid point** (a cell corner), centred on the line between cells, so it covers an **even** number of cells across (`WidthCells`, at least 2).
-- A door is `LengthCells` long. It joins the door standing at `Far` (point + direction × length) that faces back, has the same length and the same type.
+- A door is `LengthCells` long, which may be **zero**. It joins the door standing at `Far` (point + direction × length) that faces back, has the same length and the same type.
+- A **shared join** (length 0) puts the two rooms edge to edge with no corridor between. The doors stand on the same line, so both rooms draw a door in the same place; the spawner switches off the `DoorObject` of the higher-numbered room so the pair is drawn once. A zero-length door must name its `DoorObject` (`door-shared-needs-door-object`), and its point must sit on the room's edge (a door that opens onto its own footprint is rejected as before).
+- A room can **claim cells beyond its rectangle**, for alcoves that stick out through a wall: put a `RoomClaimedCell` marker anywhere in each such cell. The packer stores them as `RoomBlueprint.ExtraCells` (from the lowest corner, like door points), they turn with the room, and no other room may stand in them. A marker on an object with meshes (an alcove wall piece) claims every cell outside the rectangle that those meshes reach into; a marker with no mesh claims the cell it stands in. Markers do not count towards the room's size. A claimed cell must lie outside the rectangle and touch it or another claimed cell.
+- **Coincident pieces:** the wall pieces are zero-thickness planes two cells wide standing on the grid line, so rooms that share an edge each put one there, and rooms of different sizes meet them at odd offsets so they overlap only in part. After spawning, `CoincidentGeometry` (1) switches off the renderer of any solid, double-sided piece whose bounds match one in an earlier room (trims, pillars; colliders stay) and (2) moves every flat double-sided plane that overlaps a plane of another room 0.01 units into its own room, so from either side the room's own wall is the nearer one. Single-sided pieces are left alone, since they cannot fight and hiding one would leave a hole.
+- **Joined doors:** each room draws its own door, so when two doors join the spawner switches off the `DoorObject` of the higher-numbered room's door, whatever the door length.
 - The **passage** is the row of cells across the door for each cell of its length, plus one more row past its end. Cells in it must be empty, or belong to the room the door joins. When two doors join, any cells between the two rooms are reserved so nothing is placed in the gap.
 
 ## Floors
@@ -40,8 +44,11 @@ Only the spawner creates objects, so the server and clients reach the same `Layo
 
 ## Generation rules
 
-- Rooms are added freely until `MinimumNumberOfRooms`. After that only rooms that close more doors than they open are accepted, and the dungeon stops growing at `MaximumNumberOfRooms` (default: twice the minimum, at least four more).
-- A door no room fits after enough tries is sealed with its `SealingObject`. Sealing is normal, not a failure.
+- Rooms are added freely until `MinimumNumberOfRooms`. After that only rooms that close more doors than they open are accepted, and the dungeon stops growing at `MaximumNumberOfRooms` (default: the minimum plus a tenth of it, at least two more).
+- `LayoutStyle` shapes the result: `LoopRatio` (above 0.5 the generator hunts for rooms that join two open doors, below it some are refused), `Branching` (favours junctions or corridors) and `LockedDoors` (locks on bridges, each with its key in a room the player can reach first; placement is checked by `LockSolver`, with bridges found in one pass by `LockSolver.BridgeCuts`).
+- `RoomRole.Exit` rooms are swapped in for the dead end farthest from the start. `MinCount` makes a room mandatory.
+- A door that no placeable room has a mate for (type, length, climb) is sealed as soon as it is picked rather than after repeated misses.
+- A door no room fits after enough tries is sealed with its `SealingObject`. Sealing is normal, not a failure. The cells in front of a sealed door are reserved from then on, because the door's frame reaches into them and a room placed there later would stand inside it.
 - If an attempt cannot reach the minimum or fails validation, another attempt runs from a seed derived from `(Seed, attempt)`. All machines run the same sequence.
 - Room choice (`IRoomSelector`): weights, per-room `MaxCount`, a `Start` role that is used only to begin, a bias toward dead ends once the minimum is reached, and only rooms with a door that can join the target.
 - Doors only join doors of the same `ConnectionType` (no type = standard door).
@@ -50,7 +57,7 @@ Only the spawner creates objects, so the server and clients reach the same `Layo
 ## Authoring and tooling
 
 - Select a **Roomset** asset: **Validate Roomset** checks every room and the set as a whole; **Package Rooms** packs all rooms or none.
-- Room rules (`RoomValidator`): doors on the grid, axis-aligned, not opening into their own room, no duplicates, a `SealingObject` that belongs to the room and starts inactive, whole-cell door length, positive width, identity root transform, no stray pivots outside the geometry, packed data up to date.
+- Room rules (`RoomValidator`): every mesh within the cells the room claims (a mesh in another cell overlaps the room placed there and z-fights) and the geometry as a whole reaching the rectangle's edges within `GeometryTolerance` (0.02 cells; short of it leaves a gap), doors within `GridTolerance` (0.02 cells) of the grid, axis-aligned, not opening into their own room, no duplicates, a `SealingObject` that belongs to the room and starts inactive, whole-cell door length, positive width, identity root transform, no stray pivots outside the geometry, packed data up to date.
 - Roomset rules: not empty, no duplicates, no room without doors, a placeable dead end, something placeable besides start rooms, one length per door type, unique type names.
 - Rooms in a roomset are re-packed automatically when their prefab changes and the packed data is stale (**Tools > Rooms > Auto-pack changed rooms** to switch off). Selecting a room in the scene shows its footprint, door points, reach and the cells past each door.
 - Builds fail if a roomset the build scenes depend on has problems (`RoomsetBuildGate`). Run the same check from the command line:
@@ -60,9 +67,12 @@ Only the spawner creates objects, so the server and clients reach the same `Layo
 
 `Assets/Tests/EditMode`: `GridMathTests`, `LayoutGeneratorTests` (hand-built and real roomset sweeps, spawner geometry), `LayoutValidatorTests`, `FloorTests` (multi-floor, synthetic and real prefabs), `PassageTests`, `ConnectionTypeTests`, `RoomSelectionTests`, `LayoutFingerprintTests`, `RoomValidatorTests`, `RoomPackerTests`, `RoomsetBuildGateTests`.
 
+`SeamTests` spawns dungeons from the real `ModularDungeon` roomset and checks what a player would see where rooms meet: flat or solid pieces of different rooms drawn in the same place, joined doors that do not line up or both draw a door, and sealed doors with a room standing in their frame. Run it whenever a room's art or doors change. `LayoutPerformanceTests` logs generation times.
+
 ## Not done yet
 
 - A vertical `ConnectionType` asset and a ladder/shaft room are supported and tested with synthetic rooms but not yet authored; the only real vertical room is `Room_Stairwell`.
 - Nothing makes a multi-floor dungeon *use* its lower floors; they are reached when the dice pick a stairwell.
-- Exit and boss room roles.
+- A boss room role.
+- The existing rooms still use connecting corridors (door length above zero) to keep the purchased double-sided door meshes apart. Rooms authored for shared joins need a `DoorObject` on each door and their geometry within their claimed cells; re-author and re-pack them to drop the corridors.
 - Legacy `Dungeon` and `TestDungeon` roomsets still contain unpacked rooms; they are not referenced by a build scene, so the build gate ignores them.

@@ -34,14 +34,14 @@ namespace SimpleRPG.LevelGeneration
             {
                 // The packed location is the grid point the door stands on, measured from the room's lowest corner.
                 Side side = GridMath.FromDirection(connection.Forward);
-                int length = Mathf.Max(1, Mathf.RoundToInt(connection.ConnectionLength / cellSize));
+                int length = Mathf.Max(0, Mathf.RoundToInt(connection.ConnectionLength / cellSize));
                 // Doors are centred on a grid line, so they cover an even number of cells; narrower than two cells still covers the pair either side.
                 int width = Mathf.Max(2, 2 * Mathf.CeilToInt(connection.ConnectionWidth / cellSize / 2f));
 
                 doors.Add(new DoorDefinition(doors.Count, connection.location, side, length, width, ConnectionType.IdFor(connection.Type), connection.Level, connection.FloorDelta));
             }
 
-            return new RoomDefinition(index, room.name, room.Size, room.OriginOffset, doors, room.SelectionWeight, room.MaxCount, room.Role, room.Floors, room.MinCount);
+            return new RoomDefinition(index, room.name, room.Size, room.OriginOffset, doors, room.SelectionWeight, room.MaxCount, room.Role, room.Floors, room.MinCount, room.ExtraCells.ToList());
         }
     }
 }

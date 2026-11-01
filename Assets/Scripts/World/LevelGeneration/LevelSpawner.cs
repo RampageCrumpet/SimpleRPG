@@ -62,6 +62,12 @@ namespace SimpleRPG.LevelGeneration
                 Seal(door, instances[door.Room.Id]);
             }
 
+            // Each room draws its own door, so a joined pair is drawn twice: the lower-numbered room's door draws it and the other is switched off.
+            foreach ((PlacedDoor first, PlacedDoor second) in LockSolver.Joins(layout.Rooms, layout.SealedDoors))
+            {
+                HideDoor(second, instances[second.Room.Id]);
+            }
+
             foreach (LockedDoor locked in layout.Locks)
             {
                 Lock(locked.Door, instances[locked.Door.Room.Id]);
@@ -70,7 +76,20 @@ namespace SimpleRPG.LevelGeneration
                 KeyRoomAssigned?.Invoke(locked.KeyId, instances[locked.KeyRoom.Id]);
             }
 
+            // Rooms that share an edge each draw the same flat wall there; keep them from fighting.
+            CoincidentGeometry.HideDuplicates(instances);
+            CoincidentGeometry.SeparateOverlappingPlanes(instances);
+
             return instances;
+        }
+
+        private static void HideDoor(PlacedDoor door, RoomBlueprint instance)
+        {
+            ConnectionBlueprint connection = instance.Connections.ElementAtOrDefault(door.Index);
+            if (connection == null || !connection.TryHideDoor())
+            {
+                Debug.LogWarning($"{door} is joined but '{instance.name}' has no door object for door {door.Index}, so both doors of the pair will be drawn.", instance);
+            }
         }
 
         private static void Lock(PlacedDoor door, RoomBlueprint instance)

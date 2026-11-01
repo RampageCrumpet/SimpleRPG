@@ -53,6 +53,12 @@ namespace SimpleRPG.EditorTools
             Vector3 center = footprintMin + new Vector3(plan.Size.x, 0, plan.Size.y) * cellSize * 0.5f;
             Gizmos.DrawWireCube(center, new Vector3(plan.Size.x * cellSize, 0.1f, plan.Size.y * cellSize));
 
+            foreach (Vector2Int cell in plan.ExtraCells)
+            {
+                Vector3 cellCenter = footprintMin + new Vector3(cell.x + 0.5f, 0, cell.y + 0.5f) * cellSize;
+                Gizmos.DrawWireCube(cellCenter, new Vector3(cellSize, 0.1f, cellSize));
+            }
+
             foreach (DoorPlan door in plan.Doors)
             {
                 DrawDoor(door, footprintMin, cellSize);
@@ -63,7 +69,7 @@ namespace SimpleRPG.EditorTools
         {
             ConnectionBlueprint connection = door.Door;
             Side side = GridMath.FromDirection(connection.Forward);
-            int length = Mathf.Max(1, Mathf.RoundToInt(connection.ConnectionLength / cellSize));
+            int length = Mathf.Max(0, Mathf.RoundToInt(connection.ConnectionLength / cellSize));
             Vector3 point = footprintMin + new Vector3(door.Location.x, 0, door.Location.y) * cellSize;
             Vector2Int direction = GridMath.Direction(side);
             Vector3 along = new Vector3(direction.x, 0, direction.y);

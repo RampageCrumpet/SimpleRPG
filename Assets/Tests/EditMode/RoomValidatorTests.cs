@@ -56,12 +56,55 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
-        public void DoorOffGrid_AllowsAuthoredPillarOffset()
+        public void DoorOffGrid_AllowsModellingNoise()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddDoor(room, new Vector3(15.05f, 0, 20), new Vector2Int(0, 1));
+
+            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule == RoomValidator.RuleDoorOffGrid), Is.Empty);
+        }
+
+        [Test]
+        public void DoorAPillarWidthOffGrid_IsReported()
         {
             RoomBlueprint room = CreateValidRoom();
             AddDoor(room, new Vector3(15.5f, 0, 20), new Vector2Int(0, 1));
 
-            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule == RoomValidator.RuleDoorOffGrid), Is.Empty);
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleDoorOffGrid);
+        }
+
+        [Test]
+        public void GeometryThatFillsTheFootprint_IsAccepted()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+
+            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule.StartsWith("geometry-")), Is.Empty);
+        }
+
+        [Test]
+        public void GeometryPastTheFootprint_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+            GameObject trim = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            trim.transform.SetParent(room.transform, false);
+            trim.transform.position = new Vector3(31f, 0, 15);
+            trim.transform.localScale = new Vector3(2, 1, 30);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleGeometryOutsideFootprint);
+        }
+
+        [Test]
+        public void GeometryShortOfTheFootprint_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            floor.transform.SetParent(room.transform, false);
+            floor.transform.position = new Vector3(14.5f, 0, 15);
+            floor.transform.localScale = new Vector3(29, 1, 30);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleGeometryShortOfFootprint);
         }
 
         [Test]
@@ -179,6 +222,21 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
+        public void ModularDungeonRooms_UseChamberEdgesForSharedDoors()
+        {
+            Roomset roomset = AssetDatabase.LoadAssetAtPath<Roomset>("Assets/Prefabs/World/TileSets/ModularDungeon/ModularDungeon.asset");
+            Assert.IsNotNull(roomset);
+            RoomBlueprint crossroads = roomset.RoomCollection.Single(room => room.name == "Room_Crossroads");
+            Assert.That(crossroads.Size, Is.EqualTo(new Vector2Int(6, 6)), "The crossroads footprint must stop at the chamber walls.");
+
+            foreach (RoomBlueprint room in roomset.RoomCollection)
+            {
+                Assert.That(room.transform.Cast<Transform>().Any(child => child.name == "Connection" || child.name.StartsWith("Connection (")), Is.False, room.name);
+                Assert.That(room.Connections.All(door => door.ConnectionLength == 0 && door.DoorObject != null), Is.True, room.name);
+            }
+        }
+
+        [Test]
         public void ModularDungeonDoors_AllHaveALockObject()
         {
             Roomset roomset = AssetDatabase.LoadAssetAtPath<Roomset>("Assets/Prefabs/World/TileSets/ModularDungeon/ModularDungeon.asset");
@@ -234,13 +292,152 @@ namespace SimpleRPG.Tests.EditMode
 
         [TestCase(12f)]
         [TestCase(2f)]
-        [TestCase(0f)]
+        [TestCase(-5f)]
         public void DoorLengthNotAWholeNumberOfCells_IsReported(float length)
         {
             RoomBlueprint room = CreateValidRoom();
             AddDoor(room, new Vector3(15.5f, 0, 20), new Vector2Int(0, 1), length);
 
             AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleDoorLength);
+        }
+
+        [Test]
+        public void SharedDoorWithoutADoorObject_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddDoor(room, new Vector3(15, 0, 30), new Vector2Int(0, 1), 0f);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleDoorSharedNeedsDoorObject);
+        }
+
+        [Test]
+        public void SharedDoorWithADoorObject_IsAccepted()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            ConnectionBlueprint door = AddDoor(room, new Vector3(15, 0, 30), new Vector2Int(0, 1), 0f);
+            GameObject leaf = new GameObject("DoorLeaf");
+            leaf.transform.SetParent(room.transform, false);
+            leaf.transform.position = door.transform.position;
+            spawned.Add(leaf);
+            door.DoorObject = leaf;
+
+            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule.StartsWith("door-")), Is.Empty);
+        }
+
+        [Test]
+        public void DoorFrameThatSpillsIntoTheSharedDoorway_IsAccepted()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+            ConnectionBlueprint door = AddDoor(room, new Vector3(15, 0, 30), new Vector2Int(0, 1), 0f);
+            GameObject frame = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            frame.transform.SetParent(door.transform, false);
+            frame.transform.position = new Vector3(15, 0, 30);
+            frame.transform.localScale = new Vector3(8, 1, 1);
+            door.DoorObject = frame;
+
+            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule.StartsWith("geometry-")), Is.Empty);
+        }
+
+        [Test]
+        public void SameMeshOutsideADoor_IsStillReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+            GameObject frame = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            frame.transform.SetParent(room.transform, false);
+            frame.transform.position = new Vector3(15, 0, 30);
+            frame.transform.localScale = new Vector3(8, 1, 1);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleGeometryOutsideFootprint);
+        }
+
+        [Test]
+        public void ClaimedCellOutsideTheRectangle_IsPlannedAndAccepted()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+            AddClaimedCell(room, new Vector3(32.5f, 0, 2.5f));
+
+            RoomPlan plan = RoomPlanner.Plan(room, CellSize);
+
+            Assert.That(plan.ExtraCells, Is.EqualTo(new[] { new Vector2Int(6, 0) }));
+            Assert.That(plan.Size, Is.EqualTo(new Vector2Int(6, 6)), "A marker must not stretch the room.");
+            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule.StartsWith("claimed-")), Is.Empty);
+        }
+
+        [Test]
+        public void MarkerOnAnAlcoveWall_ClaimsEveryCellTheWallFills()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+
+            // A wall 2 cells wide and a little over half a cell deep, standing on the east edge.
+            GameObject alcove = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            alcove.transform.SetParent(room.transform, false);
+            alcove.transform.position = new Vector3(31.375f, 0, 5f);
+            alcove.transform.localScale = new Vector3(2.75f, 1, 10f);
+            alcove.AddComponent<RoomClaimedCell>();
+
+            RoomPlan plan = RoomPlanner.Plan(room, CellSize);
+
+            Assert.That(plan.Size, Is.EqualTo(new Vector2Int(6, 6)), "The marked wall's own pivot must not stretch the room.");
+            Assert.That(plan.ExtraCells, Is.EquivalentTo(new[] { new Vector2Int(6, 0), new Vector2Int(6, 1) }));
+            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule.StartsWith("geometry-") || error.Rule.StartsWith("claimed-")), Is.Empty);
+        }
+
+        [Test]
+        public void GeometryInAClaimedCell_IsAccepted()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+            GameObject alcove = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            alcove.transform.SetParent(room.transform, false);
+            alcove.transform.position = new Vector3(32.5f, 0, 2.5f);
+            alcove.transform.localScale = new Vector3(5, 1, 5);
+            AddClaimedCell(room, new Vector3(32.5f, 0, 2.5f));
+
+            Assert.That(RoomValidator.Validate(room, CellSize).Where(error => error.Rule.StartsWith("geometry-")), Is.Empty);
+        }
+
+        [Test]
+        public void GeometryInAnUnclaimedCell_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddFloor(room);
+            GameObject alcove = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            alcove.transform.SetParent(room.transform, false);
+            alcove.transform.position = new Vector3(32.5f, 0, 2.5f);
+            alcove.transform.localScale = new Vector3(5, 1, 5);
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleGeometryOutsideFootprint);
+        }
+
+        [Test]
+        public void ClaimedCellInsideTheRectangle_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddClaimedCell(room, new Vector3(12.5f, 0, 12.5f));
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleClaimedCellInsideFootprint);
+        }
+
+        [Test]
+        public void ClaimedCellAwayFromTheRoom_IsReported()
+        {
+            RoomBlueprint room = CreateValidRoom();
+            AddClaimedCell(room, new Vector3(42.5f, 0, 2.5f));
+
+            AssertRule(RoomValidator.Validate(room, CellSize), RoomValidator.RuleClaimedCellDetached);
+        }
+
+        private void AddClaimedCell(RoomBlueprint room, Vector3 position)
+        {
+            GameObject marker = new GameObject("Claim");
+            marker.transform.SetParent(room.transform, false);
+            marker.transform.position = position;
+            marker.AddComponent<RoomClaimedCell>();
+            spawned.Add(marker);
         }
 
         [Test]

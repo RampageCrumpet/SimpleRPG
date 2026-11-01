@@ -75,6 +75,103 @@ namespace SimpleRPG.LevelGeneration
         }
 
         /// <summary>
+        /// Which joins are bridges (the only way between two parts of the dungeon) and which rooms each one cuts off from the first room,
+        /// found in one pass instead of one walk per join.
+        /// </summary>
+        public sealed class BridgeCuts
+        {
+            private readonly Dictionary<PlacedRoom, int> entered = new Dictionary<PlacedRoom, int>();
+            private readonly Dictionary<(PlacedDoor a, PlacedDoor b), (int first, int last)> cutOff = new Dictionary<(PlacedDoor, PlacedDoor), (int, int)>();
+
+            public BridgeCuts(IReadOnlyList<PlacedRoom> rooms, IReadOnlyList<(PlacedDoor a, PlacedDoor b)> joins)
+            {
+                if (rooms.Count == 0)
+                {
+                    return;
+                }
+
+                // Edges are numbered, so two joins between the same pair of rooms are told apart and neither is a bridge.
+                var links = new Dictionary<PlacedRoom, List<(int edge, PlacedRoom other)>>();
+                foreach (PlacedRoom room in rooms)
+                {
+                    links[room] = new List<(int, PlacedRoom)>();
+                }
+
+                for (int edge = 0; edge < joins.Count; edge++)
+                {
+                    links[joins[edge].a.Room].Add((edge, joins[edge].b.Room));
+                    links[joins[edge].b.Room].Add((edge, joins[edge].a.Room));
+                }
+
+                var low = new Dictionary<PlacedRoom, int>();
+                var last = new Dictionary<PlacedRoom, int>();
+                int timer = 0;
+
+                // Depth-first walk from the first room. A join is a bridge when nothing below it links back above it.
+                // Iterative, so a long corridor of rooms cannot overflow the stack.
+                var stack = new Stack<(PlacedRoom room, int parentEdge, int next)>();
+                entered[rooms[0]] = low[rooms[0]] = timer++;
+                stack.Push((rooms[0], -1, 0));
+
+                while (stack.Count > 0)
+                {
+                    (PlacedRoom room, int parentEdge, int next) = stack.Pop();
+                    List<(int edge, PlacedRoom other)> edges = links[room];
+
+                    if (next < edges.Count)
+                    {
+                        stack.Push((room, parentEdge, next + 1));
+                        (int edge, PlacedRoom other) = edges[next];
+
+                        if (edge == parentEdge)
+                        {
+                            continue;
+                        }
+
+                        if (entered.TryGetValue(other, out int seen))
+                        {
+                            low[room] = System.Math.Min(low[room], seen);
+                        }
+                        else
+                        {
+                            entered[other] = low[other] = timer++;
+                            stack.Push((other, edge, 0));
+                        }
+
+                        continue;
+                    }
+
+                    // Finished with this room: everything entered since it was entered lies below it.
+                    last[room] = timer - 1;
+
+                    if (stack.Count > 0)
+                    {
+                        PlacedRoom parent = stack.Peek().room;
+                        low[parent] = System.Math.Min(low[parent], low[room]);
+
+                        if (low[room] > entered[parent])
+                        {
+                            cutOff[joins[parentEdge]] = (entered[room], last[room]);
+                        }
+                    }
+                }
+            }
+
+            /// <summary>
+            /// True if removing the join would cut part of the dungeon off from the first room.
+            /// </summary>
+            public bool IsBridge((PlacedDoor a, PlacedDoor b) join) => cutOff.ContainsKey(join);
+
+            /// <summary>
+            /// True if the join is a bridge and the room is on the side of it away from the first room.
+            /// </summary>
+            public bool IsCutOff((PlacedDoor a, PlacedDoor b) join, PlacedRoom room)
+            {
+                return cutOff.TryGetValue(join, out (int first, int last) range) && entered.TryGetValue(room, out int time) && time >= range.first && time <= range.last;
+            }
+        }
+
+        /// <summary>
         /// The rooms reachable from the first room along joins, ignoring locks, optionally without crossing one join.
         /// </summary>
         public static HashSet<PlacedRoom> Connected(IReadOnlyList<PlacedRoom> rooms, IReadOnlyList<(PlacedDoor a, PlacedDoor b)> joins, (PlacedDoor a, PlacedDoor b)? skip = null)

@@ -170,6 +170,7 @@ namespace SimpleRPG.EditorTools
             room.gameObject.transform.position = Vector3.zero;
             room.OriginOffset = plan.OriginOffset;
             room.Size = plan.Size;
+            room.ExtraCells = plan.ExtraCells.ToList();
 
             room.SetConnections(plan.Doors.Select(door => door.Door));
 
