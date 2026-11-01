@@ -50,6 +50,7 @@ Only the spawner creates objects, so the server and clients reach the same `Layo
 - A door that no placeable room has a mate for (type, length, climb) is sealed as soon as it is picked rather than after repeated misses.
 - A door no room fits after enough tries is sealed with its `SealingObject`. Sealing is normal, not a failure. The cells in front of a sealed door are reserved from then on, because the door's frame reaches into them and a room placed there later would stand inside it.
 - If an attempt cannot reach the minimum or fails validation, another attempt runs from a seed derived from `(Seed, attempt)`. All machines run the same sequence.
+- Which door of a chosen room stands against an open door is also random: every door that matches (same type, length and climb) is tried in a shuffled order, so a room with two doors on one wall joins through either, not always the first.
 - Room choice (`IRoomSelector`): weights, per-room `MaxCount`, a `Start` role that is used only to begin, a bias toward dead ends once the minimum is reached, and only rooms with a door that can join the target.
 - Doors only join doors of the same `ConnectionType` (no type = standard door).
 - Randomness comes from three independent streams (rooms, doors, turns). Layouts are stable for a given `LayoutGenerator.AlgorithmVersion`; raise it whenever a change would give an existing seed a different layout. The version is part of the roomset fingerprint, so a client on different rules refuses to generate instead of building a different dungeon.

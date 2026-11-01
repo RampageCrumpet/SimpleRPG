@@ -80,6 +80,27 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
+        public void RoomWithTwoDoorsOnOneWall_JoinsThroughEitherOne()
+        {
+            var definitions = new List<RoomDefinition>
+            {
+                new RoomDefinition(0, "Start", new Vector2Int(4, 4), Vector2Int.zero, new List<DoorDefinition> { East(0) }, role: RoomRole.Start),
+                Room(1, "TwoOnTheWest", null, new DoorDefinition(0, new Vector2Int(0, 1), Side.West, 0), new DoorDefinition(1, new Vector2Int(0, 3), Side.West, 0)),
+            };
+
+            var joinedThrough = new int[2];
+            for (int seed = 0; seed < Seeds; seed++)
+            {
+                Layout layout = new LayoutGenerator(seed, definitions).Generate(2, 2).Layout;
+                PlacedRoom second = layout.Rooms[1];
+                joinedThrough[second.Doors.Single(door => !layout.SealedDoors.Contains(door)).Index]++;
+            }
+
+            Assert.That(joinedThrough[0], Is.GreaterThan(Seeds / 5), "The first door should be used about half the time.");
+            Assert.That(joinedThrough[1], Is.GreaterThan(Seeds / 5), "The second door should be used about half the time, not never.");
+        }
+
+        [Test]
         public void ClaimedCells_TurnWithTheRoom([NUnit.Framework.Range(0, 3)] int turns)
         {
             RoomDefinition definition = SharedSet(new[] { new Vector2Int(4, 0) })[1];
