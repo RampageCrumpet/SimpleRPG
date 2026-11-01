@@ -271,6 +271,29 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
+        public void Validator_NeverAcceptsAGapNarrowerThanTheMinimumPassage_AtAnyResolutionOrAlignment()
+        {
+            // A partition leaves a gap beside the south wall. Whatever the raster step and however the partition is shifted off the raster,
+            // a gap under the 1200 mm minimum must be refused: rounding may only ever make the check stricter.
+            foreach (int step in new[] { 50, 100, 250, 500 })
+            {
+                for (int shift = 0; shift < 100; shift += 21)
+                {
+                    for (int gap = 1000; gap <= 1700; gap += 37)
+                    {
+                        var settings = new RoomGenerationSettings { ValidationResolutionMm = step };
+                        RoomGenerationContext context = Context(8, 6, 1, null, 1, settings, Door(0, 0, 3, Side.West), Door(1, 8, 3, Side.East));
+                        GeneratedRoom room = new ChamberGenerator().Generate(context);
+                        room.Walls.Add(new WallSegment(new RectMm(7850 + shift, 300 + gap + shift, 8150 + shift, 11700), 0, 4000, WallKind.Partition));
+
+                        bool accepted = RoomPlanValidator.Validate(room, context).IsValid;
+                        Assert.IsFalse(accepted && gap + shift < 1200, $"accepted a {gap + shift} mm gap at raster step {step}");
+                    }
+                }
+            }
+        }
+
+        [Test]
         public void Validator_CatchesMovedOpening_AndOutOfBounds()
         {
             RoomGenerationContext context = TwoDoors(6, 6, 1);

@@ -59,6 +59,20 @@ namespace SimpleRPG.RoomGeneration
     /// tested on the same resolved pieces that are meshed, and reachability is tested by moving a square of the minimum passage width through
     /// a raster of the walkable floor, including up and down the stairs.
     /// </summary>
+    /// <remarks>
+    /// How the raster stays conservative (it may refuse a room that is really fine, never accept one that is not):
+    /// <list type="bullet">
+    /// <item>Resolution is <see cref="RoomGenerationSettings.ValidationResolutionMm"/>, fixed by the settings and not derived from the plan.</item>
+    /// <item>The walker is a square of n cells, n = ceil(MinPassageWidthMm / step), so its side is never under the minimum passage.</item>
+    /// <item>A cell is walkable only if a floor of the level covers all of it. A cell touched at all by any solid that reaches into the clearance
+    /// height above the floor is blocked, however thin the wall or small the overlap. Both roundings shrink the free space.</item>
+    /// <item>The walker moves in whole cells along the axes, so a diagonal squeeze is never counted as a passage.</item>
+    /// <item>Stairs are links between a square just before the first step and a square just past the last, so both must be free; the steps themselves
+    /// are checked from the plan's numbers (riser, tread, width, landings, continuity, headroom).</item>
+    /// </list>
+    /// Dimensions that are multiples of the step are checked exactly; others only ever make the check stricter. A coarse step can therefore
+    /// refuse a tight but valid room (a step above the minimum passage rounds the walker up to a larger square).
+    /// </remarks>
     public static class RoomPlanValidator
     {
         public const string GenerationFailed = "generation-failed";
