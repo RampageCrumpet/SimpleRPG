@@ -121,6 +121,14 @@ namespace SimpleRPG.LevelGeneration
         }
 
         /// <summary>
+        /// The shortest time between two answers to the same client's request for the level. A client that needs a retry (a lost message)
+        /// still gets one a moment later.
+        /// </summary>
+        private const float LevelRequestCooldownSeconds = 2f;
+
+        private readonly Dictionary<ulong, float> lastLevelRequestAnswered = new Dictionary<ulong, float>();
+
+        /// <summary>
         /// Called by a client that spawned after the level was generated, to receive the parameters it missed.
         /// </summary>
         [Rpc(SendTo.Server)]
@@ -132,6 +140,15 @@ namespace SimpleRPG.LevelGeneration
                 return;
             }
 
+            // A client needs the parameters once. Answering every request would let one client keep the server sending them.
+            ulong sender = rpcParams.Receive.SenderClientId;
+            float now = Time.unscaledTime;
+            if (lastLevelRequestAnswered.TryGetValue(sender, out float answeredAt) && now - answeredAt < LevelRequestCooldownSeconds)
+            {
+                return;
+            }
+
+            lastLevelRequestAnswered[sender] = now;
             GenerateLevelRpc(generatedParameters, RpcTarget.Single(rpcParams.Receive.SenderClientId, RpcTargetUse.Temp));
         }
 

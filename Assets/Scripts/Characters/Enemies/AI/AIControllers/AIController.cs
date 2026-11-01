@@ -20,8 +20,11 @@ namespace SimpleRPG.AI
         [Min(0.1f)] public float AttackRange = 1.5f;
         [Min(0f), Tooltip("Seconds between sensing sweeps while the current target stays valid or there is none. A lost target forces an immediate sweep. 0 senses on every call.")]
         public float SenseInterval = 0.2f;
+        [Min(0f), Tooltip("An enemy with no target does nothing while every living player is further away than this many metres, so a big dungeon only pays for the rooms people are in. 0 keeps it always active.")]
+        public float WakeDistance = 40f;
         public Character Target { get; private set; }
         public bool IsDead { get; private set; }
+        private bool wasAsleep;
 
         protected virtual void Start()
         {
@@ -44,7 +47,17 @@ namespace SimpleRPG.AI
         {
             if (!IsServer || AIStateMachine == null || IsDead) return;
             if (!Character.IsAlive) { Die(); return; }
+            if (!ShouldThink()) return;
             AIStateMachine.Update();
+        }
+
+        // An enemy still after a target keeps going wherever it leads; one with none stands down while no player is near.
+        private bool ShouldThink()
+        {
+            bool awake = WakeDistance <= 0f || (Target != null && Target.IsAlive) || PlayerProximity.AnyWithin(NetworkManager, transform.position, WakeDistance);
+            if (!awake && !wasAsleep) StopMoving();
+            wasAsleep = !awake;
+            return awake;
         }
 
         public override void OnNetworkDespawn()

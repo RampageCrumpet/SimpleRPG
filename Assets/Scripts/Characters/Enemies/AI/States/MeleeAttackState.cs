@@ -1,5 +1,4 @@
 using SimpleRPG.Abilities;
-using System.Linq;
 
 namespace SimpleRPG.AI
 {
@@ -29,9 +28,20 @@ namespace SimpleRPG.AI
             if (!controller.TrackTarget() || !controller.InAttackRange) { outsideRange(); return; }
             controller.FaceTarget();
             if (!controller.IsFacingTarget) return;
-            var slot = controller.Character.Loadout.Slots.OfType<GraphAbilitySlot>()
-                .FirstOrDefault(s => s.Definition != null && s.Definition.HasNode(NodeTypes.MeleeSwing) && s.CooldownTimeLeft <= 0);
+            GraphAbilitySlot slot = ReadyMeleeSlot();
             slot?.Activate();
+        }
+
+        // The first ready melee slot, found without allocating: this runs every frame for every attacking enemy.
+        private GraphAbilitySlot ReadyMeleeSlot()
+        {
+            var slots = controller.Character.Loadout.Slots;
+            for (int i = 0; i < slots.Count; i++)
+            {
+                if (slots[i] is GraphAbilitySlot s && s.Definition != null && s.Definition.HasNode(NodeTypes.MeleeSwing) && s.CooldownTimeLeft <= 0) return s;
+            }
+
+            return null;
         }
     }
 }

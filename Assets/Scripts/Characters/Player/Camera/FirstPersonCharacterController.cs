@@ -136,7 +136,24 @@ namespace SimpleRPG
         }
 
         /// <summary>
-        /// FixedUpdate runs on the physics step and is used for movement only.
+        /// How long the server keeps acting on the last movement request. The owner sends one every physics step, so a request this old means
+        /// the owner stopped sending (or its packets were lost, since movement is sent unreliably) and the character stands still.
+        /// </summary>
+        private const float MovementRequestLifetime = 0.25f;
+
+        /// <summary>
+        /// The newest movement direction the owner asked for, as the server holds it. Server only.
+        /// </summary>
+        private Vector3 requestedMovement;
+
+        /// <summary>
+        /// When <see cref="requestedMovement"/> arrived, in <see cref="Time.time"/>. Server only.
+        /// </summary>
+        private float requestedMovementAt = float.NegativeInfinity;
+
+        /// <summary>
+        /// FixedUpdate runs on the physics step and is used for movement only. The owner sends what it wants; the server moves the character
+        /// exactly once per physics step, so how many requests arrive can never change how far the character goes.
         /// </summary>
         public void FixedUpdate()
         {
@@ -146,11 +163,30 @@ namespace SimpleRPG
                 Vector3 movement = this.CalculateMovement();
                 this.MoveCharacterServerRPC(movement);
             }
-            else if (this.IsServer && !this.IsAlive && this.characterController.enabled)
+
+            if (this.IsServer)
             {
-                // Nobody is steering a dead character, but gravity still applies to it.
-                this.characterController.SimpleMove(Vector3.zero);
+                this.ApplyRequestedMovement();
             }
+        }
+
+        /// <summary>
+        /// Moves the character by one physics step of the newest request, or lets gravity act on it if there is none. Server only.
+        /// </summary>
+        private void ApplyRequestedMovement()
+        {
+            if (this.characterController == null || !this.characterController.enabled)
+            {
+                return;
+            }
+
+            // Nobody steers a dead character, but gravity still applies to it.
+            bool steered = this.IsAlive && Time.time - this.requestedMovementAt <= MovementRequestLifetime;
+            Vector3 direction = steered ? this.requestedMovement : Vector3.zero;
+
+            // How fast the character moves is the server's resolved Movement Speed; the client only ever supplies a direction.
+            float speed = this.character != null ? this.character.Stats.MovementSpeed : 0f;
+            this.characterController.SimpleMove(speed * direction);
         }
 
         /// <summary>
@@ -228,9 +264,10 @@ namespace SimpleRPG
         }
 
         /// <summary>
-        /// Moves this player in the given direction.
+        /// Records the direction the owner wants to move in. Unreliable on purpose: it is sent every physics step and only the newest matters, so
+        /// a lost message must not hold up the ones behind it. The request only stores the direction; <see cref="ApplyRequestedMovement"/> moves.
         /// </summary>
-        [ServerRpc]
+        [ServerRpc(Delivery = RpcDelivery.Unreliable)]
         private void MoveCharacterServerRPC(Vector3 direction)
         {
             // The server decides whether the character may move, whatever the client sends.
@@ -240,12 +277,10 @@ namespace SimpleRPG
                 direction = Vector3.zero;
             }
 
-            // Normalize the direction value given by the player to ensure it has no magnitude.
+            // A request names a direction, never a distance, so it is reduced to length one: it cannot ask for more speed.
             direction.Normalize();
-        
-            // How fast the character moves is the server's resolved Movement Speed; the client only ever supplies a direction.
-            float speed = this.character != null ? this.character.Stats.MovementSpeed : 0f;
-            characterController.SimpleMove(speed * direction);
+            this.requestedMovement = direction;
+            this.requestedMovementAt = Time.time;
         }
 
         /// <summary>
