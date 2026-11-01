@@ -166,7 +166,7 @@ namespace SimpleRPG.LevelGeneration
         /// <summary>
         /// The axis a bounding box is flat in, or -1 if it is thick on every axis. A plane has one thin axis; a box thin on two is a line.
         /// </summary>
-        private static int FlatAxis(Bounds bounds)
+        public static int FlatAxis(Bounds bounds)
         {
             int flat = -1;
             for (int axis = 0; axis < 3; axis++)
@@ -253,7 +253,7 @@ namespace SimpleRPG.LevelGeneration
         /// do not fight, and hiding one would leave a hole when looked at from the other room. A material with no cull setting is taken
         /// to be double sided, since that is what a flat wall piece needs to be seen from both rooms.
         /// </summary>
-        private static bool SingleSided(Renderer renderer)
+        public static bool SingleSided(Renderer renderer)
         {
             Material[] materials = renderer.sharedMaterials;
             if (materials.Length == 0)

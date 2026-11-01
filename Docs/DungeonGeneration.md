@@ -48,7 +48,7 @@ Only the spawner creates objects, so the server and clients reach the same `Layo
 - `LayoutStyle` shapes the result: `LoopRatio` (above 0.5 the generator hunts for rooms that join two open doors, below it some are refused), `Branching` (favours junctions or corridors) and `LockedDoors` (locks on bridges, each with its key in a room the player can reach first; placement is checked by `LockSolver`, with bridges found in one pass by `LockSolver.BridgeCuts`).
 - `RoomRole.Exit` rooms are swapped in for the dead end farthest from the start. `MinCount` makes a room mandatory.
 - A door that no placeable room has a mate for (type, length, climb) is sealed as soon as it is picked rather than after repeated misses.
-- A door no room fits after enough tries is sealed with its `SealingObject`. Sealing is normal, not a failure.
+- A door no room fits after enough tries is sealed with its `SealingObject`. Sealing is normal, not a failure. The cells in front of a sealed door are reserved from then on, because the door's frame reaches into them and a room placed there later would stand inside it.
 - If an attempt cannot reach the minimum or fails validation, another attempt runs from a seed derived from `(Seed, attempt)`. All machines run the same sequence.
 - Room choice (`IRoomSelector`): weights, per-room `MaxCount`, a `Start` role that is used only to begin, a bias toward dead ends once the minimum is reached, and only rooms with a door that can join the target.
 - Doors only join doors of the same `ConnectionType` (no type = standard door).
@@ -66,6 +66,8 @@ Only the spawner creates objects, so the server and clients reach the same `Layo
 ## Tests
 
 `Assets/Tests/EditMode`: `GridMathTests`, `LayoutGeneratorTests` (hand-built and real roomset sweeps, spawner geometry), `LayoutValidatorTests`, `FloorTests` (multi-floor, synthetic and real prefabs), `PassageTests`, `ConnectionTypeTests`, `RoomSelectionTests`, `LayoutFingerprintTests`, `RoomValidatorTests`, `RoomPackerTests`, `RoomsetBuildGateTests`.
+
+`SeamTests` spawns dungeons from the real `ModularDungeon` roomset and checks what a player would see where rooms meet: flat or solid pieces of different rooms drawn in the same place, joined doors that do not line up or both draw a door, and sealed doors with a room standing in their frame. Run it whenever a room's art or doors change. `LayoutPerformanceTests` logs generation times.
 
 ## Not done yet
 

@@ -50,7 +50,7 @@ namespace SimpleRPG.LevelGeneration
         /// <summary>
         /// Raised whenever a change to the generator would give an existing seed a different layout.
         /// </summary>
-        public const int AlgorithmVersion = 7;
+        public const int AlgorithmVersion = 8;
 
         private const int RoomStream = 1;
         private const int DoorStream = 2;
@@ -203,7 +203,7 @@ namespace SimpleRPG.LevelGeneration
             private readonly List<PlacedRoom> rooms = new List<PlacedRoom>();
 
             // Cells between two joined rooms that neither covers. A door longer than the rooms' own reach leaves a gap that must stay clear.
-            private readonly HashSet<Vector3Int> reserved = new HashSet<Vector3Int>();
+            private readonly Dictionary<Vector3Int, int> reserved = new Dictionary<Vector3Int, int>();
             private readonly int floorCount;
 
             // Open doors in the order they opened, because the random pick indexes into it. The lookup finds the door a new door would join.
@@ -258,6 +258,11 @@ namespace SimpleRPG.LevelGeneration
 
             public void SealAllOpenDoors()
             {
+                foreach (PlacedDoor door in openDoors)
+                {
+                    ReserveSealed(door);
+                }
+
                 sealedDoors.AddRange(openDoors);
                 openDoors.Clear();
                 openLookup.Clear();
@@ -312,8 +317,7 @@ namespace SimpleRPG.LevelGeneration
                     // No room in the set has a door that could join this one, so waiting for luck would only waste attempts.
                     if (!joinable.Contains((target.TypeId, target.LengthCells, -target.FloorDelta)))
                     {
-                        Remove(target);
-                        sealedDoors.Add(target);
+                        Seal(target);
                         continue;
                     }
 
@@ -331,8 +335,7 @@ namespace SimpleRPG.LevelGeneration
 
                     if (count >= definitions.Count * TriesPerDoor)
                     {
-                        Remove(target);
-                        sealedDoors.Add(target);
+                        Seal(target);
                         misses.Remove(target);
                     }
                     else
@@ -660,7 +663,7 @@ namespace SimpleRPG.LevelGeneration
                     {
                         if (slice < door.LengthCells && !door.Room.Contains(cell) && !mate.Room.Contains(cell))
                         {
-                            reserved.Remove(cell);
+                            Unreserve(cell);
                         }
                     }
                 }
@@ -751,7 +754,7 @@ namespace SimpleRPG.LevelGeneration
 
                 foreach (Vector3Int cell in candidate.Cells3D())
                 {
-                    if (grid.ContainsKey(cell) || reserved.Contains(cell))
+                    if (grid.ContainsKey(cell) || reserved.ContainsKey(cell))
                     {
                         return false;
                     }
@@ -774,7 +777,7 @@ namespace SimpleRPG.LevelGeneration
                         }
 
                         bool ownRoom = candidate.Contains(cell);
-                        if (ownRoom ? slice == door.LengthCells : grid.ContainsKey(cell) || reserved.Contains(cell))
+                        if (ownRoom ? slice == door.LengthCells : grid.ContainsKey(cell) || reserved.ContainsKey(cell))
                         {
                             return false;
                         }
@@ -863,7 +866,7 @@ namespace SimpleRPG.LevelGeneration
                 {
                     if (slice < door.LengthCells && !door.Room.Contains(cell) && !mate.Room.Contains(cell))
                     {
-                        reserved.Add(cell);
+                        Reserve(cell);
                     }
                 }
             }
@@ -879,6 +882,49 @@ namespace SimpleRPG.LevelGeneration
                     if (openPassages.TryGetValue(cell, out List<PlacedDoor> facing) && facing.Remove(door) && facing.Count == 0)
                     {
                         openPassages.Remove(cell);
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Closes an open door with its wall. The cells in front of it stay empty from here on: the door's frame reaches into them,
+            /// so a room placed there later would stand inside it.
+            /// </summary>
+            private void Seal(PlacedDoor door)
+            {
+                Remove(door);
+                sealedDoors.Add(door);
+                ReserveSealed(door);
+            }
+
+            private void ReserveSealed(PlacedDoor door)
+            {
+                foreach ((int slice, Vector3Int cell) in door.PassageCells3D())
+                {
+                    if (!grid.ContainsKey(cell))
+                    {
+                        Reserve(cell);
+                    }
+                }
+            }
+
+            private void Reserve(Vector3Int cell)
+            {
+                reserved.TryGetValue(cell, out int count);
+                reserved[cell] = count + 1;
+            }
+
+            private void Unreserve(Vector3Int cell)
+            {
+                if (reserved.TryGetValue(cell, out int count))
+                {
+                    if (count <= 1)
+                    {
+                        reserved.Remove(cell);
+                    }
+                    else
+                    {
+                        reserved[cell] = count - 1;
                     }
                 }
             }
