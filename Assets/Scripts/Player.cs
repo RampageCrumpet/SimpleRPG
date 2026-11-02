@@ -1,4 +1,6 @@
 using SimpleRPG;
+using SimpleRPG.Delve;
+using SimpleRPG.Networking;
 using SimpleRPG.UI;
 using System.Collections;
 using System.Collections.Generic;
@@ -72,13 +74,44 @@ namespace SimpleRPG
             if (IsServer)
             {
                 var population = UnityEngine.Object.FindAnyObjectByType<SimpleRPG.LevelGeneration.DungeonPopulation>();
-                Vector3 spawnPosition = population != null && population.IsReady ? population.PlayerSpawnPosition + Vector3.up * 0.15f : new Vector3(0, 5, 0);
-                GameObject playerInstance = Instantiate(playerPrefab, spawnPosition, playerPrefab.transform.rotation);
-                playerInstance.GetComponent<NetworkObject>().SpawnWithOwnership(this.OwnerClientId, true);
+                Vector3 startPosition = population != null && population.IsReady ? population.PlayerSpawnPosition + Vector3.up * 0.15f : new Vector3(0, 5, 0);
+
+                // A player who dropped out and is back finds their character as it was; the first time, or without delves, it starts at the start.
+                DelveController delve = DelveController.Find(NetworkManager);
+                string playerId = null;
+                bool keepable = delve != null && PlayerSessions.For(NetworkManager).TryGetPlayerId(OwnerClientId, out playerId);
+                ParkedCharacter returning = keepable ? delve.TakeParked(playerId) : null;
+
+                Vector3 spawnPosition = returning != null ? returning.Position : startPosition;
+                Quaternion spawnRotation = returning != null ? returning.Rotation : playerPrefab.transform.rotation;
+                GameObject playerInstance = Instantiate(playerPrefab, spawnPosition, spawnRotation);
+
+                // A character that can be kept for its player must survive the player's connection ending; delve.Park takes care of it from there.
+                NetworkObject characterObject = playerInstance.GetComponent<NetworkObject>();
+                characterObject.DontDestroyWithOwner = keepable;
+                characterObject.SpawnWithOwnership(this.OwnerClientId, true);
 
                 // Ensure that the server has the connection betweeen the character and the client.
                 character = playerInstance.GetComponent<Character>();
                 character.Initialize();
+
+                if (keepable)
+                {
+                    character.SetRespawnPointOnServer(startPosition, playerPrefab.transform.rotation);
+                    delve.RegisterCharacter(playerId, OwnerClientId, character);
+                }
+
+                if (returning != null)
+                {
+                    int lost = returning.RestoreInto(character);
+                    if (lost > 0) Debug.LogError($"{lost} item(s) of returning player {playerId} could not be put back.", this);
+
+                    // A character that was dead when its player left is still dead; its belongings are already in a loot bag.
+                    if (returning.WasDead)
+                    {
+                        character.TakeDamage(new DamageInfo { Damage = character.MaxHealth }, SimpleRPG.HitDetection.BodyLocation.Torso);
+                    }
+                }
 
                 characterReference.Value = new NetworkObjectReference(playerInstance);
             }

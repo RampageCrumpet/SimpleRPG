@@ -11,8 +11,15 @@ namespace SimpleRPG.Delve
         /// <param name="anyPlayerSeen">True once at least one player has been in the delve, so an empty session is not a wipe.</param>
         /// <param name="livingPlayers">How many players are alive.</param>
         /// <param name="extractionComplete">True once the party has finished the extraction channel.</param>
-        public static DelvePhase Evaluate(bool anyPlayerSeen, int livingPlayers, bool extractionComplete)
+        /// <param name="awayPlayers">How many players have dropped out and whose characters are waiting for them. Nobody gets out and nobody is
+        /// wiped while someone may still come back.</param>
+        public static DelvePhase Evaluate(bool anyPlayerSeen, int livingPlayers, bool extractionComplete, int awayPlayers = 0)
         {
+            if (awayPlayers > 0)
+            {
+                return DelvePhase.Delving;
+            }
+
             // Getting out wins: the channel only completes while someone is alive.
             if (extractionComplete && livingPlayers > 0)
             {

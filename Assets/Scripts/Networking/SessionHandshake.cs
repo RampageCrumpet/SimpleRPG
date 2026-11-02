@@ -14,7 +14,7 @@ namespace SimpleRPG.Networking
         /// <summary>
         /// Bumped when the wire contract changes in a way two builds cannot be expected to survive, even if their version strings match.
         /// </summary>
-        public const int ProtocolVersion = 1;
+        public const int ProtocolVersion = 2;
 
         private const string Prefix = "SimpleRPG";
         private const char Separator = '|';
@@ -25,11 +25,15 @@ namespace SimpleRPG.Networking
         /// <summary>The server's answer to a connection request.</summary>
         public readonly struct Decision
         {
-            public Decision(bool approved, string reason)
+            public Decision(bool approved, string reason, string playerId = null)
             {
                 Approved = approved;
                 Reason = reason;
+                PlayerId = playerId;
             }
+
+            /// <summary>Who the client says it is, when approved. The same player has the same id on every connection, which is how a returning player finds their character.</summary>
+            public string PlayerId { get; }
 
             public bool Approved { get; }
 
@@ -38,9 +42,30 @@ namespace SimpleRPG.Networking
         }
 
         /// <summary>The connection data a client of this build sends.</summary>
-        public static byte[] BuildRequest(string buildVersion)
+        public static byte[] BuildRequest(string buildVersion, string playerId)
         {
-            return Encoding.UTF8.GetBytes(Prefix + Separator + ProtocolVersion + Separator + buildVersion);
+            return Encoding.UTF8.GetBytes(Prefix + Separator + ProtocolVersion + Separator + buildVersion + Separator + playerId);
+        }
+
+        /// <summary>
+        /// True if the text is usable as a player id: 8 to 64 letters, digits, dashes or underscores. Anything else is not one of ours.
+        /// </summary>
+        public static bool IsValidPlayerId(string playerId)
+        {
+            if (string.IsNullOrEmpty(playerId) || playerId.Length < 8 || playerId.Length > 64)
+            {
+                return false;
+            }
+
+            foreach (char c in playerId)
+            {
+                if (!(c >= 'a' && c <= 'z') && !(c >= 'A' && c <= 'Z') && !(c >= '0' && c <= '9') && c != '-' && c != '_')
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -58,7 +83,7 @@ namespace SimpleRPG.Networking
             }
 
             string[] parts = Encoding.UTF8.GetString(request).Split(Separator);
-            if (parts.Length != 3 || parts[0] != Prefix || !int.TryParse(parts[1], out int protocol))
+            if (parts.Length != 4 || parts[0] != Prefix || !int.TryParse(parts[1], out int protocol))
             {
                 return new Decision(false, "Not a SimpleRPG client.");
             }
@@ -73,12 +98,17 @@ namespace SimpleRPG.Networking
                 return new Decision(false, "Version mismatch: the server runs " + serverBuildVersion + " and this client " + parts[2] + ".");
             }
 
+            if (!IsValidPlayerId(parts[3]))
+            {
+                return new Decision(false, "Not a valid player id.");
+            }
+
             if (maxPlayers > 0 && connectedCount >= maxPlayers)
             {
                 return new Decision(false, "The server is full.");
             }
 
-            return new Decision(true, string.Empty);
+            return new Decision(true, string.Empty, parts[3]);
         }
 
         /// <summary>
@@ -94,6 +124,12 @@ namespace SimpleRPG.Networking
                     ? new Decision(true, string.Empty)
                     : Evaluate(request.Payload, Application.version, manager.ConnectedClientsIds.Count, maxPlayers);
 
+                // Remember who this client is, so a returning player finds their character. A host is the session itself and has no id.
+                if (decision.Approved && decision.PlayerId != null)
+                {
+                    PlayerSessions.For(manager).Set(request.ClientNetworkId, decision.PlayerId);
+                }
+
                 response.Approved = decision.Approved;
                 response.CreatePlayerObject = decision.Approved;
                 response.Pending = false;
@@ -108,7 +144,7 @@ namespace SimpleRPG.Networking
         public static void PrepareClient(NetworkManager manager)
         {
             manager.NetworkConfig.ConnectionApproval = true;
-            manager.NetworkConfig.ConnectionData = BuildRequest(Application.version);
+            manager.NetworkConfig.ConnectionData = BuildRequest(Application.version, PlayerIdentity.Current);
         }
     }
 }

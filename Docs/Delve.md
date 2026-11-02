@@ -16,6 +16,7 @@ and follows the rule in [Network authority](NetworkAuthority.md): the server dec
 | How does the party get out? | **Together.** Every living player must stand in the extraction zone for the whole channel (10 s). If anyone steps out or dies the countdown starts over. |
 | When does a delve end? | When the party extracts, or when every player is dead (a wipe). |
 | Where does the outcome go? | To an `IDelveRewardSink`. See below. |
+| A player's connection drops? | Their character is **kept for them**, not killed. See "Players who drop out". |
 
 ## Pieces
 
@@ -28,6 +29,28 @@ and follows the rule in [Network authority](NetworkAuthority.md): the server dec
 | `DungeonPopulation.ExtractionPosition` | Chosen after enemies and treasure so existing seeds place them identically: the furthest reachable spot from the arrival among the last few rooms. |
 
 The drop runs on the poll after the death, not inside the damage event that caused it.
+
+## Players who drop out
+
+A dropped connection is not a death. Losing a hard-won equipment set to an internet hiccup would be a harsh penalty.
+
+- **Identity.** The connection handshake carries a stable player id (`PlayerIdentity`). A client id changes on every connection; the player id does not, so the server can tell a returning player from a new one. **The id is a stand-in**: one the client makes up proves nothing, so official servers must replace it with an identity from the login service. Two clients on one machine would share an id; start one with `-playerId <other-id>`.
+- **Away.** When a client disconnects, the server captures its character (items with their instance IDs and places, worn gear, health, position) as a `ParkedCharacter` and despawns it. It cannot be hurt, and it cannot be used to dodge a death.
+- **Back.** When the same player id connects again, `Player` makes a fresh character where the old one stood, with everything restored. A new character goes through the normal spawn path, so the owner's camera and controls are set up the usual way. A returning player whose character was already dead comes back dead.
+- **Waiting.** While anyone is away the party cannot extract and cannot be wiped: someone may still come back.
+- **Too long.** After `reconnectGraceSeconds` (default 180; 0 waits for ever) the player is treated as dead: their belongings go into a loot bag where they stood.
+- **Restarting.** A player reconnecting before the server noticed the old connection is gone is handled: the old character is put aside first.
+
+What this does **not** do: leave a visible body in the world. The character is out of the world while the player is away. A body that stays behind, and can be seen, needs ownership of an already-spawned character to move to the returning client, and the client-side setup (camera, controls, HUD) has to be redone when that happens. That needs testing against a real second client.
+
+## Weapons and walls
+
+A blade cannot reach through a wall. Each physics step a swing's `Hitbox` checks a line from the wielder's body to the blade's far end against the level's solid geometry (`obstructionLayer`, default `World`). If the line is blocked the blade has met a wall: the hitbox reports it once, finds nothing more that swing, and the weapon deals no more damage until the next swing.
+`MeleeDeliveryBase.MeleeBounced` tells every machine where the wall was struck and which way it faces, for sound, sparks and a recoil.
+
+Walls, doors and pillars belong on the `World` layer; floors stay on `Walkable`, so a low chop is not stopped by the ground. Projectiles and weapons nobody carries are not checked.
+
+What this does **not** do: change the swing animation. The attack clip still plays out. A real bounce needs a recoil animation, and to cut the swing short the combo machine, which the owning client predicts, has to know. See the notes in the pull request.
 
 ## The reward sink
 

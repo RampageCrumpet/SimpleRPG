@@ -123,5 +123,26 @@ namespace SimpleRPG.Tests.EditMode
         {
             Assert.AreEqual(DelvePhase.Wiped, DelveRules.Evaluate(true, 0, true));
         }
+
+        // ---- Players who dropped out ----
+
+        [Test]
+        public void Delve_IsNotWiped_WhileAPlayerIsAwayAndMayReturn()
+        {
+            Assert.AreEqual(DelvePhase.Delving, DelveRules.Evaluate(true, 0, false, awayPlayers: 1));
+        }
+
+        [Test]
+        public void Delve_CannotBeExtracted_WhileAPlayerIsAway()
+        {
+            Assert.AreEqual(DelvePhase.Delving, DelveRules.Evaluate(true, 2, true, awayPlayers: 1));
+        }
+
+        [Test]
+        public void Delve_ResumesItsNormalRules_OnceNobodyIsAway()
+        {
+            Assert.AreEqual(DelvePhase.Wiped, DelveRules.Evaluate(true, 0, false, awayPlayers: 0));
+            Assert.AreEqual(DelvePhase.Extracted, DelveRules.Evaluate(true, 2, true, awayPlayers: 0));
+        }
     }
 }

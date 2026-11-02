@@ -303,6 +303,34 @@ namespace SimpleRPG
         }
 
         /// <summary>
+        /// Sets how hurt a character is, for one returning to the delve as it left it. Never kills, and never goes above the maximum. Server only.
+        /// </summary>
+        public void RestoreHealthOnServer(int health)
+        {
+            if (!IsServer || !IsSpawned || networkIsDead.Value)
+            {
+                return;
+            }
+
+            networkHealth.Value = Mathf.Clamp(health, 1, networkMaxHealth.Value);
+        }
+
+        /// <summary>
+        /// Changes where this character goes when it respawns or is returned to the start. For a character spawned somewhere other than the
+        /// start, such as one returning to where it left off. Server only.
+        /// </summary>
+        public void SetRespawnPointOnServer(Vector3 position, Quaternion rotation)
+        {
+            if (!IsServer)
+            {
+                return;
+            }
+
+            respawnPosition = position;
+            respawnRotation = rotation;
+        }
+
+        /// <summary>
         /// Puts a living character back at its spawn point, as the start of a new delve does for those who got out. Server only.
         /// </summary>
         /// <returns>False if the character is dead, not spawned or not on the server.</returns>

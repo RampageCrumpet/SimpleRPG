@@ -5,6 +5,7 @@ using SimpleRPG.Delve;
 using SimpleRPG.Gameplay;
 using SimpleRPG.HitDetection;
 using SimpleRPG.InventorySystem;
+using SimpleRPG.Networking;
 using SimpleRPG.ObjectInteractions;
 using System.Collections;
 using System.Collections.Generic;
@@ -203,6 +204,124 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.IsTrue(player.IsAlive);
             Assert.IsTrue(delve.StartNextDelve(), "The next delve can start.");
             Assert.AreEqual(DelvePhase.Delving, delve.Phase);
+        }
+
+        // ----- A player who drops out -----
+
+        private const string PlayerId = "player-7777";
+        private const ulong ClientId = 7;
+
+        private Character SpawnAwayPlayer(Vector3 position)
+        {
+            Character character = SpawnPlayer(position);
+            PlayerSessions.For(manager).Set(ClientId, PlayerId);
+            delve.RegisterCharacter(PlayerId, ClientId, character);
+            return character;
+        }
+
+        private static Item Treasure()
+        {
+            Item treasure = AssetDatabase.LoadAssetAtPath<Item>(TreasurePath);
+            Assert.IsNotNull(treasure, $"Could not load {TreasurePath}.");
+            return treasure;
+        }
+
+        [UnityTest]
+        public IEnumerator ACharacterWhosePlayerDropsOut_IsKept_AndComesBackWithItsItems()
+        {
+            Character away = SpawnAwayPlayer(new Vector3(2f, 0f, 0f));
+            Character partner = SpawnPlayer(new Vector3(4f, 0f, 0f));
+            yield return null;
+            Assert.IsTrue(away.GetComponent<Inventory>().AddItemInstance(Treasure()));
+
+            Assert.IsTrue(delve.ParkDisconnected(ClientId), "The character is put aside for its player.");
+            yield return null;
+
+            Assert.IsTrue(away == null, "While waiting it is not in the world.");
+            Assert.AreEqual(1, delve.AwayCount);
+            Assert.AreEqual(0, Object.FindObjectsByType<LootBag>().Length, "Nothing was dropped: this is not a death.");
+
+            ParkedCharacter waiting = delve.TakeParked(PlayerId);
+            Assert.IsNotNull(waiting);
+            Assert.AreEqual(0, delve.AwayCount);
+            Assert.AreEqual(1, waiting.Carried.Count);
+            Assert.AreEqual(2f, waiting.Position.x, 0.5f, "It waits where it stood.");
+
+            Character returned = SpawnPlayer(waiting.Position);
+            yield return null;
+            Assert.AreEqual(0, waiting.RestoreInto(returned));
+            Assert.AreEqual(1, CarriedBy(returned), "Everything it carried is back.");
+            Assert.IsTrue(partner.IsAlive);
+        }
+
+        [UnityTest]
+        public IEnumerator ADelveCannotBeWiped_WhileAPlayerIsAway()
+        {
+            Character away = SpawnAwayPlayer(Vector3.zero);
+            Character partner = SpawnPlayer(new Vector3(3f, 0f, 0f));
+            yield return null;
+            delve.ParkDisconnected(ClientId);
+            yield return null;
+
+            Kill(partner);
+            yield return new WaitForSeconds(0.6f);
+
+            Assert.AreEqual(DelvePhase.Delving, delve.Phase, "Everyone present is dead, but one player may still come back.");
+        }
+
+        [UnityTest]
+        public IEnumerator APlayerWhoDoesNotReturnInTime_LeavesTheirBelongingsInALootBag()
+        {
+            Set(delve, "reconnectGraceSeconds", 0.3f);
+            Character away = SpawnAwayPlayer(new Vector3(2f, 0f, 0f));
+            Character partner = SpawnPlayer(new Vector3(4f, 0f, 0f));
+            yield return null;
+            away.GetComponent<Inventory>().AddItemInstance(Treasure());
+            delve.ParkDisconnected(ClientId);
+
+            yield return new WaitForSeconds(1f);
+
+            Assert.AreEqual(0, delve.AwayCount, "They are no longer waited for.");
+            LootBag bag = Object.FindFirstObjectByType<LootBag>();
+            Assert.IsNotNull(bag, "What they carried was left behind.");
+            Assert.AreEqual(1, bag.GetComponent<Inventory>().GetItems().Count());
+            Assert.IsNull(delve.TakeParked(PlayerId), "There is nothing left to come back to.");
+        }
+
+        [UnityTest]
+        public IEnumerator APlayerWhoReturnsBeforeTheServerNoticed_FindsTheirCharacterAnyway()
+        {
+            Character away = SpawnAwayPlayer(Vector3.zero);
+            yield return null;
+            away.GetComponent<Inventory>().AddItemInstance(Treasure());
+
+            // No disconnect was seen; the same player id arrives again.
+            ParkedCharacter waiting = delve.TakeParked(PlayerId);
+
+            Assert.IsNotNull(waiting, "The old character is put aside and handed back.");
+            Assert.AreEqual(1, waiting.Carried.Count);
+        }
+
+        [UnityTest]
+        public IEnumerator ALateWordThatAnOldConnectionDied_DoesNotTakeTheReturnedPlayersCharacter()
+        {
+            Character first = SpawnAwayPlayer(Vector3.zero);
+            yield return null;
+            delve.ParkDisconnected(ClientId);
+            yield return null;
+
+            // The player returns as a different client and gets a character.
+            const ulong secondClient = 8;
+            PlayerSessions.For(manager).Set(secondClient, PlayerId);
+            Character second = SpawnPlayer(Vector3.zero);
+            delve.RegisterCharacter(PlayerId, secondClient, second);
+            yield return null;
+
+            // The server still knows the first client by name; it just no longer owns the character.
+            PlayerSessions.For(manager).Set(ClientId, PlayerId);
+            Assert.IsFalse(delve.ParkDisconnected(ClientId), "The first connection no longer owns the character.");
+            yield return null;
+            Assert.IsTrue(second != null && second.IsSpawned, "The returned player's character is untouched.");
         }
     }
 }
