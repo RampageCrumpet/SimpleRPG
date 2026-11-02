@@ -35,6 +35,27 @@ namespace SimpleRPG
     }
 
     /// <summary>
+    /// A blade meeting a wall, as every machine is told it, so presentation (a sound, sparks, a recoil) can react.
+    /// </summary>
+    public readonly struct MeleeBounceCue
+    {
+        public MeleeBounceCue(int attackNumber, Vector3 point, Vector3 normal)
+        {
+            AttackNumber = attackNumber;
+            Point = point;
+            Normal = normal;
+        }
+
+        public int AttackNumber { get; }
+
+        /// <summary>Where the blade struck the wall.</summary>
+        public Vector3 Point { get; }
+
+        /// <summary>The way the wall's surface faces, so a recoil or spark can point away from it.</summary>
+        public Vector3 Normal { get; }
+    }
+
+    /// <summary>
     /// What every character's melee mechanics share: the swings the server is tracking, the weapon's hits and how they are reported to the
     /// ability that started the swing, and telling every machine which attack to play. A melee ability asks for a swing and is told what the
     /// swing hits; subclasses decide which attack plays and when its hit window is open, so abilities never handle animation, hitboxes or combo
@@ -87,6 +108,11 @@ namespace SimpleRPG
         /// Raised on every machine when the server confirms a weapon hit on a living target. Only confirmed contacts raise it, never an attack merely starting.
         /// </summary>
         public event System.Action<MeleeHitCue> MeleeHitConfirmed;
+
+        /// <summary>
+        /// Raised on every machine when the server finds the blade has met a wall. The swing deals no damage from then on.
+        /// </summary>
+        public event System.Action<MeleeBounceCue> MeleeBounced;
 
         /// <summary>
         /// Raised on a client when an attack it started showing before the server had spoken turned out not to have happened.
@@ -148,6 +174,7 @@ namespace SimpleRPG
             if (equipped != null)
             {
                 equipped.HitConfirmed += HandleWeaponHit;
+                equipped.Bounced += HandleWeaponBounced;
             }
 
             Character.OnDeath += ReleaseAllSwings;
@@ -158,6 +185,7 @@ namespace SimpleRPG
             if (weapon != null)
             {
                 weapon.HitConfirmed -= HandleWeaponHit;
+                weapon.Bounced -= HandleWeaponBounced;
             }
 
             if (Character != null)
@@ -221,6 +249,29 @@ namespace SimpleRPG
             }
 
             RaiseHitConfirmed(new MeleeHitCue(victim, (BodyLocation)location, attackNumber, point));
+        }
+
+        /// <summary>
+        /// Tells every machine the blade met a wall. Carries what happened, never a sound.
+        /// </summary>
+        [Rpc(SendTo.Everyone)]
+        private void MeleeBouncedClientRpc(int attackNumber, Vector3 point, Vector3 normal)
+        {
+            MeleeBounced?.Invoke(new MeleeBounceCue(attackNumber, point, normal));
+        }
+
+        /// <summary>
+        /// Server only. The open swing's blade met a wall; no hit lands past it, and everyone is told where it struck.
+        /// </summary>
+        private void HandleWeaponBounced(Vector3 point, Vector3 normal)
+        {
+            Swing swing = ActiveSwing;
+            if (swing == null || !Character.IsAlive)
+            {
+                return;
+            }
+
+            MeleeBouncedClientRpc(swing.AttackNumber, point, normal);
         }
 
         /// <summary>

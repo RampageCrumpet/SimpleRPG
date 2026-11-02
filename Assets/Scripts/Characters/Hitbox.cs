@@ -22,6 +22,14 @@ namespace SimpleRPG.HitDetection
         private const int MaxSweepSamples = 12;
 
         private static readonly Collider[] OverlapBuffer = new Collider[64];
+        private static readonly RaycastHit[] RayBuffer = new RaycastHit[16];
+
+        [SerializeField]
+        [Tooltip("The physics layer of the level's solid geometry (walls, doors, pillars). A weapon's blade cannot pass through it: the swing bounces off and hits nothing past it. Floors are not on it, so a low chop is not stopped by the ground.")]
+        private string obstructionLayer = "World";
+
+        private int obstructionMask;
+        private bool blocked;
 
         private readonly HashSet<Character> reported = new HashSet<Character>();
         private readonly List<HitCandidate> found = new List<HitCandidate>();
@@ -35,6 +43,8 @@ namespace SimpleRPG.HitDetection
         {
             reported.Clear();
             hasPreviousPose = false;
+            blocked = false;
+            obstructionMask = string.IsNullOrEmpty(obstructionLayer) ? 0 : LayerMask.GetMask(obstructionLayer);
 
             layerMask = LayerMask.GetMask("HurtBox");
             shape = GetComponent<Collider>();
@@ -52,6 +62,18 @@ namespace SimpleRPG.HitDetection
         private void OnDisable() => reported.Clear();
 
         public UnityEvent<Character, BodyLocation> HitboxCollisionEvent { get; set; } = new UnityEvent<Character, BodyLocation>();
+
+        /// <summary>
+        /// Where a line to the blade starts: the wielder's body. While this gives a point and the line from it to the blade's far end crosses solid
+        /// level geometry, the blade is behind a wall: the hitbox reports <see cref="Obstructed"/> once and finds nothing more until it is switched
+        /// off and on again. Null, or a function returning null, switches the check off (a projectile, or a weapon with no wielder).
+        /// </summary>
+        public System.Func<Vector3?> ObstructionOrigin { get; set; }
+
+        /// <summary>
+        /// Raised once per window, with the point and surface normal where the blade met the wall.
+        /// </summary>
+        public event System.Action<Vector3, Vector3> Obstructed;
 
         // Runs before the physics step, so the blade's transform is where the last frame left it, final pose included. The previous step's pose is
         // remembered here, not read from physics, so the path between them is the blade's real path whatever moved it.
@@ -73,6 +95,13 @@ namespace SimpleRPG.HitDetection
                 float t = i / (float)samples;
                 Vector3 position = hasPreviousPose ? Vector3.Lerp(previousPosition, blade.position, t) : blade.position;
                 Quaternion rotation = hasPreviousPose ? Quaternion.Slerp(previousRotation, blade.rotation, t) : blade.rotation;
+
+                // A blade behind a wall hits nothing: the wall is checked first, so a target on the far side is never reached.
+                if (blocked || IsObstructed(position, rotation))
+                {
+                    break;
+                }
+
                 Probe(position, rotation);
             }
 
@@ -80,6 +109,76 @@ namespace SimpleRPG.HitDetection
             previousRotation = blade.rotation;
             hasPreviousPose = true;
         }
+
+        // True, and reported once, if solid geometry lies between the wielder and the blade's far end at this pose.
+        private bool IsObstructed(Vector3 position, Quaternion rotation)
+        {
+            if (obstructionMask == 0 || ObstructionOrigin == null)
+            {
+                return false;
+            }
+
+            Vector3? start = ObstructionOrigin();
+            if (!start.HasValue)
+            {
+                return false;
+            }
+
+            Vector3 origin = start.Value;
+            Vector3 toEnd = FarEnd(position, rotation, origin) - origin;
+            float distance = toEnd.magnitude;
+            if (distance < 0.01f)
+            {
+                return false;
+            }
+
+            int count = Physics.RaycastNonAlloc(origin, toEnd / distance, RayBuffer, distance, obstructionMask, QueryTriggerInteraction.Ignore);
+            int nearest = -1;
+            for (int i = 0; i < count; i++)
+            {
+                if (nearest < 0 || RayBuffer[i].distance < RayBuffer[nearest].distance)
+                {
+                    nearest = i;
+                }
+            }
+
+            if (nearest < 0)
+            {
+                return false;
+            }
+
+            blocked = true;
+            Obstructed?.Invoke(RayBuffer[nearest].point, RayBuffer[nearest].normal);
+            return true;
+        }
+
+        // The end of the blade furthest from the wielder, which is the part that reaches through a wall first.
+        private Vector3 FarEnd(Vector3 position, Quaternion rotation, Vector3 from)
+        {
+            Vector3 scale = Abs(transform.lossyScale);
+            switch (shape)
+            {
+                case BoxCollider box:
+                {
+                    Vector3 centre = position + rotation * Vector3.Scale(box.center, scale);
+                    Vector3 half = Vector3.Scale(box.size, scale) * 0.5f;
+                    int longest = half.x >= half.y && half.x >= half.z ? 0 : half.y >= half.z ? 1 : 2;
+                    Vector3 along = rotation * (longest == 0 ? Vector3.right : longest == 1 ? Vector3.up : Vector3.forward) * half[longest];
+                    return Farther(centre + along, centre - along, from);
+                }
+                case CapsuleCollider capsule:
+                {
+                    CapsuleEnds(capsule, position, rotation, scale, out Vector3 a, out Vector3 b, out float _);
+                    return Farther(a, b, from);
+                }
+                case SphereCollider sphere:
+                    return position + rotation * Vector3.Scale(sphere.center, scale);
+                default:
+                    return position;
+            }
+        }
+
+        private static Vector3 Farther(Vector3 a, Vector3 b, Vector3 from) => (a - from).sqrMagnitude >= (b - from).sqrMagnitude ? a : b;
 
         // How many poses the blade's path between two steps is tested at: spaced by the blade's thinnest extent, so no gap a thin target could hide in.
         private int SampleCount(Vector3 fromPosition, Quaternion fromRotation, Vector3 toPosition, Quaternion toRotation)
