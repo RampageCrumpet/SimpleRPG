@@ -174,6 +174,24 @@ namespace SimpleRPG.UI
         }
 
         /// <summary>
+        /// True if an item dragged out of this view onto the world is dropped: it shows the inventory of the character this player controls.
+        /// A chest or another player's inventory is not somewhere to drop items from.
+        /// </summary>
+        public bool CanDropItems => Inventory != null && Inventory.IsCarriedByOwnCharacter;
+
+        /// <summary>
+        /// Asks for an item in this inventory to be put on the ground in front of the character. The server decides where it lands and whether
+        /// it may; this view changes nothing itself and redraws when the inventory reports the item gone.
+        /// </summary>
+        public void RequestDrop(Item item)
+        {
+            if (CanDropItems)
+            {
+                Inventory.RequestDropItem(item);
+            }
+        }
+
+        /// <summary>
         /// Asks for an item in this inventory to be worn by the character that owns it. Inventories without equipment (a chest) do nothing.
         /// </summary>
         public void RequestEquip(Item item)
