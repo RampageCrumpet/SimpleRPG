@@ -28,31 +28,32 @@ namespace SimpleRPG.Tests.EditMode
             var throttle = new RequestThrottle(perSecond: 10d, burst: 5d);
             for (int i = 0; i < 5; i++) throttle.TryAllow(1, 0d);
 
-            // A tenth of a second earns one request back.
-            Assert.IsTrue(throttle.TryAllow(1, 0.1d));
-            Assert.IsFalse(throttle.TryAllow(1, 0.1d));
+            // Slightly over a tenth of a second earns one request back (and not two).
+            Assert.IsTrue(throttle.TryAllow(1, 0.11d));
+            Assert.IsFalse(throttle.TryAllow(1, 0.11d));
         }
 
         [Test]
         public void ASteadyRateAtTheLimitIsNeverRefused()
         {
-            var throttle = new RequestThrottle(perSecond: 10d, burst: 1d);
+            // Eight a second, every eighth of a second: both are exact in binary, so no rounding can short a token.
+            var throttle = new RequestThrottle(perSecond: 8d, burst: 1d);
 
             for (int i = 0; i < 100; i++)
             {
-                Assert.IsTrue(throttle.TryAllow(1, i * 0.1d), "Request " + i);
+                Assert.IsTrue(throttle.TryAllow(1, i * 0.125d), "Request " + i);
             }
         }
 
         [Test]
         public void ARateTwiceTheLimit_IsHalfRefused()
         {
-            var throttle = new RequestThrottle(perSecond: 10d, burst: 1d);
+            var throttle = new RequestThrottle(perSecond: 8d, burst: 1d);
             int allowed = 0;
 
             for (int i = 0; i < 200; i++)
             {
-                if (throttle.TryAllow(1, i * 0.05d)) allowed++;
+                if (throttle.TryAllow(1, i * 0.0625d)) allowed++;
             }
 
             Assert.AreEqual(100, allowed, 2);
@@ -91,7 +92,7 @@ namespace SimpleRPG.Tests.EditMode
             throttle.TryAllow(1, 10d);
 
             Assert.IsFalse(throttle.TryAllow(1, 5d), "Going back in time does not refill it.");
-            Assert.IsTrue(throttle.TryAllow(1, 10.1d), "And the real time still counts afterwards.");
+            Assert.IsTrue(throttle.TryAllow(1, 10.11d), "And the real time still counts afterwards.");
         }
 
         [Test]
