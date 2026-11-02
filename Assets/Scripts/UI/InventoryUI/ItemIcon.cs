@@ -114,9 +114,29 @@ namespace SimpleRPG.UI
                 }
             }
 
+            // Dragged out of the player's own inventory onto the world (not onto another inventory, nor the paper doll): put it on the ground.
+            if (targetInventoryUI == null && inventoryUI != null && inventoryUI.CanDropItems && !IsOverPaperDoll())
+            {
+                inventoryUI.RequestDrop(Item);
+            }
+
             // If it wasn't dragged and dropped onto an inventory send it back to where it started.
             transform.SetParent(originalParent);
             transform.localPosition = originalPosition;
+        }
+
+        // The paper doll is somewhere an item is worn from, not dropped onto, so letting go over it never drops the item.
+        private static bool IsOverPaperDoll()
+        {
+            foreach (PaperDollUI doll in FindObjectsByType<PaperDollUI>())
+            {
+                if (RectTransformUtility.RectangleContainsScreenPoint(doll.GetComponent<RectTransform>(), GameInput.PointerPosition, null))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         void OnEnable()

@@ -514,6 +514,51 @@ namespace SimpleRPG.InventorySystem
         // Dragging items is human speed; this leaves plenty of room for it and none for a client flooding the server.
         private readonly RequestThrottle moveThrottle = new RequestThrottle(perSecond: 20d, burst: 40d);
 
+        // Dropping creates a world object each time, so it is held tighter than moving.
+        private readonly RequestThrottle dropThrottle = new RequestThrottle(perSecond: 2d, burst: 5d);
+
+        /// <summary>
+        /// True if this inventory belongs to a character this machine controls, which is the only kind a player can drop items out of.
+        /// </summary>
+        public bool IsCarriedByOwnCharacter => IsOwner && TryGetComponent(out Character _);
+
+        /// <summary>
+        /// Asks for an item in this inventory to be put on the ground in front of its character. On the server it happens at once; on the owning
+        /// client the request is sent, the server decides where it lands, and the result arrives through <see cref="Changed"/>.
+        /// See <see cref="ItemDropController"/> for what makes a request valid.
+        /// </summary>
+        /// <returns>True if the drop happened or the request was sent; false if it can't possibly succeed.</returns>
+        public bool RequestDropItem(Item item)
+        {
+            if (item == null || !idsByItem.TryGetValue(item, out uint instanceId))
+            {
+                return false;
+            }
+
+            if (CanMutate)
+            {
+                return ItemDropController.TryDrop(this, item, OwnerClientId, out _) == DropResult.Success;
+            }
+
+            if (!IsSpawned || !IsOwner)
+            {
+                return false;
+            }
+
+            DropItemRpc(instanceId);
+            return true;
+        }
+
+        [Rpc(SendTo.Server)]
+        private void DropItemRpc(uint instanceId, RpcParams rpcParams = default)
+        {
+            ulong senderClientId = rpcParams.Receive.SenderClientId;
+            if (dropThrottle.TryAllow(senderClientId, Time.unscaledTimeAsDouble) && itemsById.TryGetValue(instanceId, out Item item))
+            {
+                ItemDropController.TryDrop(this, item, senderClientId, out _);
+            }
+        }
+
         [Rpc(SendTo.Server)]
         private void MoveItemRpc(uint instanceId, NetworkBehaviourReference destinationReference, Vector2Int location, RpcParams rpcParams = default)
         {

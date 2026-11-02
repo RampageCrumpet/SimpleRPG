@@ -13,6 +13,35 @@ namespace SimpleRPG.ObjectInteractions
         public Item Item => item;
         private bool collected;
 
+        // A pickup a player dropped is that very item instance: it keeps what it rolled and picks up as itself. Held by the server only.
+        private Item carried;
+        private uint carriedInstanceId;
+
+        // What the carried item rolled, for every machine to read (a tooltip, say). A pickup that is only the asset has none.
+        private readonly NetworkVariable<ItemAffixes> affixes = new NetworkVariable<ItemAffixes>();
+
+        /// <summary>What the item on the ground rolled. Empty for an item that is still just the asset, which rolls when it is picked up.</summary>
+        public ItemAffixes Affixes => carried != null ? carried.Affixes : affixes.Value;
+
+        /// <summary>
+        /// Makes this pickup the given item instance, as dropped by a player. Called by the server right after it spawns the pickup. The pickup
+        /// then hands that same instance, under the same instance id, to whoever picks it up.
+        /// </summary>
+        public void InitializeDropped(Item instance, uint instanceId)
+        {
+            if (instance == null || (IsSpawned && !IsServer))
+            {
+                return;
+            }
+
+            carried = instance;
+            carriedInstanceId = instanceId;
+            if (IsSpawned)
+            {
+                affixes.Value = instance.Affixes;
+            }
+        }
+
         /// <summary>
         /// The server removing the pickup is how every machine learns it was collected, so the sound plays from the despawn. A despawn caused by
         /// the session ending is not a pickup.
@@ -22,6 +51,13 @@ namespace SimpleRPG.ObjectInteractions
             if (!IsServer && NetworkManager != null && !NetworkManager.ShutdownInProgress && item != null)
             {
                 InventoryAudio.PlayAt(item, InventoryAudioAction.Pickup, transform.position);
+            }
+
+            // A dropped item nobody picked up ends with the pickup; one that was picked up is in an inventory now and is not ours to destroy.
+            if (IsServer && carried != null)
+            {
+                Destroy(carried);
+                carried = null;
             }
 
             base.OnNetworkDespawn();
@@ -57,7 +93,20 @@ namespace SimpleRPG.ObjectInteractions
             if (!IsServer || !IsSpawned || collected || item == null || character == null || !character.IsAlive ||
                 character.NetworkManager != NetworkManager || Vector3.Distance(character.transform.position, transform.position) > InteractionRange) return false;
             var inventory = character.GetComponent<Inventory>();
-            if (inventory == null || !inventory.AddItemInstance(item)) return false;
+            if (inventory == null) return false;
+
+            if (carried != null)
+            {
+                // The dropped instance goes back as itself, in the first place it fits.
+                if (!inventory.TryFindRoom(carried, null, out Vector2Int room)) return false;
+                inventory.Attach(carried, room, carriedInstanceId);
+                carried = null;
+            }
+            else if (!inventory.AddItemInstance(item))
+            {
+                return false;
+            }
+
             collected = true;
             NetworkObject.Despawn(true);
             return true;
