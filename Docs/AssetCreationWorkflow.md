@@ -91,6 +91,8 @@ Copy canonical FBX/maps into the Unity asset folder. Use Unity MCP for Editor op
 
 Use mipmaps, 2048 max size and high-quality compression. Enable `_NORMALMAP`, `_METALLICSPECGLOSSMAP` and `_OCCLUSIONMAP`. Use white tint, metallic/smoothness multipliers 1, normal strength 1 and occlusion strength 0.6. Smoothness comes from metallic-map alpha. The tested normal requires no green-channel flip.
 
+**Metal reads black in this game.** The scenes set `reflectionIntensity` to 0 and have no reflection probes, and metal has no diffuse colour, so a surface with metallic near 1 shows only the direct highlights of the torch. The longsword rendered black until the R channel of `Longsword_MetallicSmoothness.png` was scaled by 0.7 (mean metallic 0.77 to 0.54; alpha, the smoothness, untouched). URP ignores the `_Metallic` slider when a metallic map is assigned, so the remap is baked into the texture; the original Painter export is outside the project. For a new metal item, cap the metallic channel around 0.5 to 0.6 when packing the map and check it under the exploration light before shipping.
+
 `setup_consolidated_unity.cs.txt` preserves the existing prefab GUID and references the FBX mesh subassets. Both renderers share the same material. The prefab root has zero rotation and unit scale; FBX axis conversion stays on renderer leaf transforms. The usable hinge is Y-up with a local X opening axis. Do not zero all imported leaf rotations.
 
 This prefab is a visual equipment asset. Collider, inventory definition, head fit and character socket attachment require separate integration for the target character.
