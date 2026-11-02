@@ -57,6 +57,10 @@ PrefabInstance:
       value: Metal_Bar_Door
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: bb91520391b2da3409d1a7a58e757eed, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: bb91520391b2da3409d1a7a58e757eed, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}

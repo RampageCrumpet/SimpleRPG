@@ -57,6 +57,10 @@ PrefabInstance:
       value: Arched_Ceiling_Side
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: f5c1924d9e1d40c418919a1567cf1046, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f5c1924d9e1d40c418919a1567cf1046, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}

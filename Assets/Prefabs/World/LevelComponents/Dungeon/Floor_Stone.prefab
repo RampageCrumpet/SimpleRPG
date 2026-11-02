@@ -57,6 +57,10 @@ PrefabInstance:
       value: Floor_Stone
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: d6d75a647f2725e4f830c6ab0281c9ca, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d6d75a647f2725e4f830c6ab0281c9ca, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}

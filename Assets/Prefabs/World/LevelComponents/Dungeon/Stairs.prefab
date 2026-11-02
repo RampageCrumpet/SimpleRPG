@@ -57,6 +57,10 @@ PrefabInstance:
       value: Stairs
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 81fed7e1de559c7459c2c65ca0e4462f, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 81fed7e1de559c7459c2c65ca0e4462f, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
