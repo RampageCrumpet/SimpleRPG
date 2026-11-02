@@ -16,8 +16,15 @@ namespace SimpleRPG.LevelGeneration
         [SerializeField, Range(0, 1)] private float encounterChance = 0.65f;
         [SerializeField, Min(0)] private int treasureRollsPerRoom = 2;
         [SerializeField] private LayerMask geometryLayers;
+        [SerializeField, Min(0), Tooltip("How many players the dungeon is built for. 0 or 1 is a lone player. A bigger party meets more groups of enemies in the same rooms; the enemies themselves do not get stronger.")]
+        private int expectedPartySize;
+        [SerializeField, Min(0f), Tooltip("Each player beyond the first adds this much to how many groups of enemies wait where a lone player would meet one. 0.5 is one extra group for every two extra players.")]
+        private float extraEncountersPerExtraPlayer = 0.5f;
         private readonly List<Vector3> occupied = new List<Vector3>();
         public Vector3 PlayerSpawnPosition { get; private set; }
+
+        /// <summary>How many players the dungeon is built for; set before <see cref="Populate"/>.</summary>
+        public int ExpectedPartySize { get => expectedPartySize; set => expectedPartySize = Mathf.Max(0, value); }
 
         /// <summary>Where the party gets out, picked far from the arrival once population has succeeded. See <see cref="HasExtraction"/>.</summary>
         public Vector3 ExtractionPosition { get; private set; }
@@ -83,13 +90,16 @@ namespace SimpleRPG.LevelGeneration
                 // Keep the arrival room safe. No restrictions on room types or dungeon size.
                 if (i > 0 && encounters != null && random.NextDouble() < encounterChance)
                 {
-                    foreach (var enemy in encounters.GetResult(random).OfType<EncounterEntry>())
-                        if (enemy.EnemyPrefab != null && TryFindPosition(rooms[i], cellSize, random, true, out Vector3 point))
-                        {
-                            Spawn(enemy.EnemyPrefab, point, Quaternion.Euler(0, (float)random.NextDouble() * 360, 0));
-                            occupied.Add(point);
-                            EnemyCount++;
-                        }
+                    // A bigger party meets more groups in the same room; a party of one rolls exactly once, as it always did.
+                    int groups = SimpleRPG.Delve.PartyScaling.Groups(expectedPartySize, extraEncountersPerExtraPlayer, random);
+                    for (int group = 0; group < groups; group++)
+                        foreach (var enemy in encounters.GetResult(random).OfType<EncounterEntry>())
+                            if (enemy.EnemyPrefab != null && TryFindPosition(rooms[i], cellSize, random, true, out Vector3 point))
+                            {
+                                Spawn(enemy.EnemyPrefab, point, Quaternion.Euler(0, (float)random.NextDouble() * 360, 0));
+                                occupied.Add(point);
+                                EnemyCount++;
+                            }
                 }
                 if (treasure == null) continue;
                 for (int roll = 0; roll < treasureRollsPerRoom; roll++)

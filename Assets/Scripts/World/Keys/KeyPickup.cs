@@ -1,3 +1,4 @@
+using SimpleRPG.Networking;
 using SimpleRPG.ObjectInteractions;
 using Unity.Netcode;
 using UnityEngine;
@@ -103,9 +104,16 @@ namespace SimpleRPG.Keys
             return null;
         }
 
+        private readonly RequestThrottle pickUpThrottle = new RequestThrottle(perSecond: 5d, burst: 10d);
+
         [Rpc(SendTo.Server)]
         private void PickUpRpc(RpcParams rpcParams = default)
         {
+            if (!pickUpThrottle.TryAllow(rpcParams.Receive.SenderClientId, UnityEngine.Time.unscaledTimeAsDouble))
+            {
+                return;
+            }
+
             if (DungeonKeyRing.TryGetPlayerPosition(rpcParams.Receive.SenderClientId, out Vector3 player))
             {
                 TryPickUp(Vector3.Distance(player, transform.position));

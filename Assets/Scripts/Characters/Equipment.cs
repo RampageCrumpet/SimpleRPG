@@ -1,3 +1,4 @@
+using SimpleRPG.Networking;
 using SimpleRPG.Gameplay;
 using SimpleRPG.InventorySystem;
 using System;
@@ -320,9 +321,16 @@ namespace SimpleRPG
             return true;
         }
 
+        private readonly RequestThrottle changeThrottle = new RequestThrottle(perSecond: 10d, burst: 20d);
+
         [Rpc(SendTo.Server)]
         private void EquipRpc(uint instanceId, RpcParams rpcParams = default)
         {
+            if (!changeThrottle.TryAllow(rpcParams.Receive.SenderClientId, Time.unscaledTimeAsDouble))
+            {
+                return;
+            }
+
             if (CanBeChangedBy(rpcParams.Receive.SenderClientId) && TryGetComponent(out Inventory inventory) && inventory.TryGetItem(instanceId, out Item item))
             {
                 EquipmentController.TryEquip(inventory, this, item);
@@ -332,6 +340,11 @@ namespace SimpleRPG
         [Rpc(SendTo.Server)]
         private void UnequipRpc(int slot, RpcParams rpcParams = default)
         {
+            if (!changeThrottle.TryAllow(rpcParams.Receive.SenderClientId, Time.unscaledTimeAsDouble))
+            {
+                return;
+            }
+
             if (CanBeChangedBy(rpcParams.Receive.SenderClientId) && TryGetComponent(out Inventory inventory) && System.Enum.IsDefined(typeof(EquipmentSlot), slot))
             {
                 EquipmentController.TryUnequip(inventory, this, (EquipmentSlot)slot);

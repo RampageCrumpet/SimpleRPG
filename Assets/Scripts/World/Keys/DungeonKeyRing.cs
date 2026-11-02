@@ -1,3 +1,4 @@
+using SimpleRPG.Networking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -165,9 +166,16 @@ namespace SimpleRPG.Keys
             RequestOpenRpc(keyId);
         }
 
+        private readonly RequestThrottle openThrottle = new RequestThrottle(perSecond: 5d, burst: 10d);
+
         [Rpc(SendTo.Server)]
         private void RequestOpenRpc(int keyId, RpcParams rpcParams = default)
         {
+            if (!openThrottle.TryAllow(rpcParams.Receive.SenderClientId, UnityEngine.Time.unscaledTimeAsDouble))
+            {
+                return;
+            }
+
             if (!TryGetPlayerPosition(rpcParams.Receive.SenderClientId, out Vector3 player))
             {
                 return;

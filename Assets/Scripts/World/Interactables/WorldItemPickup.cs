@@ -1,3 +1,4 @@
+using SimpleRPG.Networking;
 using SimpleRPG.Audio;
 using SimpleRPG.InventorySystem;
 using Unity.Netcode;
@@ -36,9 +37,16 @@ namespace SimpleRPG.ObjectInteractions
 
         public override void FinishInteraction(Interactor interactor) { }
 
+        private readonly RequestThrottle pickUpThrottle = new RequestThrottle(perSecond: 5d, burst: 10d);
+
         [Rpc(SendTo.Server)]
         private void PickUpRpc(RpcParams rpcParams = default)
         {
+            if (!pickUpThrottle.TryAllow(rpcParams.Receive.SenderClientId, Time.unscaledTimeAsDouble))
+            {
+                return;
+            }
+
             if (!NetworkManager.ConnectedClients.TryGetValue(rpcParams.Receive.SenderClientId, out var client)) return;
             var player = client.PlayerObject != null ? client.PlayerObject.GetComponent<Player>() : null;
             TryPickUp(player != null ? player.character : null);

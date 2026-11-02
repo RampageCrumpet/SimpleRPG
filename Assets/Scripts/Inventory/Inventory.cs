@@ -1,3 +1,4 @@
+using SimpleRPG.Networking;
 using SimpleRPG.Audio;
 using System;
 using System.Collections.Generic;
@@ -508,10 +509,17 @@ namespace SimpleRPG.InventorySystem
             }
         }
 
+        // Dragging items is human speed; this leaves plenty of room for it and none for a client flooding the server.
+        private readonly RequestThrottle moveThrottle = new RequestThrottle(perSecond: 20d, burst: 40d);
+
         [Rpc(SendTo.Server)]
         private void MoveItemRpc(uint instanceId, NetworkBehaviourReference destinationReference, Vector2Int location, RpcParams rpcParams = default)
         {
             ulong senderClientId = rpcParams.Receive.SenderClientId;
+            if (!moveThrottle.TryAllow(senderClientId, Time.unscaledTimeAsDouble))
+            {
+                return;
+            }
 
             if (!itemsById.TryGetValue(instanceId, out Item item) ||
                 !destinationReference.TryGet(out Inventory destination) ||
