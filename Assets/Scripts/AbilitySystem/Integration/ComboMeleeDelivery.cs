@@ -34,6 +34,17 @@ namespace SimpleRPG.Abilities.Integration
         /// </summary>
         public const double PredictionTimeoutSeconds = 1.0;
 
+        [SerializeField]
+        [Min(0f)]
+        [Tooltip("How long, in seconds, the wielder cannot start another swing after the blade strikes a wall.")]
+        private float bounceStaggerSeconds = 0.6f;
+
+        // Until when a swing may not start, on the clock the machine runs on (the server's), after the blade struck a wall.
+        private double staggeredUntil = double.NegativeInfinity;
+
+        // The same for the owning client, on its own clock: it shows no swing the server is going to refuse.
+        private double predictedStaggerUntil = double.NegativeInfinity;
+
         private readonly List<ComboEvent> events = new List<ComboEvent>();
 
         private IGameplayClock clock;
@@ -161,7 +172,7 @@ namespace SimpleRPG.Abilities.Integration
         public override int BeginClientPress(bool freshAllowed)
         {
             ComboPredictor current = PredictorForEquippedWeapon();
-            if (!Predicts || current == null || !Character.IsAlive)
+            if (!Predicts || current == null || !Character.IsAlive || NetworkManager.LocalTime.Time < predictedStaggerUntil)
             {
                 return 0;
             }
@@ -265,7 +276,7 @@ namespace SimpleRPG.Abilities.Integration
         /// <inheritdoc/>
         public override MeleePressOutcome Press(long pressTick, bool freshAllowed, int pressId = 0)
         {
-            if (!IsServer || !Character.IsAlive)
+            if (!IsServer || !Character.IsAlive || Clock.ElapsedSeconds < staggeredUntil)
             {
                 return MeleePressOutcome.Rejected;
             }
@@ -327,6 +338,26 @@ namespace SimpleRPG.Abilities.Integration
             pendingStep = -1;
             StartSwing(attackNumber, launch, swingEvents, pendingStartTime, pressId);
             return true;
+        }
+
+        /// <inheritdoc/>
+        protected override void OnBladeBounced()
+        {
+            staggeredUntil = Clock.ElapsedSeconds + bounceStaggerSeconds;
+        }
+
+        /// <inheritdoc/>
+        protected override void OnBounceShown(in MeleeBounceCue cue)
+        {
+            if (Predicts)
+            {
+                // The swing the owner was showing is over, and whatever it guessed about the chain with it; the next press starts afresh.
+                predictor = null;
+                predictedCombo = null;
+                predictedStaggerUntil = NetworkManager.LocalTime.Time + bounceStaggerSeconds;
+            }
+
+            base.OnBounceShown(cue);
         }
 
         protected override void ReleaseAllSwings()

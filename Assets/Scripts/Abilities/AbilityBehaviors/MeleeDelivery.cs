@@ -147,6 +147,16 @@ namespace SimpleRPG
             }
         }
 
+        [Tooltip("How long, in seconds, this character recovers after its blade strikes a wall, in place of the rest of the attack's length.")]
+        [SerializeField, Min(0f)] private float bounceRecoverySeconds = 1f;
+
+        /// <inheritdoc/>
+        protected override void OnBladeBounced()
+        {
+            // The swing was cut short, so the wait before the next is the stagger and not what was left of the clip.
+            recoveryUntil = ServerClock.Now + bounceRecoverySeconds;
+        }
+
         // A clip with no attack number belongs to the oldest swing in progress.
         private Swing OldestSwing()
         {

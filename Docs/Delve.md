@@ -50,7 +50,14 @@ A blade cannot reach through a wall. Each physics step a swing's `Hitbox` checks
 
 Walls, doors and pillars belong on the `World` layer; floors stay on `Walkable`, so a low chop is not stopped by the ground. Projectiles and weapons nobody carries are not checked.
 
-What this does **not** do: change the swing animation. The attack clip still plays out. A real bounce needs a recoil animation, and to cut the swing short the combo machine, which the owning client predicts, has to know. See the notes in the pull request.
+### What a bounce does
+
+1. **The swing ends.** The server releases the swing exactly as a death mid-swing does: the ability is told it completed, the hit window closes, the combo chain stops. No more damage is dealt that swing.
+2. **The wielder is thrown off balance.** For `bounceStaggerSeconds` (0.6 s on `ComboMeleeDelivery`) the server refuses a new swing, and the owning client does not predict one, so it never shows a swing the server will refuse. Enemies recover for `bounceRecoverySeconds` (1 s on `MeleeDelivery`) instead of the rest of the attack's length.
+3. **Everyone sees it stop.** Every machine cancels the attack animation: the attack layer fades back to the ready stance. The owning client also drops its guess about the combo.
+4. **Presentation hooks.** `MeleeBounced` carries the wall point and surface normal, for a sound, sparks or a decal. Nothing listens yet.
+
+The stop is abrupt: there is no recoil clip, only the existing fade to the ready stance. A recoil animation would be played from the same place, `OnBounceShown`, and would need to be a short clip that starts from any point in a swing (or one per swing direction). Until it exists the bounce reads as the swing being stopped dead.
 
 ## The reward sink
 

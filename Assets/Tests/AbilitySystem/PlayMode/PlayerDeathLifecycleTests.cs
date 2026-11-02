@@ -208,6 +208,65 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             result(Travelled(player, position), Turned(player, angle));
         }
 
+        // ----- A blade that meets a wall -----
+
+        // What Weapon does when its hitbox reports the blade behind a wall.
+        private static void BladeMeetsWall(Character attacker)
+        {
+            MethodInfo obstructed = typeof(Weapon).GetMethod("HandleObstructed", BindingFlags.Instance | BindingFlags.NonPublic);
+            obstructed.Invoke(WeaponOf(attacker), new object[] { attacker.transform.position + Vector3.forward, Vector3.back });
+        }
+
+        [UnityTest]
+        public IEnumerator ABladeThatMeetsAWall_EndsTheSwing_AndHurtsNobody()
+        {
+            Character player = SpawnPlayer();
+            Character victim = SpawnVictim();
+            yield return null;
+            Assert.IsTrue(Press(player));
+            ComboTestSupport.Advance(player, ComboTestSupport.InsideHitWindow);
+            ComboMeleeDelivery delivery = player.GetComponent<ComboMeleeDelivery>();
+            Assert.AreEqual(1, delivery.CurrentAttack, "Control: a swing is under way.");
+
+            BladeMeetsWall(player);
+            WeaponOf(player).TargetHit(victim, BodyLocation.Torso);
+
+            Assert.AreEqual(0, delivery.CurrentAttack, "The swing is over.");
+            Assert.AreEqual(StartingHealth, victim.Health, "Nothing past the wall was hit.");
+        }
+
+        [UnityTest]
+        public IEnumerator AfterABounce_TheWielderIsThrownOffBalanceForAMoment()
+        {
+            Character player = SpawnPlayer();
+            yield return null;
+            Assert.IsTrue(Press(player));
+            ComboTestSupport.Advance(player, ComboTestSupport.InsideHitWindow);
+            ComboMeleeDelivery delivery = player.GetComponent<ComboMeleeDelivery>();
+
+            BladeMeetsWall(player);
+
+            Assert.AreEqual(MeleePressOutcome.Rejected, delivery.Press(-1, true), "No new swing straight after striking a wall.");
+
+            ComboTestSupport.Advance(player, 1.0);
+            Assert.AreEqual(MeleePressOutcome.Fresh, delivery.Press(-1, true), "The wielder recovers.");
+            delivery.CancelPress();
+        }
+
+        [UnityTest]
+        public IEnumerator ABladeThatMeetsNoWall_SwingsAsBefore()
+        {
+            Character player = SpawnPlayer();
+            Character victim = SpawnVictim();
+            yield return null;
+            Assert.IsTrue(Press(player));
+            ComboTestSupport.Advance(player, ComboTestSupport.InsideHitWindow);
+
+            WeaponOf(player).TargetHit(victim, BodyLocation.Torso);
+
+            Assert.AreEqual(StartingHealth - Blow, victim.Health, "Control: with no wall the same swing lands.");
+        }
+
         // ----- Dying -----
 
         [UnityTest]

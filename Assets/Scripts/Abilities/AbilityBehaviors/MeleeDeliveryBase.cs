@@ -257,11 +257,29 @@ namespace SimpleRPG
         [Rpc(SendTo.Everyone)]
         private void MeleeBouncedClientRpc(int attackNumber, Vector3 point, Vector3 normal)
         {
-            MeleeBounced?.Invoke(new MeleeBounceCue(attackNumber, point, normal));
+            var cue = new MeleeBounceCue(attackNumber, point, normal);
+            OnBounceShown(cue);
+            MeleeBounced?.Invoke(cue);
         }
 
         /// <summary>
-        /// Server only. The open swing's blade met a wall; no hit lands past it, and everyone is told where it struck.
+        /// The word that the blade met a wall reached this machine. By default the attack being shown is cut short: its layer fades back to the
+        /// ready stance. Subclasses add what they keep for themselves, such as the owning client's guess about the combo.
+        /// </summary>
+        protected virtual void OnBounceShown(in MeleeBounceCue cue)
+        {
+            RaiseAttackCancelled();
+        }
+
+        /// <summary>
+        /// Server only. The swing has just been cut short by a wall. Subclasses add the price: how long the wielder is thrown off balance.
+        /// </summary>
+        protected virtual void OnBladeBounced()
+        {
+        }
+
+        /// <summary>
+        /// Server only. The open swing's blade met a wall; no hit lands past it, the swing ends, and everyone is told where it struck.
         /// </summary>
         private void HandleWeaponBounced(Vector3 point, Vector3 normal)
         {
@@ -272,6 +290,10 @@ namespace SimpleRPG
             }
 
             MeleeBouncedClientRpc(swing.AttackNumber, point, normal);
+
+            // The swing ends here, as if the wielder had died mid-swing: the ability is told, the hit window closes and any chain stops.
+            ReleaseAllSwings();
+            OnBladeBounced();
         }
 
         /// <summary>
