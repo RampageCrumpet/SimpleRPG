@@ -34,11 +34,16 @@ namespace SimpleRPG.Editor
             var report = new StringBuilder();
             int prefabsChanged = 0;
             int objectsChanged = 0;
+            int scanned = 0;
+            int matched = 0;
+            int alreadyRight = 0;
+            int triggersOnly = 0;
             var untouched = new List<string>();
 
             foreach (string guid in AssetDatabase.FindAssets("t:Prefab", new[] { Folder }))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
+                scanned++;
                 string layerName = DungeonLayerRules.LayerFor(System.IO.Path.GetFileNameWithoutExtension(path));
                 if (layerName == null)
                 {
@@ -46,19 +51,30 @@ namespace SimpleRPG.Editor
                     continue;
                 }
 
+                matched++;
                 int layer = layerName == DungeonLayerRules.World ? world : walkable;
                 GameObject contents = PrefabUtility.LoadPrefabContents(path);
                 try
                 {
                     int changed = 0;
+                    int solid = 0;
                     foreach (Collider collider in contents.GetComponentsInChildren<Collider>(true))
                     {
-                        if (!collider.isTrigger && collider.gameObject.layer != layer)
+                        if (collider.isTrigger)
+                        {
+                            continue;
+                        }
+
+                        solid++;
+                        if (collider.gameObject.layer != layer)
                         {
                             collider.gameObject.layer = layer;
                             changed++;
                         }
                     }
+
+                    if (solid == 0) triggersOnly++;
+                    else if (changed == 0) alreadyRight++;
 
                     if (changed > 0)
                     {
@@ -78,11 +94,21 @@ namespace SimpleRPG.Editor
             }
 
             string verb = apply ? "Moved" : "Would move";
-            Debug.Log($"{verb} {objectsChanged} object(s) in {prefabsChanged} prefab(s).\n{report}\nLeft alone by name: {string.Join(", ", untouched)}");
+            string summary = $"{verb} {objectsChanged} object(s) in {prefabsChanged} prefab(s).\n" +
+                             $"Looked at {scanned} prefab(s) under {Folder}: {matched} matched a name rule, {alreadyRight} already on the right layer, " +
+                             $"{triggersOnly} had no solid collider, {untouched.Count} left alone by name.";
+            Debug.Log($"{summary}\n{report}\nLeft alone by name: {string.Join(", ", untouched)}");
+            if (scanned == 0)
+            {
+                Debug.LogWarning($"No prefabs were found under {Folder}. Has the folder moved?");
+            }
+
             if (apply)
             {
                 AssetDatabase.SaveAssets();
             }
+
+            EditorUtility.DisplayDialog("Dungeon layers", summary + "\n\nThe Console lists each prefab.", "OK");
         }
     }
 }
