@@ -16,12 +16,13 @@ namespace SimpleRPG.Abilities.Integration
         {
             grants = null;
             Item equipped = Find(wearer, item);
-            if (equipped == null || equipped.Grants.Count == 0)
+            IReadOnlyList<GrantSpec> all = equipped != null ? equipped.AllGrants : null;
+            if (all == null || all.Count == 0)
             {
                 return false;
             }
 
-            grants = equipped.Grants;
+            grants = all;
             return true;
         }
 

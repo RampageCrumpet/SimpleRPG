@@ -18,6 +18,9 @@ namespace SimpleRPG.InventorySystem
         /// </summary>
         public EquipmentSlot Slot => slot;
 
+        /// <inheritdoc/>
+        public override EquipmentSlot WornSlot => slot;
+
         /// <summary>
         /// The slots armor can be worn in, in the order the paper doll lists them.
         /// </summary>

@@ -95,7 +95,7 @@ namespace SimpleRPG.InventorySystem
             foreach (InventoryEntry entry in entries)
             {
                 Item item;
-                if (!previousItems.Remove(entry.InstanceId, out item) || ItemIds.GetId(item) != entry.ItemId)
+                if (!previousItems.Remove(entry.InstanceId, out item) || ItemIds.GetId(item) != entry.ItemId || !item.Affixes.Equals(entry.Affixes))
                 {
                     Item template = ItemIds.GetItem(entry.ItemId);
                     if (template == null)
@@ -104,7 +104,7 @@ namespace SimpleRPG.InventorySystem
                         continue;
                     }
 
-                    item = template.CloneInstance();
+                    item = template.CloneInstance(entry.Affixes);
                 }
 
                 itemsById[entry.InstanceId] = item;
@@ -166,7 +166,8 @@ namespace SimpleRPG.InventorySystem
                 {
                     InstanceId = instanceId,
                     ItemId = itemId,
-                    Position = location
+                    Position = location,
+                    Affixes = item.Affixes
                 });
             }
 
@@ -275,7 +276,8 @@ namespace SimpleRPG.InventorySystem
                 return false;
             }
 
-            PlaceItem(cloneFirst ? item.CloneInstance() : item, location);
+            // A new instance rolls its affixes here, once, from the gameplay stream; an item with no pool draws nothing.
+            PlaceItem(cloneFirst ? item.CloneInstance(item.RollAffixes(SimpleRPG.Gameplay.GameplayServices.Current.Random)) : item, location);
             return true;
         }
 

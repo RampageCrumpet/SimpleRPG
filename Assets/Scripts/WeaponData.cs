@@ -14,6 +14,9 @@ namespace SimpleRPG
     [System.Serializable]
     public class WeaponData : Item
     {
+        /// <inheritdoc/>
+        public override EquipmentSlot WornSlot => EquipmentSlot.mainHand;
+
         /// <summary>
         /// The total damage dealt by this weapon.
         /// </summary>

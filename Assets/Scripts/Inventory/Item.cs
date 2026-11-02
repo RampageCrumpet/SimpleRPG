@@ -104,6 +104,79 @@ namespace SimpleRPG.InventorySystem
         [Tooltip("Attributes this item has of its own, such as a staff's magic power. Abilities the item provides can read them whoever wields it.")]
         private List<AttributeValueSpec> fixedAttributes = new List<AttributeValueSpec>();
 
+        [Header("Affixes")]
+        [SerializeField]
+        [Tooltip("The bonuses an instance of this item can roll when it comes into the world. None means it has no affixes and the game rolls nothing for it.")]
+        private AffixPool affixPool;
+
+        /// <summary>
+        /// The pool new instances of this item roll their affixes from, or null.
+        /// </summary>
+        public AffixPool AffixPool => affixPool;
+
+        /// <summary>
+        /// The affixes this instance rolled. Fixed when the instance was made and never changed; empty for an item asset and for an instance
+        /// made from an item with no pool.
+        /// </summary>
+        public ItemAffixes Affixes { get; private set; }
+
+        private List<GrantSpec> combinedGrants;
+
+        /// <summary>
+        /// The slot this item is worn in, for choosing which affixes may roll on it. Items that are not worn report the consumable slot.
+        /// </summary>
+        public virtual EquipmentSlot WornSlot => EquipmentSlot.Consumable;
+
+        /// <summary>
+        /// Everything this item changes about its wearer: the grants its asset declares plus what this instance rolled. An affix that cannot
+        /// be found in the registry is skipped with a warning rather than failing the item.
+        /// </summary>
+        public IReadOnlyList<GrantSpec> AllGrants
+        {
+            get
+            {
+                if (Affixes.IsEmpty)
+                {
+                    return grants;
+                }
+
+                if (combinedGrants == null)
+                {
+                    combinedGrants = new List<GrantSpec>(grants);
+                    DefinitionRegistry registry = DefinitionRegistry.Instance;
+                    for (int i = 0; i < Affixes.Count; i++)
+                    {
+                        AffixRoll roll = Affixes[i];
+                        if (registry != null && registry.TryGetByShortId(roll.AffixId, out GameplayDefinition definition) && definition is AffixDefinition affix)
+                        {
+                            combinedGrants.Add(affix.ToGrant(roll.Value));
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"{name}: affix {roll.AffixId} is not in the DefinitionRegistry, so it does nothing. Rebuild the registry (SimpleRPG > Definitions).", this);
+                        }
+                    }
+                }
+
+                return combinedGrants;
+            }
+        }
+
+        /// <summary>
+        /// Rolls affixes for a new instance of this item from its pool. Draws nothing if it has no pool, so adding affixes to some items never
+        /// changes what the rest of a dungeon's loot rolls. Server (or offline) only.
+        /// </summary>
+        public ItemAffixes RollAffixes(SimpleRPG.Gameplay.IGameplayRandom random)
+        {
+            if (affixPool == null)
+            {
+                return default;
+            }
+
+            DefinitionRegistry registry = DefinitionRegistry.Instance;
+            return AffixRoller.Roll(affixPool, WornSlot, random, affix => registry != null && registry.TryGetShortId(affix.Id, out uint id) ? id : 0u);
+        }
+
         /// <summary>
         /// Charges each instance of this item starts with. Zero means no charge pool.
         /// </summary>
@@ -132,10 +205,16 @@ namespace SimpleRPG.InventorySystem
         /// <summary>
         /// Creates a runtime copy of this item (for example the copy that lives in an inventory) that remembers its source asset.
         /// </summary>
-        public Item CloneInstance()
+        public Item CloneInstance() => CloneInstance(default);
+
+        /// <summary>
+        /// Creates a runtime copy that carries the affixes it rolled. They are set here, once, and never again.
+        /// </summary>
+        public Item CloneInstance(ItemAffixes affixes)
         {
             Item clone = Instantiate(SourceAsset);
             clone.Template = SourceAsset;
+            clone.Affixes = affixes;
             return clone;
         }
     }

@@ -24,16 +24,22 @@ namespace SimpleRPG.InventorySystem
         /// </summary>
         public Vector2Int Position;
 
+        /// <summary>
+        /// What this instance rolled, fixed when it was made. Sent with the entry so a client sees the same item the server has.
+        /// </summary>
+        public ItemAffixes Affixes;
+
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
             serializer.SerializeValue(ref InstanceId);
             serializer.SerializeValue(ref ItemId);
             serializer.SerializeValue(ref Position);
+            serializer.SerializeValue(ref Affixes);
         }
 
         public bool Equals(InventoryEntry other)
         {
-            return InstanceId == other.InstanceId && ItemId == other.ItemId && Position == other.Position;
+            return InstanceId == other.InstanceId && ItemId == other.ItemId && Position == other.Position && Affixes.Equals(other.Affixes);
         }
 
         public override bool Equals(object obj)
@@ -43,7 +49,7 @@ namespace SimpleRPG.InventorySystem
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(InstanceId, ItemId, Position);
+            return HashCode.Combine(InstanceId, ItemId, Position, Affixes);
         }
     }
 }

@@ -29,18 +29,22 @@ namespace SimpleRPG
             public uint InstanceId;
             public uint ItemId;
 
+            /// <summary>What this worn instance rolled, so a client sees the same item the server has.</summary>
+            public ItemAffixes Affixes;
+
             public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
             {
                 serializer.SerializeValue(ref Slot);
                 serializer.SerializeValue(ref InstanceId);
                 serializer.SerializeValue(ref ItemId);
+                serializer.SerializeValue(ref Affixes);
             }
 
-            public bool Equals(EquippedEntry other) => Slot == other.Slot && InstanceId == other.InstanceId && ItemId == other.ItemId;
+            public bool Equals(EquippedEntry other) => Slot == other.Slot && InstanceId == other.InstanceId && ItemId == other.ItemId && Affixes.Equals(other.Affixes);
 
             public override bool Equals(object obj) => obj is EquippedEntry other && Equals(other);
 
-            public override int GetHashCode() => HashCode.Combine(Slot, InstanceId, ItemId);
+            public override int GetHashCode() => HashCode.Combine(Slot, InstanceId, ItemId, Affixes);
         }
 
         /// <summary>
@@ -252,7 +256,7 @@ namespace SimpleRPG
 
             items[slot] = item;
             instanceIds[slot] = instanceId;
-            entries.Add(new EquippedEntry { Slot = (int)slot, InstanceId = instanceId, ItemId = itemId });
+            entries.Add(new EquippedEntry { Slot = (int)slot, InstanceId = instanceId, ItemId = itemId, Affixes = item.Affixes });
 
             // An item with a charge pool brings its starting charges the first time it is ever equipped; after that the pool only goes down.
             ItemInstanceId instance = new ItemInstanceId(instanceId);
@@ -443,6 +447,16 @@ namespace SimpleRPG
 
         private void RebuildFromEntries()
         {
+            // A worn item with affixes is a copy carrying them; the copies from the last rebuild are reused when nothing about them changed.
+            var previous = new Dictionary<uint, Item>();
+            foreach (KeyValuePair<EquipmentSlot, Item> pair in items)
+            {
+                if (pair.Value != null && pair.Value.Template != null)
+                {
+                    previous[instanceIds[pair.Key]] = pair.Value;
+                }
+            }
+
             items.Clear();
             instanceIds.Clear();
 
@@ -455,8 +469,26 @@ namespace SimpleRPG
                     continue;
                 }
 
+                if (!entry.Affixes.IsEmpty)
+                {
+                    if (previous.Remove(entry.InstanceId, out Item kept) && kept.Template == item && kept.Affixes.Equals(entry.Affixes))
+                    {
+                        item = kept;
+                    }
+                    else
+                    {
+                        item = item.CloneInstance(entry.Affixes);
+                    }
+                }
+
                 items[(EquipmentSlot)entry.Slot] = item;
                 instanceIds[(EquipmentSlot)entry.Slot] = entry.InstanceId;
+            }
+
+            // Copies no longer worn are not kept.
+            foreach (Item stale in previous.Values)
+            {
+                Destroy(stale);
             }
 
             Changed?.Invoke();
