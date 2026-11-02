@@ -167,17 +167,17 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private bool Press(Character attacker) => attacker.GetComponent<AbilityUser>().TryActivateOnServer(melee);
 
         /// <summary>
-        /// Sends the movement request the owning client sends every physics step. A host's request to itself is delivered on a later update,
-        /// so the caller lets a few frames pass before asking <see cref="Travelled"/>.
+        /// Makes the owner push forward, as a player holding the key would. The owner sends its movement every physics step and the server moves
+        /// the character once per step, so the push is held until <see cref="StopPushing"/> and the caller lets a few frames pass before asking
+        /// <see cref="Travelled"/>.
         /// </summary>
         private static Vector3 SendMoveForward(Character player)
         {
-            FirstPersonCharacterController controller = player.GetComponent<FirstPersonCharacterController>();
-            MethodInfo move = typeof(FirstPersonCharacterController).GetMethod("MoveCharacterServerRPC", BindingFlags.Instance | BindingFlags.NonPublic);
-            Vector3 before = player.transform.position;
-            move.Invoke(controller, new object[] { player.transform.forward });
-            return before;
+            player.GetComponent<FirstPersonCharacterController>().MoveInput = () => Vector2.up;
+            return player.transform.position;
         }
+
+        private static void StopPushing(Character player) => player.GetComponent<FirstPersonCharacterController>().MoveInput = null;
 
         private static float Travelled(Character player, Vector3 before)
         {
@@ -203,7 +203,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             Vector3 position = SendMoveForward(player);
             float angle = SendTurn(player, 30f);
-            for (int i = 0; i < 3; i++) yield return null;
+            for (int i = 0; i < 8; i++) yield return null;
+            StopPushing(player);
             result(Travelled(player, position), Turned(player, angle));
         }
 

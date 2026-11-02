@@ -136,6 +136,12 @@ namespace SimpleRPG
         }
 
         /// <summary>
+        /// Where the owner's movement input (x sideways, y forward, each -1 to 1) comes from. Null reads the player's controls. Something else that
+        /// steers a character the way a player does, such as a bot or a test, replaces it; the request still goes to the server like any other.
+        /// </summary>
+        public System.Func<Vector2> MoveInput { get; set; }
+
+        /// <summary>
         /// How long the server keeps acting on the last movement request. The owner sends one every physics step, so a request this old means
         /// the owner stopped sending (or its packets were lost, since movement is sent unreliably) and the character stands still.
         /// </summary>
@@ -257,7 +263,7 @@ namespace SimpleRPG
             // Movement is relative to where the player looks. The body trails the view, so its own axes would steer the wrong way mid-turn.
             float viewYaw = this.look != null ? this.look.Yaw : this.transform.eulerAngles.y;
             FirstPersonLookMath.ViewAxes(viewYaw, out Vector3 forward, out Vector3 right);
-            Vector2 move = GameInput.Move.ReadValue<Vector2>();
+            Vector2 move = this.MoveInput != null ? this.MoveInput() : GameInput.Move.ReadValue<Vector2>();
             Vector3 movementDirection = FirstPersonLookMath.MovementDirection(forward, right, move.y, move.x);
 
             return movementDirection;

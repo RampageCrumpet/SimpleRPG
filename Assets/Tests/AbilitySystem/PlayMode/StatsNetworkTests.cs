@@ -6,7 +6,6 @@ using SimpleRPG.Gameplay;
 using SimpleRPG.UI;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEditor;
@@ -117,11 +116,11 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             yield return null;
             FirstPersonCharacterController controller = player.GetComponent<FirstPersonCharacterController>();
-            MethodInfo move = typeof(FirstPersonCharacterController).GetMethod("MoveCharacterServerRPC", BindingFlags.Instance | BindingFlags.NonPublic);
 
+            // The owner sends its movement every physics step and the server moves the character once per step, so holding the key is enough.
+            controller.MoveInput = () => Vector2.up;
             for (int i = 0; i < 5; i++)
             {
-                move.Invoke(controller, new object[] { player.transform.forward });
                 yield return null;
             }
 
@@ -129,12 +128,12 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             float start = Time.time;
             for (int i = 0; i < 30; i++)
             {
-                move.Invoke(controller, new object[] { player.transform.forward });
                 yield return null;
             }
 
             Vector3 delta = player.transform.position - before;
             delta.y = 0f;
+            controller.MoveInput = null;
             speed(delta.magnitude / (Time.time - start));
         }
 
