@@ -49,6 +49,9 @@ namespace SimpleRPG.Tests.PlayMode
             hurtBoxObject.AddComponent<HurtBox>();
             hurtBoxObject.transform.position = hitboxObject.transform.position;
 
+            // The blade stays off until a test has built its scene (see Settle); a physics step in between would hit the target before any wall exists.
+            hitbox.enabled = false;
+
             yield return null;
         }
 
@@ -72,6 +75,7 @@ namespace SimpleRPG.Tests.PlayMode
 
         private IEnumerator Settle()
         {
+            hitbox.enabled = true;
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();

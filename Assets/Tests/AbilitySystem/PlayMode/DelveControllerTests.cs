@@ -307,6 +307,9 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             Character first = SpawnAwayPlayer(Vector3.zero);
             yield return null;
+            // Every test character is owned by the host, so the first one took the only camera as a child, and parking despawns it with the camera.
+            // A real returning client has a camera of its own.
+            cameraObject.transform.SetParent(null);
             delve.ParkDisconnected(ClientId);
             yield return null;
 
