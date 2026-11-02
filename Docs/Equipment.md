@@ -48,6 +48,6 @@ A presentation component on the character will observe `Equipment.Changed` and, 
 
 ## Known limits
 
-- No armor statistics, durability, requirements, weight or set bonuses. `Item.Grants` and `Item.Rules` already apply while an item is worn, as for any equipped item.
+- No armor statistics, durability, requirements, weight or set bonuses. Rolled bonuses exist: see [Item affixes](Affixes.md). `Item.Grants` and `Item.Rules` already apply while an item is worn, as for any equipped item.
 - There is no item tooltip anywhere in the UI yet, so the paper doll has none either.
 - The `DefinitionRegistry` must list every wearable item, or `Equipment` refuses it (clients could not look it up). Validate Definitions fails the build if it does not.
