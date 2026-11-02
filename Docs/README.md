@@ -18,5 +18,6 @@ For sound effects (Audacity MCP, sourcing, measuring, known tool quirks), start 
 - [The local player and the UI](LocalPlayerAndUI.md)
 - [How a character is put together](CharacterComposition.md)
 - [Upper-body articulation](UpperBodyArticulation.md)
+- [Animations: hips, masks and the fixed pelvis](Animations.md)
 - [Character appearance](CharacterAppearance.md)
 - [Anatomical hit regions](HitRegions.md)
