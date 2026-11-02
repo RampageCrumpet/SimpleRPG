@@ -85,7 +85,10 @@ namespace SimpleRPG.Tests.EditMode
             var definitions = new List<RoomDefinition>
             {
                 new RoomDefinition(0, "Start", new Vector2Int(4, 4), Vector2Int.zero, new List<DoorDefinition> { East(0) }, role: RoomRole.Start),
-                Room(1, "TwoOnTheWest", null, new DoorDefinition(0, new Vector2Int(0, 1), Side.West, 0), new DoorDefinition(1, new Vector2Int(0, 3), Side.West, 0)),
+                // Doors are two cells wide and the room is taller than the start, so whichever door is left unused faces open ground
+                // instead of the start room's wall.
+                new RoomDefinition(1, "TwoOnTheWest", new Vector2Int(4, 8), Vector2Int.zero,
+                    new List<DoorDefinition> { new DoorDefinition(0, new Vector2Int(0, 2), Side.West, 0), new DoorDefinition(1, new Vector2Int(0, 6), Side.West, 0) }),
             };
 
             var joinedThrough = new int[2];

@@ -10,7 +10,6 @@ using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.TestTools;
 
 namespace SimpleRPG.Abilities.Tests.PlayMode
@@ -288,10 +287,11 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return Seconds(0.5f);
             Vector3 idle = playerObject.transform.InverseTransformPoint(cameraObject.transform.position);
 
-            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            FirstPersonCharacterController controller = playerObject.GetComponent<FirstPersonCharacterController>();
             try
             {
-                InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.W));
+                // Hold the walk key through the controller's own input hook; an injected keyboard is dropped whenever the Editor is not focused.
+                controller.MoveInput = () => Vector2.up;
                 yield return Seconds(1f);
                 Assert.Greater(playerObject.GetComponent<CharacterController>().velocity.magnitude, 0.5f, "the character is walking");
 
@@ -317,8 +317,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             }
             finally
             {
-                InputSystem.QueueStateEvent(keyboard, new KeyboardState());
-                InputSystem.RemoveDevice(keyboard);
+                controller.MoveInput = null;
             }
         }
 

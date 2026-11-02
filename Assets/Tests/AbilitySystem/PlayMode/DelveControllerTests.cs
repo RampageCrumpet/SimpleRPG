@@ -93,7 +93,10 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             var host = new GameObject("Delve");
             spawned.Add(host);
-            host.AddComponent<NetworkObject>();
+            // The real controller is placed in the scene, which gives its NetworkObject an id; a runtime one has none, and Netcode refuses to spawn it.
+            NetworkObject networkObject = host.AddComponent<NetworkObject>();
+            typeof(NetworkObject).GetField("GlobalObjectIdHash", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(networkObject, 0xDE17E001u);
             DelveController controller = host.AddComponent<DelveController>();
 
             GameObject bagPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(LootBagPrefab);

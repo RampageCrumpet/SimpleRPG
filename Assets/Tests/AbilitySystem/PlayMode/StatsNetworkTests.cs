@@ -127,7 +127,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             Vector3 before = player.transform.position;
             float start = Time.time;
-            for (int i = 0; i < 30; i++)
+            // The character moves once per physics step, so the window must span many steps; a fixed number of frames can be a handful of steps.
+            while (Time.time - start < 0.5f)
             {
                 yield return null;
             }
