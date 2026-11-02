@@ -203,7 +203,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             Vector3 position = SendMoveForward(player);
             float angle = SendTurn(player, 30f);
-            for (int i = 0; i < 8; i++) yield return null;
+            // Movement and turning happen on physics steps, so the wait is in seconds: a count of frames can pass in a few milliseconds.
+            yield return new WaitForSeconds(0.3f);
             StopPushing(player);
             result(Travelled(player, position), Turned(player, angle));
         }

@@ -120,10 +120,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             // The owner sends its movement every physics step and the server moves the character once per step, so holding the key is enough.
             controller.MoveInput = () => Vector2.up;
-            for (int i = 0; i < 5; i++)
-            {
-                yield return null;
-            }
+            // The request takes a physics step to arrive and a controller still settling on the floor takes no horizontal step, so wait in seconds.
+            yield return new WaitForSeconds(0.3f);
 
             Vector3 before = player.transform.position;
             float start = Time.time;
