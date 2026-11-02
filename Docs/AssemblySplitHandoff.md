@@ -28,7 +28,7 @@ Notes: `Integration` sits **above** `SimpleRPG` (it references it; `SimpleRPG` d
 
 Sizes of the areas inside `SimpleRPG` (files / lines): Characters 49 / 5,100, World 40 / 6,300, Audio 28 / 3,400, UI 19 / 2,400, Abilities 10 / 1,600, Inventory 12 / 1,700, Delve 9 / 1,100, Networking 4 / 300, LootGeneration 5 / 280, Rendering 2 / 200, Controls 1 / 120, Encounters 1 / 20, plus 9 files loose in the root of `Scripts` (`Player`, `Weapon`, `WeaponData`, `Projectile`, `ServerClock`, `GameController`, `EnemySpawner`, `NetworkSpawn`, `SwingHitTracker`).
 
-## What depends on what
+## What depends on what (by folder)
 
 Produced by `python3 Docs/tools/folder_dependencies.py` (re-run it as you work). Each cell is how many distinct type names an area uses from another.
 
@@ -64,46 +64,105 @@ World          -> Inventory(7) Characters(7) Audio(6) LootGeneration(5) Networki
 
 **Caveats on the numbers.** Names are matched as words, so common ones inflate them. Known false positives: `Inventory -> Chest` (it is the word in the armor-slot tooltip), anything called `Instance` or `Pending`, and the `AbilitySystem/Core -> Characters/Inventory` rows in the "other assemblies" output (Core cannot reference the main assembly, so those are name collisions). Treat the table as a map to dig from. The compiler is the authority.
 
-## The shape this suggests
+## Decisions already made by the owner
 
-The pattern in the data is not a ring of equal partners. There is a **tightly bound core**: a character carries items, wields weapons, takes hits and runs abilities, so `Characters`, `Inventory`, `Equipment`, the melee code in `Abilities`, and the combat types loose in the root (`Weapon`, `WeaponData`, `Projectile`, `SwingHitTracker`) are one concept and will always know each other. Forcing them apart would add interfaces for their own sake. Around that core sit **leaves** that should depend on it and never the reverse: audio, world and level, delve rules, UI, loot tables, and the session bootstrap.
+1. **Split the core finer.** One big core assembly would invite new code to be dumped into it. The layering below has many small assemblies with a stated purpose each.
+2. **Audio data used by items moves down with `Item`** (into the `Items` assembly), rather than hiding behind an interface. It can be moved behind an assembly boundary later if that proves worth it.
 
-Recommended layering (bottom depends on nothing above it). **Decide this with the owner before moving anything:**
+## The target layering
+
+Lower rows may not use higher rows. The leaves are ordered (a leaf uses only leaves earlier in its list). The measured check for all of this is `python3 Docs/tools/layering_check.py`; it holds the plan as data, so change the plan there if you change it here.
 
 ```
-Leaves        Audio     World/Level     Delve     UI     Session (Player, GameController, EnemySpawner, NetworkSpawn)
-                 \          |            |        /               |
-Core gameplay    Characters + Inventory/Equipment + melee Abilities + combat root types (Weapon, WeaponData, Projectile, hits)
-                                   |
-Foundation       ServerClock, Networking primitives (RequestThrottle, PlayerSessions, SessionHandshake), GameInput
-                                   |
-Existing         SimpleRPG.Abilities.Runtime  ->  SimpleRPG.Gameplay.Core
+Session      Player, GameController, EnemySpawner, NetworkSpawn
+UI
+Rendering
+Delve        the rules of a delve: death drop, extraction, reconnect
+World        level generation, rooms, doors, keys, chests, loot bags, world pickups, population
+AI           enemy behaviour and senses
+PlayerControl  first-person controller, local controls, camera
+Loot         loot tables, encounter tables
+Interaction  Interactable, InteractableManager, Interactor
+Presentation animation, appearance, articulation, the character's look
+AudioPlayback  the audio service, emitters, ambience, footsteps, per-system audio controllers
+------------------------------------------------------------------ leaves above, core below
+Melee        MeleeDeliveryBase, MeleeDelivery            Carrying   Inventory, Equipment, move/equip/drop rules
+Combat       Character, stats, combat loadout, hit detection, Weapon, Projectile, ability slots
+Items        Item, ItemIds, affixes, ArmorData, WeaponData, item audio profile
+AudioModel   audio events, tables, tags, contexts, profiles (data only)      Combos   combo timing and data (pure)
+Foundation   ServerClock, networking primitives, GameInput, DamageInfo, BodyLocation
+Existing     SimpleRPG.Abilities.Runtime -> SimpleRPG.Gameplay.Core
 ```
 
-`SimpleRPG.Abilities.Integration` and the editor assemblies stay above all of it. A finer split of the core (for example separating `Items` from `Characters`) is possible later; it is deliberately not proposed first, because it needs the most seams and buys the least.
+| Assembly | What belongs | What does **not** |
+|---|---|---|
+| `Foundation` | Primitives everything needs: the server clock, request throttling, the connection handshake and player sessions, input actions, `DamageInfo`, `BodyLocation` | Anything that knows about characters, items or the world |
+| `Combos` | The combo machine, predictor, step timing and the `ComboDefinition` asset. No network or character types | Anything that plays an animation or reads a character |
+| `AudioModel` | The data of sound: event definitions, tables, tags, contexts, profiles | Anything that plays a sound |
+| `Items` | What an item *is*: `Item`, ids, affixes and their rolling, armor and weapon data, the item's audio profile | Where an item *is* (inventories, slots, the world) |
+| `Combat` | What a combatant *is*: `Character`, stats, loadout, hit detection, `Weapon`, `Projectile`, the ability slot types | How it is carried, animated or controlled |
+| `Carrying` | Holding and wearing items: `Inventory`, `Equipment` and the rules that move, equip and drop items | The world form of an item, or any UI |
+| `Melee` | Turning a swing into hits: the melee delivery classes | Animation, input |
+| `AudioPlayback` | Playing sounds | The data of sound |
+| `Presentation` | How a character looks and moves on screen | Rules, state the server owns |
+| `Interaction` | The act of interacting: `Interactable`, `Interactor` | What a chest or a door does |
+| `Loot` | Weighted tables and encounter tables | What spawns them |
+| `PlayerControl` | The local player's first-person control, camera and input handling | Anything a server does |
+| `AI` | Enemy states, senses, controllers | Players' controls |
+| `World` | The dungeon: layout, rooms, doors, keys, containers, pickups, population | The rules of a delve |
+| `Delve` | The run: death, extraction, reconnect, the reward sink | Anything needed by the code below it |
+| `Rendering`, `UI` | Screen-space and view code | State. A view reads state and forwards intent |
+| `Session` | Bootstrapping the game | Anything another assembly needs; if it is used elsewhere it does not belong here |
 
-### What has to change for that to compile
+That is about eighteen assemblies for about 25,000 lines. It is a lot, deliberately: the owner's priority is that the structure resists dumping and the cost is a few extra `.asmdef` files.
 
-The core-to-leaf edges are the ones to break. Each of these is a small, local change:
+### What the checker reports today
 
-1. **`Characters -> Audio`** (`GameAudio`, `AudioEventBase`). The character should raise events and the audio side should subscribe (as `CombatAudio` already does with `MeleeHitConfirmed`). Do the same for `Inventory -> Audio`: `Inventory.PlayMoveSound` calls `InventoryAudio.Play`; make `Inventory` raise an item-moved event and let `Audio` observe it. The audio *data* the item holds (`ItemAudioProfile`, `MovementAudioProfile`, `AudioTag`) is the harder half: either those three types move down with `Item`, or `Item` holds them behind a small interface. Decide with the owner; moving the data down is simpler.
-2. **`Characters -> World`** (`Interactor` uses `Interactable`). `Interactor` is the player's interaction component. It most naturally lives with `Interactable` in the world leaf; check what in `Characters` and `UI` then reaches it.
-3. **`Characters -> Delve`**. Replace the static lookup in `Character.RequestRespawn` / `RespawnServerRpc` with a small policy interface in the core (for example `IRespawnPolicy`) that the delve implements, found by the character through its network manager the way `DelveController.Find` works today. No static.
-4. **`Inventory -> World`**. `ItemDropController` needs a world form that can take an item instance. Put a tiny interface for it in the core (`InitializeDropped(Item, uint)`) and have `WorldItemPickup` implement it; the controller finds it with `GetComponent<T>()`.
-5. **The loose root files** go to their proper homes. `ServerClock` to Foundation; `Weapon`, `WeaponData`, `Projectile`, `SwingHitTracker` next to `Hitbox`/`HurtBox` in the core; `Player`, `GameController`, `EnemySpawner`, `NetworkSpawn` to a Session area at the top. `WeaponData` is an `Item` subclass, so it sits with `Item`.
-6. **`Controls` (`GameInput`) and `Networking`** are small and used from everywhere; they belong in Foundation. `Controls -> Inventory(1)` and `Networking -> Abilities(1)` need looking at (the second is probably the `Pending` false positive).
-7. **`internal` members.** After a split, anything `internal` that crosses an assembly stops compiling. Today: `Inventory.Detach`, `Attach`, `TryFindRoom`, `CommitMove` (used by `EquipmentController`, `InventoryMoveController`, `ItemDropController`, and, from the delve, `DeathDrop`, `ParkedCharacter`, `WorldItemPickup`), and `Weapon.ResolvesHits`. Do **not** add `InternalsVisibleTo`; that is a back door. Give these a deliberate public surface instead, a narrow "take this item out / put it here under its old instance id" API with a name that says what it is, and keep the rule that an item is in exactly one place.
+Running `layering_check.py --summary` against this plan finds a short list of upward references. **Six of the rows below are not real** (a type's name appears as a word in a string or comment); the rest are the work.
+
+| Reference | Real? | The fix |
+|---|---|---|
+| `Foundation -> Combos: Pending`, `Foundation -> Carrying: Inventory` (in `GameInput`), `Items -> Carrying: Inventory` (a tooltip), `Items -> World: Chest` (a tooltip), `Presentation -> World: Chest`, `Items -> AudioPlayback: Instance` | No | Confirm by reading the file, then ignore. If one is real, treat it like the others |
+| `AudioModel -> AudioPlayback`: `IAudioRandom`, `IntermittentSound`, `MovementLayer`, `MovementLayerPicker` | Yes | These data types are declared inside playback files. Move them into the audio model, then `MovementAudioProfile` and friends no longer reach up |
+| `Items -> AudioPlayback`: `InventoryAudioAction` | Yes | The enum is declared in the playback side; it is part of the item audio profile's data. Move it down with the profile |
+| `Combat -> Melee`: `MeleeDeliveryBase` (in `IAbilitySlot.cs`) | Yes | The ability slot should use `IMeleeSwingHost`, which already exists in `Abilities.Runtime`, not the concrete base class |
+| `Combat -> Carrying`: `Equipment` (in `CombatLoadout`) | Yes | `CombatLoadout` needs only the weapon in the main hand. Add a tiny `IEquippedWeaponSource` in `Combat`, implemented by `Equipment`, found with `GetComponent<T>()` |
+| `Combat -> Delve`: `DelveController` (in `Character`) | Yes | A respawn-policy interface in `Combat` (for example `IRespawnPolicy`), implemented by the delve and found through the network manager the way `DelveController.Find` works now. No static |
+| `Carrying -> World`: `WorldItemPickup` (in `ItemDropController`) | Yes | An interface in `Carrying` for "a world form that can take an item instance" (`InitializeDropped(Item, uint)`), implemented by `WorldItemPickup` |
+| `Carrying -> AudioPlayback`: `InventoryAudio` (in `Inventory`) | Yes | `Inventory` raises an item-moved event; `AudioPlayback` observes it, as `CombatAudio` already observes `MeleeHitConfirmed` |
+| `Delve/World/AI -> Session`: `Player` | Yes | These only want "the character belonging to this client", or "is this character a player's". Add a small `PlayerCharacters` lookup and an `IPlayerControlled` marker in `Combat` (implemented by `FirstPersonCharacterController`, which `PlayerProximity` and `DelveController` already use as the marker). Then nothing below `Session` reaches `Player` |
+
+Three moves the plan assumes, none of which is a code change beyond moving files:
+
+- `Characters/Damage.cs` and `BodyLocations.cs` to `Foundation` (so `WeaponData` and the audio contexts do not reach up into `Combat`).
+- `Abilities/Combo/*` to `Combos` (so `WeaponData` can hold a `ComboDefinition` without reaching up into `Melee`).
+- `Delve/PartyScaling.cs` to `World` (so the dungeon does not reach up into `Delve`), and `Interactable`, `InteractableManager` and `Interactor` together into `Interaction` (they used each other across `World` and `Characters`).
+
+### The `internal` members
+
+After the split, anything `internal` that crosses an assembly stops compiling. Today: `Inventory.Detach`, `Attach`, `TryFindRoom`, `CommitMove`, used inside `Carrying` by `EquipmentController`, `InventoryMoveController` and `ItemDropController`, and from outside it by `DeathDrop`, `ParkedCharacter` (in `Delve`) and `WorldItemPickup` (in `World`); and `Weapon.ResolvesHits`, used inside `Combat` only. Do **not** add `InternalsVisibleTo`: it is a back door that defeats the layering. Give `Inventory` a deliberate, narrow public surface instead (take an item out and get back what it was, put it here under its old instance id) and keep the rule that an item is in exactly one place.
 
 ### Suggested order
 
 Each step ends compiling, with tests green and Validate Definitions clean.
 
-0. **Baseline.** Compile, run EditMode + PlayMode, run Validate Definitions, record the results. Resolve the eight package GUIDs.
-1. **Guard first.** Add an EditMode test that reads every `.asmdef` and fails if a reference points the wrong way (the table above, once agreed). It will fail on nothing now and protects every later step. (An `AssemblyLayeringTests` that parses the JSON is enough.)
-2. **Break the core-to-leaf edges** (1 to 4 above), one at a time, all still in the single assembly. This is ordinary refactoring and each is testable on its own. Re-run `folder_dependencies.py` after each; the two-way pairs should disappear one by one.
-3. **Move the loose root files** to their areas (a pure move: `git mv` the `.cs` **and** its `.meta`, so script GUIDs, and with them every prefab and scene reference, are untouched).
-4. **Create assemblies bottom-up:** Foundation, then core gameplay, then each leaf. Move folders with their `.meta` files, add the `.asmdef`, set references, compile, test. Update the test assemblies' references and `SimpleRPG.Editor`, `SimpleRPG.Abilities.Editor` and `Integration` as each appears.
-5. **Retire `SimpleRPG`** (or leave it as the Session assembly if that is where the bootstrap ends up).
+0. **Baseline.** Compile, run EditMode and PlayMode, run Validate Definitions, record the results. Resolve the eight package GUIDs in `SimpleRPG.asmdef`.
+1. **Guard first.** An EditMode test that reads every `.asmdef` and fails on a reference the plan does not allow (an `AssemblyLayeringTests` that parses the JSON and checks it against the table above). It passes trivially at first and protects every later step.
+2. **Move the plain files** that the plan relocates (`Damage`, `BodyLocations`, `Combo/*`, `PartyScaling`, the interaction trio, the loose root files). Pure moves: `git mv` the `.cs` **and** its `.meta`. Re-run `layering_check.py`.
+3. **Untangle audio inside the one assembly:** move the data types out of the playback files (see the table), and move `ItemAudioProfile` and `InventoryAudioAction` beside `Item`. Make `Inventory` raise an event instead of calling `InventoryAudio`.
+4. **Break the remaining core edges** (`IAbilitySlot`, `IEquippedWeaponSource`, `IRespawnPolicy`, the world-form interface, `PlayerCharacters`/`IPlayerControlled`), one at a time, each with a test. Behaviour must not change.
+5. **Create the assemblies bottom-up:** Foundation, Combos, AudioModel, Items, Combat, Carrying, Melee, then the leaves in `LEAF_ORDER`. For each: move the folder with its `.meta` files, add the `.asmdef` (set `autoReferenced` to false), set references, compile, run tests. Update the test assemblies, `SimpleRPG.Editor`, `SimpleRPG.Abilities.Editor` and `Integration` as each appears.
+6. **Retire the old `SimpleRPG` assembly** (or leave it as `Session`).
+
+### Keeping it from eroding (the owner's real worry)
+
+The layering only helps if the next agent puts new code in the right place. The cheapest, most reliable ways:
+
+- **The layering test** from step 1 fails the build the moment something reaches the wrong way. This is the one that matters most.
+- **A "where new code goes" rule in `CLAUDE.md`**, pointing at a short `Docs/CodeLayout.md`: the assembly table above, and "if you cannot say which assembly it belongs to, ask; never add to `Session` because it is convenient".
+- **A short `README.md` beside each `.asmdef`** stating what belongs and what does not, taken from the table. An agent that opens the folder reads the rule.
+- **Set `autoReferenced` to false** on every new assembly, so nothing is referenced implicitly.
+- **Align namespaces with assemblies** as a later, separate change, so a type's namespace tells you where it lives. Not part of this work: do not mix a namespace rename with the split.
 
 ## After the layering: three classes that have grown
 
@@ -126,18 +185,16 @@ Do this only after the split, as separate changes. The point is separate concern
 - **The `DefinitionRegistry`** is built from assets, not types, so moving a `GameplayDefinition` subclass between assemblies is safe, but run Validate Definitions to be certain.
 - **Behaviour must not change.** This is a restructure. If a test changes, something was changed that should not have been.
 
-## Decisions to settle with the owner before step 2
+## Still to settle with the owner
 
-1. Is "one core plus leaves" the right shape, or do they want a finer split of the core?
-2. For `Item`'s audio references: move the three audio data types down with `Item`, or hide them behind an interface?
-3. Where does `Interactor` belong (the world leaf, or stay in the core)?
-4. The public surface that replaces `Inventory`'s `internal` members (names and shape).
-5. Is a separate Session assembly wanted, or should the bootstrap stay in whatever `SimpleRPG` becomes?
+1. The public surface that replaces `Inventory`'s `internal` members: names and shape.
+2. Whether `Presentation` and `PlayerControl` stay separate or are better merged (they are both about the local view of a character; the data does not force either answer).
+3. Whether a separate `Session` assembly is wanted, or the bootstrap stays wherever the old `SimpleRPG` assembly ends up.
 
 ## Done means
 
 - The agreed reference graph is enforced by an EditMode test, and has no cycles.
-- `folder_dependencies.py` shows no core-to-leaf edges.
+- `layering_check.py` reports no upward references and no leaf-order violations (apart from any confirmed name collisions).
 - Compile is clean, EditMode and PlayMode are green, and Validate Definitions passes.
 - No behaviour or serialized data changed: a play-through of the delve (die, extract, drop an item, reconnect) behaves exactly as before.
-- `Docs/README.md` links this document's outcome (a short "Code layout" page replacing this hand-off), and `bd` shows what is left.
+- `Docs/CodeLayout.md` exists (the assembly table and the rule for where new code goes), `CLAUDE.md` points at it, every assembly has its short `README.md`, `Docs/README.md` links the layout page in place of this hand-off, and `bd` shows what is left.
