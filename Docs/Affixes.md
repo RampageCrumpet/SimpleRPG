@@ -25,7 +25,29 @@ An item keeps its affixes wherever it goes, because it moves as the same instanc
 
 - **A death drop, and the belongings of a player who did not return in time,** go into a loot bag as the same items with the same instance ids and affixes.
 - **A character parked while its player is away** restores its items as they were.
-- **A player dropping an item on the ground does not exist yet.** If it is added, the world pickup must carry the instance (its affixes) and hand that same item back, rather than hold the asset, which would roll a new one on pickup.
+- **A player dropping an item on the ground** (drag its icon out of the inventory onto the world) puts the very instance on the ground. The world pickup carries the instance and its instance id, shows what it rolled (`WorldItemPickup.Affixes`), and hands that same item back to whoever picks it up, in the first place it fits. An item still lying where the dungeon placed it is only the asset and rolls when it is first picked up.
+
+## Dropping items
+
+`ItemDropController` owns the rules, in the same validate-then-commit shape as `InventoryMoveController` and `EquipmentController`:
+
+- Only the owner of a character's own inventory can drop from it, and only while the character is alive. A chest, a loot bag or another player's inventory is somewhere to take from, not drop from.
+- The client only names the item. The server decides where it lands: a metre in front of the character, on the floor, and at their feet instead if a wall is in the way.
+- An item whose asset has no `WorldPrefab` (with a `WorldItemPickup` on it) cannot be dropped, and a refused drop changes nothing.
+- Dropping is rate limited (2 a second, a burst of 5), since each one makes a world object.
+- A dropped item nobody picks up ends with the pickup, at the end of the session.
+
+In the UI, letting go of an icon over the world drops it; letting go over another inventory moves it, and over the paper doll does nothing.
+
+## Which attributes an affix can change
+
+An affix names an attribute by its stable key, and any attribute in a character's set works, the core ones and the derived ones alike: modifiers apply on top of a derived stat's resolved value through the same layers (add, percent, factor). So an affix on maximum health adds to the maximum; one on Strength changes the stats derived from it.
+
+| Core attributes (`simplerpg.attr.`) | Derived stats (`simplerpg.stat.`) |
+|---|---|
+| `strength`, `constitution`, `dexterity`, `agility`, `willpower`, `intelligence` (`armor` and `wisdom` also appear in the project) | `max_health`, `physical_power`, `magical_power`, `physical_damage_reduction`, `magical_damage_reduction`, `movement_speed`, `attack_speed`, `casting_speed`, `interaction_speed`, `equip_speed`, `carrying_capacity`, `spell_preparation_capacity` |
+
+Not every derived stat is consumed by gameplay yet (see [Stats](Stats.md)): an affix on one that nothing reads has no visible effect until something does.
 
 ## Replication
 
