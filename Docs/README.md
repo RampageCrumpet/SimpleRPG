@@ -14,6 +14,7 @@ For sound effects (Audacity MCP, sourcing, measuring, known tool quirks), start 
 - [The delve: dying, extracting, and the loot bag](Delve.md)
 - [Equipment and the paper doll](Equipment.md)
 - [Item affixes (rolled bonuses)](Affixes.md)
+- [Hand-off: layering the game code into assemblies](AssemblySplitHandoff.md)
 - [HUD and inventory screens](InventoryScreens.md)
 - [The local player and the UI](LocalPlayerAndUI.md)
 - [How a character is put together](CharacterComposition.md)
