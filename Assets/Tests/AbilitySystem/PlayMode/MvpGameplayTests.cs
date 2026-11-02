@@ -146,23 +146,35 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return StartDungeon(42, 8, 1);
             var population = Object.FindAnyObjectByType<DungeonPopulation>();
             var enemies = Object.FindObjectsByType<EnemyController>();
-            var enemy = enemies[0];
-            var agent = enemy.GetComponent<NavMeshAgent>();
-            var path = new NavMeshPath();
-            Assert.IsTrue(agent.CalculatePath(population.PlayerSpawnPosition, path));
-            Assert.AreEqual(NavMeshPathStatus.PathComplete, path.status);
+            // Physics lists enemies in no fixed order, and one standing near the spawn has no long straight leg, so take the first whose route has one.
+            EnemyController enemy = null;
+            NavMeshAgent agent = null;
             Vector3 start = default, finish = default;
             bool found = false;
-            for (int i = 0; i < path.corners.Length - 1; i++)
+            foreach (var candidate in enemies)
             {
-                Vector3 delta = path.corners[i + 1] - path.corners[i];
-                if (delta.magnitude < 3 || Mathf.Abs(delta.y) > .05f) continue;
-                start = path.corners[i] + delta.normalized * .2f;
-                finish = path.corners[i + 1] - delta.normalized * .2f;
-                found = true;
-                break;
+                var candidateAgent = candidate.GetComponent<NavMeshAgent>();
+                var path = new NavMeshPath();
+                Assert.IsTrue(candidateAgent.CalculatePath(population.PlayerSpawnPosition, path));
+                if (path.status != NavMeshPathStatus.PathComplete) continue;
+                for (int i = 0; i < path.corners.Length - 1 && !found; i++)
+                {
+                    Vector3 delta = path.corners[i + 1] - path.corners[i];
+                    if (delta.magnitude < 3 || Mathf.Abs(delta.y) > .05f) continue;
+                    start = path.corners[i] + delta.normalized * .2f;
+                    finish = path.corners[i + 1] - delta.normalized * .2f;
+                    found = true;
+                }
+
+                if (found)
+                {
+                    enemy = candidate;
+                    agent = candidateAgent;
+                    break;
+                }
             }
-            Assert.IsTrue(found, "The generated route must offer a straight floor segment for measuring gait speed.");
+
+            Assert.IsTrue(found, "At least one enemy's route must offer a straight floor segment for measuring gait speed.");
             foreach (var other in enemies)
             {
                 other.enabled = false; // Measure navigation without attacks redirecting the destination.
