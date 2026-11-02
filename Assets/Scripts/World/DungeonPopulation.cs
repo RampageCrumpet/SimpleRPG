@@ -18,6 +18,12 @@ namespace SimpleRPG.LevelGeneration
         [SerializeField] private LayerMask geometryLayers;
         private readonly List<Vector3> occupied = new List<Vector3>();
         public Vector3 PlayerSpawnPosition { get; private set; }
+
+        /// <summary>Where the party gets out, picked far from the arrival once population has succeeded. See <see cref="HasExtraction"/>.</summary>
+        public Vector3 ExtractionPosition { get; private set; }
+
+        /// <summary>False if no reachable spot for extraction could be found, for example in a dungeon of one room.</summary>
+        public bool HasExtraction { get; private set; }
         public int EnemyCount { get; private set; }
         public int TreasureCount { get; private set; }
         public bool IsReady { get; private set; }
@@ -41,6 +47,7 @@ namespace SimpleRPG.LevelGeneration
             IsReady = false;
             HasFailed = false;
             FailureReason = null;
+            HasExtraction = false;
             error = null;
             if (rooms == null || rooms.Count == 0)
                 error = "The generated dungeon has no rooms to populate.";
@@ -55,6 +62,10 @@ namespace SimpleRPG.LevelGeneration
                 {
                     occupied.Add(start);
                     PopulateRooms(rooms, cellSize, random);
+
+                    // Chosen after everything else so adding it does not change where enemies and treasure go for a given seed.
+                    HasExtraction = TryFindExtraction(rooms, cellSize, random, out Vector3 extraction);
+                    ExtractionPosition = extraction;
                     IsReady = true;
                     return true;
                 }
@@ -92,6 +103,36 @@ namespace SimpleRPG.LevelGeneration
                             TreasureCount++;
                         }
             }
+        }
+
+        /// <summary>
+        /// Picks the extraction point: the furthest from the arrival of one reachable spot in each of the last few rooms, so getting out takes
+        /// crossing the dungeon.
+        /// </summary>
+        private bool TryFindExtraction(IReadOnlyList<RoomBlueprint> rooms, float cellSize, System.Random random, out Vector3 best)
+        {
+            const int RoomsToTry = 8;
+            best = default;
+            bool found = false;
+            float bestDistance = -1f;
+            int tried = 0;
+            for (int i = rooms.Count - 1; i > 0 && tried < RoomsToTry; i--, tried++)
+            {
+                if (!TryFindPosition(rooms[i], cellSize, random, true, out Vector3 candidate))
+                {
+                    continue;
+                }
+
+                float distance = (candidate - PlayerSpawnPosition).sqrMagnitude;
+                if (distance > bestDistance)
+                {
+                    bestDistance = distance;
+                    best = candidate;
+                    found = true;
+                }
+            }
+
+            return found;
         }
 
         private bool TryFindArrival(IReadOnlyList<RoomBlueprint> rooms, float cellSize, System.Random random, out Vector3 start)

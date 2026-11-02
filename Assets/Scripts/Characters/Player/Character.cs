@@ -1,5 +1,6 @@
 using SimpleRPG.HitDetection;
 using SimpleRPG.Abilities;
+using SimpleRPG.Delve;
 using SimpleRPG.Gameplay;
 using System.Collections.Generic;
 using Unity.Netcode;
@@ -276,7 +277,8 @@ namespace SimpleRPG
         /// </summary>
         public void RequestRespawn()
         {
-            if (!IsSpawned || IsAlive)
+            // While a delve is running a dead player waits for it to end; see DelveController.
+            if (!IsSpawned || IsAlive || !DelveController.AllowsRespawn(this))
             {
                 return;
             }
@@ -294,7 +296,25 @@ namespace SimpleRPG
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
         private void RespawnServerRpc()
         {
-            RespawnOnServer();
+            if (DelveController.AllowsRespawn(this))
+            {
+                RespawnOnServer();
+            }
+        }
+
+        /// <summary>
+        /// Puts a living character back at its spawn point, as the start of a new delve does for those who got out. Server only.
+        /// </summary>
+        /// <returns>False if the character is dead, not spawned or not on the server.</returns>
+        public bool ReturnToSpawnOnServer()
+        {
+            if (!IsServer || !IsSpawned || !IsAlive)
+            {
+                return false;
+            }
+
+            Teleport(respawnPosition, respawnRotation);
+            return true;
         }
 
         /// <summary>

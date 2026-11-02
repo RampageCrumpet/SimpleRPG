@@ -1,0 +1,48 @@
+# The delve: dying, extracting, and what happens after
+
+A **delve** is one trip into the dungeon, from arriving to getting out or dying. Players group up, go in, and either leave together with
+what they found or lose everything. There is no levelling; gear is the only thing that carries over, and that lives outside the dungeon.
+
+`DelveController` (`Assets/Scripts/Delve/`) owns the rules. It sits on the `Level` child of the `GameManager` prefab, next to the key ring,
+and follows the rule in [Network authority](NetworkAuthority.md): the server decides, clients read replicated state.
+
+## Decisions
+
+| Question | Decision |
+|---|---|
+| What does dying cost? | **Everything.** The inventory and all worn gear move into a loot bag where the player fell. |
+| Who can take it? | Anyone alive within reach, like a chest. A partner can recover it; an enemy cannot. |
+| Can a dead player respawn mid-delve? | No. They wait for the delve to end. |
+| How does the party get out? | **Together.** Every living player must stand in the extraction zone for the whole channel (10 s). If anyone steps out or dies the countdown starts over. |
+| When does a delve end? | When the party extracts, or when every player is dead (a wipe). |
+| Where does the outcome go? | To an `IDelveRewardSink`. See below. |
+
+## Pieces
+
+| Piece | What it is |
+|---|---|
+| `DelveRules`, `ExtractionChannel` | Plain code, no engine types. The end conditions and the countdown, tested in `DelveRulesTests`. |
+| `DeathDrop` | Moves the same items, with the same instance IDs, from an inventory and equipment into a bag. Nothing is copied. An item the bag has no room for stays with its owner and is reported; the bag prefab is sized to hold a full inventory and all worn gear. |
+| `LootBag` | A `LootContainer` that despawns once it has held items and been emptied. Prefab: `Prefabs/Interactables/LootBag.prefab`, registered in the network prefab list. |
+| `DelveController` | Finds the players (4 times a second, not every frame), drops the belongings of the dead, runs the channel, decides the phase, and gates respawn through `DelveController.AllowsRespawn`. Without one in the session nothing changes. |
+| `DungeonPopulation.ExtractionPosition` | Chosen after enemies and treasure so existing seeds place them identically: the furthest reachable spot from the arrival among the last few rooms. |
+
+The drop runs on the poll after the death, not inside the damage event that caused it.
+
+## The reward sink
+
+Official servers will keep characters and the stash in a SQL database; a local game keeps its own, entirely separate, storage (the
+Diablo II Battle.net versus single-player split). The dungeon must not know which it is talking to, so a finished delve is handed to
+`IDelveRewardSink.Deposit(DelveResult)` with the survivors' and the dead's client IDs. The default only logs.
+Set `DelveController.RewardSink` to plug a real store in.
+
+What a store must know: at the moment of `Deposit`, what a survivor carries is theirs; what the dead carried is in the loot bags and is no
+longer theirs. Loading a character into a delve is the opposite direction and is not built yet.
+
+## Not built yet
+
+- The **HUD** is a plain on-screen placeholder (`OnGUI`), and the extraction point is a flat green disc made in code. Both need real art and UI.
+- `StartNextDelve` resets the rules and brings everyone back to the spawn; it does **not** rebuild the dungeon. A new dungeon per delve needs
+  a decision about scene or session handling and testing in the editor.
+- A fixed party size, joining a delve in progress, and disconnect handling beyond "a player who leaves is no longer counted".
+- The loot bag has no time limit and no owner-only window.

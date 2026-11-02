@@ -86,6 +86,7 @@ GameObject:
   - component: {fileID: 2074495731175748178}
   - component: {fileID: 5082288297274321634}
   - component: {fileID: 4192829544618534247}
+  - component: {fileID: 8420000000000000001}
   m_Layer: 0
   m_Name: Level
   m_TagString: Untagged
@@ -174,3 +175,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Keys.DungeonKeyRing
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &8420000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2074495731175748179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77a02de6e1838f5c09ebc73f16df80c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  lootBagPrefab: {fileID: 7310000000000000006, guid: 9a4c1d73e5b84f2c8d06b3a7e1f95c20, type: 3}
+  extractionRadius: 3
+  extractionSeconds: 10

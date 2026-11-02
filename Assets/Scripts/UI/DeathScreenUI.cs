@@ -1,4 +1,5 @@
 using SimpleRPG.Controls;
+using SimpleRPG.Delve;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -84,6 +85,19 @@ namespace SimpleRPG.UI
         public void Respawn()
         {
             if (character != null) character.RequestRespawn();
+        }
+
+        // While a delve is running a dead player waits for it to end, so the respawn is only offered once the server would accept it.
+        private void Update()
+        {
+            if (!IsShowing || character == null) return;
+
+            bool allowed = DelveController.AllowsRespawn(character);
+            if (respawnButton != null) respawnButton.interactable = allowed;
+            if (respawnLabel != null)
+            {
+                respawnLabel.text = allowed ? $"Respawn ({GameInput.BindingDisplay(GameInput.Interact)})" : "You died. Wait for the delve to end.";
+            }
         }
 
         private void Show()

@@ -11,6 +11,7 @@ For sound effects (Audacity MCP, sourcing, measuring, known tool quirks), start 
 - [Lighting and the torch flicker](Lighting.md)
 - [Skeleton animation](SkeletonAnimationPlan.md)
 - [Network authority](NetworkAuthority.md)
+- [The delve: dying, extracting, and the loot bag](Delve.md)
 - [Equipment and the paper doll](Equipment.md)
 - [HUD and inventory screens](InventoryScreens.md)
 - [The local player and the UI](LocalPlayerAndUI.md)

@@ -1,3 +1,4 @@
+using SimpleRPG.Delve;
 using SimpleRPG.Gameplay;
 using SimpleRPG.LevelGeneration;
 using Unity.AI.Navigation;
@@ -26,11 +27,17 @@ namespace SimpleRPG
         /// </summary>
         private NavMeshSurface navMeshSurface;
 
+        /// <summary>
+        /// The rules of the delve (extraction, what dying costs). Optional: a session without one plays as before.
+        /// </summary>
+        private DelveController delveController;
+
         // References are resolved in Awake because OnNetworkSpawn can run before Start.
         private void Awake()
         {
             levelGeneratorController = this.GetComponentInChildren<LevelGeneratorController>();
             navMeshSurface = this.GetComponentInChildren<NavMeshSurface>();
+            delveController = this.GetComponentInChildren<DelveController>();
         }
 
         public override void OnNetworkSpawn()
@@ -50,7 +57,11 @@ namespace SimpleRPG
                 navMeshSurface.BuildNavMesh();
                 var population = GetComponentInChildren<DungeonPopulation>();
                 if (population != null)
+                {
                     population.Populate(levelGeneratorController.GeneratedRooms, levelGeneratorController.Roomset.cellSize, levelGeneratorController.GeneratedSeed);
+                    if (delveController != null && population.IsReady && population.HasExtraction)
+                        delveController.ConfigureExtraction(population.ExtractionPosition);
+                }
             }
             else
             {
