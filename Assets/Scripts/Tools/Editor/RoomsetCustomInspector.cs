@@ -8,7 +8,7 @@ namespace SimpleRPG.EditorTools
     /// Draws the roomset buttons. The work is done by <see cref="RoomsetTools"/>.
     /// </summary>
     [CustomEditor(typeof(Roomset))]
-    public class RoomsetCustomInspector : Editor
+    public class RoomsetCustomInspector : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {

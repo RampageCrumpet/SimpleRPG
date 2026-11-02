@@ -84,7 +84,7 @@ namespace SimpleRPG.AudioTools
         {
             try
             {
-                Assembly editor = typeof(Editor).Assembly;
+                Assembly editor = typeof(UnityEditor.Editor).Assembly;
                 Type controllerType = editor.GetType("UnityEditor.Audio.AudioMixerController", true);
                 Type groupType = editor.GetType("UnityEditor.Audio.AudioMixerGroupController", true);
                 Type pathType = editor.GetType("UnityEditor.Audio.AudioGroupParameterPath", true);
