@@ -1,0 +1,19 @@
+{
+    "name": "SimpleRPG.Interaction",
+    "rootNamespace": "SimpleRPG",
+    "references": [
+        "SimpleRPG.Combat",
+        "SimpleRPG.Gameplay.Core",
+        "SimpleRPG.Abilities.Runtime",
+        "Unity.Netcode.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

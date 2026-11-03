@@ -2,7 +2,7 @@
 
 Data-driven, contextual, layered sound for combat, characters, equipment, inventory, spells, interactables and the dungeon. Gameplay asks for an **event**; assets decide what plays. Built on Unity's own audio (AudioSource, AudioMixer, Audio Random Containers). No middleware. For how the sound files themselves are made, see [AudioCreationWorkflow.md](AudioCreationWorkflow.md).
 
-Code is in `Assets/Scripts/Audio/` (namespace `SimpleRPG.Audio`); editor tools in `Assets/Scripts/Tools/Editor/Audio/`.
+Code is in `Assets/Scripts/AudioModel/` (the data of sound) and `Assets/Scripts/AudioPlayback/` (playing it), namespace `SimpleRPG.Audio`; editor tools in `Assets/Scripts/Tools/Editor/Audio/`.
 
 ## Architecture
 

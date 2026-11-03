@@ -1,0 +1,16 @@
+{
+    "name": "SimpleRPG.AudioModel",
+    "rootNamespace": "SimpleRPG",
+    "references": [
+        "SimpleRPG.Foundation"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

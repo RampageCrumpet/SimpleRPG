@@ -41,7 +41,7 @@ A weapon references one combo. A step is plain data, in seconds from the step's 
 | `StartOffset` | Seconds skipped at the start of this step's clip when entered (hides pose mismatch) |
 | `DamageScalar` | Replaces `comboDamageScalars` |
 
-The last step has no chain window. Built: `ComboStep`, `ComboDefinition` (`Assets/Scripts/Abilities/Combo/`), `WeaponData.Combo`. `ComboDefinition.Validate()` checks windows ordered and inside `Duration`, `Duration` matches the clip length, a state name and clip are set, and the last step has no chain window; "Validate Definitions" and the build gate run it on every combo asset. Whether the state exists in the animator controller is not checked yet (the presentation task owns that). This replaces the hand-copied `attackLengths` / `comboLengths` arrays and their test.
+The last step has no chain window. Built: `ComboStep`, `ComboDefinition` (`Assets/Scripts/Combos/`), `WeaponData.Combo`. `ComboDefinition.Validate()` checks windows ordered and inside `Duration`, `Duration` matches the clip length, a state name and clip are set, and the last step has no chain window; "Validate Definitions" and the build gate run it on every combo asset. Whether the state exists in the animator controller is not checked yet (the presentation task owns that). This replaces the hand-copied `attackLengths` / `comboLengths` arrays and their test.
 
 ### 2. Logic: `ComboMachine` (pure C#, Unity-free)
 
@@ -55,7 +55,7 @@ Rules:
 - Step ends unchained: chain resets; the next press starts step 1 fresh.
 - Last step ends: chain resets. (Assumption: no wrap-around; confirm.)
 
-Built as `ComboMachine` (`Assets/Scripts/Abilities/Combo/`), driven by `ComboStepTiming` so it never touches clips. Callers pass the time in: `Press(now, events)`, `Advance(now, events)` and `Interrupt(now, events)` append `ComboEvent`s (StepStarted, HitOpened, HitClosed, StepEnded) stamped with the time they happened, so a late advance reports the same times as a frame-by-frame one. `Advance` ignores earlier times; a `Press` may carry an earlier time than the last advance (network latency) as long as its step is still running. `ComboDefinition.CreateMachine()` builds one per character. Replaces `MeleeComboTracker`.
+Built as `ComboMachine` (`Assets/Scripts/Combos/`), driven by `ComboStepTiming` so it never touches clips. Callers pass the time in: `Press(now, events)`, `Advance(now, events)` and `Interrupt(now, events)` append `ComboEvent`s (StepStarted, HitOpened, HitClosed, StepEnded) stamped with the time they happened, so a late advance reports the same times as a frame-by-frame one. `Advance` ignores earlier times; a `Press` may carry an earlier time than the last advance (network latency) as long as its step is still running. `ComboDefinition.CreateMachine()` builds one per character. Replaces `MeleeComboTracker`.
 
 ### 3. Server authority and prediction
 

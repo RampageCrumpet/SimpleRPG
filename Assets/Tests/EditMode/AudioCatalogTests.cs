@@ -184,7 +184,7 @@ namespace SimpleRPG.Tests.EditMode
             Assert.IsNotNull(InventoryAudio.SoundFor(ruby, InventoryAudioAction.Place));
 
             // Read the scene file rather than the open scene: the test runner may have another scene loaded.
-            string guid = AssetDatabase.AssetPathToGUID("Assets/Scripts/Audio/AmbienceController.cs");
+            string guid = AssetDatabase.AssetPathToGUID("Assets/Scripts/AudioPlayback/AmbienceController.cs");
             string sceneText = System.IO.File.ReadAllText("Assets/Scenes/SampleScene.unity");
             Assert.IsTrue(sceneText.Contains(guid), "SampleScene needs an AmbienceController");
         }

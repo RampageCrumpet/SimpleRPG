@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using SimpleRPG.Abilities.Integration;
 using SimpleRPG.Animations;
 using SimpleRPG.Gameplay;
 using SimpleRPG.HitDetection;

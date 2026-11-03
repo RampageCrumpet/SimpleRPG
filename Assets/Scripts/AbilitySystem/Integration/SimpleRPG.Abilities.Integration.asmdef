@@ -2,10 +2,18 @@
     "name": "SimpleRPG.Abilities.Integration",
     "rootNamespace": "SimpleRPG.Abilities.Integration",
     "references": [
-        "SimpleRPG",
         "SimpleRPG.Gameplay.Core",
         "SimpleRPG.Abilities.Runtime",
-        "Unity.Netcode.Runtime"
+        "Unity.Netcode.Runtime",
+        "SimpleRPG.Foundation",
+        "SimpleRPG.Combos",
+        "SimpleRPG.Items",
+        "SimpleRPG.Combat",
+        "SimpleRPG.Carrying",
+        "SimpleRPG.Melee",
+        "SimpleRPG.AudioPlayback",
+        "SimpleRPG.Presentation",
+        "SimpleRPG.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

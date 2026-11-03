@@ -1,5 +1,4 @@
 using SimpleRPG.Controls;
-using SimpleRPG.Delve;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -92,7 +91,7 @@ namespace SimpleRPG.UI
         {
             if (!IsShowing || character == null) return;
 
-            bool allowed = DelveController.AllowsRespawn(character);
+            bool allowed = RespawnPolicies.AllowsRespawn(character);
             if (respawnButton != null) respawnButton.interactable = allowed;
             if (respawnLabel != null)
             {

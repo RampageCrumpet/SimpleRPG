@@ -1,0 +1,30 @@
+{
+    "name": "SimpleRPG.UI",
+    "rootNamespace": "SimpleRPG",
+    "references": [
+        "SimpleRPG.Foundation",
+        "SimpleRPG.Items",
+        "SimpleRPG.Combat",
+        "SimpleRPG.Carrying",
+        "SimpleRPG.PlayerControl",
+        "SimpleRPG.World",
+        "SimpleRPG.Interaction",
+        "SimpleRPG.Presentation",
+        "SimpleRPG.Rendering",
+        "SimpleRPG.Gameplay.Core",
+        "SimpleRPG.Abilities.Runtime",
+        "Unity.Netcode.Runtime",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

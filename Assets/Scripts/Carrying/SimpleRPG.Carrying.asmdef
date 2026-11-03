@@ -1,0 +1,21 @@
+{
+    "name": "SimpleRPG.Carrying",
+    "rootNamespace": "SimpleRPG",
+    "references": [
+        "SimpleRPG.Foundation",
+        "SimpleRPG.Items",
+        "SimpleRPG.Combat",
+        "SimpleRPG.Gameplay.Core",
+        "SimpleRPG.Abilities.Runtime",
+        "Unity.Netcode.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

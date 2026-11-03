@@ -1,0 +1,25 @@
+{
+    "name": "SimpleRPG.Presentation",
+    "rootNamespace": "SimpleRPG",
+    "references": [
+        "SimpleRPG.Foundation",
+        "SimpleRPG.AudioModel",
+        "SimpleRPG.Combat",
+        "SimpleRPG.Carrying",
+        "SimpleRPG.Melee",
+        "SimpleRPG.AudioPlayback",
+        "SimpleRPG.Gameplay.Core",
+        "SimpleRPG.Abilities.Runtime",
+        "Unity.Netcode.Runtime",
+        "SimpleRPG.Items"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

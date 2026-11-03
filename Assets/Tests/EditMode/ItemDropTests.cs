@@ -105,7 +105,7 @@ namespace SimpleRPG.Tests.EditMode
             Item item = MakeItem(droppable: false);
             inventory.AddItem(item, Vector2Int.zero);
 
-            Assert.AreEqual(DropResult.CannotBeDropped, ItemDropController.TryDrop(inventory, item, 0, out WorldItemPickup dropped));
+            Assert.AreEqual(DropResult.CannotBeDropped, ItemDropController.TryDrop(inventory, item, 0, out IDroppedItemForm dropped));
 
             Assert.IsNull(dropped);
             Assert.IsTrue(inventory.Contains(item), "A refused drop changes nothing.");
@@ -121,7 +121,8 @@ namespace SimpleRPG.Tests.EditMode
             created.Add(instance);
             inventory.AddItem(instance, new Vector2Int(2, 1));
 
-            DropResult result = ItemDropController.TryDrop(inventory, instance, 0, out WorldItemPickup dropped);
+            DropResult result = ItemDropController.TryDrop(inventory, instance, 0, out IDroppedItemForm form);
+            WorldItemPickup dropped = form as WorldItemPickup;
             if (dropped != null) created.Add(dropped.gameObject);
 
             Assert.AreEqual(DropResult.Success, result);
@@ -140,7 +141,8 @@ namespace SimpleRPG.Tests.EditMode
             Item item = MakeItem();
             inventory.AddItem(item, Vector2Int.zero);
 
-            ItemDropController.TryDrop(inventory, item, 0, out WorldItemPickup dropped);
+            ItemDropController.TryDrop(inventory, item, 0, out IDroppedItemForm form);
+            WorldItemPickup dropped = form as WorldItemPickup;
             if (dropped != null) created.Add(dropped.gameObject);
 
             Assert.AreEqual(10f, dropped.transform.position.x, 0.01f);

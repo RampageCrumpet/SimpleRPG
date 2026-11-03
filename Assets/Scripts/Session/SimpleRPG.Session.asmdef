@@ -1,0 +1,24 @@
+{
+    "name": "SimpleRPG.Session",
+    "rootNamespace": "SimpleRPG",
+    "references": [
+        "SimpleRPG.Foundation",
+        "SimpleRPG.Combat",
+        "SimpleRPG.Delve",
+        "SimpleRPG.World",
+        "SimpleRPG.Loot",
+        "SimpleRPG.Gameplay.Core",
+        "SimpleRPG.Abilities.Runtime",
+        "Unity.Netcode.Runtime",
+        "Unity.AI.Navigation"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

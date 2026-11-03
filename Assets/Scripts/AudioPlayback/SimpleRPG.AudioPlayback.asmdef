@@ -1,0 +1,25 @@
+{
+    "name": "SimpleRPG.AudioPlayback",
+    "rootNamespace": "SimpleRPG",
+    "references": [
+        "SimpleRPG.AudioModel",
+        "SimpleRPG.Combos",
+        "SimpleRPG.Items",
+        "SimpleRPG.Combat",
+        "SimpleRPG.Carrying",
+        "SimpleRPG.Melee",
+        "SimpleRPG.Gameplay.Core",
+        "SimpleRPG.Abilities.Runtime",
+        "Unity.Netcode.Runtime",
+        "SimpleRPG.Foundation"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

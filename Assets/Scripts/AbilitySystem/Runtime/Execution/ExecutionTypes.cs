@@ -262,6 +262,12 @@ namespace SimpleRPG.Abilities
     public interface IMeleeSwingHost : IMeleeDelivery
     {
         /// <summary>
+        /// True while a chain of swings is running as this machine sees it, so a press now would continue it rather than start a fresh use.
+        /// On an owning client this follows its prediction.
+        /// </summary>
+        bool IsChainRunning { get; }
+
+        /// <summary>
         /// Decides what a press does and, unless it is rejected, reserves the swing that the ability's next Begin starts. Server only.
         /// </summary>
         /// <param name="pressTick">The tick the press happened at, as the presser's clock read it. The host credits at most a short, bounded

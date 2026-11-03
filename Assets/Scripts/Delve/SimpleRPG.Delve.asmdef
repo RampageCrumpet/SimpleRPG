@@ -1,0 +1,24 @@
+{
+    "name": "SimpleRPG.Delve",
+    "rootNamespace": "SimpleRPG",
+    "references": [
+        "SimpleRPG.Foundation",
+        "SimpleRPG.Items",
+        "SimpleRPG.Combat",
+        "SimpleRPG.Carrying",
+        "SimpleRPG.World",
+        "SimpleRPG.PlayerControl",
+        "SimpleRPG.Gameplay.Core",
+        "SimpleRPG.Abilities.Runtime",
+        "Unity.Netcode.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

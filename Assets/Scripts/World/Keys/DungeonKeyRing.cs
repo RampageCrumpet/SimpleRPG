@@ -200,13 +200,13 @@ namespace SimpleRPG.Keys
                 return false;
             }
 
-            Player player = client.PlayerObject.GetComponent<Player>();
-            if (player == null || player.character == null || !player.character.IsAlive)
+            Character character = PlayerCharacters.Of(client);
+            if (character == null || !character.IsAlive)
             {
                 return false;
             }
 
-            position = player.character.transform.position;
+            position = character.transform.position;
             return true;
         }
     }

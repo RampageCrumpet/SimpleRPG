@@ -9,7 +9,7 @@ Bead: `simplerpg-7du.1` child "Anatomical hit regions". Related: `UpperBodyArtic
 | Piece | Where | Does |
 |---|---|---|
 | `HurtBox` | `Characters/Hurtbox.cs` | One region: a trigger collider on the **HurtBox** layer, on the bone it follows. Names a `BodyLocation`, an owner `Character` and an optional `Priority`. |
-| `BodyLocation` | `Characters/BodyLocations.cs` | The vocabulary of regions: `Head`, `Torso`, `Legs`, `Arms`. Append-only (prefabs store the number). |
+| `BodyLocation` | `Foundation/BodyLocations.cs` | The vocabulary of regions: `Head`, `Torso`, `Legs`, `Arms`. Append-only (prefabs store the number). |
 | `Hitbox` | `Characters/Hitbox.cs` | A weapon's blade. Each physics step it tests the poses the blade passed through and reports **one** region per character through `HitboxCollisionEvent`. |
 | `HitCandidate` | `Characters/HitCandidate.cs` | The contact-resolution rule when a blade overlaps several regions of one character. |
 | `Weapon` / `SwingHitTracker` | unchanged | One hit per target per swing, never the wielder. |

@@ -73,6 +73,10 @@ A build runs a definition check (ids, registry, ability graph compile errors); r
 
 Server-authoritative multiplayer on Netcode for GameObjects (host or dedicated server; clients only ask). Gameplay abilities are ScriptableObject graphs compiled and run by one executor, shared by players, monsters, items and traps. See `Docs/AbilitySystem.md` (design, decisions, lifetimes), `Docs/AbilityEditor.md` (visual editor) and `Docs/NetworkAuthority.md` (who owns what).
 
+## Where new code goes
+
+The game code is layered into assemblies, one folder each under `Assets/Scripts`; lower layers never use higher ones, and `AssemblyLayeringTests` fails the build when one does. Read [Docs/CodeLayout.md](Docs/CodeLayout.md) before adding a file or an assembly. If you cannot say which assembly a piece of code belongs to, ask; never add to `Session` because it is convenient. When a lower layer needs something from a higher one, add a small interface in the lower layer instead of reaching up, and do not add `InternalsVisibleTo`.
+
 ## Conventions & Patterns
 
 - Build mechanics as generic, reusable primitives; never one class per named spell or item.

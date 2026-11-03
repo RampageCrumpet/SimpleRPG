@@ -7,7 +7,7 @@ using UnityEngine;
 namespace SimpleRPG.ObjectInteractions
 {
     /// <summary>A catalog item in the world. The server validates the caller and transfers it only if inventory space is available.</summary>
-    public sealed class WorldItemPickup : Interactable
+    public sealed class WorldItemPickup : Interactable, IDroppedItemForm
     {
         [SerializeField] private Item item;
         public Item Item => item;
@@ -23,10 +23,7 @@ namespace SimpleRPG.ObjectInteractions
         /// <summary>What the item on the ground rolled. Empty for an item that is still just the asset, which rolls when it is picked up.</summary>
         public ItemAffixes Affixes => carried != null ? carried.Affixes : affixes.Value;
 
-        /// <summary>
-        /// Makes this pickup the given item instance, as dropped by a player. Called by the server right after it spawns the pickup. The pickup
-        /// then hands that same instance, under the same instance id, to whoever picks it up.
-        /// </summary>
+        /// <inheritdoc/>
         public void InitializeDropped(Item instance, uint instanceId)
         {
             if (instance == null || (IsSpawned && !IsServer))
@@ -84,8 +81,7 @@ namespace SimpleRPG.ObjectInteractions
             }
 
             if (!NetworkManager.ConnectedClients.TryGetValue(rpcParams.Receive.SenderClientId, out var client)) return;
-            var player = client.PlayerObject != null ? client.PlayerObject.GetComponent<Player>() : null;
-            TryPickUp(player != null ? player.character : null);
+            TryPickUp(PlayerCharacters.Of(client));
         }
 
         public bool TryPickUp(Character character)
@@ -98,8 +94,8 @@ namespace SimpleRPG.ObjectInteractions
             if (carried != null)
             {
                 // The dropped instance goes back as itself, in the first place it fits.
-                if (!inventory.TryFindRoom(carried, null, out Vector2Int room)) return false;
-                inventory.Attach(carried, room, carriedInstanceId);
+                if (!inventory.TryFindRoom(carried, out Vector2Int room)) return false;
+                inventory.PutBack(carried, room, carriedInstanceId);
                 carried = null;
             }
             else if (!inventory.AddItemInstance(item))

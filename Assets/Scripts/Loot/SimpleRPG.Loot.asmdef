@@ -1,0 +1,17 @@
+{
+    "name": "SimpleRPG.Loot",
+    "rootNamespace": "SimpleRPG",
+    "references": [
+        "SimpleRPG.Items",
+        "SimpleRPG.Gameplay.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

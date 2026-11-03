@@ -2,11 +2,28 @@
     "name": "SimpleRPG.Abilities.Editor",
     "rootNamespace": "SimpleRPG.Abilities.Editor",
     "references": [
-        "SimpleRPG",
         "SimpleRPG.Gameplay.Core",
         "SimpleRPG.Abilities.Runtime",
         "SimpleRPG.Abilities.Integration",
-        "Unity.Netcode.Runtime"
+        "Unity.Netcode.Runtime",
+        "SimpleRPG.Foundation",
+        "SimpleRPG.AudioModel",
+        "SimpleRPG.Combos",
+        "SimpleRPG.Items",
+        "SimpleRPG.Combat",
+        "SimpleRPG.Carrying",
+        "SimpleRPG.Melee",
+        "SimpleRPG.AudioPlayback",
+        "SimpleRPG.Presentation",
+        "SimpleRPG.Interaction",
+        "SimpleRPG.Loot",
+        "SimpleRPG.PlayerControl",
+        "SimpleRPG.AI",
+        "SimpleRPG.World",
+        "SimpleRPG.Delve",
+        "SimpleRPG.Rendering",
+        "SimpleRPG.UI",
+        "SimpleRPG.Session"
     ],
     "includePlatforms": [
         "Editor"

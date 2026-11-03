@@ -120,7 +120,7 @@ namespace SimpleRPG.Delve
             {
                 if (inventory != null && inventory.ValidateItemPlacement(carried.Item, carried.Location))
                 {
-                    inventory.Attach(carried.Item, carried.Location, carried.InstanceId);
+                    inventory.PutBack(carried.Item, carried.Location, carried.InstanceId);
                 }
                 else
                 {
@@ -167,9 +167,9 @@ namespace SimpleRPG.Delve
 
         private static int Place(Inventory bag, Item item, uint instanceId)
         {
-            if (bag != null && bag.TryFindRoom(item, null, out Vector2Int room))
+            if (bag != null && bag.TryFindRoom(item, out Vector2Int room))
             {
-                bag.Attach(item, room, instanceId);
+                bag.PutBack(item, room, instanceId);
                 return 0;
             }
 

@@ -56,9 +56,9 @@ namespace SimpleRPG.Delve
             int left = 0;
             foreach (Item item in items)
             {
-                if (bag.TryFindRoom(item, null, out Vector2Int room) && source.Detach(item, out uint instanceId, out Vector2Int _))
+                if (bag.TryFindRoom(item, out Vector2Int room) && source.TryTakeOut(item, out uint instanceId, out Vector2Int _))
                 {
-                    bag.Attach(item, room, instanceId);
+                    bag.PutBack(item, room, instanceId);
                     moved++;
                 }
                 else
@@ -88,9 +88,9 @@ namespace SimpleRPG.Delve
             int left = 0;
             foreach ((EquipmentSlot slot, uint instanceId, Item item) in worn)
             {
-                if (bag.TryFindRoom(item, null, out Vector2Int room) && equipment.Unequip(slot))
+                if (bag.TryFindRoom(item, out Vector2Int room) && equipment.Unequip(slot))
                 {
-                    bag.Attach(item, room, instanceId);
+                    bag.PutBack(item, room, instanceId);
                     moved++;
                 }
                 else

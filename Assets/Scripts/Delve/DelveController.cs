@@ -16,12 +16,10 @@ namespace SimpleRPG.Delve
     /// </list>
     /// Clients only read the replicated state. The HUD here is a plain on-screen placeholder until the real one exists.
     /// </summary>
-    public sealed class DelveController : NetworkBehaviour
+    public sealed class DelveController : NetworkBehaviour, IRespawnPolicy
     {
         // The server looks at the players this often, not every frame: a death or a step into the zone does not need to be noticed sooner.
         private const float PollSeconds = 0.2f;
-
-        private static readonly Dictionary<NetworkManager, DelveController> Active = new Dictionary<NetworkManager, DelveController>();
 
         [SerializeField]
         [Tooltip("The loot bag a dead player's belongings go into. Needs a NetworkObject, an Inventory big enough for a full inventory plus all worn gear, and a LootBag.")]
@@ -97,27 +95,17 @@ namespace SimpleRPG.Delve
         public float ExtractionRadius => extractionRadius;
 
         /// <summary>
-        /// Whether a dead character may start its next life now. Always true where no delve is being run (a test scene, an older setup), so
-        /// nothing that does not use delves changes.
+        /// A dead character waits for the delve to end: it may respawn only once the delve is no longer being run. Where there is no delve
+        /// (a test scene, an older setup) <see cref="RespawnPolicies"/> allows it, so nothing that does not use delves changes.
         /// </summary>
-        public static bool AllowsRespawn(Character character)
-        {
-            NetworkManager manager = character != null ? character.NetworkManager : null;
-            return manager == null || !Active.TryGetValue(manager, out DelveController controller) || controller.phase.Value != DelvePhase.Delving;
-        }
+        public bool AllowsRespawn(Character character) => phase.Value != DelvePhase.Delving;
 
         /// <summary>The delve controller of this session, or null if there is none.</summary>
-        public static DelveController Find(NetworkManager manager)
-        {
-            return manager != null && Active.TryGetValue(manager, out DelveController controller) ? controller : null;
-        }
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStatics() => Active.Clear();
+        public static DelveController Find(NetworkManager manager) => RespawnPolicies.Find(manager) as DelveController;
 
         public override void OnNetworkSpawn()
         {
-            Active[NetworkManager] = this;
+            RespawnPolicies.Register(NetworkManager, this);
             extractionKnown.OnValueChanged += HandleExtractionChanged;
             extractionPosition.OnValueChanged += HandleExtractionChanged;
             RefreshMarker();
@@ -132,10 +120,7 @@ namespace SimpleRPG.Delve
 
         public override void OnNetworkDespawn()
         {
-            if (NetworkManager != null && Active.TryGetValue(NetworkManager, out DelveController registered) && registered == this)
-            {
-                Active.Remove(NetworkManager);
-            }
+            RespawnPolicies.Unregister(NetworkManager, this);
 
             if (IsServer && NetworkManager != null)
             {
@@ -552,8 +537,7 @@ namespace SimpleRPG.Delve
 
         private Character LocalCharacter()
         {
-            NetworkObject playerObject = NetworkManager != null && NetworkManager.LocalClient != null ? NetworkManager.LocalClient.PlayerObject : null;
-            return playerObject != null && playerObject.TryGetComponent(out Player player) ? player.character : null;
+            return PlayerCharacters.Of(NetworkManager != null ? NetworkManager.LocalClient : null);
         }
 
         private void OnGUI()
