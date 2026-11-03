@@ -14,7 +14,7 @@ namespace SimpleRPG.Delve
     /// <item>The party extracts together: every living player has to stand in the extraction zone for the whole channel.</item>
     /// <item>The delve ends when the party extracts or when everyone is dead, and the outcome goes to the <see cref="RewardSink"/>.</item>
     /// </list>
-    /// Clients only read the replicated state. The HUD here is a plain on-screen placeholder until the real one exists.
+    /// Clients only read the replicated state; showing it (the countdown, the result) is the UI's job, see <c>DelveHud</c>.
     /// </summary>
     public sealed class DelveController : NetworkBehaviour, IRespawnPolicy
     {
@@ -71,9 +71,6 @@ namespace SimpleRPG.Delve
         private bool anyPlayerSeen;
         private bool warnedNoBag;
 
-        // Presentation.
-        private GameObject marker;
-
         /// <summary>Where the outcome of a delve goes when it ends. Replace it to store results; the default only logs.</summary>
         public IDelveRewardSink RewardSink { get; set; } = new LogDelveRewardSink();
 
@@ -94,6 +91,18 @@ namespace SimpleRPG.Delve
 
         public float ExtractionRadius => extractionRadius;
 
+        /// <summary>How far the party's extraction countdown has got, from 0 to 1. Read by every machine, for a HUD.</summary>
+        public float ExtractionProgress => extractionProgress.Value;
+
+        /// <summary>How many players were alive when the delve ended. Meaningful once <see cref="Phase"/> is not Delving.</summary>
+        public int SurvivorCount => survivorCount.Value;
+
+        /// <summary>How many players had died when the delve ended.</summary>
+        public int DeadCount => deadCount.Value;
+
+        /// <summary>How long the delve lasted, in seconds, once it has ended.</summary>
+        public float DurationSeconds => durationSeconds.Value;
+
         /// <summary>
         /// A dead character waits for the delve to end: it may respawn only once the delve is no longer being run. Where there is no delve
         /// (a test scene, an older setup) <see cref="RespawnPolicies"/> allows it, so nothing that does not use delves changes.
@@ -106,9 +115,6 @@ namespace SimpleRPG.Delve
         public override void OnNetworkSpawn()
         {
             RespawnPolicies.Register(NetworkManager, this);
-            extractionKnown.OnValueChanged += HandleExtractionChanged;
-            extractionPosition.OnValueChanged += HandleExtractionChanged;
-            RefreshMarker();
 
             if (IsServer)
             {
@@ -126,10 +132,6 @@ namespace SimpleRPG.Delve
             {
                 NetworkManager.OnClientDisconnectCallback -= HandleClientDisconnect;
             }
-
-            extractionKnown.OnValueChanged -= HandleExtractionChanged;
-            extractionPosition.OnValueChanged -= HandleExtractionChanged;
-            DestroyMarker();
 
             foreach (KeyValuePair<Character, Character.NotifyDeath> pair in tracked)
             {
@@ -499,82 +501,6 @@ namespace SimpleRPG.Delve
             var result = new DelveResult(outcome, seconds, survivors, died);
             RewardSink?.Deposit(result);
             Ended?.Invoke(result);
-        }
-
-        // ----- Presentation -----
-
-        private void HandleExtractionChanged(bool previous, bool current) => RefreshMarker();
-
-        private void HandleExtractionChanged(Vector3 previous, Vector3 current) => RefreshMarker();
-
-        // A flat disc on the floor where the party gets out. A stand-in for real art, made here so it needs no asset.
-        private void RefreshMarker()
-        {
-            DestroyMarker();
-            if (Application.isBatchMode || !extractionKnown.Value)
-            {
-                return;
-            }
-
-            marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            marker.name = "ExtractionMarker (placeholder)";
-            Destroy(marker.GetComponent<Collider>());
-            marker.transform.position = extractionPosition.Value + Vector3.up * 0.03f;
-            marker.transform.localScale = new Vector3(extractionRadius * 2f, 0.03f, extractionRadius * 2f);
-            Renderer renderer = marker.GetComponent<Renderer>();
-            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            renderer.material.color = new Color(0.2f, 0.9f, 0.5f);
-        }
-
-        private void DestroyMarker()
-        {
-            if (marker != null)
-            {
-                Destroy(marker);
-                marker = null;
-            }
-        }
-
-        private Character LocalCharacter()
-        {
-            return PlayerCharacters.Of(NetworkManager != null ? NetworkManager.LocalClient : null);
-        }
-
-        private void OnGUI()
-        {
-            if (!IsSpawned || !IsClient)
-            {
-                return;
-            }
-
-            const float width = 360f;
-            Rect area = new Rect((Screen.width - width) * 0.5f, 12f, width, 120f);
-            GUILayout.BeginArea(area);
-
-            if (phase.Value != DelvePhase.Delving)
-            {
-                string title = phase.Value == DelvePhase.Extracted ? "EXTRACTED" : "WIPED";
-                GUILayout.Box($"{title}\n{survivorCount.Value} survived, {deadCount.Value} died, {durationSeconds.Value:0}s");
-                if (IsServer && GUILayout.Button("Start next delve"))
-                {
-                    StartNextDelve();
-                }
-            }
-            else if (extractionKnown.Value)
-            {
-                Character local = LocalCharacter();
-                string where = local != null ? $"{Vector3.Distance(local.transform.position, extractionPosition.Value):0}m to extraction" : "extraction";
-                if (extractionProgress.Value > 0f)
-                {
-                    GUILayout.Box($"Extracting... {extractionProgress.Value * 100f:0}% (the whole party must stay)");
-                }
-                else
-                {
-                    GUILayout.Box(where);
-                }
-            }
-
-            GUILayout.EndArea();
         }
     }
 }

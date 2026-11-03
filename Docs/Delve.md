@@ -71,8 +71,8 @@ longer theirs. Loading a character into a delve is the opposite direction and is
 
 ## Not built yet
 
-- The **HUD** is a plain on-screen placeholder (`OnGUI`), and the extraction point is a flat green disc made in code. Both need real art and UI.
-- `StartNextDelve` resets the rules and brings everyone back to the spawn; it does **not** rebuild the dungeon. A new dungeon per delve needs
+- The **HUD** (`DelveHud`, in the `UI` assembly, created by code) is a plain on-screen placeholder, and the extraction point is a flat green disc made the same way. Both need real art and UI. When a delve ends the HUD takes the cursor through `PlayerUIController`'s reference-counted lock, as the death screen does, and offers **Exit dungeon**: `MainMenuReturn` shuts the session down, clears what it left behind (`LocalPlayer`, the player sessions, the gameplay services), frees the cursor and reloads the scene, which brings the menu back. A client that loses its connection, or is refused on joining, returns to the menu the same way.
+- `StartNextDelve` (no longer offered in the UI; leaving is) resets the rules and brings everyone back to the spawn; it does **not** rebuild the dungeon. A new dungeon per delve needs
   a decision about scene or session handling and testing in the editor.
 - A fixed party size, joining a delve in progress, and disconnect handling beyond "a player who leaves is no longer counted".
 - The loot bag has no time limit and no owner-only window.

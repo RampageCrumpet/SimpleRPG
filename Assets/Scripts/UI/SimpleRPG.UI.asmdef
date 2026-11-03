@@ -11,6 +11,7 @@
         "SimpleRPG.Interaction",
         "SimpleRPG.Presentation",
         "SimpleRPG.Rendering",
+        "SimpleRPG.Delve",
         "SimpleRPG.Gameplay.Core",
         "SimpleRPG.Abilities.Runtime",
         "Unity.Netcode.Runtime",

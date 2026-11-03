@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using SimpleRPG.Networking;
+using SimpleRPG.UI;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
@@ -53,7 +54,11 @@ namespace SimpleRPG
             startClientButton.onClick.AddListener(() =>
             {
                 SessionHandshake.PrepareClient(NetworkManager.Singleton);
+
+                // A client that loses its connection, or is refused (a full server, another build), has nothing to play: back to the menu.
+                NetworkManager.Singleton.OnClientDisconnectCallback += HandleClientDisconnect;
                 if (NetworkManager.Singleton.StartClient()) gameObject.SetActive(false);
+                else NetworkManager.Singleton.OnClientDisconnectCallback -= HandleClientDisconnect;
             });
 
             startDedicatedButton.onClick.AddListener(() =>
@@ -61,6 +66,27 @@ namespace SimpleRPG
                 SessionHandshake.InstallOnServer(NetworkManager.Singleton, maxPlayers);
                 if (NetworkManager.Singleton.StartServer()) gameObject.SetActive(false);
             });
+        }
+
+        private void HandleClientDisconnect(ulong clientId)
+        {
+            NetworkManager manager = NetworkManager.Singleton;
+            if (manager == null || manager.IsServer || clientId != manager.LocalClientId)
+            {
+                return;
+            }
+
+            Debug.Log("Disconnected from the server" + (string.IsNullOrEmpty(manager.DisconnectReason) ? "." : ": " + manager.DisconnectReason));
+            manager.OnClientDisconnectCallback -= HandleClientDisconnect;
+            MainMenuReturn.Begin();
+        }
+
+        private void OnDestroy()
+        {
+            if (NetworkManager.Singleton != null)
+            {
+                NetworkManager.Singleton.OnClientDisconnectCallback -= HandleClientDisconnect;
+            }
         }
     }
 }

@@ -33,5 +33,8 @@ namespace SimpleRPG.Networking
         public bool TryGetPlayerId(ulong clientId, out string playerId) => playerByClient.TryGetValue(clientId, out playerId);
 
         public void Remove(ulong clientId) => playerByClient.Remove(clientId);
+
+        /// <summary>Forgets every client, for a session that has ended.</summary>
+        public void Clear() => playerByClient.Clear();
     }
 }
