@@ -254,7 +254,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             deadline = Time.time + 20;
             while (enemy.Character.IsAlive && Time.time < deadline)
             {
-                player.transform.position = enemy.transform.position - enemy.transform.forward * 1.1f + Vector3.up * 0.65f;
+                // The longsword's swing does not reach the skeleton from 1.1 m (the skeleton's own blade reaches the player from there), so stand closer.
+                player.transform.position = enemy.transform.position - enemy.transform.forward * 0.8f + Vector3.up * 0.65f;
                 player.transform.rotation = enemy.transform.rotation;
                 Physics.SyncTransforms();
                 int hitsBefore = enemyHits.Count;
