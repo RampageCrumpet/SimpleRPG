@@ -79,3 +79,68 @@ MonoBehaviour:
   attachPosition: {x: 0, y: 0, z: 0}
   attachRotation: {x: 0, y: 0, z: 0, w: 1}
   attachScale: {x: 1, y: 1, z: 1}
+  additionalPieces:
+  - mesh: {fileID: 577909996860477045, guid: 044ef1b0df8a61c44850980b06ea0f16, type: 3}
+    materials:
+    - {fileID: 2100000, guid: 6d9861375d0c1ea4aac2f1688c371363, type: 2}
+    boneNames:
+    - Hips
+    - Spine
+    - Chest
+    - UpperChest
+    - Neck
+    - Head
+    - LeftShoulder
+    - LeftUpperArm
+    - LeftLowerArm
+    - LeftHand
+    - LeftThumbProximal
+    - LeftThumbIntermediate
+    - LeftThumbDistal
+    - LeftIndexProximal
+    - LeftIndexIntermediate
+    - LeftIndexDistal
+    - LeftMiddleProximal
+    - LeftMiddleIntermediate
+    - LeftMiddleDistal
+    - LeftRingProximal
+    - LeftRingIntermediate
+    - LeftRingDistal
+    - LeftLittleProximal
+    - LeftLittleIntermediate
+    - LeftLittleDistal
+    - RightShoulder
+    - RightUpperArm
+    - RightLowerArm
+    - RightHand
+    - RightThumbProximal
+    - RightThumbIntermediate
+    - RightThumbDistal
+    - RightIndexProximal
+    - RightIndexIntermediate
+    - RightIndexDistal
+    - RightMiddleProximal
+    - RightMiddleIntermediate
+    - RightMiddleDistal
+    - RightRingProximal
+    - RightRingIntermediate
+    - RightRingDistal
+    - RightLittleProximal
+    - RightLittleIntermediate
+    - RightLittleDistal
+    - LeftUpperLeg
+    - LeftLowerLeg
+    - LeftFoot
+    - LeftToes
+    - RightUpperLeg
+    - RightLowerLeg
+    - RightFoot
+    - RightToes
+    rootBoneName: Hips
+    localBounds:
+      m_Center: {x: 0.0008957982, y: 0.18352544, z: 0.007800214}
+      m_Extent: {x: 0.45171064, y: 0.42358518, z: 0.19473419}
+    attachBoneName: 
+    attachPosition: {x: 0, y: 0, z: 0}
+    attachRotation: {x: 0, y: 0, z: 0, w: 1}
+    attachScale: {x: 1, y: 1, z: 1}

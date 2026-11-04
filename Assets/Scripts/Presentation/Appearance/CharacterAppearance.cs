@@ -157,7 +157,7 @@ namespace SimpleRPG.Appearance
             {
                 if (part == null) continue;
                 GameObject go = BodyPartBinder.Create(part, new RigBoneIndex(rigRoot), partsRoot);
-                go.hideFlags = HideFlags.DontSave;
+                go.GetComponent<BodyPartInstance>().SetHideFlags(HideFlags.DontSave);
             }
         }
 

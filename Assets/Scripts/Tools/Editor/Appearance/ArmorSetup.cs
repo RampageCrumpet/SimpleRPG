@@ -163,22 +163,29 @@ namespace SimpleRPG.AppearanceTools
                     continue;
                 }
 
-                var claimed = new Dictionary<BodyPartSlot, string>();
+                // A character shows one part per slot, so the meshes of a slot (plate with its mail undercoat) become the pieces of one part.
+                var bySlot = new Dictionary<BodyPartSlot, List<(SkinnedMeshRenderer mesh, BodyPartPiece piece)>>();
                 foreach (SkinnedMeshRenderer mesh in meshes)
                 {
-                    if (!WritePart(piece, item, mesh, problems, out BodyPartSlot slot))
+                    if (!TryMakePiece(piece, mesh, problems, out BodyPartSlot slot, out BodyPartPiece made))
                     {
                         continue;
                     }
 
-                    partsWritten++;
-
-                    // A character shows one part per slot, so a second mesh in the same slot is never shown with the first.
-                    if (!claimed.TryAdd(slot, mesh.name))
-                    {
-                        problems.Add($"{piece.Folder}: '{mesh.name}' and '{claimed[slot]}' are both in {slot}. A character shows ONE part per slot, so only one of them will show (which one is not defined). See Docs/CharacterAppearance.md, 'One part per slot'.");
-                    }
+                    if (!bySlot.TryGetValue(slot, out var group)) bySlot[slot] = group = new List<(SkinnedMeshRenderer, BodyPartPiece)>();
+                    group.Add((mesh, made));
                 }
+
+                var written = new HashSet<BodyPartDefinition>();
+                foreach (var pair in bySlot)
+                {
+                    BodyPartDefinition part = WritePart(piece, item, pair.Key, pair.Value, problems);
+                    if (part == null) continue;
+                    written.Add(part);
+                    partsWritten++;
+                }
+
+                DetachStaleParts(piece, item, written, problems);
             }
 
             AssetDatabase.SaveAssets();
@@ -249,8 +256,10 @@ namespace SimpleRPG.AppearanceTools
             return boneNames.Where(name => !have.Contains(name)).Distinct().ToList();
         }
 
-        private static bool WritePart(Piece piece, ArmorData item, SkinnedMeshRenderer mesh, List<string> problems, out BodyPartSlot slot)
+        // Validates one skinned mesh and describes it as a piece. False (with a problem reported) if it cannot be worn.
+        private static bool TryMakePiece(Piece piece, SkinnedMeshRenderer mesh, List<string> problems, out BodyPartSlot slot, out BodyPartPiece made)
         {
+            made = null;
             if (!TryPartSlot(piece.Slot, mesh.name, out slot))
             {
                 problems.Add($"{piece.Folder}: cannot tell which side of the body '{mesh.name}' is for ({piece.Slot}); name it with a trailing _L or _R.");
@@ -272,7 +281,16 @@ namespace SimpleRPG.AppearanceTools
                 return false;
             }
 
-            string path = $"{PartsFolder}/{piece.Folder}_{mesh.name}.asset";
+            made = new BodyPartPiece(mesh.sharedMesh, mesh.sharedMaterials, boneNames, mesh.rootBone.name, mesh.localBounds,
+                "", Vector3.zero, Quaternion.identity, Vector3.one);
+            return true;
+        }
+
+        // One part for the slot: the first mesh is the primary piece and names the asset (so an existing single-mesh part keeps its id and
+        // references), and any further meshes are its additional pieces.
+        private static BodyPartDefinition WritePart(Piece piece, ArmorData item, BodyPartSlot slot, List<(SkinnedMeshRenderer mesh, BodyPartPiece piece)> group, List<string> problems)
+        {
+            string path = $"{PartsFolder}/{piece.Folder}_{group[0].mesh.name}.asset";
             BodyPartDefinition part = AssetDatabase.LoadAssetAtPath<BodyPartDefinition>(path);
             if (part == null)
             {
@@ -281,13 +299,30 @@ namespace SimpleRPG.AppearanceTools
                 AssetDatabase.CreateAsset(part, path);
             }
 
-            part.Configure(slot, mesh.sharedMesh, mesh.sharedMaterials, boneNames, mesh.rootBone.name,
-                mesh.localBounds, "", Vector3.zero, Quaternion.identity, Vector3.one);
+            BodyPartPiece primary = group[0].piece;
+            part.Configure(slot, primary.Mesh, primary.Materials, primary.BoneNames, primary.RootBoneName, primary.LocalBounds,
+                "", Vector3.zero, Quaternion.identity, Vector3.one);
+            part.SetAdditionalPieces(group.Skip(1).Select(g => g.piece).ToArray());
             part.Dress(item);
             string problem = part.Problem();
             if (problem != null) problems.Add($"{piece.Folder}: {problem}");
             EditorUtility.SetDirty(part);
-            return true;
+            return part;
+        }
+
+        // A part an earlier run wrote for this item that this run did not (an old one-mesh-per-part export, now merged into another part) would
+        // still dress the item and fight the merged part for the slot. It is detached from the item, not deleted, so nothing referencing it breaks.
+        private static void DetachStaleParts(Piece piece, ArmorData item, HashSet<BodyPartDefinition> written, List<string> problems)
+        {
+            foreach (string guid in AssetDatabase.FindAssets("t:BodyPartDefinition", new[] { PartsFolder }))
+            {
+                var part = AssetDatabase.LoadAssetAtPath<BodyPartDefinition>(AssetDatabase.GUIDToAssetPath(guid));
+                if (part == null || part.DressesItem != item || written.Contains(part)) continue;
+
+                part.Dress(null);
+                EditorUtility.SetDirty(part);
+                problems.Add($"{piece.Folder}: '{part.name}' is no longer part of this item's look (its mesh is now a piece of another part) and was detached from it. It can be deleted.");
+            }
         }
 
         // A piece that is not skinned: every mesh in its prefab is combined, in the prefab's own space, into one mesh worn rigidly on the head

@@ -159,10 +159,26 @@ namespace SimpleRPG.Tests.EditMode
             foreach (string guid in UnityEditor.AssetDatabase.FindAssets("t:BodyPartDefinition", new[] { ArmorSetup.PartsFolder }))
             {
                 var part = UnityEditor.AssetDatabase.LoadAssetAtPath<BodyPartDefinition>(UnityEditor.AssetDatabase.GUIDToAssetPath(guid));
-                if (part.IsSkinned)
+                foreach (BodyPartPiece piece in part.Pieces)
                 {
-                    Assert.IsEmpty(ArmorSetup.BonesMissingFromRig(part.BoneNames), part.name + " is skinned to bones the body rig lacks; export it with Authoring/export_armor.py");
+                    if (piece.IsSkinned)
+                    {
+                        Assert.IsEmpty(ArmorSetup.BonesMissingFromRig(piece.BoneNames), part.name + " is skinned to bones the body rig lacks; export it with Authoring/export_armor.py");
+                    }
                 }
+            }
+        }
+
+        [Test]
+        public void NoSlotOfAnItem_IsDressedByMoreThanOnePart()
+        {
+            var seen = new System.Collections.Generic.HashSet<(Item, BodyPartSlot)>();
+            foreach (string guid in UnityEditor.AssetDatabase.FindAssets("t:BodyPartDefinition", new[] { ArmorSetup.PartsFolder }))
+            {
+                var part = UnityEditor.AssetDatabase.LoadAssetAtPath<BodyPartDefinition>(UnityEditor.AssetDatabase.GUIDToAssetPath(guid));
+                if (part.DressesItem == null) continue;
+                Assert.IsTrue(seen.Add((part.DressesItem, part.Slot)),
+                    part.name + " shares " + part.Slot + " of " + part.DressesItem.name + " with another part, so only one would show. Merge the meshes into one part (more pieces) with SimpleRPG > Items > Build Armor Items And Parts.");
             }
         }
     }

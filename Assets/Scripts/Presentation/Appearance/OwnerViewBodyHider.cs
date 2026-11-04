@@ -42,12 +42,13 @@ namespace SimpleRPG.Appearance
             foreach (BodyPartSlot slot in hiddenSlots)
             {
                 GameObject shown = appearance.ShownIn(slot);
-                if (shown == null)
+                if (shown == null || !shown.TryGetComponent(out BodyPartInstance instance))
                 {
                     continue;
                 }
 
-                foreach (Renderer renderer in shown.GetComponentsInChildren<Renderer>())
+                // Every piece of the part, including rigid ones parented to bones outside the part's own object.
+                foreach (Renderer renderer in instance.Renderers)
                 {
                     renderer.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
                 }

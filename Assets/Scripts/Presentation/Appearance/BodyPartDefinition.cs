@@ -1,12 +1,14 @@
 using SimpleRPG.Abilities;
 using SimpleRPG.InventorySystem;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SimpleRPG.Appearance
 {
     /// <summary>
-    /// One swappable visual piece of a character: a mesh, its materials and how it attaches to the rig. A piece is either skinned to the
-    /// shared humanoid skeleton (bone names are baked in, in the mesh's bind-pose order) or rigid, parented to a single bone.
+    /// One swappable visual part of a character, shown in one slot. A part is one or more <see cref="BodyPartPiece"/>s (<see cref="Pieces"/>):
+    /// the primary piece is the flat mesh/material/bone fields below, and <see cref="AdditionalPieces"/> are any further pieces, each with its own
+    /// mesh, materials, transform and skinned-or-rigid binding. A one-piece part, which is every part of the bare body, needs nothing more.
     /// Immutable during gameplay. Like other gameplay definitions it has a permanent ID and a short network ID in the
     /// <see cref="DefinitionRegistry"/>, so the wire carries a number, never the asset.
     /// </summary>
@@ -34,7 +36,30 @@ namespace SimpleRPG.Appearance
         [SerializeField] private Quaternion attachRotation = Quaternion.identity;
         [SerializeField] private Vector3 attachScale = Vector3.one;
 
+        [Header("More pieces")]
+        [SerializeField, Tooltip("Further pieces shown with the primary piece above, e.g. a mail undercoat under plate. Each binds on its own.")]
+        private BodyPartPiece[] additionalPieces;
+
+        private BodyPartPiece[] pieces;
+
         public BodyPartSlot Slot => slot;
+
+        /// <summary>The primary piece followed by <see cref="AdditionalPieces"/>: the one view of everything this part shows.</summary>
+        public IReadOnlyList<BodyPartPiece> Pieces
+        {
+            get
+            {
+                if (pieces != null) return pieces;
+                int extra = additionalPieces != null ? additionalPieces.Length : 0;
+                var all = new BodyPartPiece[1 + extra];
+                all[0] = new BodyPartPiece(mesh, materials, boneNames, rootBoneName, localBounds, attachBoneName, attachPosition, attachRotation, attachScale);
+                for (int i = 0; i < extra; i++) all[1 + i] = additionalPieces[i];
+                pieces = all;
+                return pieces;
+            }
+        }
+
+        public IReadOnlyList<BodyPartPiece> AdditionalPieces => additionalPieces ?? System.Array.Empty<BodyPartPiece>();
 
         /// <summary>The armor this part is the look of, or null for a part of the bare body.</summary>
         public Item DressesItem => dressesItem;
@@ -48,21 +73,20 @@ namespace SimpleRPG.Appearance
         public Quaternion AttachRotation => attachRotation;
         public Vector3 AttachScale => attachScale;
 
+        private void OnValidate() => pieces = null;
+
         public bool IsSkinned => boneNames != null && boneNames.Length > 0;
 
         /// <summary>Why this part cannot be built, or null if it can. Used by tests and the definition check.</summary>
         public string Problem()
         {
-            if (mesh == null) return name + " has no mesh.";
-            if (materials == null || materials.Length == 0) return name + " has no materials.";
-            if (IsSkinned)
+            foreach (BodyPartPiece piece in Pieces)
             {
-                if (boneNames.Length != mesh.bindposes.Length) return name + " lists " + boneNames.Length + " bones for " + mesh.bindposes.Length + " bind poses.";
-                if (string.IsNullOrEmpty(rootBoneName)) return name + " has no root bone.";
-                return null;
+                string problem = piece == null ? name + " has an empty piece." : piece.Problem(name);
+                if (problem != null) return problem;
             }
 
-            return string.IsNullOrEmpty(attachBoneName) ? name + " is neither skinned nor attached to a bone." : null;
+            return null;
         }
 
 #if UNITY_EDITOR
@@ -83,6 +107,14 @@ namespace SimpleRPG.Appearance
             this.attachPosition = attachPosition;
             this.attachRotation = attachRotation;
             this.attachScale = attachScale;
+            pieces = null;
+        }
+
+        /// <summary>Sets the pieces shown with the primary one. Editor tooling only.</summary>
+        public void SetAdditionalPieces(BodyPartPiece[] more)
+        {
+            additionalPieces = more;
+            pieces = null;
         }
 #endif
     }
