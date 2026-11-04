@@ -1,4 +1,5 @@
 using SimpleRPG.Abilities;
+using SimpleRPG.InventorySystem;
 using UnityEngine;
 
 namespace SimpleRPG.Appearance
@@ -16,6 +17,10 @@ namespace SimpleRPG.Appearance
         [SerializeField] private Mesh mesh;
         [SerializeField] private Material[] materials;
 
+        [Header("Armor")]
+        [SerializeField, Tooltip("The item this part is the look of: worn armor shows its parts. Empty for a part of the bare body.")]
+        private Item dressesItem;
+
         [Header("Skinned parts")]
         [SerializeField, Tooltip("The rig bone for each of the mesh's bind poses, in order. Leave empty for a rigid part.")]
         private string[] boneNames;
@@ -30,6 +35,9 @@ namespace SimpleRPG.Appearance
         [SerializeField] private Vector3 attachScale = Vector3.one;
 
         public BodyPartSlot Slot => slot;
+
+        /// <summary>The armor this part is the look of, or null for a part of the bare body.</summary>
+        public Item DressesItem => dressesItem;
         public Mesh Mesh => mesh;
         public Material[] Materials => materials;
         public string[] BoneNames => boneNames;
@@ -58,6 +66,9 @@ namespace SimpleRPG.Appearance
         }
 
 #if UNITY_EDITOR
+        /// <summary>Makes this part the look of an item. Editor tooling only.</summary>
+        public void Dress(Item item) => dressesItem = item;
+
         /// <summary>Fills the part from authored data. Editor tooling only; definitions are never written at runtime.</summary>
         public void Configure(BodyPartSlot slot, Mesh mesh, Material[] materials, string[] boneNames, string rootBoneName, Bounds localBounds,
             string attachBoneName, Vector3 attachPosition, Quaternion attachRotation, Vector3 attachScale)

@@ -13,6 +13,7 @@ A character is one animated skeleton plus swappable visual parts. The skeleton c
 | `AppearanceView` | Pure presentation: which part is shown per slot. No network or gameplay knowledge. |
 | `IBodyPartCatalog` | Part to short id and back. `RegistryBodyPartCatalog` uses the registry; tests can substitute another. |
 | `CharacterAppearance` | The `NetworkBehaviour` on the character. |
+| `EquipmentAppearance` | Server-side: dresses the character in the parts of the armor it wears, and back to the bare body when it comes off. A part's `dressesItem` names the armor it is the look of. See [Equipment](Equipment.md). |
 
 ## Authority
 
