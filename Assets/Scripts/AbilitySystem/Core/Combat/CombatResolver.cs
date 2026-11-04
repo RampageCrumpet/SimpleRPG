@@ -135,8 +135,8 @@ namespace SimpleRPG.Gameplay
                 return new DamageOutcome(DamageResult.RejectedNoDamage, before, before);
             }
 
-            // The one place a struck body region changes the damage. Everything after this, including the events, sees the final amount.
-            DamageRequest request = AdjustForRegion(target, incoming);
+            // The one place the target's body and defences change the damage. Everything after this, including the events, sees the final amount.
+            DamageRequest request = AdjustAmount(target, incoming);
             if (request.Amount <= 0)
             {
                 return new DamageOutcome(DamageResult.RejectedNoDamage, before, before);
@@ -218,29 +218,45 @@ namespace SimpleRPG.Gameplay
         }
 
         /// <summary>
-        /// Scales a weapon blow by the factor its target gives the struck region. A spell, tick or hazard strikes no region and is untouched.
-        /// A blow that lands always does at least 1, so a low multiplier cannot turn a hit into a miss. Armour mitigation, when it exists, belongs after this.
+        /// The one place the target's body and defences change the damage. A weapon blow is scaled by the factor its target gives the struck region
+        /// (a spell, tick or hazard strikes no region and is not), and then the target's damage reduction for the kind of blow removes its share
+        /// (see <see cref="DamageMitigation"/>). Both are applied together and the result rounded once; a blow that lands always does at least 1.
+        /// Everything after this, including the events, sees the final amount.
         /// </summary>
-        private static DamageRequest AdjustForRegion(ICombatant target, in DamageRequest request)
+        private static DamageRequest AdjustAmount(ICombatant target, in DamageRequest request)
+        {
+            double regionFactor = RegionFactor(target, request);
+            double reduction = ReductionFor(target, request);
+            if (regionFactor == 1d && reduction <= 0d)
+            {
+                return request;
+            }
+
+            return request.WithAmount(DamageMitigation.Final(request.Amount, regionFactor, reduction));
+        }
+
+        // What the struck region is worth: 1 where no region was struck or the target has no anatomy, or its answer is not usable.
+        private static double RegionFactor(ICombatant target, in DamageRequest request)
         {
             if ((request.Provenance & DamageProvenance.DirectWeaponHit) == 0 || request.BodyLocation == DamageRequest.NoBodyLocation)
             {
-                return request;
+                return 1d;
             }
 
             if (!(target is IRegionDamageModifier anatomy))
             {
-                return request;
+                return 1d;
             }
 
             float multiplier = anatomy.DamageMultiplier(request.BodyLocation);
-            if (multiplier == 1f || float.IsNaN(multiplier) || multiplier < 0f)
-            {
-                return request;
-            }
+            return float.IsNaN(multiplier) || multiplier < 0f ? 1d : multiplier;
+        }
 
-            int scaled = (int)Math.Round(request.Amount * (double)multiplier, MidpointRounding.AwayFromZero);
-            return request.WithAmount(multiplier > 0f ? Math.Max(1, scaled) : 0);
+        // The fraction of this blow the target's defences remove: none for a target with no defences or a blow no defence applies to.
+        private static double ReductionFor(ICombatant target, in DamageRequest request)
+        {
+            DamageKind kind = DamageMitigation.KindOf(request.Provenance);
+            return kind != DamageKind.None && target is IDamageMitigator defences ? DamageMitigation.Clamp(defences.Reduction(kind)) : 0d;
         }
 
         private FatalDamageDecision Intercept(ICombatant target, in DamageRequest request)

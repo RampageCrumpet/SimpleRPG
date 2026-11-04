@@ -15,7 +15,7 @@ namespace SimpleRPG
     /// </summary>
     [RequireComponent(typeof(CharacterStats))]
     [RequireComponent(typeof(CombatLoadout))]
-    public class Character : NetworkBehaviour, ICombatant, IRegionDamageModifier
+    public class Character : NetworkBehaviour, ICombatant, IRegionDamageModifier, IDamageMitigator
     {
         private HitAnatomy anatomy;
         private bool anatomyLooked;
@@ -169,6 +169,11 @@ namespace SimpleRPG
 
             return anatomy != null ? anatomy.DamageMultiplier(bodyLocation) : 1f;
         }
+
+        /// <summary>
+        /// What this character's defences take off a blow of a kind, which its stats decide. The resolver asks once per request.
+        /// </summary>
+        double IDamageMitigator.Reduction(DamageKind kind) => Stats.DamageReduction(kind);
 
         Position3 ICombatant.Position => new Position3(transform.position.x, transform.position.y, transform.position.z);
 
