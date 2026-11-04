@@ -66,18 +66,23 @@ namespace SimpleRPG.Tests.EditMode
             Object.DestroyImmediate(mesh);
         }
 
-        // Red until the body is moved onto the canonical A-pose rig (Docs/RigMigrationReport.md); it is the proof the migration is done.
+        // The proof the body is on the canonical A-pose rig (Docs/RigMigrationReport.md). FBX meshes keep their node's axis conversion, so the
+        // armor is compared in the body's own mesh space, read from the body's chest part, which fits the rig it came from.
         [Test]
         public void EveryArmorPart_IsBoundToTheRestPoseOfTheBodyRig()
         {
             root = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(HumanMaleSetup.RigPrefabPath));
+            var chest = AssetDatabase.LoadAssetAtPath<BodyPartDefinition>(HumanMaleSetup.PartsFolder + "/Human_Male_Chest.asset");
+            BodyPartPiece reference = chest.Pieces.First(p => p.IsSkinned);
+            Matrix4x4 meshToRig = RigConformance.MeshToRig(root.transform, reference.Mesh, reference.BoneNames);
+            Assert.IsEmpty(RigConformance.Compare(root.transform, reference.Mesh, reference.BoneNames, RigConformance.DefaultTolerance, meshToRig), "the body's own chest does not fit the body rig");
             var failures = new System.Collections.Generic.List<string>();
             foreach (string guid in AssetDatabase.FindAssets("t:BodyPartDefinition", new[] { ArmorSetup.PartsFolder }))
             {
                 var part = AssetDatabase.LoadAssetAtPath<BodyPartDefinition>(AssetDatabase.GUIDToAssetPath(guid));
                 foreach (BodyPartPiece piece in part.Pieces.Where(p => p.IsSkinned))
                 {
-                    var deviations = RigConformance.Compare(root.transform, piece.Mesh, piece.BoneNames);
+                    var deviations = RigConformance.Compare(root.transform, piece.Mesh, piece.BoneNames, RigConformance.DefaultTolerance, meshToRig);
                     if (deviations.Count > 0) failures.Add(part.name + ": " + deviations.Count + " bones off, worst " + deviations[0]);
                 }
             }

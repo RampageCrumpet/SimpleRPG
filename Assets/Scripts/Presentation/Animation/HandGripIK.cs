@@ -63,11 +63,26 @@ namespace SimpleRPG.Animations
             Transform hand = animator.GetBoneTransform(handBone);
             if (upper == null || lower == null || hand == null) return;
 
-            grip.GetHandPose(out Vector3 gripPosition, out Quaternion gripRotation);
-            Vector3 target = Vector3.Lerp(hand.position, gripPosition, weight);
-            Quaternion handRotation = Quaternion.Slerp(hand.rotation, gripRotation, weight);
-            SolveTwoBone(upper, lower, hand, target);
-            hand.rotation = handRotation;
+            if (grip.PlaceHand)
+            {
+                grip.GetHandPose(out Vector3 gripPosition, out Quaternion gripRotation);
+                Vector3 target = Vector3.Lerp(hand.position, gripPosition, weight);
+                Quaternion handRotation = Quaternion.Slerp(hand.rotation, gripRotation, weight);
+                SolveTwoBone(upper, lower, hand, target);
+                hand.rotation = handRotation;
+            }
+
+            CloseFingers(grip, weight);
+        }
+
+        // The fingers go to the grip's closed hand, whatever the clip did with them.
+        private void CloseFingers(HandGrip grip, float weight)
+        {
+            foreach (FingerBone finger in grip.FingerPose)
+            {
+                Transform bone = animator.GetBoneTransform(finger.bone);
+                if (bone != null) bone.localRotation = Quaternion.Slerp(bone.localRotation, finger.localRotation, weight);
+            }
         }
 
         // Bends the elbow so the wrist reaches the target, on the same side the animation had it, or stretches straight toward it when it is too far.

@@ -21,6 +21,19 @@ Start here for the project's GLP/GLB equipment workflow: procedural modeling, UV
 
 External `I:/Art` sources need separate backups; they are outside this Git repository. Unity consumes project-local copies of the FBX and maps. Changing external files alone does not update those copies. Older external Authoring SPP files are backups, not the current painting source.
 
+## Body and rig (read before touching any rig, body or armor)
+
+There is **one game rig and one game body**. Everything else is a mistake waiting to happen; an earlier tangle of T-pose, 64-bone twist and 66-bone animation rigs shipped the wrong body to the game once and wasted days of work.
+
+- **The rig.** 52 bones, A-pose, names in `I:/Art/Blender/SimpleRPGHuman/Authoring/GameRig_Bones.json`. In the authoring scene it is the armature object `Human_Male_ArmorRig`.
+- **The scene.** `I:/Art/Blender/SimpleRPGHuman/Human_base_mesh_added_equipment.blend` is the only source for the body, the armor and the rig. Its body meshes are the `ZN_*_ArmorAuthoring` objects in "Human Base - Editable", skinned to `Human_Male_ArmorRig`. Body textures: `I:/Art/Blender/SimpleRPGHuman/Textures/HumanBody`. The procedural skin and equipment materials (`MAT-skin_caucasian_male`, `MAT-mail_hauberk`, `SRPG - Equipment Atlas Tints` and the rest) live in that scene with fake users.
+- **Exports.** Only the checked scripts write game FBX files: `Authoring/export_body.py` (`Human_Male.fbx`, with `Socket_Headgear`) and `Authoring/export_armor.py` (armor). Both refuse a rig that is not exactly the canonical bones. Never export with the FBX operator by hand, and never export a mesh or rig that is not named in those scripts.
+- **No second rig, ever.** Do not add twist bones, `MCH_` helpers, T-pose copies, "export rigs" or "returned preview" rigs to this scene or to any file under `I:/Art` that is not named `SCRATCH_*.blend`. If an experiment needs a different skeleton, make a file called `SCRATCH_<what>.blend`, name its rig `SCRATCH_<name>`, and **delete the file when the experiment ends**. If the game ever needs more bones, change `GameRig_Bones.json` and the body first (see `Docs/Equipment.md`), then everything else follows; never fork the rig.
+- **No pile of snapshots.** Do not save a copy of a whole scene before each step (`Before<Something>.blend`); those copies, each holding a full old rig, are what caused the confusion. Blender's own `.blend1` is the undo for the last save. For a real milestone keep **one** dated backup in `I:/Art/Blender/SimpleRPGHuman/Backups`, and delete it when the next milestone is saved. A backup is never a place to keep work that is not in the scene.
+- **Check.** Run `blender -b --factory-startup --python Authoring/scan_rigs.py` after any rig work. It reads only the armature data of every `.blend` under `I:/Art` and lists any file holding a rig that is not the canonical one; fix or delete what it lists.
+- **Animation sources.** Cascadeur scenes and animation FBX files are Humanoid clips and play on the game body through its avatar; they are not rigs to export from. The avatar is made in Unity: map all bones, then **Enforce T-Pose** (the body is authored in an A-pose).
+- **Agents.** The Beads memory `canonical-human-male` states this in short. If a file or note contradicts this section, this section wins and the other is out of date: correct it.
+
 ## Model and approve scale
 
 Use the local procedural workbench. Preserve seed, controls and replayable source. Establish silhouette, thickness, openings and pivots before UVs. Distinguish published measurements from inferred design dimensions: photographs alone do not establish absolute scale.

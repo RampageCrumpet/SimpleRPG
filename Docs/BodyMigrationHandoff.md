@@ -5,7 +5,7 @@ Context: `Docs/RigMigrationReport.md` (approved). Do not change code; stop and r
 ## 1. Blender: export the body
 1. Open the scene whose edits are in `Backups/..._Canonical52Bone_20261104.blend` (or the cleaned-up successor) and confirm it is the canonical 52-bone A-pose body.
 2. Add an **empty named `Socket_Headgear`** parented to the `Head` bone, at the bottom centre of where a helmet sits (the base of a helmet like the sallet), with +Y up and +Z forward the way the face looks. Keep it out of the skinned meshes' hierarchy changes otherwise.
-3. Export `Human_Male.fbx` with the same validated settings as `export_armor.py` (same node names: the model has a `Human_Male_Rig` child, meshes `Human_Male_Head`, `_Chest`, `_Pants`, `_Boot_L/R`, `_Glove_L/R`, 52 bones, no twist/`MCH_` bones). Export the eyebrows the same way if their space changed.
+3. (Done 2026-11-04: use `Authoring/export_body.py`, which adds `Socket_Headgear` and refuses a non-canonical rig.) Export `Human_Male.fbx` with the same validated settings as `export_armor.py` (same node names: the model has a `Human_Male_Rig` child, meshes `Human_Male_Head`, `_Chest`, `_Pants`, `_Boot_L/R`, `_Glove_L/R`, 52 bones, no twist/`MCH_` bones). Export the eyebrows the same way if their space changed.
 4. Replace `Assets/Art/3d Models/Human/Human_Male.fbx` (keep its `.meta`; do not let the importer regenerate the GUID).
 
 ## 2. Unity: avatar and parts

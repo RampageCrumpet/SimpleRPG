@@ -2,6 +2,8 @@
 
 Answers [LocalAgentHandoff.md](LocalAgentHandoff.md). Written by the agent that had the Unity editor and Blender. Branch `claude/zen-brahmagupta-i40kaz`; this session's commits are `e7397ef` and `e01d256`. Nothing is pushed.
 
+**Update 2026-11-04.** Historical report. Since it was written the game body was exported on the canonical 52-bone rig (`Authoring/export_body.py`), and every 64- and 66-bone rig, `REFERENCE_Old_Rig` and their files were removed from the authoring scene; where this report mentions them, they no longer exist. The rules that prevent them coming back are in [AssetCreationWorkflow.md](AssetCreationWorkflow.md), "Body and rig". The hand grip on the new body (avatar, sword mount, finger pose, hand skin weights) is described in [CharacterAppearance.md](CharacterAppearance.md), "Holding the sword"; the hands are not approved yet.
+
 **Read this first.** The bring-up found one real problem the hand-off did not anticipate: every skinned armor piece threw on equip, because the art was skinned to a 64-bone authoring rig (12 arm twist bones) and the game body has 52. It is fixed at the source (the authoring scene and a new export script), not in game code. The game body is still the *old* T-pose rig while the armor is the canonical A-pose rig; that is the main open item (section 7).
 
 ## 1. Compile

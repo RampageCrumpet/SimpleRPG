@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using SimpleRPG.Animations;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -55,6 +56,37 @@ namespace SimpleRPG.Tests.EditMode
             float right = AlongBlade(rightHand);
             float left = AlongBlade(leftHand);
             Assert.Greater(right, left, "The trailing (left) hand holds the pommel end, so the blade runs away from it.");
+        }
+
+        [Test]
+        public void BothHandsHaveAGripThatClosesAllFifteenFingerBones()
+        {
+            HandGrip[] grips = player.GetComponentsInChildren<HandGrip>(true);
+
+            Assert.AreEqual(2, grips.Length, "one grip per hand");
+            Assert.AreEqual(1, grips.Count(g => g.Hand == GripHand.Left));
+            Assert.AreEqual(1, grips.Count(g => g.Hand == GripHand.Right));
+            foreach (HandGrip grip in grips) Assert.AreEqual(15, grip.FingerPose.Count, grip.name);
+        }
+
+        [Test]
+        public void ClosedFingers_WrapTheHandleOnBothGrips()
+        {
+            foreach (HandGrip grip in player.GetComponentsInChildren<HandGrip>(true))
+            {
+                Transform hand = animator.GetBoneTransform(grip.Hand == GripHand.Left ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand);
+                grip.GetHandPose(out Vector3 position, out Quaternion rotation);
+                hand.SetPositionAndRotation(position, rotation);
+                foreach (FingerBone finger in grip.FingerPose) animator.GetBoneTransform(finger.bone).localRotation = finger.localRotation;
+
+                foreach (string name in new[] { "Index", "Middle", "Ring", "Little" })
+                {
+                    Transform distal = animator.GetBoneTransform((HumanBodyBones)System.Enum.Parse(typeof(HumanBodyBones), grip.Hand + name + "Distal"));
+                    Vector3 local = sword.InverseTransformPoint(distal.position);
+                    float fromAxis = Mathf.Sqrt(local.x * local.x + local.z * local.z);
+                    Assert.That(fromAxis, Is.InRange(0.005f, 0.04f), grip.Hand + " " + name + " fingertip joint is " + (fromAxis * 100f).ToString("0.0") + " cm from the hilt axis; it should rest on the handle");
+                }
+            }
         }
 
         private float AlongBlade(Transform hand) => Vector3.Dot(hand.TransformPoint(PalmOffset) - sword.position, sword.up);

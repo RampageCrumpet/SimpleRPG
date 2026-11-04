@@ -30,12 +30,38 @@ namespace SimpleRPG.AppearanceTools
         }
 
         /// <summary>
-        /// The bones, out of those a mesh is bound to, that sit further than <paramref name="tolerance"/> from their bind position, worst first.
-        /// <paramref name="rigRoot"/> is the transform the mesh's own space corresponds to (the root of the rig prefab). A bone the rig lacks is a
-        /// deviation of infinity.
+        /// Where a mesh's own space sits in the rig root's space. An FBX keeps the axis conversion of its mesh node (Blender's Z-up becomes Y-up
+        /// there), so a mesh's bind poses are not in the rig's space and <see cref="Compare"/> needs this. It is read from a mesh already known to
+        /// fit the rig (the body's own part), through its first bone the rig has: the bone's rest pose times the bind pose is the mesh-to-rig matrix.
         /// </summary>
-        public static List<Deviation> Compare(Transform rigRoot, Mesh mesh, IReadOnlyList<string> boneNames, float tolerance = DefaultTolerance)
+        public static Matrix4x4 MeshToRig(Transform rigRoot, Mesh referenceMesh, IReadOnlyList<string> referenceBoneNames)
         {
+            var bones = new Dictionary<string, Transform>();
+            foreach (Transform t in rigRoot.GetComponentsInChildren<Transform>(true))
+            {
+                bones.TryAdd(t.name, t);
+            }
+
+            for (int i = 0; i < referenceBoneNames.Count && i < referenceMesh.bindposes.Length; i++)
+            {
+                if (bones.TryGetValue(referenceBoneNames[i], out Transform bone))
+                {
+                    return rigRoot.worldToLocalMatrix * bone.localToWorldMatrix * referenceMesh.bindposes[i];
+                }
+            }
+
+            return Matrix4x4.identity;
+        }
+
+        /// <summary>
+        /// The bones, out of those a mesh is bound to, that sit further than <paramref name="tolerance"/> from their bind position, worst first.
+        /// <paramref name="rigRoot"/> is the transform the mesh's own space corresponds to (the root of the rig prefab), unless
+        /// <paramref name="meshToRig"/> says where the mesh's space is in it (see <see cref="MeshToRig"/>). A bone the rig lacks is a deviation of
+        /// infinity.
+        /// </summary>
+        public static List<Deviation> Compare(Transform rigRoot, Mesh mesh, IReadOnlyList<string> boneNames, float tolerance = DefaultTolerance, Matrix4x4? meshToRig = null)
+        {
+            Matrix4x4 toRig = meshToRig ?? Matrix4x4.identity;
             var bones = new Dictionary<string, Transform>();
             foreach (Transform t in rigRoot.GetComponentsInChildren<Transform>(true))
             {
@@ -52,7 +78,7 @@ namespace SimpleRPG.AppearanceTools
                     continue;
                 }
 
-                Vector3 boundAt = bindPoses[i].inverse.GetPosition();
+                Vector3 boundAt = toRig.MultiplyPoint3x4(bindPoses[i].inverse.GetPosition());
                 Vector3 restAt = rigRoot.InverseTransformPoint(bone.position);
                 float distance = Vector3.Distance(boundAt, restAt);
                 if (distance > tolerance) result.Add(new Deviation(boneNames[i], distance));

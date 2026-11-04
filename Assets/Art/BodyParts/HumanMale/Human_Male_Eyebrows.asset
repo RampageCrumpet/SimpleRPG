@@ -17,12 +17,14 @@ MonoBehaviour:
   mesh: {fileID: -5823852123119614231, guid: 456dc659678e5014da90ae8c48ef410f, type: 3}
   materials:
   - {fileID: 2100000, guid: 8921c756d22c1d94480573f6c8bdbd05, type: 2}
+  dressesItem: {fileID: 0}
   boneNames: []
   rootBoneName: 
   localBounds:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 0, y: 0, z: 0}
   attachBoneName: Head
-  attachPosition: {x: 0, y: -1.4643219, z: 0.05486701}
-  attachRotation: {x: -0.02964124, y: 0, z: 0, w: 0.9995606}
-  attachScale: {x: 1.0000002, y: 0.9999998, z: 0.9999998}
+  attachPosition: {x: 0, y: -1.4643221, z: 0.054866984}
+  attachRotation: {x: -0.029641232, y: 0, z: 0, w: 0.9995606}
+  attachScale: {x: 1, y: 1, z: 1}
+  additionalPieces: []

@@ -28,11 +28,23 @@ Server-authoritative, like equipment. The server owns the worn parts in a `Netwo
 
 Re-exporting the model updates the same assets and regenerates `HumanMale_Rig.prefab`, the model with its meshes and animator stripped. `CharacterAppearance` has *Preview Default Parts* and *Clear Preview* context-menu commands for seeing the parts in the editor; previews are never saved.
 
-## Corrected longsword sources
+## Body source and longsword sources
 
-The current body FBX comes from `I:/Art/3d Models/Human_Male/Human_Male_Corrected.blend`. The companion `Human_Male_Longsword_Corrected.blend` contains all three baked attacks and a sword for review. Editable Cascadeur scenes and animation exports are in `I:/Art/Cascadeur/Longsword/HumanMale/Corrected`. The audit and validation evidence are in `I:/Art/3d Models/Human_Male/Authoring/RigAudit_20261027/REPORT.md`.
+The body FBX (`Assets/Art/3d Models/Human/Human_Male.fbx`) is exported from the authoring scene `I:/Art/Blender/SimpleRPGHuman/Human_base_mesh_added_equipment.blend` by `Authoring/export_body.py`: the canonical 52-bone A-pose rig `Human_Male_ArmorRig` and the `ZN_*_ArmorAuthoring` meshes, plus `Socket_Headgear`. Nothing else is a source for the body; the earlier `Human_Male_Corrected` / `Human_Male_APose` files and every 64- or 66-bone rig are gone (see "Body and rig" in [AssetCreationWorkflow.md](AssetCreationWorkflow.md)). Editable Cascadeur scenes and animation exports are in `I:/Art/Cascadeur/Longsword/HumanMale/Corrected`; the grip and audit data of the 2026-10-27 audit are in `I:/Art/Cascadeur/Longsword/RigAudit_20261027_data`.
 
-The skeleton retains its 52 bones and original proportions. Wrist weights blend across the forearm/hand transition. The TestCharacter prefab's sword mount and Grip_Left target are calibrated to the corrected closed hands; retain these transforms when replacing the weapon model. HandGripIK removes the small residual from Unity's compressed Humanoid curves.
+The skeleton has 52 bones. Wrist weights blend across the forearm/hand transition.
+
+### Holding the sword (2026-11-04, **not approved yet**)
+
+Three things make the hands work on the canonical body, and the result is still being reviewed in play.
+
+- **Avatar.** The Humanoid avatar of `Human_Male.fbx` must have been through *Enforce T-Pose* and saved (the model rests in an A-pose). A stale avatar keeps the old body's T-pose and fist data and twists the fingers. After every body re-export, check that `Human_Male.fbx.meta` changed.
+- **Mount and grips.** The sword mount (`Longsword` under `RightHand`), `Grip_Left` and `Grip_Right` in `TestCharacter.prefab` come from the approved grip fit of 2026-10-27 (`I:/Art/Cascadeur/Longsword/RigAudit_20261027_data/approved_grip_matrices.json`: every finger bone of both hands in the sword's frame, in the authoring frame mirrored in X). Each hand's wrist and four knuckles are fitted onto the approved ones (Horn/Kabsch best fit); the right hand's pose gives the mount, the left's gives `Grip_Left`. The fit leaves about 2 cm rms because the canonical hands are not exactly the shape the grip was fitted for. Re-derive them the same way when the body, avatar or clips change.
+- **Finger pose.** The attack clips were authored for the old closed-hand body and curl nothing on this one. `HandGrip.FingerPose` (15 finger bones per hand) is the closed hand on the sword, and `HandGripIK` applies it to every hand that holds the item (`placeHand` is off for the right hand, which the mount already carries). The pose aligns each finger bone to its approved direction. Known limits: some finger joints sit about 0.8 cm from the handle axis, and the right thumb is about 4 cm off it.
+- **Hand skin weights.** The glove meshes' hand weights were re-fitted in Blender against the real poses (rest, Idle, strikes of all three attacks, with open and closed fingers): at the strike, edges stretched over 1.5x fell from 38 to 2 and squashed ones under 0.6x from 42 to 15. The armor gloves (`GloveGame`, `GloveReinf`, `GauntletPlate`) have their own weights and have **not** been re-fitted; expect the same stretch there. The fit works from poses captured in Unity (`rest` from the FBX instance, not from `TestCharacter.prefab`, which carries arm overrides) and checks them against Unity's own skinning. The fit scripts are not yet kept in `Authoring/`; until they are, a re-fit means writing them again.
+
+`LongswordGripTests` checks that both grips close 15 finger bones and that each fingertip joint rests 0.5 to 4 cm from the hilt axis.
+
 
 ## A part is one or more pieces
 

@@ -17,6 +17,7 @@ MonoBehaviour:
   mesh: {fileID: 3482564407842391687, guid: 1d4cf8bd0d278c444afb173d1211263f, type: 3}
   materials:
   - {fileID: 2100000, guid: ac2e868fd3314764a9a772697259984c, type: 2}
+  dressesItem: {fileID: 0}
   boneNames:
   - Hips
   - Spine
@@ -72,9 +73,10 @@ MonoBehaviour:
   - RightToes
   rootBoneName: Hips
   localBounds:
-    m_Center: {x: -0.00016460568, y: -0.26250947, z: -0.00087171793}
-    m_Extent: {x: 0.23245016, y: 0.37353766, z: 0.13659894}
+    m_Center: {x: -0.00016461313, y: -0.26250947, z: -0.0008717254}
+    m_Extent: {x: 0.23245005, y: 0.37353766, z: 0.13659897}
   attachBoneName: 
   attachPosition: {x: 0, y: 0, z: 0}
   attachRotation: {x: 0, y: 0, z: 0, w: 1}
   attachScale: {x: 1, y: 1, z: 1}
+  additionalPieces: []
