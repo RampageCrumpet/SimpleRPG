@@ -112,3 +112,22 @@ Update handoff notes, close the Beads work item and inspect Git status. Under th
 Keep authoring sources, Painter projects, masks, export scripts, previews and validation reports outside the Unity repository, under `I:/Art`. The sallet authoring workspace is `I:/Art/3d Models/Visored_Sallet/Authoring`. `UnityExportArchive` inside it retains former project export/review files and their metadata. Historical one-time migration scripts are disabled to prevent recreating authoring folders or report files in the project.
 
 The project sallet folder contains only its FBX, prefab, shared material and four used texture maps, with Unity metadata. Standalone GLB, procedural JS/factory, raw roughness/metallic maps, JSON geometry and screenshots live externally. Keep workflow documentation discoverable in Docs. Do not recreate a project ArtSource folder.
+
+## Blender MCP setup
+
+Use only the **Blender Lab "MCP" add-on** (Blender extension `lab_blender_org/mcp`) with the Claude Desktop "Blender" extension (`blmcp`, tools `mcp__Blender__*`). Both use port **9876**. Never enable Siddharth Ahuja's legacy "MCP for Blender" (`scripts/addons/blender_mcp.py`) or the `uvx blender-mcp` server: it also listens on 9876 but speaks a different JSON protocol, so calls time out.
+
+- Set the Lab add-on's port to 9876 and start its server. If it comes up on 9877, 9876 was busy; free it, set 9876 and restart the server.
+- "Cannot connect" means the server is not started or the port is wrong; "timed out" means the wrong add-on or a second client holds the port. `Get-NetTCPConnection -LocalPort 9876` shows the owner.
+- The same note is stored as the Beads memory `blender-mcp-setup`.
+
+## Armor wrist interface (approved 2026-11-03)
+
+The game wears **one item per armor slot**, so chest items (linen, gambeson, mail, plate) are alternatives and are never stacked. The only combination that has to work is a chest item with a glove, so each chest item agrees with the glove at the wrist; chest items are never measured against each other. The same rule will hold for plate gloves later.
+
+- **Contract.** `I:/Art/Blender/SimpleRPGHuman/Authoring/WristContract_v1.0_APPROVED.json`. Offsets are measured from the skin surface, along the forearm from the wrist joint (the `LeftHand`/`RightHand` bone head). Every sleeve or vambrace rim sits at least 2.5 cm above the wrist. Hems inside the first 6 cm: linen 2 mm and gambeson 5 mm (cuff over sleeve), mail and plate (sleeve over cuff) pushed clear of the glove. Beyond that a chest item blends back to its original shape by 12 cm.
+- **Glove.** The cuff is "tucked" at about 10 mm; its binding is a generated six-sided roll built from the shell rim (`wrist_fit.build_band`), not a hand-modelled band. A rigid cuff, such as a plate gauntlet, will declare a "flared" tier.
+- **Check.** `wrist_fit.pair_table()` runs each chest item against the glove on both sides: `[triangle crossings, glove samples within 1.5 mm]`, all zero is clean. Test both quad diagonals, because the engine picks its own at import.
+- **Approved state.** `Authoring/ApprovedWristFit_*.npy` and `.json` (vertex snapshot, manifest), plus `Backups/..._WristApproved_*.blend`. The script is **locked**: editing functions refuse to run until `unlock()` is called; `restore_approved()` puts everything back.
+- **Which object is shown.** `FINAL_PlateArmor` is a consolidated copy of the editable `GAME_*` plate pieces, with identical vertices; carry a change across with `wrist_fit.propagate_final()`. `FINAL_LinenTunic` and `Gambeson` are not synced yet.
+- **Gotchas.** Never run the old stacking entry points (`run_all`, `run_all_hems`): they stack the layers and inflate mail and plate. When an edit looks wrong in the viewport, pick the object under the pixel (`view3d.select`) to find out which one is actually drawn.
