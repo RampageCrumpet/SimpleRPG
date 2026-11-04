@@ -113,8 +113,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.IsFalse(skeleton.IsAlive);
             Assert.IsTrue(corpse.CanBeInteractedWith, "a dead enemy can be searched");
             List<string> loot = Loot(skeleton);
-            Assert.AreEqual(1, loot.Count, "the skeleton's loot table gives one item");
-            StringAssert.StartsWith("Golden", loot[0], "from the gold table the skeleton's own table nests");
+            Assert.AreEqual(2, loot.Count, "the skeleton's loot table gives its gold and one piece of armor");
+            Assert.AreEqual(1, loot.Count(name => name.StartsWith("Golden")), "one of them from the gold table the skeleton's own table nests");
 
             Kill(skeleton);
             yield return null;

@@ -30,13 +30,29 @@ namespace SimpleRPG.Appearance
             foreach (GameObject go in attached) go.hideFlags = flags;
         }
 
-        private void OnDestroy()
+        /// <summary>Removes the whole part: the root and every piece parented elsewhere.</summary>
+        public void Remove()
         {
             foreach (GameObject go in attached)
             {
                 if (go == null) continue;
                 if (Application.isPlaying) Destroy(go);
                 else DestroyImmediate(go);
+            }
+
+            attached.Clear();
+            if (Application.isPlaying) Destroy(gameObject);
+            else DestroyImmediate(gameObject);
+        }
+
+        private void OnDestroy()
+        {
+            // Destroyed some other way at runtime (the character going away): take the pieces on bones with it. In the editor the hierarchy
+            // owns them and destroying them here would destroy them twice; use Remove.
+            if (!Application.isPlaying) return;
+            foreach (GameObject go in attached)
+            {
+                if (go != null) Destroy(go);
             }
         }
     }

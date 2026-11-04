@@ -43,7 +43,11 @@ namespace SimpleRPG.Appearance
             shown.Remove(slot);
             parts.Remove(slot);
             if (current == null) return;
-            if (Application.isPlaying) Object.Destroy(current);
+            if (current.TryGetComponent(out BodyPartInstance instance))
+            {
+                instance.Remove();
+            }
+            else if (Application.isPlaying) Object.Destroy(current);
             else Object.DestroyImmediate(current);
         }
 
