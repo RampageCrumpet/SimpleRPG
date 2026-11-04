@@ -384,8 +384,12 @@ namespace SimpleRPG.Abilities
     /// </summary>
     public readonly struct ExecutionRequest
     {
-        public ExecutionRequest(SourceHandle source, EntityId instigator, Position3 origin, Position3 direction, StatusInvocation status = default)
+        public ExecutionRequest(SourceHandle source, EntityId instigator, Position3 origin, Position3 direction, StatusInvocation status = default,
+            EntityId eventVictim = default, int bodyLocation = 0, EntityId currentTarget = default)
         {
+            EventVictim = eventVictim;
+            BodyLocation = bodyLocation;
+            CurrentTarget = currentTarget;
             Source = source;
             Instigator = instigator;
             Origin = origin;
@@ -395,6 +399,15 @@ namespace SimpleRPG.Abilities
 
         /// <summary>For an ability started by a status: who holds it and how strong it is. Empty otherwise.</summary>
         public StatusInvocation Status { get; }
+
+        /// <summary>For an ability started by a triggered effect: the other party of the trigger (the one struck). None otherwise.</summary>
+        public EntityId EventVictim { get; }
+
+        /// <summary>For an ability started by a triggered effect: the body location struck, as the game's own enum value.</summary>
+        public int BodyLocation { get; }
+
+        /// <summary>For an ability started by a triggered effect: who the effect says it is aimed at. None otherwise.</summary>
+        public EntityId CurrentTarget { get; }
 
         /// <summary>Where the execution comes from.</summary>
         public SourceHandle Source { get; }

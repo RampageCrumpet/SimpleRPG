@@ -279,14 +279,14 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             ignite.Connect(strength, BuiltInNodes.Value, apply, BuiltInNodes.PotencyPort);
             Assert.IsTrue(ignite.Compile().Success, ignite.Compile().Report.ToString());
 
-            GameplayRuleDefinition rule = ScriptableObject.CreateInstance<GameplayRuleDefinition>();
+            TriggeredEffect rule = ScriptableObject.CreateInstance<TriggeredEffect>();
             created.Add(rule);
             rule.name = "FlamingRule";
             rule.Configure(ignite, 1f);
             WeaponData sword = ScriptableObject.CreateInstance<WeaponData>();
             created.Add(sword);
             sword.damage = new DamageInfo { Damage = 10 };
-            typeof(Item).GetField("rules", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(sword, new List<GameplayRuleDefinition> { rule });
+            typeof(Item).GetField("triggeredEffects", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(sword, new List<TriggeredEffect> { rule });
             ComboDefinition swordCombo = ComboTestSupport.CreateCombo();
             created.Add(swordCombo);
             ComboTestSupport.GiveCombo(sword, swordCombo);

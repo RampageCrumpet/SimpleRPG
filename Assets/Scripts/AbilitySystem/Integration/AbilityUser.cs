@@ -397,6 +397,12 @@ namespace SimpleRPG.Abilities.Integration
                 return false;
             }
 
+            if (ability.HasNode(NodeTypes.TriggerEntry))
+            {
+                Debug.LogWarning(ability.name + " starts from a Triggered Effect node, so only a triggered effect can run it.");
+                return false;
+            }
+
             if (!Contains(character.Loadout.Abilities, ability))
             {
                 Debug.LogWarning(name + " asked to use " + ability.name + ", which it does not have.");

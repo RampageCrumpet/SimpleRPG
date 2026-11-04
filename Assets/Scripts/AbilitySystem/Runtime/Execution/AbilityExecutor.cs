@@ -56,7 +56,7 @@ namespace SimpleRPG.Abilities
             }
 
             if (context.Tracing) context.Trace(TraceEventKind.ExecutionStarted, null, null, 0d, request.Source + ", instigator " + request.Instigator);
-            context.Continue(ability.EntryOperation, new BranchFrame(default, 0, default, false, status: request.Status));
+            context.Continue(ability.EntryOperation, new BranchFrame(request.EventVictim, request.BodyLocation, default, request.EventVictim.IsValid, currentTarget: request.CurrentTarget, status: request.Status));
             Run(context);
             return new ExecutionResult(id, !context.Aborted);
         }

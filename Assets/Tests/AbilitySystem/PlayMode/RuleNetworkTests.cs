@@ -38,7 +38,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private DefinitionRegistry previousRegistry;
         private WeaponData sword;
         private WeaponData dagger;
-        private GameplayRuleDefinition rule;
+        private TriggeredEffect rule;
         private AbilityDefinition meleeAbility;
 
         [UnitySetUp]
@@ -50,7 +50,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             meleeAbility = AssetDatabase.LoadAssetAtPath<AbilityDefinition>(MeleeAttack);
             Assert.IsNotNull(meleeAbility);
 
-            rule = ScriptableObject.CreateInstance<GameplayRuleDefinition>();
+            rule = ScriptableObject.CreateInstance<TriggeredEffect>();
             rule.name = "FlamingSwordRule";
             rule.Configure(FireballAbility(), 1f);
             created.Add(rule);
@@ -103,11 +103,11 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return null;
         }
 
-        private WeaponData Weapon(int damage, params GameplayRuleDefinition[] rules)
+        private WeaponData Weapon(int damage, params TriggeredEffect[] rules)
         {
             WeaponData weapon = ScriptableObject.CreateInstance<WeaponData>();
             weapon.damage = new DamageInfo { Damage = damage };
-            typeof(Item).GetField("rules", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(weapon, rules.ToList());
+            typeof(Item).GetField("triggeredEffects", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(weapon, rules.ToList());
             ComboDefinition combo = ComboTestSupport.CreateCombo();
             ComboTestSupport.GiveCombo(weapon, combo);
             created.Add(combo);
@@ -280,7 +280,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             wielder.Loadout.DefaultWeapon = sword;
             EquipmentOf(wielder).Equip(EquipmentSlot.mainHand, sword, 500);
             EquipmentOf(wielder).Unequip(EquipmentSlot.mainHand);
-            Assert.AreEqual(0, AbilityServices.Current.Rules.ActiveRuleCount(wielder.Id));
+            Assert.AreEqual(0, AbilityServices.Current.Effects.ActiveEffectCount(wielder.Id));
 
             SwingAt(wielder, victim);
             yield return null;
@@ -294,11 +294,11 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character wielder = Spawn(PlayerPrefab, Vector3.zero);
             yield return null;
             EquipmentOf(wielder).Equip(EquipmentSlot.mainHand, sword, 500);
-            Assert.AreEqual(1, AbilityServices.Current.Rules.ActiveRuleCount(wielder.Id));
+            Assert.AreEqual(1, AbilityServices.Current.Effects.ActiveEffectCount(wielder.Id));
 
             EquipmentOf(wielder).Equip(EquipmentSlot.mainHand, dagger, 501);
 
-            Assert.AreEqual(0, AbilityServices.Current.Rules.ActiveRuleCount(wielder.Id));
+            Assert.AreEqual(0, AbilityServices.Current.Effects.ActiveEffectCount(wielder.Id));
         }
 
         [UnityTest]
@@ -324,16 +324,16 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return null;
             EquipmentOf(wielder).Equip(EquipmentSlot.mainHand, sword, 500);
             EntityId id = wielder.Id;
-            Assert.AreEqual(1, AbilityServices.Current.Rules.ActiveRuleCount(id));
+            Assert.AreEqual(1, AbilityServices.Current.Effects.ActiveEffectCount(id));
 
             wielder.GetComponent<NetworkObject>().Despawn(false);
             yield return null;
 
-            Assert.AreEqual(0, AbilityServices.Current.Rules.ActiveRuleCount(id));
+            Assert.AreEqual(0, AbilityServices.Current.Effects.ActiveEffectCount(id));
         }
 
         [UnityTest]
-        public IEnumerator ARuleEngineStartedLate_StillKnowsWhatIsAlreadyWorn()
+        public IEnumerator AnEffectEngineStartedLate_StillKnowsWhatIsAlreadyWorn()
         {
             Character wielder = Spawn(PlayerPrefab, Vector3.zero);
             yield return null;
@@ -342,7 +342,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             // Throw the ability services away and let them be rebuilt, as happens when a game starts after its characters exist.
             AbilityServices.Reset();
 
-            Assert.AreEqual(1, AbilityServices.Current.Rules.ActiveRuleCount(wielder.Id));
+            Assert.AreEqual(1, AbilityServices.Current.Effects.ActiveEffectCount(wielder.Id));
         }
 
         // ----- The seeded proc rate -----
@@ -363,7 +363,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             ComboTestSupport.Advance(wielder, 0.3); // the hit window closes, so only Fireballs are left waiting on the executor
             for (int i = 0; i < 199; i++)
             {
-                services.Events.Enqueue(new WeaponHitConfirmedEvent(wielder.Id, victim.Id, 1, 1, default));
+                services.Events.Enqueue(new DamageResolvedEvent(new DamageRequest(victim.Id, 10, wielder.Id, default, 1, DamageProvenance.DirectWeaponHit), 100, 90, false));
                 services.Events.Drain();
             }
 

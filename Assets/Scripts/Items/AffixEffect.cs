@@ -39,6 +39,14 @@ namespace SimpleRPG.InventorySystem
         /// </summary>
         public abstract void AddGrants(IReadOnlyList<GrantSpec> itemOwnGrants, IReadOnlyList<float> values, List<GrantSpec> into);
 
+        /// <summary>
+        /// Adds the triggered effects this effect brings while its item is worn. Most effects bring none; an effect that adds a lasting reaction
+        /// (a hit that does something extra) returns it here and is run by the same engine as an item's own effects.
+        /// </summary>
+        public virtual void AddTriggeredEffects(List<TriggeredEffect> into)
+        {
+        }
+
         /// <summary>The line a player reads at the rolled values, such as "+3 Strength".</summary>
         public abstract string Describe(IReadOnlyList<float> values);
 

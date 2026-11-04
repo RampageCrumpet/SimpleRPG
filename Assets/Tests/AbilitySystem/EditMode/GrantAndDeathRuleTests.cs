@@ -296,18 +296,18 @@ namespace SimpleRPG.Abilities.Tests.EditMode
     }
 
     /// <summary>
-    /// Spawning and death rules, with the real rule engine, executor, combat pipeline, equipment and event dispatcher. The cursed amulet:
+    /// Spawning and death effects, with the real effect engine and item host, executor, combat pipeline, equipment and event dispatcher. The cursed amulet:
     /// when its wearer dies it spawns one creature where they died.
     /// </summary>
     public class DeathRuleTests
     {
-        private sealed class Provider : IItemRuleProvider
+        private sealed class Provider : IItemEffectProvider
         {
-            private readonly Dictionary<ItemInstanceId, IReadOnlyList<GameplayRuleDefinition>> rulesByItem = new Dictionary<ItemInstanceId, IReadOnlyList<GameplayRuleDefinition>>();
+            private readonly Dictionary<ItemInstanceId, IReadOnlyList<TriggeredEffect>> rulesByItem = new Dictionary<ItemInstanceId, IReadOnlyList<TriggeredEffect>>();
 
-            public void Define(ItemInstanceId item, params GameplayRuleDefinition[] rules) => rulesByItem[item] = rules;
+            public void Define(ItemInstanceId item, params TriggeredEffect[] rules) => rulesByItem[item] = rules;
 
-            public bool TryGetRules(EntityId wearer, ItemInstanceId item, out IReadOnlyList<GameplayRuleDefinition> rules) =>
+            public bool TryGetEffects(EntityId wearer, ItemInstanceId item, out IReadOnlyList<TriggeredEffect> rules) =>
                 rulesByItem.TryGetValue(item, out rules) && rules.Count > 0;
 
             public IEnumerable<KeyValuePair<EntityId, ItemInstanceId>> EnumerateEquipped() => new KeyValuePair<EntityId, ItemInstanceId>[0];
@@ -325,7 +325,8 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         private ExecutionServices services;
         private AbilityExecutor executor;
         private Provider provider;
-        private RuleEngine engine;
+        private TriggeredEffectEngine engine;
+        private ItemEffectHost itemHost;
         private EquipmentSet equipment;
         private GameObject demonPrefab;
         private AbilityDefinition summon;
@@ -355,7 +356,8 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             wearer = Add(1, 100, new Position3(7, 0, 9));
             killer = Add(2, 100, new Position3(0, 0, 0));
             equipment = new EquipmentSet(wearer.Id, events);
-            engine = new RuleEngine(events, executor, services.Random, combatants, provider);
+            engine = new TriggeredEffectEngine(events, executor, services.Random, combatants);
+            itemHost = new ItemEffectHost(events, engine, provider);
             engine.Diagnostic += diagnostics.Add;
             combat.DeathSources = engine;
         }
@@ -363,6 +365,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         [TearDown]
         public void TearDown()
         {
+            itemHost?.Dispose();
             engine?.Dispose();
             foreach (Object o in created)
             {
@@ -379,11 +382,11 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             return combatant;
         }
 
-        private GameplayRuleDefinition DeathRule(float chance = 1f, AbilityDefinition ability = null)
+        private TriggeredEffect DeathRule(float chance = 1f, AbilityDefinition ability = null)
         {
-            GameplayRuleDefinition rule = ScriptableObject.CreateInstance<GameplayRuleDefinition>();
+            TriggeredEffect rule = ScriptableObject.CreateInstance<TriggeredEffect>();
             rule.name = "CursedAmulet";
-            rule.Configure(ability ?? summon, chance, RuleTrigger.OwnerDeath);
+            rule.Configure(ability ?? summon, chance, EffectTrigger.OnOwnerDeath);
             created.Add(rule);
             return rule;
         }
@@ -494,7 +497,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             events.Enqueue(new WeaponHitConfirmedEvent(killer.Id, wearer.Id, 1, 1, default));
             events.Drain();
 
-            Assert.AreEqual(0, engine.ActiveRuleCount(wearer.Id), "The amulet is unsubscribed.");
+            Assert.AreEqual(0, engine.ActiveEffectCount(wearer.Id), "The amulet is unsubscribed.");
             Assert.AreEqual(1, spawner.Spawns.Count, "Yet its curse still ran.");
         }
 
@@ -514,15 +517,15 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         [Test]
         public void ADeathRule_DoesNotFireOnAWeaponHit_AndAWeaponRuleDoesNotFireOnDeath()
         {
-            GameplayRuleDefinition weaponRule = ScriptableObject.CreateInstance<GameplayRuleDefinition>();
+            TriggeredEffect weaponRule = ScriptableObject.CreateInstance<TriggeredEffect>();
             created.Add(weaponRule);
-            weaponRule.Configure(summon, 1f, RuleTrigger.WeaponHitConfirmed);
+            weaponRule.Configure(summon, 1f, EffectTrigger.OnHit);
             provider.Define(Amulet, DeathRule());
             provider.Define(Sword, weaponRule);
             equipment.Equip(2, Amulet);
             equipment.Equip(6, Sword);
 
-            events.Enqueue(new WeaponHitConfirmedEvent(wearer.Id, killer.Id, 1, 1, default));
+            events.Enqueue(new DamageResolvedEvent(new DamageRequest(killer.Id, 10, wearer.Id, default, 1, DamageProvenance.DirectWeaponHit), 100, 90, false));
             events.Drain();
             Assert.AreEqual(1, spawner.Spawns.Count, "Only the sword's rule answers a blow.");
 

@@ -149,7 +149,7 @@ namespace SimpleRPG.Abilities
 
             AbilityDefinition ability = grant.Ability;
             CompileResult compiled = ability.Compile();
-            if (!compiled.Success || ability.HasNode(NodeTypes.StatusTick))
+            if (!compiled.Success || ability.HasNode(NodeTypes.StatusTick) || ability.HasNode(NodeTypes.TriggerEntry))
             {
                 return ItemCastResult.AbilityInvalid;
             }

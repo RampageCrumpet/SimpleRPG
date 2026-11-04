@@ -38,13 +38,16 @@ namespace SimpleRPG.Abilities.Integration
             Statuses.Executor = Executor;
             driver = StatusDriver.Create(Statuses);
 
-            // Rules start listening now; equipment that was already worn is picked up.
-            EquipmentRuleProvider items = new EquipmentRuleProvider();
-            Rules = new RuleEngine(gameplay.Events, Executor, random, gameplay.Combatants, items);
-            Rules.Diagnostic += message => Debug.LogWarning(message);
+            // Triggered effects start listening now. Worn items and applied statuses are the hosts that bring them; equipment that was already
+            // worn is picked up.
+            EquipmentEffectProvider items = new EquipmentEffectProvider();
+            Effects = new TriggeredEffectEngine(gameplay.Events, Executor, random, gameplay.Combatants);
+            Effects.Diagnostic += message => Debug.LogWarning(message);
+            ItemHost = new ItemEffectHost(gameplay.Events, Effects, items);
+            StatusHost = new StatusEffectHost(gameplay.Events, Effects, new RegistryStatusEffectProvider());
 
             // A death's reactions are chosen as the death is committed, before any cleanup removes the worn items that asked for them.
-            gameplay.Combat.DeathSources = Rules;
+            gameplay.Combat.DeathSources = Effects;
 
             Grants = new GrantEngine(gameplay.Events, gameplay.Attributes, items);
             Grants.Diagnostic += message => Debug.LogWarning(message);
@@ -82,9 +85,19 @@ namespace SimpleRPG.Abilities.Integration
         public AbilityExecutor Executor { get; }
 
         /// <summary>
-        /// Runs item rules, such as an on-hit spell.
+        /// Runs triggered effects, such as an on-hit spell, for whatever hosts them.
         /// </summary>
-        public RuleEngine Rules { get; }
+        public TriggeredEffectEngine Effects { get; }
+
+        /// <summary>
+        /// Brings a worn item's effects to the engine while it is equipped.
+        /// </summary>
+        public ItemEffectHost ItemHost { get; }
+
+        /// <summary>
+        /// Brings an applied status's effects to the engine while it lasts.
+        /// </summary>
+        public StatusEffectHost StatusHost { get; }
 
         /// <summary>
         /// Holds the statuses on every entity and advances them each frame.
@@ -100,12 +113,14 @@ namespace SimpleRPG.Abilities.Integration
 
         private void Shutdown()
         {
-            if (ReferenceEquals(gameplay.Combat.DeathSources, Rules))
+            if (ReferenceEquals(gameplay.Combat.DeathSources, Effects))
             {
                 gameplay.Combat.DeathSources = null;
             }
 
-            Rules.Dispose();
+            ItemHost.Dispose();
+            StatusHost.Dispose();
+            Effects.Dispose();
             Grants.Dispose();
             Statuses.Dispose();
             if (driver != null) driver.Remove();

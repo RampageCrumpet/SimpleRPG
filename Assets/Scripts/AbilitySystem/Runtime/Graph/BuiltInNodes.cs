@@ -77,6 +77,16 @@ namespace SimpleRPG.Abilities
     }
 
     [Serializable]
+    public sealed class TriggerEntryConfig : AbilityNodeConfig
+    {
+    }
+
+    [Serializable]
+    public sealed class TriggerDataConfig : AbilityNodeConfig
+    {
+    }
+
+    [Serializable]
     public sealed class ApplyStatusConfig : AbilityNodeConfig
     {
         /// <summary>The status to apply.</summary>
@@ -149,9 +159,9 @@ namespace SimpleRPG.Abilities
     public static class NodeTypes
     {
         /// <summary>
-        /// True for a node type an ability can start from: Activate for an ability that is used, Status Tick for one a status runs.
+        /// True for a node type an ability can start from: Activate for an ability that is used, Status Tick for one a status runs, Triggered Effect for one a triggered effect runs.
         /// </summary>
-        public static bool IsEntry(string typeId) => typeId == Activate || typeId == StatusTick;
+        public static bool IsEntry(string typeId) => typeId == Activate || typeId == StatusTick || typeId == TriggerEntry;
 
         public const string Activate = "simplerpg.flow.activate.v1";
         public const string Constant = "simplerpg.data.constant.v1";
@@ -163,6 +173,9 @@ namespace SimpleRPG.Abilities
         public const string EventComboScalar = "simplerpg.data.eventcomboscalar.v1";
         public const string SpawnEntity = "simplerpg.action.spawnentity.v1";
         public const string StatusTick = "simplerpg.flow.statustick.v1";
+        public const string TriggerEntry = "simplerpg.flow.triggerentry.v1";
+        public const string TriggerTarget = "simplerpg.data.triggertarget.v1";
+        public const string TriggerOther = "simplerpg.data.triggerother.v1";
         public const string StatusHolder = "simplerpg.data.statusholder.v1";
         public const string StatusPotency = "simplerpg.data.statuspotency.v1";
         public const string StatusStacks = "simplerpg.data.statusstacks.v1";
@@ -267,6 +280,23 @@ namespace SimpleRPG.Abilities
                 NodeTypes.StatusTick, "Status Tick", "Entry", "Where an ability starts when a status ticks. Downstream of it, Status Holder, Status Potency and Status Stacks are available.",
                 new[] { PortDescriptor.FlowOut(Next, providesContext: EventContext.Status) },
                 (config, context) => new ActivateOperation(context.FlowTarget(Next))));
+
+            registry.Register(new NodeDescriptor<TriggerEntryConfig>(
+                NodeTypes.TriggerEntry, "Triggered Effect", "Entry", "Where an ability starts when a triggered effect runs it. Downstream of it, Trigger Target and Trigger Other are available.",
+                new[] { PortDescriptor.FlowOut(Next, providesContext: EventContext.Trigger) },
+                (config, context) => new ActivateOperation(context.FlowTarget(Next))));
+
+            registry.Register(new NodeDescriptor<TriggerDataConfig>(
+                NodeTypes.TriggerTarget, "Trigger Target", "Targets", "The entity the triggered effect is aimed at: the owner or the other party, as the effect says. Only available in an ability a triggered effect runs.",
+                new[] { PortDescriptor.DataOut(Value, DataType.Entity) },
+                (config, context) => new TriggerTargetExpr(),
+                requiredContext: EventContext.Trigger));
+
+            registry.Register(new NodeDescriptor<TriggerDataConfig>(
+                NodeTypes.TriggerOther, "Trigger Other", "Targets", "The other party of the trigger: the one the owner struck, or whoever struck the owner. Only available in an ability a triggered effect runs.",
+                new[] { PortDescriptor.DataOut(Value, DataType.Entity) },
+                (config, context) => new TriggerOtherExpr(),
+                requiredContext: EventContext.Trigger));
 
             registry.Register(new NodeDescriptor<StatusDataConfig>(
                 NodeTypes.StatusHolder, "Status Holder", "Status", "The entity the status is on. Only available in a status tick ability.",
@@ -423,6 +453,16 @@ namespace SimpleRPG.Abilities
     }
 
     internal sealed class EventVictimExpr : EntityExpr
+    {
+        protected override EntityId EvaluateCore(ExecutionContext context, in BranchFrame frame) => frame.EventVictim;
+    }
+
+    internal sealed class TriggerTargetExpr : EntityExpr
+    {
+        protected override EntityId EvaluateCore(ExecutionContext context, in BranchFrame frame) => frame.CurrentTarget;
+    }
+
+    internal sealed class TriggerOtherExpr : EntityExpr
     {
         protected override EntityId EvaluateCore(ExecutionContext context, in BranchFrame frame) => frame.EventVictim;
     }

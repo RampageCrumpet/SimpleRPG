@@ -1,6 +1,6 @@
 # Ability and effect system
 
-How abilities, effects, statuses, grants and rules work, where each part lives, and where the implementation deliberately differs from `SimpleRPG_Ability_Effect_System_Architecture.md` and its Decisions Addendum. The addendum wins where the two disagree. The visual editor is described in `AbilityEditor.md`; the network rules are in `NetworkAuthority.md`.
+How abilities, effects, statuses, grants and triggered effects work, where each part lives, and where the implementation deliberately differs from `SimpleRPG_Ability_Effect_System_Architecture.md` and its Decisions Addendum. The addendum wins where the two disagree. The visual editor is described in `AbilityEditor.md`; the network rules are in `NetworkAuthority.md`.
 
 ## Shape
 
@@ -9,7 +9,7 @@ An ability is a ScriptableObject (`AbilityDefinition`) holding a flat list of no
 | Assembly | Holds | May reference |
 |---|---|---|
 | `SimpleRPG.Gameplay.Core` | Ids, `SourceHandle`, clock, attributes, combat and death pipeline, event dispatcher, equipment and item-state records | nothing in the game |
-| `SimpleRPG.Abilities.Runtime` | Definitions and registry, graph schema, compiler, executor, rules, statuses, grants, item casting | Core |
+| `SimpleRPG.Abilities.Runtime` | Definitions and registry, graph schema, compiler, executor, triggered effects, statuses, grants, item casting | Core |
 | `SimpleRPG.Abilities.Integration` | Adapters to the game: network clock, real projectile and melee delivery, spawner, `AbilityUser`, `AbilityServices` | Runtime, Core, the game assembly, Netcode |
 | `SimpleRPG.Abilities.Editor` | Graph editor, test world, trace viewer, registry tools and build gate | everything above |
 | `SimpleRPG.Abilities.Tests.*` | EditMode tests (real services, in-memory world) and PlayMode tests (real host and a real remote client) | |
@@ -28,7 +28,7 @@ An ability is a ScriptableObject (`AbilityDefinition`) holding a flat list of no
 ## Lifetimes and policies
 
 - **Death.** Lethal damage commits `Alive -> Dead` once per life. Then, in order: `DamageResolved`, `EntityDied` (carrying the death position and the items that qualified at that moment), `DeathFinalize`. Reactions to the death use the captured snapshot, so taking the amulet off during the death does not cancel its reaction. The same transition never reacts twice; a revive starts a new life.
-- **What death cleans up.** Statuses end with reason `TargetDied` at `DeathFinalize`. Equipment grants and item rules stay on a dead wearer until the item is unequipped or the entity despawns. This is deliberate: a revived character keeps its equipment, and a second death can fire the death rules again. `DeathFinalize` is delivered even when the event queue is over budget.
+- **What death cleans up.** Statuses end with reason `TargetDied` at `DeathFinalize`. Equipment grants and item effects stay on a dead wearer until the item is unequipped or the entity despawns. This is deliberate: a revived character keeps its equipment, and a second death can fire the death rules again. `DeathFinalize` is delivered even when the event queue is over budget.
 - **Event queue.** Ordered, one queue, depth limit 8 and 256 events per drain. Over the limit, events are dropped and reported, except death cleanup.
 - **Potency and grants.** Timed effects snapshot potency when applied; persistent grants read live values.
 - **Charges.** Kept per item instance in `ItemStateStore`, spent only on the server, replicated read-only to the owner. There is no recharge.

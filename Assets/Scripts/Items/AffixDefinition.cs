@@ -101,6 +101,12 @@ namespace SimpleRPG.InventorySystem
             }
         }
 
+        /// <summary>The triggered effects this affix brings to its item while worn, added to <paramref name="into"/>.</summary>
+        public void AddTriggeredEffects(List<TriggeredEffect> into)
+        {
+            foreach (AffixEffect effect in effects) effect?.AddTriggeredEffects(into);
+        }
+
         /// <summary>The lines a player reads for this affix at rolled values, one per effect that has something to say.</summary>
         public List<string> Describe(IReadOnlyList<float> values)
         {

@@ -319,7 +319,7 @@ namespace SimpleRPG.Abilities
                 if (entry == null) return;
 
                 // Walk the flow from Activate, remembering for each operation which kinds of context some path to it lacks.
-                const EventContext Everything = EventContext.Impact | EventContext.Target | EventContext.Status;
+                const EventContext Everything = EventContext.Impact | EventContext.Target | EventContext.Status | EventContext.Trigger;
                 Dictionary<string, EventContext> possiblyMissing = new Dictionary<string, EventContext>();
                 Queue<(string node, EventContext missing)> queue = new Queue<(string, EventContext)>();
                 queue.Enqueue((entry, Everything));
@@ -362,6 +362,11 @@ namespace SimpleRPG.Abilities
                         if ((missing & EventContext.Status) != 0)
                         {
                             Add(ValidationSeverity.Error, offender, null, "'" + descriptors[offender].DisplayName + "' is only available in a status tick ability, but node '" + operation + "' can run outside one. Start the ability from a Status Tick node instead of Activate.");
+                        }
+
+                        if ((missing & EventContext.Trigger) != 0)
+                        {
+                            Add(ValidationSeverity.Error, offender, null, "'" + descriptors[offender].DisplayName + "' is only available in an ability a triggered effect runs, but node '" + operation + "' can run outside one. Start the ability from a Triggered Effect node instead of Activate.");
                         }
 
                         if ((missing & EventContext.Target) != 0)

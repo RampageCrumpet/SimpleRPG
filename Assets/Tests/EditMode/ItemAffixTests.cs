@@ -365,5 +365,71 @@ namespace SimpleRPG.Tests.EditMode
             Assert.AreNotEqual(held[0].Affixes, held[1].Affixes, "Each instance rolls for itself.");
             Assert.IsTrue(sword.Affixes.IsEmpty, "The asset stays plain.");
         }
+
+        // ---- Affixes that bring triggered effects ----
+
+        private TriggeredEffect Reaction(bool withAbility = true)
+        {
+            TriggeredEffect effect = ScriptableObject.CreateInstance<TriggeredEffect>();
+            created.Add(effect);
+            AbilityDefinition ability = null;
+            if (withAbility)
+            {
+                ability = ScriptableObject.CreateInstance<AbilityDefinition>();
+                created.Add(ability);
+            }
+
+            effect.Configure(ability);
+            return effect;
+        }
+
+        [Test]
+        public void AnAffixCanBringTriggeredEffects_ThatTheItemHasOnlyWhileItCarriesTheAffix()
+        {
+            TriggeredEffect shred = Reaction();
+            TriggeredEffect own = Reaction();
+            AffixDefinition affix = Affix(new List<AffixEffect> { new TriggeredAffixEffect(shred, "Shreds armor on hit") });
+            Register(affix);
+            Item sword = MakeItem<Item>(Pool(1, 1, affix));
+            Set(sword, "triggeredEffects", new List<TriggeredEffect> { own });
+
+            Item instance = sword.CloneInstance(sword.RollAffixes(new SeededRandom(3)));
+            created.Add(instance);
+
+            CollectionAssert.AreEqual(new[] { own, shred }, instance.AllTriggeredEffects, "What the asset declares, then what the affix brings.");
+            CollectionAssert.AreEqual(new[] { own }, sword.AllTriggeredEffects, "The asset on its own has only its own.");
+            Assert.AreEqual(1, instance.Affixes.Count);
+            Assert.AreEqual(0, instance.Affixes[0].ValueCount, "Nothing is rolled for it yet.");
+            Assert.AreEqual("Shreds armor on hit", affix.Describe(new float[0])[0]);
+        }
+
+        [Test]
+        public void AnAffixWithSeveralTriggeredEffects_HasSeveralIndependentReactions()
+        {
+            TriggeredEffect headshot = Reaction();
+            TriggeredEffect limb = Reaction();
+            AffixDefinition affix = Affix(new List<AffixEffect>
+            {
+                new TriggeredAffixEffect(headshot, "Extra damage on a killing blow to the head"),
+                new TriggeredAffixEffect(limb, "Hurts you on a blow to a limb"),
+                new StatModifierEffect("Strength", "simplerpg.attr.strength", ModifierLayer.Add, 1, 1),
+            });
+            var into = new List<TriggeredEffect>();
+
+            affix.AddTriggeredEffects(into);
+
+            CollectionAssert.AreEqual(new[] { headshot, limb }, into);
+            Assert.AreEqual(1, affix.ValueCount, "Only the stat effect rolls a value.");
+            Assert.AreEqual(3, affix.Describe(new[] { 1f }).Count);
+        }
+
+        [Test]
+        public void ATriggeredAffixEffect_IsLiveOnlyWithAnAbilityToRun()
+        {
+            Assert.IsTrue(new TriggeredAffixEffect(Reaction(), "x").IsLive(out _));
+            Assert.IsFalse(new TriggeredAffixEffect(Reaction(withAbility: false), "x").IsLive(out string reason));
+            StringAssert.Contains("ability", reason);
+            Assert.IsNotNull(new TriggeredAffixEffect(null, "x").Problem());
+        }
     }
 }

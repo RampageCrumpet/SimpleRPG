@@ -48,6 +48,9 @@ namespace SimpleRPG.Abilities
 
         /// <summary>The ability was started by a status: the entity holding it and the status's strength are known.</summary>
         Status = 4,
+
+        /// <summary>The ability was started by a triggered effect: the other party of the trigger and who the effect is aimed at are known.</summary>
+        Trigger = 8,
     }
 
     /// <summary>

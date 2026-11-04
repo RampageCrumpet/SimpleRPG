@@ -8,20 +8,20 @@ using EntityId = SimpleRPG.Gameplay.EntityId;
 namespace SimpleRPG.Abilities.Tests.EditMode
 {
     /// <summary>
-    /// Runs item rules with the real rule engine, executor, combat pipeline, equipment set and event dispatcher. <see cref="Provider"/> stands
-    /// in only for the networked equipment component: it says which rules each worn item brings.
+    /// Runs triggered effects with the real engine, item host, executor, combat pipeline, equipment set and event dispatcher. <see cref="Provider"/>
+    /// stands in only for the networked equipment component: it says which effects each worn item brings.
     /// </summary>
-    public class RuleEngineTests
+    public class TriggeredEffectEngineTests
     {
-        private sealed class Provider : IItemRuleProvider
+        private sealed class Provider : IItemEffectProvider
         {
-            private readonly Dictionary<ItemInstanceId, IReadOnlyList<GameplayRuleDefinition>> rulesByItem = new Dictionary<ItemInstanceId, IReadOnlyList<GameplayRuleDefinition>>();
+            private readonly Dictionary<ItemInstanceId, IReadOnlyList<TriggeredEffect>> rulesByItem = new Dictionary<ItemInstanceId, IReadOnlyList<TriggeredEffect>>();
 
             private readonly Dictionary<EntityId, List<ItemInstanceId>> equipped = new Dictionary<EntityId, List<ItemInstanceId>>();
 
             public int Lookups { get; private set; }
 
-            public void Define(ItemInstanceId item, params GameplayRuleDefinition[] rules) => rulesByItem[item] = rules;
+            public void Define(ItemInstanceId item, params TriggeredEffect[] rules) => rulesByItem[item] = rules;
 
             public void MarkEquipped(EntityId wearer, ItemInstanceId item)
             {
@@ -29,7 +29,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
                 items.Add(item);
             }
 
-            public bool TryGetRules(EntityId wearer, ItemInstanceId item, out IReadOnlyList<GameplayRuleDefinition> rules)
+            public bool TryGetEffects(EntityId wearer, ItemInstanceId item, out IReadOnlyList<TriggeredEffect> rules)
             {
                 Lookups++;
                 return rulesByItem.TryGetValue(item, out rules) && rules.Count > 0;
@@ -68,7 +68,8 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         private AbilityExecutor executor;
         private Provider provider;
         private CountingRandom random;
-        private RuleEngine engine;
+        private TriggeredEffectEngine engine;
+        private ItemEffectHost itemHost;
         private EquipmentSet equipment;
         private GameObject prefab;
         private AbilityDefinition fireball;
@@ -111,6 +112,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         [TearDown]
         public void TearDown()
         {
+            itemHost?.Dispose();
             engine?.Dispose();
             foreach (Object o in created)
             {
@@ -120,10 +122,12 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             created.Clear();
         }
 
-        private RuleEngine NewEngine()
+        private TriggeredEffectEngine NewEngine()
         {
-            RuleEngine created = new RuleEngine(events, executor, random, combatants, provider);
+            itemHost?.Dispose();
+            TriggeredEffectEngine created = new TriggeredEffectEngine(events, executor, random, combatants);
             created.Diagnostic += diagnostics.Add;
+            itemHost = new ItemEffectHost(events, created, provider);
             return created;
         }
 
@@ -134,20 +138,27 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             return combatant;
         }
 
-        private GameplayRuleDefinition Rule(float chance = 1f, DamageProvenance provenance = DamageProvenance.DirectWeaponHit, AbilityDefinition ability = null)
+        private TriggeredEffect Rule(float chance = 1f, AbilityDefinition ability = null, EffectScope scope = EffectScope.Owner, params EffectCondition[] conditions)
         {
-            GameplayRuleDefinition rule = ScriptableObject.CreateInstance<GameplayRuleDefinition>();
+            TriggeredEffect rule = ScriptableObject.CreateInstance<TriggeredEffect>();
             rule.name = "SwordProc";
-            rule.Configure(ability ?? fireball, chance, RuleTrigger.WeaponHitConfirmed, provenance);
+            rule.Configure(ability ?? fireball, chance, EffectTrigger.OnHit, scope, EffectTarget.Other, conditions);
             created.Add(rule);
             return rule;
         }
 
-        private void LandBlow(TestCombatant attacker = null, TestCombatant target = null, int attack = 1)
+        // A blow as the combat pipeline reports it once its damage is resolved, which is what hit effects react to.
+        private static DamageResolvedEvent Blow(TestCombatant attacker, TestCombatant target, SourceHandle source = default, int location = 1,
+            DamageProvenance provenance = DamageProvenance.DirectWeaponHit, bool fatal = false, int amount = 10)
         {
-            attacker ??= wielder;
-            target ??= victim;
-            events.Enqueue(new WeaponHitConfirmedEvent(attacker.Id, target.Id, 1, attack, default));
+            var request = new DamageRequest(target.Id, amount, attacker.Id, source, location, provenance);
+            return new DamageResolvedEvent(request, 100, fatal ? 0 : 100 - amount, fatal);
+        }
+
+        private void LandBlow(TestCombatant attacker = null, TestCombatant target = null, SourceHandle source = default, int location = 1,
+            DamageProvenance provenance = DamageProvenance.DirectWeaponHit, bool fatal = false)
+        {
+            events.Enqueue(Blow(attacker ?? wielder, target ?? victim, source, location, provenance, fatal));
             events.Drain();
         }
 
@@ -160,7 +171,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
 
             equipment.Equip(6, Sword);
 
-            Assert.AreEqual(1, engine.ActiveRuleCount(wielder.Id));
+            Assert.AreEqual(1, engine.ActiveEffectCount(wielder.Id));
         }
 
         [Test]
@@ -170,7 +181,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
 
             equipment.Equip(6, Dagger);
 
-            Assert.AreEqual(0, engine.ActiveRuleCount(wielder.Id));
+            Assert.AreEqual(0, engine.ActiveEffectCount(wielder.Id));
         }
 
         [Test]
@@ -212,7 +223,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             LandBlow();
 
             Assert.AreEqual(1, projectiles.Launches.Count, "No further proc once the sword is off.");
-            Assert.AreEqual(0, engine.ActiveRuleCount(wielder.Id));
+            Assert.AreEqual(0, engine.ActiveEffectCount(wielder.Id));
         }
 
         [Test]
@@ -231,15 +242,15 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         [Test]
         public void ReplacingTheItem_SwapsTheRules()
         {
-            GameplayRuleDefinition swordRule = Rule();
-            GameplayRuleDefinition staffRule = Rule();
+            TriggeredEffect swordRule = Rule();
+            TriggeredEffect staffRule = Rule();
             provider.Define(Sword, swordRule);
             provider.Define(Staff, staffRule);
             equipment.Equip(6, Sword);
 
             equipment.Equip(6, Staff);
 
-            Assert.AreEqual(1, engine.ActiveRuleCount(wielder.Id), "Only the staff's rule is active now.");
+            Assert.AreEqual(1, engine.ActiveEffectCount(wielder.Id), "Only the staff's rule is active now.");
             LandBlow();
             Assert.AreEqual(1, projectiles.Launches.Count);
             Assert.AreEqual(SourceHandle.FromItem(Staff), projectiles.Launches[0].Launch.Source);
@@ -283,7 +294,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             events.Enqueue(new ItemEquippedEvent(wielder.Id, 6, Sword));
             events.Drain();
 
-            Assert.AreEqual(1, engine.ActiveRuleCount(wielder.Id));
+            Assert.AreEqual(1, engine.ActiveEffectCount(wielder.Id));
             LandBlow();
             Assert.AreEqual(1, projectiles.Launches.Count);
         }
@@ -298,7 +309,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             events.Drain();
             LandBlow();
 
-            Assert.AreEqual(0, engine.ActiveRuleCount(wielder.Id));
+            Assert.AreEqual(0, engine.ActiveEffectCount(wielder.Id));
             Assert.AreEqual(0, projectiles.Launches.Count);
         }
 
@@ -311,7 +322,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
 
             engine = NewEngine();
 
-            Assert.AreEqual(1, engine.ActiveRuleCount(wielder.Id));
+            Assert.AreEqual(1, engine.ActiveEffectCount(wielder.Id));
             LandBlow();
             Assert.AreEqual(1, projectiles.Launches.Count);
         }
@@ -424,12 +435,14 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         // ----- Provenance and recursion -----
 
         [Test]
-        public void ARuleThatNamesAnotherKindOfDamage_IgnoresWeaponHits()
+        public void OnlyAWeaponBlow_IsAHit_NotSpellDamageOrAnythingElse()
         {
-            provider.Define(Sword, Rule(provenance: DamageProvenance.Spell));
+            provider.Define(Sword, Rule());
             equipment.Equip(6, Sword);
 
-            LandBlow();
+            LandBlow(provenance: DamageProvenance.Spell);
+            LandBlow(provenance: DamageProvenance.Proc);
+            LandBlow(provenance: DamageProvenance.Periodic);
 
             Assert.AreEqual(0, projectiles.Launches.Count);
         }
@@ -439,17 +452,15 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         {
             provider.Define(Sword, Rule());
             equipment.Equip(6, Sword);
-            int weaponHits = 0;
             List<DamageProvenance> damage = new List<DamageProvenance>();
-            events.Subscribe<WeaponHitConfirmedEvent>(e => weaponHits++);
             events.Subscribe<DamageResolvedEvent>(e => damage.Add(e.Request.Provenance));
 
             LandBlow();
             projectiles.Hit(0, victim.Id, at: new Position3(2, 0, 0));
 
-            Assert.AreEqual(1, weaponHits, "Only the original blow is a weapon hit; the explosion is not.");
-            Assert.IsNotEmpty(damage);
-            Assert.IsTrue(damage.All(p => p == DamageProvenance.Spell));
+            Assert.AreEqual(1, damage.Count(p => p == DamageProvenance.DirectWeaponHit), "Only the original blow is a weapon hit; the explosion is not.");
+            Assert.IsNotEmpty(damage.Where(p => p != DamageProvenance.DirectWeaponHit));
+            Assert.IsTrue(damage.Where(p => p != DamageProvenance.DirectWeaponHit).All(p => p == DamageProvenance.Spell));
             Assert.AreEqual(1, projectiles.Launches.Count, "The explosion did not trigger the sword again.");
         }
 
@@ -498,7 +509,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             melee.OnBegin = (launch, swingEvents) =>
             {
                 swingEvents.Hit(launch.Token, new MeleeHit(victim.Id, 1, 1, 1f, 1f));
-                events.Enqueue(new WeaponHitConfirmedEvent(wielder.Id, victim.Id, 1, 1, launch.Execution));
+                events.Enqueue(Blow(wielder, victim));
             };
 
             AbilityDefinition swing = AbilityBuilder.MeleeAttack();
@@ -518,7 +529,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         [Test]
         public void ARuleWithNoAbility_IsReportedOnce_NotThrown()
         {
-            GameplayRuleDefinition empty = ScriptableObject.CreateInstance<GameplayRuleDefinition>();
+            TriggeredEffect empty = ScriptableObject.CreateInstance<TriggeredEffect>();
             created.Add(empty);
             provider.Define(Sword, empty);
             equipment.Equip(6, Sword);
@@ -550,12 +561,196 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         [Test]
         public void ANullRuleInTheList_IsSkipped()
         {
-            provider.Define(Sword, new GameplayRuleDefinition[] { null, Rule() });
+            provider.Define(Sword, new TriggeredEffect[] { null, Rule() });
             equipment.Equip(6, Sword);
 
             LandBlow();
 
             Assert.AreEqual(1, projectiles.Launches.Count);
+        }
+
+        // ----- Triggers, conditions, scope, targets, hosts -----
+
+        // A condition on the body location, as the game's own BodyLocationCondition does (that one lives in the integration assembly).
+        private sealed class LocationIs : EffectCondition
+        {
+            private readonly int location;
+
+            public LocationIs(int location) => this.location = location;
+
+            public override bool Passes(in TriggerContext context) => context.BodyLocation == location;
+        }
+
+        private const int Head = 0;
+        private const int Arms = 3;
+
+        // An ability a triggered effect runs: it damages whoever the effect is aimed at by 7.
+        private AbilityDefinition StrikeTarget()
+        {
+            AbilityDefinition ability = AbilityBuilder.Empty("StrikeTarget");
+            ability.RemoveNode("activate");
+            string entry = ability.AddNode(NodeTypes.TriggerEntry, null, "entry");
+            string target = ability.AddNode(NodeTypes.TriggerTarget, null, "target");
+            string amount = ability.AddNode(NodeTypes.Constant, new ConstantConfig { Value = 7f }, "amount");
+            string damage = ability.AddNode(NodeTypes.Damage, new DamageConfig { Provenance = DamageProvenance.Proc }, "damage");
+            ability.Connect(entry, BuiltInNodes.Next, damage, BuiltInNodes.In);
+            ability.Connect(target, BuiltInNodes.Value, damage, BuiltInNodes.Target);
+            ability.Connect(amount, BuiltInNodes.Value, damage, BuiltInNodes.Amount);
+            created.Add(ability);
+            return ability;
+        }
+
+        private TriggeredEffect Effect(EffectTrigger trigger, EffectTarget target, EffectScope scope = EffectScope.Owner, params EffectCondition[] conditions)
+        {
+            TriggeredEffect effect = ScriptableObject.CreateInstance<TriggeredEffect>();
+            effect.name = "Effect";
+            effect.Configure(StrikeTarget(), 1f, trigger, scope, target, conditions);
+            created.Add(effect);
+            return effect;
+        }
+
+        [Test]
+        public void TheAbility_IsAimedAtTheOtherPartyOrTheOwner_AsTheEffectSays()
+        {
+            provider.Define(Sword, Effect(EffectTrigger.OnHit, EffectTarget.Other));
+            provider.Define(Staff, Effect(EffectTrigger.OnHit, EffectTarget.Owner));
+            equipment.Equip(6, Sword);
+            equipment.Equip(7, Staff);
+
+            LandBlow();
+
+            Assert.AreEqual(93, victim.Health, "The sword's effect struck the one that was hit.");
+            Assert.AreEqual(93, wielder.Health, "The staff's effect struck its owner.");
+            Assert.IsEmpty(diagnostics);
+        }
+
+        [Test]
+        public void SeveralConditions_MustAllHold_AndEachEffectDecidesForItself()
+        {
+            // A great deal extra on a killing blow to the head; a penalty to the wielder on a blow to the arm. Two separate effects.
+            provider.Define(Sword, Effect(EffectTrigger.OnHit, EffectTarget.Other, EffectScope.Owner, new FatalCondition(true), new LocationIs(Head)),
+                Effect(EffectTrigger.OnHit, EffectTarget.Owner, EffectScope.Owner, new LocationIs(Arms)));
+            equipment.Equip(6, Sword);
+
+            LandBlow(location: Head, fatal: false);
+            Assert.AreEqual(100, victim.Health, "A head blow that does not kill is not enough.");
+
+            LandBlow(location: 1, fatal: true);
+            Assert.AreEqual(100, victim.Health, "A killing blow to the torso is not enough.");
+
+            LandBlow(location: Head, fatal: true);
+            Assert.AreEqual(93, victim.Health);
+            Assert.AreEqual(100, wielder.Health);
+
+            LandBlow(location: Arms, fatal: false);
+            Assert.AreEqual(93, wielder.Health, "The limb effect costs the wielder.");
+            Assert.AreEqual(93, victim.Health);
+        }
+
+        [Test]
+        public void AHostScopedEffect_ReactsOnlyToItsOwnHostsBlows_AnOwnerScopedOneToAny()
+        {
+            provider.Define(Sword, Effect(EffectTrigger.OnHit, EffectTarget.Other, EffectScope.Host));
+            provider.Define(Staff, Effect(EffectTrigger.OnHit, EffectTarget.Owner, EffectScope.Owner));
+            equipment.Equip(6, Sword);
+            equipment.Equip(7, Staff);
+
+            LandBlow(source: SourceHandle.FromItem(Staff));
+            Assert.AreEqual(100, victim.Health, "The sword did not make this blow.");
+            Assert.AreEqual(93, wielder.Health, "The staff's owner-scoped effect reacts to any blow.");
+
+            LandBlow(source: SourceHandle.FromItem(Sword));
+            Assert.AreEqual(93, victim.Health, "The sword made this one.");
+        }
+
+        [Test]
+        public void OnTakeDamage_ReactsForTheOneStruck_WithTheAttackerAsTheOtherParty()
+        {
+            provider.Define(Sword, Effect(EffectTrigger.OnTakeDamage, EffectTarget.Other));
+            equipment = new EquipmentSet(victim.Id, events);
+            equipment.Equip(6, Sword);
+
+            LandBlow();
+
+            Assert.AreEqual(93, wielder.Health, "The attacker, as the other party, was struck back.");
+        }
+
+        [Test]
+        public void OnKill_ReactsForTheKiller_ByAnyMeans()
+        {
+            provider.Define(Sword, Effect(EffectTrigger.OnKill, EffectTarget.Owner));
+            equipment.Equip(6, Sword);
+
+            combat.Apply(new DamageRequest(victim.Id, 1000, wielder.Id, provenance: DamageProvenance.Spell));
+
+            Assert.IsFalse(victim.IsAlive);
+            Assert.AreEqual(93, wielder.Health);
+        }
+
+        [Test]
+        public void AnyHostCanBringEffects_AndTakingThemAwayStopsThem()
+        {
+            SourceHandle spell = SourceHandle.FromStatus(new StatusInstanceId(77));
+            engine.Activate(wielder.Id, spell, new[] { Effect(EffectTrigger.OnHit, EffectTarget.Other) });
+            Assert.AreEqual(1, engine.ActiveEffectCount(wielder.Id));
+            LandBlow();
+            Assert.AreEqual(93, victim.Health);
+
+            engine.Deactivate(wielder.Id, spell);
+            LandBlow();
+
+            Assert.AreEqual(0, engine.ActiveEffectCount(wielder.Id));
+            Assert.AreEqual(93, victim.Health);
+        }
+
+        [Test]
+        public void TwoHostsOfTheSameEffect_EachHaveTheirOwn_NotShared()
+        {
+            TriggeredEffect effect = Effect(EffectTrigger.OnHit, EffectTarget.Other);
+            SourceHandle first = SourceHandle.FromStatus(new StatusInstanceId(1));
+            SourceHandle second = SourceHandle.FromStatus(new StatusInstanceId(2));
+            engine.Activate(wielder.Id, first, new[] { effect });
+            engine.Activate(wielder.Id, second, new[] { effect });
+
+            LandBlow();
+            Assert.AreEqual(86, victim.Health, "Each host's copy ran.");
+
+            engine.Deactivate(wielder.Id, first);
+            LandBlow();
+            Assert.AreEqual(79, victim.Health, "Only the second host's remains.");
+        }
+
+        private sealed class StatusProvider : IStatusEffectProvider
+        {
+            public IReadOnlyList<TriggeredEffect> Effects;
+
+            public bool TryGetEffects(DefinitionId status, out IReadOnlyList<TriggeredEffect> effects)
+            {
+                effects = Effects;
+                return Effects != null;
+            }
+        }
+
+        [Test]
+        public void AStatusBringsItsEffectsWhileItLasts_AsASpellsLastingEffect()
+        {
+            var statuses = new StatusProvider { Effects = new[] { Effect(EffectTrigger.OnHit, EffectTarget.Other) } };
+            using (new StatusEffectHost(events, engine, statuses))
+            {
+                DefinitionId rage = DefinitionId.NewId();
+                StatusInstanceId group = new StatusInstanceId(5);
+
+                events.Enqueue(new StatusAppliedEvent(wielder.Id, rage, group, default, wielder.Id));
+                events.Drain();
+                LandBlow();
+                Assert.AreEqual(93, victim.Health, "While the status is on the holder.");
+
+                events.Enqueue(new StatusRemovedEvent(wielder.Id, rage, group, RemovalReason.Expired));
+                events.Drain();
+                LandBlow();
+                Assert.AreEqual(93, victim.Health, "Gone with the status.");
+                Assert.AreEqual(0, engine.ActiveEffectCount(wielder.Id));
+            }
         }
     }
 }

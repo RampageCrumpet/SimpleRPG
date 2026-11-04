@@ -47,17 +47,17 @@ namespace SimpleRPG.InventorySystem
         public Vector2Int ItemSize { private set; get; }
 
         /// <summary>
-        /// Rules this item brings while it is equipped, such as a chance to cast a spell when its wielder lands a blow.
-        /// Rules run on the server only, so they are not part of what is sent to clients.
+        /// Triggered effects this item brings while it is equipped, such as a chance to cast a spell when its wielder lands a blow.
+        /// They run on the server only, so they are not part of what is sent to clients. Affixes bring more (see <see cref="AllTriggeredEffects"/>).
         /// </summary>
         [SerializeField]
-        [Tooltip("Rules this item brings while it is equipped.")]
-        private List<GameplayRuleDefinition> rules = new List<GameplayRuleDefinition>();
+        [Tooltip("Triggered effects this item brings while it is equipped.")]
+        private List<TriggeredEffect> triggeredEffects = new List<TriggeredEffect>();
 
         /// <summary>
-        /// The rules this item brings while it is equipped.
+        /// The triggered effects this item's asset brings while it is equipped.
         /// </summary>
-        public IReadOnlyList<GameplayRuleDefinition> Rules => rules;
+        public IReadOnlyList<TriggeredEffect> TriggeredEffects => triggeredEffects;
 
         [Header("Audio")]
         [SerializeField]
@@ -120,6 +120,7 @@ namespace SimpleRPG.InventorySystem
         public ItemAffixes Affixes { get; private set; }
 
         private List<GrantSpec> combinedGrants;
+        private List<TriggeredEffect> combinedEffects;
 
         /// <summary>
         /// The slot this item is worn in, for choosing which affixes may roll on it. Items that are not worn report the consumable slot.
@@ -165,6 +166,36 @@ namespace SimpleRPG.InventorySystem
                 }
 
                 return combinedGrants;
+            }
+        }
+
+        /// <summary>
+        /// Every triggered effect this item brings while worn: the ones its asset declares plus those its rolled affixes bring. An affix that is
+        /// not in the registry is skipped (<see cref="AllGrants"/> already warned about it).
+        /// </summary>
+        public IReadOnlyList<TriggeredEffect> AllTriggeredEffects
+        {
+            get
+            {
+                if (Affixes.IsEmpty)
+                {
+                    return triggeredEffects;
+                }
+
+                if (combinedEffects == null)
+                {
+                    combinedEffects = new List<TriggeredEffect>(triggeredEffects);
+                    DefinitionRegistry registry = DefinitionRegistry.Instance;
+                    for (int i = 0; i < Affixes.Count; i++)
+                    {
+                        if (registry != null && registry.TryGetByShortId(Affixes[i].AffixId, out GameplayDefinition definition) && definition is AffixDefinition affix)
+                        {
+                            affix.AddTriggeredEffects(combinedEffects);
+                        }
+                    }
+                }
+
+                return combinedEffects;
             }
         }
 

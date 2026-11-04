@@ -193,7 +193,14 @@ namespace SimpleRPG.Abilities
         [Tooltip("Changes to the holder's stats while a stack of this status is active. How stacks combine follows the Magnitude setting: all stacks apply, or only the strongest.")]
         private System.Collections.Generic.List<StatusStatModifier> statModifiers = new System.Collections.Generic.List<StatusStatModifier>();
 
+        [Header("Triggered effects")]
+        [SerializeField]
+        [Tooltip("Effects the holder has while this status is on them: a spell's lasting effects. Each reacts to the holder's blows and wounds as its trigger says.")]
+        private System.Collections.Generic.List<TriggeredEffect> triggeredEffects = new System.Collections.Generic.List<TriggeredEffect>();
+
         public string StatusName => statusName;
+
+        public System.Collections.Generic.IReadOnlyList<TriggeredEffect> TriggeredEffects => triggeredEffects;
 
         public System.Collections.Generic.IReadOnlyList<StatusStatModifier> StatModifiers => statModifiers;
 

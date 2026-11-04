@@ -7,9 +7,9 @@ using EntityId = SimpleRPG.Gameplay.EntityId;
 namespace SimpleRPG.Abilities.Integration
 {
     /// <summary>
-    /// Tells the rule engine which rules a worn item brings, by looking at the wearer's equipment. Server only.
+    /// Tells the effect hosts what a worn item brings (its triggered effects and its grants), by looking at the wearer's equipment. Server only.
     /// </summary>
-    public sealed class EquipmentRuleProvider : IItemRuleProvider, IItemGrantProvider
+    public sealed class EquipmentEffectProvider : IItemEffectProvider, IItemGrantProvider
     {
         /// <inheritdoc/>
         public bool TryGetGrants(EntityId wearer, ItemInstanceId item, out IReadOnlyList<GrantSpec> grants)
@@ -66,9 +66,9 @@ namespace SimpleRPG.Abilities.Integration
         }
 
         /// <inheritdoc/>
-        public bool TryGetRules(EntityId wearer, ItemInstanceId item, out IReadOnlyList<GameplayRuleDefinition> rules)
+        public bool TryGetEffects(EntityId wearer, ItemInstanceId item, out IReadOnlyList<TriggeredEffect> effects)
         {
-            rules = null;
+            effects = null;
             NetworkManager manager = NetworkManager.Singleton;
             if (manager == null || !manager.IsServer || !manager.SpawnManager.SpawnedObjects.TryGetValue(wearer.Value, out NetworkObject spawned))
             {
@@ -83,9 +83,9 @@ namespace SimpleRPG.Abilities.Integration
 
             foreach ((EquipmentSlot slot, uint instanceId, Item equipped) in equipment.Equipped)
             {
-                if (instanceId == item.Value && equipped != null && equipped.Rules.Count > 0)
+                if (instanceId == item.Value && equipped != null && equipped.AllTriggeredEffects.Count > 0)
                 {
-                    rules = equipped.Rules;
+                    effects = equipped.AllTriggeredEffects;
                     return true;
                 }
             }

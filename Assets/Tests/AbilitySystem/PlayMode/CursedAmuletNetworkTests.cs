@@ -52,14 +52,14 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             summon.Connect("activate", BuiltInNodes.Next, spawn, BuiltInNodes.In);
             Assert.IsTrue(summon.Compile().Success, summon.Compile().Report.ToString());
 
-            GameplayRuleDefinition curse = ScriptableObject.CreateInstance<GameplayRuleDefinition>();
+            TriggeredEffect curse = ScriptableObject.CreateInstance<TriggeredEffect>();
             created.Add(curse);
             curse.name = "Curse";
-            curse.Configure(summon, 1f, RuleTrigger.OwnerDeath);
+            curse.Configure(summon, 1f, EffectTrigger.OnOwnerDeath);
 
             amulet = ScriptableObject.CreateInstance<Item>();
             created.Add(amulet);
-            typeof(Item).GetField("rules", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(amulet, new List<GameplayRuleDefinition> { curse });
+            typeof(Item).GetField("triggeredEffects", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(amulet, new List<TriggeredEffect> { curse });
             typeof(Item).GetField("grants", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(amulet, new List<GrantSpec>
             {
                 new GrantSpec { AttributeKey = PrimaryAttributes.Strength.Key, Layer = ModifierLayer.Add, Value = 3 },
