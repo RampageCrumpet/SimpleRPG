@@ -222,7 +222,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         public IEnumerator ADeadPlayer_CanAskForTheNextLife_EvenWithTheDeathScreenUp()
         {
             yield return null;
-            player.TakeDamage(new DamageInfo { Damage = 100000 }, HitDetection.BodyLocation.Torso);
+            player.TakeDamage(new DamageInfo { Damage = 100000 }, HitDetection.BodyLocation.Torso, bypassesMitigation: true);
             yield return null;
             Assert.IsFalse(player.IsAlive);
 

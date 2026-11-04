@@ -42,10 +42,17 @@ MonoBehaviour:
       curve: 0
       scale: 1
       halfPoint: 0
+  - statKey: simplerpg.stat.armor_rating
+    baseValue: 0
+    contributions: []
   - statKey: simplerpg.stat.physical_damage_reduction
     baseValue: 0
     contributions:
     - sourceKey: simplerpg.attr.constitution
+      curve: 1
+      scale: 0.9
+      halfPoint: 100
+    - sourceKey: simplerpg.stat.armor_rating
       curve: 1
       scale: 0.9
       halfPoint: 100

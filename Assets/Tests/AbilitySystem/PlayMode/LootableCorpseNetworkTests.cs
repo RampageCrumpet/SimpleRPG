@@ -83,7 +83,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             return character;
         }
 
-        private static void Kill(Character target) => target.TakeDamage(new DamageInfo { Damage = 100000 }, HitDetection.BodyLocation.Torso);
+        private static void Kill(Character target) => target.TakeDamage(new DamageInfo { Damage = 100000 }, HitDetection.BodyLocation.Torso, bypassesMitigation: true);
 
         private static List<string> Loot(Character skeleton) =>
             skeleton.GetComponent<Inventory>().GetItems().Select(i => i.item.ItemName).OrderBy(n => n).ToList();

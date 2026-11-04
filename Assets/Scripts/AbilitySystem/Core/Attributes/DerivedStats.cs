@@ -22,12 +22,19 @@ namespace SimpleRPG.Gameplay
         public static readonly AttributeId SpellPreparationCapacity = new AttributeId("simplerpg.stat.spell_preparation_capacity");
 
         /// <summary>
-        /// All twelve, in a fixed order.
+        /// How much armour a character wears. A derived stat, not a core attribute: it starts at zero and equipment supplies it through the
+        /// ordinary grant and modifier layers (an affix on a piece can add to it or scale it). The player profile turns it into Physical Damage
+        /// Reduction through its own contribution curve, alongside Constitution's, each tuned on its own.
+        /// </summary>
+        public static readonly AttributeId ArmorRating = new AttributeId("simplerpg.stat.armor_rating");
+
+        /// <summary>
+        /// All thirteen, in a fixed order.
         /// </summary>
         public static readonly AttributeId[] All =
         {
             MaximumHealth, PhysicalPower, MagicalPower, PhysicalDamageReduction, MagicalDamageReduction, MovementSpeed,
-            AttackSpeed, CastingSpeed, InteractionSpeed, EquipSpeed, CarryingCapacity, SpellPreparationCapacity,
+            AttackSpeed, CastingSpeed, InteractionSpeed, EquipSpeed, CarryingCapacity, SpellPreparationCapacity, ArmorRating,
         };
 
         private static readonly HashSet<AttributeId> AllSet = new HashSet<AttributeId>(All);

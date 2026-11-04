@@ -28,6 +28,21 @@ namespace SimpleRPG.Gameplay
     }
 
     /// <summary>
+    /// What a blow is, for the purpose of the defence it meets. Every request has one; whether it is reduced depends on this and on nothing
+    /// else, not on how the damage was delivered (a burn and a fireball are both magical, a bleed and a sword are both physical). A request that
+    /// should skip the defences says so itself, with <see cref="DamageRequest.BypassesMitigation"/>. There are only these two: elemental
+    /// resistances are not part of the game yet.
+    /// </summary>
+    public enum DamageType
+    {
+        /// <summary>Met by Physical Damage Reduction: weapon blows, and effects like a bleed.</summary>
+        Physical = 0,
+
+        /// <summary>Met by Magical Damage Reduction: spells, and effects like a burn or a curse.</summary>
+        Magical = 1,
+    }
+
+    /// <summary>
     /// A request to damage one entity. All damage goes through <see cref="CombatResolver"/> on the server.
     /// </summary>
     public readonly struct DamageRequest
@@ -42,7 +57,9 @@ namespace SimpleRPG.Gameplay
             SourceHandle source = default,
             int bodyLocation = NoBodyLocation,
             DamageProvenance provenance = DamageProvenance.None,
-            ExecutionId execution = default)
+            ExecutionId execution = default,
+            DamageType type = DamageType.Physical,
+            bool bypassesMitigation = false)
         {
             Target = target;
             Amount = amount;
@@ -51,6 +68,8 @@ namespace SimpleRPG.Gameplay
             BodyLocation = bodyLocation;
             Provenance = provenance;
             Execution = execution;
+            Type = type;
+            BypassesMitigation = bypassesMitigation;
         }
 
         /// <summary>The entity being damaged.</summary>
@@ -76,7 +95,15 @@ namespace SimpleRPG.Gameplay
         /// <summary>The ability execution this damage belongs to, if any.</summary>
         public ExecutionId Execution { get; }
 
+        /// <summary>Which defence this damage meets. Physical unless the effect that made it says otherwise.</summary>
+        public DamageType Type { get; }
+
+        /// <summary>
+        /// True if the damage deliberately skips the target's defences, whatever its type: a property an effect has to choose, never a default.
+        /// </summary>
+        public bool BypassesMitigation { get; }
+
         /// <summary>The same request with a different amount, which keeps its attribution, source, location and provenance.</summary>
-        public DamageRequest WithAmount(int amount) => new DamageRequest(Target, amount, Instigator, Source, BodyLocation, Provenance, Execution);
+        public DamageRequest WithAmount(int amount) => new DamageRequest(Target, amount, Instigator, Source, BodyLocation, Provenance, Execution, Type, BypassesMitigation);
     }
 }

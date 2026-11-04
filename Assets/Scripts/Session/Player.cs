@@ -110,7 +110,7 @@ namespace SimpleRPG
                     // A character that was dead when its player left is still dead; its belongings are already in a loot bag.
                     if (returning.WasDead)
                     {
-                        character.TakeDamage(new DamageInfo { Damage = character.MaxHealth }, SimpleRPG.HitDetection.BodyLocation.Torso);
+                        character.TakeDamage(new DamageInfo { Damage = character.MaxHealth }, SimpleRPG.HitDetection.BodyLocation.Torso, bypassesMitigation: true);
                     }
                 }
 

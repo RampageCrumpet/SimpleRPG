@@ -82,3 +82,5 @@ MonoBehaviour:
       type: {class: DamageConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
       data:
         Provenance: 2
+        Type: 1
+        BypassesMitigation: 0

@@ -29,7 +29,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
 
             Assert.AreEqual(StatOwnership.Derived, profile.Ownership);
             CollectionAssert.AreEquivalent(
-                new[] { DerivedStats.MaximumHealth, DerivedStats.MovementSpeed, DerivedStats.PhysicalPower, DerivedStats.MagicalPower, DerivedStats.PhysicalDamageReduction, DerivedStats.MagicalDamageReduction },
+                new[] { DerivedStats.MaximumHealth, DerivedStats.MovementSpeed, DerivedStats.PhysicalPower, DerivedStats.MagicalPower, DerivedStats.PhysicalDamageReduction, DerivedStats.MagicalDamageReduction, DerivedStats.ArmorRating },
                 System.Linq.Enumerable.Select(profile.Sheet.Rules, x => x.Stat));
         }
 
@@ -74,7 +74,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         public void Reductions_AreDiminishingFractionsBelowTheirCap()
         {
             // Reduction is a fraction of damage removed, 0 to 0.9: 0.9 * x / (x + 100) of Constitution (physical) or Willpower (magical).
-            // Not yet applied to damage; the semantics are recorded here for when combat consumes them.
+            // Combat applies them to damage by type: see DamageMitigationTests. Armor Rating adds a contribution of its own: see ArmorRatingTests.
             Assert.AreEqual(0d, PlayerWith(0).Get(DerivedStats.PhysicalDamageReduction), 1e-9);
             Assert.AreEqual(0.9d * 10 / 110, PlayerWith(10).Get(DerivedStats.PhysicalDamageReduction), 1e-9);
             Assert.AreEqual(0.45d, PlayerWith(100).Get(DerivedStats.MagicalDamageReduction), 1e-9);

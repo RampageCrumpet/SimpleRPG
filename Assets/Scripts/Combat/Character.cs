@@ -171,9 +171,9 @@ namespace SimpleRPG
         }
 
         /// <summary>
-        /// What this character's defences take off a blow of a kind, which its stats decide. The resolver asks once per request.
+        /// What this character's defences take off damage of a type, which its stats decide. The resolver asks once per request.
         /// </summary>
-        double IDamageMitigator.Reduction(DamageKind kind) => Stats.DamageReduction(kind);
+        double IDamageMitigator.Reduction(DamageType type) => Stats.DamageReduction(type);
 
         Position3 ICombatant.Position => new Position3(transform.position.x, transform.position.y, transform.position.z);
 
@@ -242,8 +242,11 @@ namespace SimpleRPG
         /// <param name="damage">The damage to apply.</param>
         /// <param name="location">The body location that was hit.</param>
         /// <param name="instigator">The character credited with the damage, if any.</param>
-        /// <param name="provenance">What kind of damage this is, so rules can tell a weapon blow from a spell.</param>
-        public void TakeDamage(DamageInfo damage, BodyLocation location, Character instigator = null, DamageProvenance provenance = DamageProvenance.None)
+        /// <param name="provenance">Where the damage came from, so rules can tell a weapon blow from a spell.</param>
+        /// <param name="type">Which defence the damage meets: Physical Damage Reduction or Magical Damage Reduction.</param>
+        /// <param name="bypassesMitigation">True to skip the defences altogether. Damage is reduced unless the caller says otherwise.</param>
+        public void TakeDamage(DamageInfo damage, BodyLocation location, Character instigator = null, DamageProvenance provenance = DamageProvenance.None,
+            DamageType type = DamageType.Physical, bool bypassesMitigation = false)
         {
             if (!IsServer)
             {
@@ -251,7 +254,7 @@ namespace SimpleRPG
                 return;
             }
 
-            DamageRequest request = new DamageRequest(Id, damage.Damage, instigator != null ? instigator.Id : default, bodyLocation: (int)location, provenance: provenance);
+            DamageRequest request = new DamageRequest(Id, damage.Damage, instigator != null ? instigator.Id : default, bodyLocation: (int)location, provenance: provenance, type: type, bypassesMitigation: bypassesMitigation);
             GameplayServices.Current.Combat.Apply(request);
 
             // The resolver publishes damage and death events; nothing is logged per hit.

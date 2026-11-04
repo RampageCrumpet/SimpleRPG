@@ -95,7 +95,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return ClientCopyOf(target, c => clientTarget = c);
 
             LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("ignored a damage request on a client"));
-            clientTarget.TakeDamage(new DamageInfo { Damage = 50 }, BodyLocation.Torso);
+            clientTarget.TakeDamage(new DamageInfo { Damage = 50 }, BodyLocation.Torso, bypassesMitigation: true);
             LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("ignored an equip request"));
             bool equipped = clientPlayer.GetComponent<Equipment>().Equip(EquipmentSlot.mainHand, staff, 900);
             bool ran = clientPlayer.GetComponent<AbilityUser>().TryActivateOnServer(firebolt);
@@ -213,7 +213,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             AttackLog log = new AttackLog(clientPlayer.GetComponent<ComboMeleeDelivery>());
 
             // The owner has not heard of the death yet, so it predicts a swing that the server will refuse.
-            player.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso);
+            player.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso, bypassesMitigation: true);
             clientPlayer.GetComponent<AbilityUser>().RequestActivate(melee);
             Assert.AreEqual(1, log.Started.Count, "The owner showed the swing it guessed.");
 

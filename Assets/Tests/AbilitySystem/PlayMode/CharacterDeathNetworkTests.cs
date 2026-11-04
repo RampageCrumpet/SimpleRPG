@@ -80,7 +80,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
         private static void Hit(Character target, int damage, Character by = null, DamageProvenance provenance = DamageProvenance.None)
         {
-            target.TakeDamage(new DamageInfo { Damage = damage }, BodyLocation.Torso, by, provenance);
+            target.TakeDamage(new DamageInfo { Damage = damage }, BodyLocation.Torso, by, provenance, bypassesMitigation: true);
         }
 
         [UnityTest]

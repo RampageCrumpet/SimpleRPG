@@ -340,7 +340,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character wielder = Spawn(PlayerPrefab, Vector3.zero);
             yield return null;
             EquipmentOf(wielder).Equip(EquipmentSlot.mainHand, staff, 800);
-            wielder.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso);
+            wielder.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso, bypassesMitigation: true);
             yield return null;
 
             Assert.AreEqual(ItemCastResult.UserDead, UserOf(wielder).TryActivateItemOnServer(EquipmentSlot.mainHand, 0));

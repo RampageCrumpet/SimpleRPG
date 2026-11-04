@@ -24,6 +24,7 @@ namespace SimpleRPG.UI
         {
             ("Physical Power", DerivedStats.PhysicalPower, false),
             ("Magical Power", DerivedStats.MagicalPower, false),
+            ("Armor Rating", DerivedStats.ArmorRating, false),
             ("Physical Reduction", DerivedStats.PhysicalDamageReduction, true),
             ("Magical Reduction", DerivedStats.MagicalDamageReduction, true),
             ("Movement Speed", DerivedStats.MovementSpeed, false),

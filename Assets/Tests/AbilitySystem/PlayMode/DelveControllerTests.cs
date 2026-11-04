@@ -135,7 +135,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             return character;
         }
 
-        private static void Kill(Character target) => target.TakeDamage(new DamageInfo { Damage = target.MaxHealth }, BodyLocation.Torso);
+        private static void Kill(Character target) => target.TakeDamage(new DamageInfo { Damage = target.MaxHealth }, BodyLocation.Torso, bypassesMitigation: true);
 
         private static int CarriedBy(Character character) => character.GetComponent<Inventory>().GetItems().Count();
 

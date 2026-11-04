@@ -325,7 +325,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             Character shooter = SpawnCharacter(PlayerPrefab, Vector3.zero);
             yield return null;
-            shooter.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso);
+            shooter.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso, bypassesMitigation: true);
             yield return null;
 
             Assert.IsFalse(shooter.IsAlive);
@@ -406,7 +406,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character shooter = SpawnCharacter(PlayerPrefab, Vector3.zero);
             Character target = SpawnCharacter(MonsterPrefab, new Vector3(0f, 0f, 20f));
             yield return null;
-            target.TakeDamage(new DamageInfo { Damage = StartingHealth - 5 }, BodyLocation.Torso);
+            target.TakeDamage(new DamageInfo { Damage = StartingHealth - 5 }, BodyLocation.Torso, bypassesMitigation: true);
             DeathContext death = null;
             services.Events.Subscribe<EntityDiedEvent>(e => death = e.Context);
 

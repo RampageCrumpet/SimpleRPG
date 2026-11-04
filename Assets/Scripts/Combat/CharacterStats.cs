@@ -49,23 +49,19 @@ namespace SimpleRPG
         public float MovementSpeed => Attributes != null ? (float)Mathf.Max(0f, (float)Attributes.Get(DerivedStats.MovementSpeed)) : 0f;
 
         /// <summary>
-        /// The fraction of damage of a kind that this character's defences remove, from its Physical or Magical Damage Reduction stat, held to
-        /// the range a defence can have (see <see cref="DamageMitigation"/>). Zero for a character with no such stat, for damage of no kind, and
-        /// on clients, which never take damage.
+        /// The fraction of damage of a type that this character's defences remove, from its Physical or Magical Damage Reduction stat, held to
+        /// the range a defence can have (see <see cref="DamageMitigation"/>). Zero for a character with no such stat, and on clients, which never
+        /// take damage.
         /// </summary>
-        public double DamageReduction(DamageKind kind)
+        public double DamageReduction(DamageType type)
         {
             if (Attributes == null)
             {
                 return 0d;
             }
 
-            switch (kind)
-            {
-                case DamageKind.Physical: return DamageMitigation.Clamp(Attributes.Get(DerivedStats.PhysicalDamageReduction));
-                case DamageKind.Magical: return DamageMitigation.Clamp(Attributes.Get(DerivedStats.MagicalDamageReduction));
-                default: return 0d;
-            }
+            AttributeId stat = type == DamageType.Magical ? DerivedStats.MagicalDamageReduction : DerivedStats.PhysicalDamageReduction;
+            return DamageMitigation.Clamp(Attributes.Get(stat));
         }
 
         /// <summary>

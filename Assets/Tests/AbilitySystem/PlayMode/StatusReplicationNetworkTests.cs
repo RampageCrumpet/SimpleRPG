@@ -109,7 +109,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Apply(victim);
             yield return Until(() => Buffs(clientVictim).Count == 1, 5f, "the client to see the status");
 
-            victim.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, HitDetection.BodyLocation.Torso);
+            victim.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, HitDetection.BodyLocation.Torso, bypassesMitigation: true);
 
             yield return Until(() => Buffs(clientVictim).Count == 0, 5f, "the status to go with the character's life");
         }

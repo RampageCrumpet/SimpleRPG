@@ -241,7 +241,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return null;
             wielder.Loadout.DefaultWeapon = sword;
             EquipmentOf(wielder).Equip(EquipmentSlot.mainHand, sword, 500);
-            victim.TakeDamage(new DamageInfo { Damage = StartingHealth - 20 }, BodyLocation.Torso);
+            victim.TakeDamage(new DamageInfo { Damage = StartingHealth - 20 }, BodyLocation.Torso, bypassesMitigation: true);
             DeathContext death = null;
             services.Events.Subscribe<EntityDiedEvent>(e => death = e.Context);
 

@@ -311,7 +311,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         {
             Character attacker = SpawnAttacker();
             yield return null;
-            attacker.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso);
+            attacker.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso, bypassesMitigation: true);
             yield return null;
 
             Assert.IsFalse(Press(attacker));
@@ -435,7 +435,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character attacker = SpawnAttacker();
             Character victim = SpawnVictim();
             yield return null;
-            victim.TakeDamage(new DamageInfo { Damage = StartingHealth - 5 }, BodyLocation.Torso);
+            victim.TakeDamage(new DamageInfo { Damage = StartingHealth - 5 }, BodyLocation.Torso, bypassesMitigation: true);
             int confirmed = 0;
             services.Events.Subscribe<WeaponHitConfirmedEvent>(e => confirmed++);
 
@@ -478,7 +478,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Advance(attacker, ComboTestSupport.InsideHitWindow);
             Assert.AreEqual(1, Pending());
 
-            attacker.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso);
+            attacker.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso, bypassesMitigation: true);
             yield return null;
 
             Assert.AreEqual(0, Pending());
@@ -492,7 +492,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return null;
             Press(attacker);
             Advance(attacker, ComboTestSupport.InsideChainWindow);
-            attacker.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso);
+            attacker.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso, bypassesMitigation: true);
             yield return null;
 
             Assert.IsFalse(Press(attacker));

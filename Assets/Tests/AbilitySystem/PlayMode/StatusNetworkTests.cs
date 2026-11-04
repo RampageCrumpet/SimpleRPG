@@ -205,7 +205,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             services.Events.Subscribe<StatusRemovedEvent>(e => { reason = e.Reason; removed++; });
             Ignite(victim, wielder, 1);
 
-            victim.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso);
+            victim.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso, bypassesMitigation: true);
             yield return null;
 
             Assert.IsFalse(victim.IsAlive);
@@ -220,7 +220,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character wielder = Spawn(PlayerPrefab, Vector3.zero);
             Character victim = Spawn(TargetPrefab, new Vector3(0f, 0f, 3f));
             yield return null;
-            victim.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso);
+            victim.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso, bypassesMitigation: true);
             yield return null;
 
             Assert.AreEqual(StatusApplyResult.RejectedTarget, Ignite(victim, wielder, 1));
@@ -317,7 +317,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.AreEqual(4d, stack.Potency);
 
             // The wielder dies while the target burns.
-            wielder.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso);
+            wielder.TakeDamage(new DamageInfo { Damage = StartingHealth * 2 }, BodyLocation.Torso, bypassesMitigation: true);
             yield return new WaitForSeconds(0.9f);
 
             Assert.IsFalse(wielder.IsAlive);

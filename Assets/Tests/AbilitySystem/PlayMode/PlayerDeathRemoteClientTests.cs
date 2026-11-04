@@ -12,7 +12,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
     /// </summary>
     public class PlayerDeathRemoteClientTests : RemoteClientTestBase
     {
-        private static void Kill(Character target) => target.TakeDamage(new DamageInfo { Damage = StartingHealth }, BodyLocation.Torso);
+        private static void Kill(Character target) => target.TakeDamage(new DamageInfo { Damage = StartingHealth }, BodyLocation.Torso, bypassesMitigation: true);
 
         [UnityTest]
         public IEnumerator ADeath_ReachesTheOwningClient_AndTheClientCanAskForItsNextLife()
@@ -45,7 +45,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Character player = SpawnOnServer(PlayerPrefab, Vector3.zero, ClientId);
             Character clientPlayer = null;
             yield return ClientCopyOf(player, c => clientPlayer = c);
-            player.TakeDamage(new DamageInfo { Damage = 30 }, BodyLocation.Torso);
+            player.TakeDamage(new DamageInfo { Damage = 30 }, BodyLocation.Torso, bypassesMitigation: true);
             yield return Until(() => clientPlayer.Health == StartingHealth - 30, 5f, "the client to see the damage");
 
             clientPlayer.RequestRespawn();

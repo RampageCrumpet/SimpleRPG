@@ -127,8 +127,20 @@ namespace SimpleRPG.Abilities
     [Serializable]
     public sealed class DamageConfig : AbilityNodeConfig
     {
-        /// <summary>What kind of damage this is, so rules can tell a spell from a weapon blow.</summary>
+        /// <summary>Where the damage came from, so rules can tell a spell from a weapon blow. It does not decide which defence the damage meets.</summary>
         public DamageProvenance Provenance = DamageProvenance.Spell;
+
+        /// <summary>
+        /// Which defence the damage meets. A weapon blow or a bleed is physical; a spell, a burn or a curse is magical. Physical unless set, so a
+        /// magical effect has to say so.
+        /// </summary>
+        public DamageType Type = DamageType.Physical;
+
+        /// <summary>
+        /// True if this damage skips the target's defences entirely. A deliberate property of the effect (a bleed that ignores armour once applied),
+        /// never inferred from how the damage is delivered.
+        /// </summary>
+        public bool BypassesMitigation;
     }
 
     /// <summary>
@@ -337,7 +349,7 @@ namespace SimpleRPG.Abilities
                     PortDescriptor.DataIn(Amount, DataType.Float),
                     PortDescriptor.FlowOut(Next),
                 },
-                (config, context) => new DamageOperation(context.EntityInput(Target), context.FloatInput(Amount), config.Provenance, context.FlowTarget(Next))));
+                (config, context) => new DamageOperation(context.EntityInput(Target), context.FloatInput(Amount), config.Provenance, config.Type, config.BypassesMitigation, context.FlowTarget(Next))));
         }
 
         private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
@@ -719,13 +731,17 @@ namespace SimpleRPG.Abilities
         private readonly EntityExpr target;
         private readonly FloatExpr amount;
         private readonly DamageProvenance provenance;
+        private readonly DamageType type;
+        private readonly bool bypassesMitigation;
         private readonly int next;
 
-        public DamageOperation(EntityExpr target, FloatExpr amount, DamageProvenance provenance, int next)
+        public DamageOperation(EntityExpr target, FloatExpr amount, DamageProvenance provenance, DamageType type, bool bypassesMitigation, int next)
         {
             this.target = target;
             this.amount = amount;
             this.provenance = provenance;
+            this.type = type;
+            this.bypassesMitigation = bypassesMitigation;
             this.next = next;
         }
 
@@ -736,7 +752,7 @@ namespace SimpleRPG.Abilities
             {
                 double value = amount.Evaluate(context, frame);
                 int rounded = (int)Math.Round(Math.Max(0d, Math.Min(value, int.MaxValue)), MidpointRounding.AwayFromZero);
-                DamageOutcome outcome = context.Services.Combat.Apply(new DamageRequest(victim, rounded, context.Instigator, context.Source, frame.BodyLocation, provenance, context.Id));
+                DamageOutcome outcome = context.Services.Combat.Apply(new DamageRequest(victim, rounded, context.Instigator, context.Source, frame.BodyLocation, provenance, context.Id, type, bypassesMitigation));
                 if (context.Tracing) context.TraceOutcome(rounded, "Damage " + rounded + " to " + victim + ": " + outcome.Result + ", health " + outcome.HealthBefore + " to " + outcome.HealthAfter);
             }
             else

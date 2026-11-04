@@ -264,11 +264,11 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         /// <summary>
         /// Firebolt: launch a projectile, and on impact damage the victim by base + scale x the attribute.
         /// </summary>
-        public static AbilityDefinition Firebolt(GameObject prefab, float baseDamage = 12f, float scale = 0.8f, AttributeBindingKind kind = AttributeBindingKind.Source, EvaluationPolicy policy = EvaluationPolicy.OnActivation, float fallback = 0f)
+        public static AbilityDefinition Firebolt(GameObject prefab, float baseDamage = 12f, float scale = 0.8f, AttributeBindingKind kind = AttributeBindingKind.Source, EvaluationPolicy policy = EvaluationPolicy.OnActivation, float fallback = 0f, DamageType damageType = DamageType.Physical, bool bypassesMitigation = false)
         {
             AbilityDefinition ability = Empty("Firebolt");
             string launch = ability.AddNode(NodeTypes.LaunchProjectile, new LaunchProjectileConfig { Projectile = prefab }, "launch");
-            string damage = ability.AddNode(NodeTypes.Damage, null, "damage");
+            string damage = ability.AddNode(NodeTypes.Damage, damageType == DamageType.Physical && !bypassesMitigation ? null : new DamageConfig { Type = damageType, BypassesMitigation = bypassesMitigation }, "damage");
             string victim = ability.AddNode(NodeTypes.EventVictim, null, "victim");
             string attribute = ability.AddNode(NodeTypes.Attribute, new AttributeConfig { Kind = kind, AttributeKey = MagicPower, Fallback = fallback, Policy = policy }, "magicPower");
             string scaleNode = ability.AddNode(NodeTypes.Constant, new ConstantConfig { Value = scale }, "scale");

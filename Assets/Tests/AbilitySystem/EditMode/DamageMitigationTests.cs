@@ -42,7 +42,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
 
             public void CommitRevive(int health) => Health = health;
 
-            public double Reduction(DamageKind kind) => kind == DamageKind.Physical ? physical : kind == DamageKind.Magical ? magical : 0d;
+            public double Reduction(DamageType type) => type == DamageType.Magical ? magical : physical;
 
             public float DamageMultiplier(int bodyLocation) => regionFactor;
         }
@@ -84,27 +84,77 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             combat = new CombatResolver(new GameplayEventDispatcher(), registry);
         }
 
-        private static DamageRequest Hit(ICombatant target, int amount, DamageProvenance provenance, int bodyLocation = DamageRequest.NoBodyLocation) =>
-            new DamageRequest(target.Id, amount, bodyLocation: bodyLocation, provenance: provenance);
+        private static DamageRequest Hit(ICombatant target, int amount, DamageType type = DamageType.Physical, bool bypasses = false,
+            DamageProvenance provenance = DamageProvenance.None, int bodyLocation = DamageRequest.NoBodyLocation) =>
+            new DamageRequest(target.Id, amount, bodyLocation: bodyLocation, provenance: provenance, type: type, bypassesMitigation: bypasses);
 
-        // ---- Which defence a blow meets ----
+        // ---- Which defence a request meets: its type, and nothing else ----
 
-        [TestCase(DamageProvenance.DirectWeaponHit, DamageKind.Physical)]
-        [TestCase(DamageProvenance.Spell, DamageKind.Magical)]
-        [TestCase(DamageProvenance.Proc, DamageKind.Magical)]
-        [TestCase(DamageProvenance.Proc | DamageProvenance.Spell, DamageKind.Magical)]
-        [TestCase(DamageProvenance.Periodic, DamageKind.None)]
-        [TestCase(DamageProvenance.Environmental, DamageKind.None)]
-        [TestCase(DamageProvenance.None, DamageKind.None)]
-        public void ABlowMeetsTheDefenceItsOriginNames(DamageProvenance provenance, DamageKind expected)
+        [Test]
+        public void ARequestIsPhysicalAndMitigatedUnlessItSaysOtherwise()
         {
-            Assert.AreEqual(expected, DamageMitigation.KindOf(provenance));
+            var request = new DamageRequest(new EntityId(1), 10);
+
+            Assert.AreEqual(DamageType.Physical, request.Type);
+            Assert.IsFalse(request.BypassesMitigation);
         }
 
         [Test]
-        public void AWeaponBlowIsPhysical_EvenIfAnItemTriggeredIt()
+        public void ThereAreOnlyPhysicalAndMagicalDamage()
         {
-            Assert.AreEqual(DamageKind.Physical, DamageMitigation.KindOf(DamageProvenance.DirectWeaponHit | DamageProvenance.Proc));
+            CollectionAssert.AreEquivalent(new[] { DamageType.Physical, DamageType.Magical }, System.Enum.GetValues(typeof(DamageType)));
+        }
+
+        [Test]
+        public void ReductionForFollowsTheType_AndOnlyTheType()
+        {
+            var defences = new Body(1, 100, physical: 0.3d, magical: 0.6d);
+
+            Assert.AreEqual(0.3d, DamageMitigation.ReductionFor(Hit(defences, 10, DamageType.Physical), defences), 1e-12);
+            Assert.AreEqual(0.6d, DamageMitigation.ReductionFor(Hit(defences, 10, DamageType.Magical), defences), 1e-12);
+        }
+
+        [TestCase(DamageProvenance.None)]
+        [TestCase(DamageProvenance.DirectWeaponHit)]
+        [TestCase(DamageProvenance.Spell)]
+        [TestCase(DamageProvenance.Proc)]
+        [TestCase(DamageProvenance.Periodic)]
+        [TestCase(DamageProvenance.Environmental)]
+        public void HowDamageWasDelivered_NeverChoosesTheDefence(DamageProvenance provenance)
+        {
+            // The same physical damage meets physical reduction whether it was a swing, a spell's side effect or a periodic tick, and the same
+            // goes for magical.
+            var defences = new Body(1, 100, physical: 0.3d, magical: 0.6d);
+
+            Assert.AreEqual(0.3d, DamageMitigation.ReductionFor(Hit(defences, 10, DamageType.Physical, provenance: provenance), defences), 1e-12);
+            Assert.AreEqual(0.6d, DamageMitigation.ReductionFor(Hit(defences, 10, DamageType.Magical, provenance: provenance), defences), 1e-12);
+        }
+
+        [Test]
+        public void ABypassingRequestMeetsNoDefence_OfEitherType()
+        {
+            var defences = new Body(1, 100, physical: 0.9d, magical: 0.9d);
+
+            Assert.AreEqual(0d, DamageMitigation.ReductionFor(Hit(defences, 10, DamageType.Physical, bypasses: true), defences));
+            Assert.AreEqual(0d, DamageMitigation.ReductionFor(Hit(defences, 10, DamageType.Magical, bypasses: true), defences));
+        }
+
+        [Test]
+        public void ATargetWithNoDefences_MeetsNone()
+        {
+            Assert.AreEqual(0d, DamageMitigation.ReductionFor(new DamageRequest(new EntityId(1), 10), null));
+        }
+
+        [Test]
+        public void ChangingTheAmountKeepsTheTypeAndTheBypass()
+        {
+            var request = new DamageRequest(new EntityId(1), 10, type: DamageType.Magical, bypassesMitigation: true);
+
+            DamageRequest changed = request.WithAmount(3);
+
+            Assert.AreEqual(3, changed.Amount);
+            Assert.AreEqual(DamageType.Magical, changed.Type);
+            Assert.IsTrue(changed.BypassesMitigation);
         }
 
         // ---- The arithmetic ----
@@ -172,26 +222,26 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         // ---- Through the real resolver ----
 
         [Test]
-        public void AWeaponBlow_MeetsPhysicalReduction()
+        public void PhysicalDamage_MeetsPhysicalReduction()
         {
             Body target = new Body(1, 1000, physical: 0.5d, magical: 0d);
             registry.Register(target);
 
-            combat.Apply(Hit(target, 40, DamageProvenance.DirectWeaponHit));
+            combat.Apply(Hit(target, 40, DamageType.Physical));
 
             Assert.AreEqual(980, target.Health);
         }
 
         [Test]
-        public void ASpell_MeetsMagicalReduction_NotPhysical()
+        public void MagicalDamage_MeetsMagicalReduction_NotPhysical()
         {
             Body physicalOnly = new Body(1, 1000, physical: 0.5d, magical: 0d);
             Body magicalOnly = new Body(2, 1000, physical: 0d, magical: 0.5d);
             registry.Register(physicalOnly);
             registry.Register(magicalOnly);
 
-            combat.Apply(Hit(physicalOnly, 40, DamageProvenance.Spell));
-            combat.Apply(Hit(magicalOnly, 40, DamageProvenance.Spell));
+            combat.Apply(Hit(physicalOnly, 40, DamageType.Magical));
+            combat.Apply(Hit(magicalOnly, 40, DamageType.Magical));
 
             Assert.AreEqual(960, physicalOnly.Health, "Armour does not stop a spell.");
             Assert.AreEqual(980, magicalOnly.Health);
@@ -200,23 +250,48 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         [TestCase(DamageProvenance.Periodic)]
         [TestCase(DamageProvenance.Environmental)]
         [TestCase(DamageProvenance.None)]
-        public void DamageOfNoKind_IsNeverReduced(DamageProvenance provenance)
+        public void DamageOverTimeIsReducedLikeAnyOther_ByItsType(DamageProvenance provenance)
+        {
+            Body target = new Body(1, 1000, physical: 0.5d, magical: 0.25d);
+            registry.Register(target);
+
+            combat.Apply(Hit(target, 40, DamageType.Physical, provenance: provenance));
+            combat.Apply(Hit(target, 40, DamageType.Magical, provenance: provenance));
+
+            Assert.AreEqual(1000 - 20 - 30, target.Health, "A physical tick meets physical reduction, a magical tick meets magical.");
+        }
+
+        [Test]
+        public void ADeliberateBypass_SkipsTheDefences()
         {
             Body target = new Body(1, 1000, physical: 0.9d, magical: 0.9d);
             registry.Register(target);
 
-            combat.Apply(Hit(target, 40, provenance));
+            combat.Apply(Hit(target, 40, DamageType.Physical, bypasses: true));
+            combat.Apply(Hit(target, 40, DamageType.Magical, bypasses: true));
 
-            Assert.AreEqual(960, target.Health);
+            Assert.AreEqual(920, target.Health);
         }
 
         [Test]
-        public void ACombatantWithNoDefences_TakesTheBlowUnchanged()
+        public void ABypassingBleed_IsPhysicalDamage_ThatIgnoresArmour_OnlyBecauseItSaysSo()
+        {
+            Body target = new Body(1, 1000, physical: 0.5d);
+            registry.Register(target);
+
+            combat.Apply(Hit(target, 10, DamageType.Physical, provenance: DamageProvenance.Periodic));
+            combat.Apply(Hit(target, 10, DamageType.Physical, bypasses: true, provenance: DamageProvenance.Periodic));
+
+            Assert.AreEqual(1000 - 5 - 10, target.Health);
+        }
+
+        [Test]
+        public void ACombatantWithNoDefences_TakesTheDamageUnchanged()
         {
             PlainBody target = new PlainBody(1, 1000);
             registry.Register(target);
 
-            combat.Apply(Hit(target, 40, DamageProvenance.DirectWeaponHit));
+            combat.Apply(Hit(target, 40, DamageType.Physical));
 
             Assert.AreEqual(960, target.Health);
         }
@@ -227,7 +302,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             Body target = new Body(1, 1000, physical: 0.1d, regionFactor: 1.75f);
             registry.Register(target);
 
-            combat.Apply(Hit(target, 15, DamageProvenance.DirectWeaponHit, bodyLocation: 0));
+            combat.Apply(Hit(target, 15, DamageType.Physical, provenance: DamageProvenance.DirectWeaponHit, bodyLocation: 0));
 
             Assert.AreEqual(1000 - 24, target.Health);
         }
@@ -238,20 +313,20 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             Body target = new Body(1, 1000, physical: 0.9d);
             registry.Register(target);
 
-            DamageOutcome outcome = combat.Apply(Hit(target, 1, DamageProvenance.DirectWeaponHit));
+            DamageOutcome outcome = combat.Apply(Hit(target, 1, DamageType.Physical));
 
             Assert.AreEqual(DamageResult.Applied, outcome.Result);
             Assert.AreEqual(999, target.Health);
         }
 
         [Test]
-        public void WhetherABlowIsFatal_IsJudgedOnWhatLands()
+        public void WhetherADamageIsFatal_IsJudgedOnWhatLands()
         {
             // 30 would kill a character with 20 health, but half of it is turned aside.
             Body target = new Body(1, 20, physical: 0.5d);
             registry.Register(target);
 
-            DamageOutcome outcome = combat.Apply(Hit(target, 30, DamageProvenance.DirectWeaponHit));
+            DamageOutcome outcome = combat.Apply(Hit(target, 30, DamageType.Physical));
 
             Assert.AreEqual(DamageResult.Applied, outcome.Result);
             Assert.AreEqual(5, target.Health);
@@ -268,7 +343,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             int reported = -1;
             events.Subscribe<DamageResolvedEvent>(e => reported = e.Request.Amount);
 
-            local.Apply(Hit(target, 40, DamageProvenance.DirectWeaponHit));
+            local.Apply(Hit(target, 40, DamageType.Physical));
 
             Assert.AreEqual(20, reported);
         }

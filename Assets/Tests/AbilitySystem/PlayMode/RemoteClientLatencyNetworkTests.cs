@@ -112,7 +112,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             AttackLog log = new AttackLog(clientPlayer.GetComponent<ComboMeleeDelivery>());
 
             // The owner will not hear of the death for 100 ms, so it predicts a swing the server will refuse.
-            player.TakeDamage(new DamageInfo { Damage = 1000 }, BodyLocation.Torso);
+            player.TakeDamage(new DamageInfo { Damage = 1000 }, BodyLocation.Torso, bypassesMitigation: true);
             float pressedAt = Time.realtimeSinceStartup;
             clientPlayer.GetComponent<AbilityUser>().RequestActivate(melee);
             Assert.AreEqual(1, log.Started.Count, "The owner showed the swing it guessed.");

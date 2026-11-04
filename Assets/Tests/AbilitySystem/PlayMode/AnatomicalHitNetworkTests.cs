@@ -334,7 +334,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             HurtBox skull = Region(skeleton, "Head");
             Vector3 head = CentreOf(skull);
 
-            skeleton.TakeDamage(new DamageInfo { Damage = skeleton.MaxHealth * 2 }, BodyLocation.Torso);
+            skeleton.TakeDamage(new DamageInfo { Damage = skeleton.MaxHealth * 2 }, BodyLocation.Torso, bypassesMitigation: true);
             yield return null;
             Assert.IsFalse(skeleton.IsAlive);
             hits.Clear();
@@ -367,7 +367,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Freeze(attacker);
             Freeze(victim);
 
-            victim.TakeDamage(new DamageInfo { Damage = victim.MaxHealth * 2 }, BodyLocation.Torso);
+            victim.TakeDamage(new DamageInfo { Damage = victim.MaxHealth * 2 }, BodyLocation.Torso, bypassesMitigation: true);
             yield return null;
             Assert.IsTrue(victim.GetComponentsInChildren<HurtBox>(true).All(h => h.Shapes.All(s => !s.enabled)), "dead: no region is strikable");
 

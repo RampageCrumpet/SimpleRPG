@@ -160,7 +160,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
         private static void Kill(Character target) => Hit(target, StartingHealth);
 
-        private static void Hit(Character target, int damage) => target.TakeDamage(new DamageInfo { Damage = damage }, BodyLocation.Torso);
+        private static void Hit(Character target, int damage) => target.TakeDamage(new DamageInfo { Damage = damage }, BodyLocation.Torso, bypassesMitigation: true);
 
         private static Weapon WeaponOf(Character character) => character.GetComponentInChildren<Weapon>();
 

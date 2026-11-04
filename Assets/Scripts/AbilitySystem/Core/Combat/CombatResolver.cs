@@ -219,7 +219,7 @@ namespace SimpleRPG.Gameplay
 
         /// <summary>
         /// The one place the target's body and defences change the damage. A weapon blow is scaled by the factor its target gives the struck region
-        /// (a spell, tick or hazard strikes no region and is not), and then the target's damage reduction for the kind of blow removes its share
+        /// (a spell, tick or hazard strikes no region and is not), and then the target's damage reduction for the type of the damage removes its share
         /// (see <see cref="DamageMitigation"/>). Both are applied together and the result rounded once; a blow that lands always does at least 1.
         /// Everything after this, including the events, sees the final amount.
         /// </summary>
@@ -252,11 +252,10 @@ namespace SimpleRPG.Gameplay
             return float.IsNaN(multiplier) || multiplier < 0f ? 1d : multiplier;
         }
 
-        // The fraction of this blow the target's defences remove: none for a target with no defences or a blow no defence applies to.
+        // The fraction of this blow the target's defences remove: none for a target with no defences or a request that bypasses them.
         private static double ReductionFor(ICombatant target, in DamageRequest request)
         {
-            DamageKind kind = DamageMitigation.KindOf(request.Provenance);
-            return kind != DamageKind.None && target is IDamageMitigator defences ? DamageMitigation.Clamp(defences.Reduction(kind)) : 0d;
+            return DamageMitigation.ReductionFor(request, target as IDamageMitigator);
         }
 
         private FatalDamageDecision Intercept(ICombatant target, in DamageRequest request)

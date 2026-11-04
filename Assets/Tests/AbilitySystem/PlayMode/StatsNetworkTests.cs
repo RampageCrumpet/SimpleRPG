@@ -222,7 +222,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.AreEqual(200, player.MaxHealth);
             Assert.AreEqual(50, player.Health, "A higher maximum does not heal.");
 
-            player.TakeDamage(new DamageInfo { Damage = 1000 }, BodyLocation.Torso);
+            player.TakeDamage(new DamageInfo { Damage = 1000 }, BodyLocation.Torso, bypassesMitigation: true);
             Assert.IsFalse(player.IsAlive);
             Assert.IsTrue(player.RespawnOnServer());
             Assert.AreEqual(200, player.Health, "A new life starts at the resolved maximum.");

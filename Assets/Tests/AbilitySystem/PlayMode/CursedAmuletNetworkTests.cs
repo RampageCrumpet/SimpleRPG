@@ -131,7 +131,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private static Equipment EquipmentOf(Character character) => character.GetComponent<Equipment>();
 
         private static void Kill(Character character) =>
-            character.TakeDamage(new DamageInfo { Damage = StartingHealth * 5 }, BodyLocation.Torso);
+            character.TakeDamage(new DamageInfo { Damage = StartingHealth * 5 }, BodyLocation.Torso, bypassesMitigation: true);
 
         /// <summary>
         /// The characters in the world that are not among those given.

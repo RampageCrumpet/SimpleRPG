@@ -142,7 +142,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Inventory inventory = player.GetComponent<Inventory>();
             Item held = GiveTreasure(player);
 
-            player.TakeDamage(new DamageInfo { Damage = player.MaxHealth }, BodyLocation.Torso);
+            player.TakeDamage(new DamageInfo { Damage = player.MaxHealth }, BodyLocation.Torso, bypassesMitigation: true);
             yield return null;
             inventory.RequestDropItem(held);
             yield return null;
