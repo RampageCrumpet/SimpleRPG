@@ -31,12 +31,19 @@ namespace SimpleRPG.AppearanceTools
         /// <summary>One piece of armor as the seed describes it.</summary>
         public readonly struct Piece
         {
-            public Piece(string folder, string displayName, EquipmentSlot slot, int width, int height, float armorRating)
+            /// <summary>A piece of the default size for its slot (see <see cref="TryDefaultSize"/>).</summary>
+            public Piece(string folder, string displayName, EquipmentSlot slot, float armorRating)
+                : this(folder, displayName, slot, TryDefaultSize(slot, out Vector2Int size) ? size : Vector2Int.one, armorRating)
+            {
+            }
+
+            /// <summary>A piece with a size of its own: an item's size is its own data, and the slot's default is only where it starts.</summary>
+            public Piece(string folder, string displayName, EquipmentSlot slot, Vector2Int size, float armorRating)
             {
                 Folder = folder;
                 DisplayName = displayName;
                 Slot = slot;
-                Size = new Vector2Int(width, height);
+                Size = size;
                 ArmorRating = armorRating;
             }
 
@@ -54,10 +61,11 @@ namespace SimpleRPG.AppearanceTools
         }
 
         /// <summary>
-        /// The standard grid size of a piece worn in a slot, as in the games this one follows: 2 by 2 for head, hands and feet, 2 wide and 3 tall
-        /// for body armor. Legs are not settled yet, so they have none.
+        /// The size a new piece worn in a slot starts with, as in the games this one follows: 2 by 2 for head, hands and feet, 2 wide and 3 tall
+        /// for chest and legs. This is only a default for the tool: nothing enforces it. An item's size is its own data in its asset, a piece in
+        /// the seed may give its own, and a larger or smaller piece in any slot is fine.
         /// </summary>
-        public static bool TryStandardSize(EquipmentSlot slot, out Vector2Int size)
+        public static bool TryDefaultSize(EquipmentSlot slot, out Vector2Int size)
         {
             switch (slot)
             {
@@ -67,6 +75,7 @@ namespace SimpleRPG.AppearanceTools
                     size = new Vector2Int(2, 2);
                     return true;
                 case EquipmentSlot.chest:
+                case EquipmentSlot.legs:
                     size = new Vector2Int(2, 3);
                     return true;
                 default:
@@ -78,16 +87,16 @@ namespace SimpleRPG.AppearanceTools
         /// <summary>The seed. Legs and feet join it when their art exists.</summary>
         public static readonly Piece[] Pieces =
         {
-            new Piece("PaddedCoif", "Padded Coif", EquipmentSlot.head, 2, 2, 5f),
-            new Piece("KettleHelm", "Kettle Helm", EquipmentSlot.head, 2, 2, 12f),
-            new Piece("VisoredSallet", "Visored Sallet", EquipmentSlot.head, 2, 2, 18f),
-            new Piece("LinenTunic", "Linen Tunic", EquipmentSlot.chest, 2, 3, 2f),
-            new Piece("Gambeson", "Gambeson", EquipmentSlot.chest, 2, 3, 10f),
-            new Piece("MailHauberk", "Mail Hauberk", EquipmentSlot.chest, 2, 3, 28f),
-            new Piece("PlateArmor", "Plate Armor", EquipmentSlot.chest, 2, 3, 45f),
-            new Piece("LeatherGloves", "Leather Gloves", EquipmentSlot.hands, 2, 2, 3f),
-            new Piece("ReinforcedGloves", "Reinforced Gloves", EquipmentSlot.hands, 2, 2, 6f),
-            new Piece("PlateGauntlets", "Plate Gauntlets", EquipmentSlot.hands, 2, 2, 12f),
+            new Piece("PaddedCoif", "Padded Coif", EquipmentSlot.head, 5f),
+            new Piece("KettleHelm", "Kettle Helm", EquipmentSlot.head, 12f),
+            new Piece("VisoredSallet", "Visored Sallet", EquipmentSlot.head, 18f),
+            new Piece("LinenTunic", "Linen Tunic", EquipmentSlot.chest, 2f),
+            new Piece("Gambeson", "Gambeson", EquipmentSlot.chest, 10f),
+            new Piece("MailHauberk", "Mail Hauberk", EquipmentSlot.chest, 28f),
+            new Piece("PlateArmor", "Plate Armor", EquipmentSlot.chest, 45f),
+            new Piece("LeatherGloves", "Leather Gloves", EquipmentSlot.hands, 3f),
+            new Piece("ReinforcedGloves", "Reinforced Gloves", EquipmentSlot.hands, 6f),
+            new Piece("PlateGauntlets", "Plate Gauntlets", EquipmentSlot.hands, 12f),
         };
 
         /// <summary>

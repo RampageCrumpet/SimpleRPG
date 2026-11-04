@@ -65,7 +65,7 @@ The starting numbers are a seed, not a design decision:
 | Chest | Linen Tunic / Gambeson / Mail Hauberk / Plate Armor | 2 / 10 / 28 / 45 | 2 wide, 3 tall |
 | Hands | Leather Gloves / Reinforced Gloves / Plate Gauntlets | 3 / 6 / 12 | 2 by 2 |
 
-Grid sizes follow the standard of the games this one follows: 2 by 2 for head, hands and feet, 2 wide and 3 tall for body armor (legs are not settled). The ratings are placeholders; everything here will be rebalanced after playtesting.
+Grid sizes start from the standard of the games this one follows: 2 by 2 for head, hands and feet, 2 wide and 3 tall for chest and legs. That is only the default the tool starts a new piece with (`ArmorSetup.TryDefaultSize`): an item's size is its own data in its asset, a seed piece may give its own, and nothing enforces a size for a slot. The ratings are placeholders; everything here will be rebalanced after playtesting.
 
 With the player profile's starting curve (see Stats), a full set of the heaviest pieces so far (45 + 18 + 12 = 75) gives about 39 percent physical reduction from armor, plus Constitution's 8 percent.
 

@@ -82,35 +82,53 @@ namespace SimpleRPG.Tests.EditMode
             }
         }
 
-        [Test]
-        public void TheSeed_UsesTheStandardGridSizes()
-        {
-            // 2 by 2 for head, hands and feet; 2 wide and 3 tall for body armor.
-            foreach (ArmorSetup.Piece piece in ArmorSetup.Pieces)
-            {
-                if (ArmorSetup.TryStandardSize(piece.Slot, out Vector2Int standard))
-                {
-                    Assert.AreEqual(standard, piece.Size, piece.Folder);
-                }
-            }
-        }
-
         [TestCase(EquipmentSlot.head, 2, 2)]
         [TestCase(EquipmentSlot.hands, 2, 2)]
         [TestCase(EquipmentSlot.feet, 2, 2)]
         [TestCase(EquipmentSlot.chest, 2, 3)]
-        public void TheStandardSizes(EquipmentSlot slot, int width, int height)
+        [TestCase(EquipmentSlot.legs, 2, 3)]
+        public void TheDefaultSizeOfASlot(EquipmentSlot slot, int width, int height)
         {
-            Assert.IsTrue(ArmorSetup.TryStandardSize(slot, out Vector2Int size));
+            Assert.IsTrue(ArmorSetup.TryDefaultSize(slot, out Vector2Int size));
             Assert.AreEqual(new Vector2Int(width, height), size);
         }
 
-        [TestCase(EquipmentSlot.legs)]
         [TestCase(EquipmentSlot.neck)]
         [TestCase(EquipmentSlot.mainHand)]
-        public void ASlotWithNoStandardSizeYet_HasNone(EquipmentSlot slot)
+        [TestCase(EquipmentSlot.Consumable)]
+        public void ASlotThatIsNotArmor_HasNoDefaultSize(EquipmentSlot slot)
         {
-            Assert.IsFalse(ArmorSetup.TryStandardSize(slot, out _));
+            Assert.IsFalse(ArmorSetup.TryDefaultSize(slot, out _));
+        }
+
+        [Test]
+        public void APieceStartsWithItsSlotsDefaultSize()
+        {
+            var legs = new ArmorSetup.Piece("Greaves", "Greaves", EquipmentSlot.legs, 20f);
+            var boots = new ArmorSetup.Piece("Boots", "Boots", EquipmentSlot.feet, 6f);
+
+            Assert.AreEqual(new Vector2Int(2, 3), legs.Size);
+            Assert.AreEqual(new Vector2Int(2, 2), boots.Size);
+        }
+
+        [Test]
+        public void APieceMayHaveASizeOfItsOwn_ForAnySlot()
+        {
+            var tower = new ArmorSetup.Piece("TowerHelm", "Tower Helm", EquipmentSlot.head, new Vector2Int(3, 3), 30f);
+            var cap = new ArmorSetup.Piece("Cap", "Cap", EquipmentSlot.chest, new Vector2Int(1, 1), 1f);
+
+            Assert.AreEqual(new Vector2Int(3, 3), tower.Size, "Nothing forces a helm to be 2 by 2.");
+            Assert.AreEqual(new Vector2Int(1, 1), cap.Size);
+        }
+
+        [Test]
+        public void TheSeed_StartsEachPieceAtItsSlotsDefault_BecauseNoneOverridesIt()
+        {
+            foreach (ArmorSetup.Piece piece in ArmorSetup.Pieces)
+            {
+                Assert.IsTrue(ArmorSetup.TryDefaultSize(piece.Slot, out Vector2Int size), piece.Folder);
+                Assert.AreEqual(size, piece.Size, piece.Folder);
+            }
         }
 
         [Test]
