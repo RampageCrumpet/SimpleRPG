@@ -208,7 +208,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.IsTrue(inventory.RequestDropItem(piece));
             yield return null;
             Assert.IsFalse(inventory.Contains(piece));
-            WorldItemPickup pickup = Object.FindFirstObjectByType<WorldItemPickup>();
+            WorldItemPickup pickup = Object.FindAnyObjectByType<WorldItemPickup>();
             Assert.IsNotNull(pickup);
             Assert.AreEqual(rolled, pickup.Affixes, "The pickup shows what the dropped item rolled.");
 

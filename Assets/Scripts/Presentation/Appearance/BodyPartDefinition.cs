@@ -73,7 +73,11 @@ namespace SimpleRPG.Appearance
         public Quaternion AttachRotation => attachRotation;
         public Vector3 AttachScale => attachScale;
 
-        private void OnValidate() => pieces = null;
+        protected override void OnValidate()
+        {
+            base.OnValidate();
+            pieces = null;
+        }
 
         public bool IsSkinned => boneNames != null && boneNames.Length > 0;
 
