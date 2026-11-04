@@ -4,6 +4,7 @@ using SimpleRPG.Abilities.Integration;
 using SimpleRPG.Gameplay;
 using SimpleRPG.HitDetection;
 using UnityEngine;
+using EntityId = SimpleRPG.Gameplay.EntityId;
 
 namespace SimpleRPG.Tests.EditMode
 {

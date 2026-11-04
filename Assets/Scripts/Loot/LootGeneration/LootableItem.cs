@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace SimpleRPG.InventorySystem.LootGeneration
 {
@@ -11,9 +12,16 @@ namespace SimpleRPG.InventorySystem.LootGeneration
         /// <summary>
         /// The item to be dropped.
         /// </summary>
-        [field: SerializeField]
+        [SerializeField]
+        [FormerlySerializedAs("<Item>k__BackingField")]
         [Tooltip("The item to be dropped.")]
-        public Item Item { get; set; }
+        private Item item;
+
+        public Item Item
+        {
+            get => item;
+            set => item = value;
+        }
 
         /// <inheritdoc/>
         public override IEnumerable<WeightedRandomEntry> GetResult()

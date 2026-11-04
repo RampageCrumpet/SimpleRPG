@@ -124,7 +124,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return null;
 
             Assert.AreEqual(0, inventory.GetItems().Count(), "It left the inventory.");
-            WorldItemPickup pickup = Object.FindFirstObjectByType<WorldItemPickup>();
+            WorldItemPickup pickup = Object.FindAnyObjectByType<WorldItemPickup>();
             Assert.IsNotNull(pickup, "It lies on the ground.");
             Assert.Less(Vector3.Distance(pickup.transform.position, player.transform.position), 2.5f, "Close by, where the player can take it back.");
 
@@ -147,7 +147,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             inventory.RequestDropItem(held);
             yield return null;
 
-            Assert.IsNull(Object.FindFirstObjectByType<WorldItemPickup>(), "Nothing was dropped.");
+            Assert.IsNull(Object.FindAnyObjectByType<WorldItemPickup>(), "Nothing was dropped.");
             Assert.IsTrue(inventory.Contains(held), "The item is still in the inventory.");
         }
 

@@ -153,7 +153,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return new WaitForSeconds(0.8f);
 
             Assert.AreEqual(0, CarriedBy(player), "The dead player carries nothing.");
-            LootBag bag = Object.FindFirstObjectByType<LootBag>();
+            LootBag bag = Object.FindAnyObjectByType<LootBag>();
             Assert.IsNotNull(bag, "A loot bag was left behind.");
             Assert.AreEqual(1, bag.GetComponent<Inventory>().GetItems().Count(), "It holds what they carried.");
             Assert.Less(Vector3.Distance(bag.transform.position, player.transform.position), 1f, "It lies where they fell.");
@@ -282,7 +282,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             yield return new WaitForSeconds(1f);
 
             Assert.AreEqual(0, delve.AwayCount, "They are no longer waited for.");
-            LootBag bag = Object.FindFirstObjectByType<LootBag>();
+            LootBag bag = Object.FindAnyObjectByType<LootBag>();
             Assert.IsNotNull(bag, "What they carried was left behind.");
             Assert.AreEqual(1, bag.GetComponent<Inventory>().GetItems().Count());
             Assert.IsNull(delve.TakeParked(PlayerId), "There is nothing left to come back to.");

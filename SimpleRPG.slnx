@@ -8,14 +8,14 @@
   <Project Path="SimpleRPG.World.csproj" />
   <Project Path="SimpleRPG.Abilities.Tests.PlayMode.csproj" />
   <Project Path="SimpleRPG.Gameplay.Core.csproj" />
+  <Project Path="SimpleRPG.Abilities.Integration.csproj" />
+  <Project Path="SimpleRPG.Abilities.Runtime.csproj" />
   <Project Path="SimpleRPG.UI.csproj" />
   <Project Path="SimpleRPG.Abilities.Editor.csproj" />
-  <Project Path="SimpleRPG.Tests.PlayMode.csproj" />
   <Project Path="SimpleRPG.Items.csproj" />
-  <Project Path="SimpleRPG.Abilities.Runtime.csproj" />
+  <Project Path="SimpleRPG.Tests.PlayMode.csproj" />
   <Project Path="SimpleRPG.AI.csproj" />
   <Project Path="SimpleRPG.Combat.csproj" />
-  <Project Path="SimpleRPG.Abilities.Integration.csproj" />
   <Project Path="SimpleRPG.AudioPlayback.csproj" />
   <Project Path="SimpleRPG.Foundation.csproj" />
   <Project Path="SimpleRPG.Rendering.csproj" />
