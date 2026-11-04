@@ -19,13 +19,14 @@ namespace SimpleRPG.AppearanceTools
     /// <b>never</b> changed: once it is made, its numbers (size, armor rating) belong to the asset and the designer, and this only creates
     /// what is missing. The starting numbers below are a seed to tune from, not a decision.
     /// </para>
-    /// A piece it cannot convert (no skinned mesh, a hand or foot with no left or right in its name) is reported and left for hand work.
+    /// A piece it cannot convert (a hand or foot with no left or right in its name, a rigid piece that is not a helmet) is reported and left for hand work.
     /// </summary>
     public static class ArmorSetup
     {
         private const string ArtFolder = "Assets/Art/3d Models/Items";
         public const string ItemsFolder = "Assets/Items/Armor";
         public const string PartsFolder = "Assets/Art/BodyParts/Armor";
+        private const string HeadBone = "Head";
 
         /// <summary>One piece of armor as the seed describes it.</summary>
         public readonly struct Piece
@@ -52,17 +53,39 @@ namespace SimpleRPG.AppearanceTools
             public float ArmorRating { get; }
         }
 
+        /// <summary>
+        /// The standard grid size of a piece worn in a slot, as in the games this one follows: 2 by 2 for head, hands and feet, 2 wide and 3 tall
+        /// for body armor. Legs are not settled yet, so they have none.
+        /// </summary>
+        public static bool TryStandardSize(EquipmentSlot slot, out Vector2Int size)
+        {
+            switch (slot)
+            {
+                case EquipmentSlot.head:
+                case EquipmentSlot.hands:
+                case EquipmentSlot.feet:
+                    size = new Vector2Int(2, 2);
+                    return true;
+                case EquipmentSlot.chest:
+                    size = new Vector2Int(2, 3);
+                    return true;
+                default:
+                    size = default;
+                    return false;
+            }
+        }
+
         /// <summary>The seed. Legs and feet join it when their art exists.</summary>
         public static readonly Piece[] Pieces =
         {
             new Piece("PaddedCoif", "Padded Coif", EquipmentSlot.head, 2, 2, 5f),
             new Piece("KettleHelm", "Kettle Helm", EquipmentSlot.head, 2, 2, 12f),
             new Piece("VisoredSallet", "Visored Sallet", EquipmentSlot.head, 2, 2, 18f),
-            new Piece("LinenTunic", "Linen Tunic", EquipmentSlot.chest, 2, 2, 2f),
-            new Piece("Gambeson", "Gambeson", EquipmentSlot.chest, 3, 2, 10f),
-            new Piece("MailHauberk", "Mail Hauberk", EquipmentSlot.chest, 3, 3, 28f),
-            new Piece("PlateArmor", "Plate Armor", EquipmentSlot.chest, 3, 3, 45f),
-            new Piece("LeatherGloves", "Leather Gloves", EquipmentSlot.hands, 2, 1, 3f),
+            new Piece("LinenTunic", "Linen Tunic", EquipmentSlot.chest, 2, 3, 2f),
+            new Piece("Gambeson", "Gambeson", EquipmentSlot.chest, 2, 3, 10f),
+            new Piece("MailHauberk", "Mail Hauberk", EquipmentSlot.chest, 2, 3, 28f),
+            new Piece("PlateArmor", "Plate Armor", EquipmentSlot.chest, 2, 3, 45f),
+            new Piece("LeatherGloves", "Leather Gloves", EquipmentSlot.hands, 2, 2, 3f),
             new Piece("ReinforcedGloves", "Reinforced Gloves", EquipmentSlot.hands, 2, 2, 6f),
             new Piece("PlateGauntlets", "Plate Gauntlets", EquipmentSlot.hands, 2, 2, 12f),
         };
@@ -126,7 +149,8 @@ namespace SimpleRPG.AppearanceTools
                 SkinnedMeshRenderer[] meshes = prefab.GetComponentsInChildren<SkinnedMeshRenderer>(true);
                 if (meshes.Length == 0)
                 {
-                    problems.Add($"{piece.Folder}: its prefab has no skinned mesh (a rigid piece, such as one with a moving part, needs its part made by hand), so the item has no look yet.");
+                    // A rigid piece (a helmet that is meshes on a pivot, not skinned to the rig) is combined into one part on the head bone.
+                    if (WriteRigidPart(piece, item, prefab, problems)) partsWritten++;
                     continue;
                 }
 
@@ -219,6 +243,85 @@ namespace SimpleRPG.AppearanceTools
 
             part.Configure(slot, mesh.sharedMesh, mesh.sharedMaterials, mesh.bones.Select(b => b != null ? b.name : "").ToArray(), mesh.rootBone.name,
                 mesh.localBounds, "", Vector3.zero, Quaternion.identity, Vector3.one);
+            part.Dress(item);
+            string problem = part.Problem();
+            if (problem != null) problems.Add($"{piece.Folder}: {problem}");
+            EditorUtility.SetDirty(part);
+            return true;
+        }
+
+        // A piece that is not skinned: every mesh in its prefab is combined, in the prefab's own space, into one mesh worn rigidly on the head
+        // bone. Parts are one per slot, so a shell and a visor have to be one part; the visor is as the prefab has it (closed). The pose of the
+        // prefab relative to the head bone is taken the way the eyebrows are: the art is assumed to share the body model's space. If the piece
+        // sits wrong on the head, adjust the part's attach position and rotation in its asset.
+        private static bool WriteRigidPart(Piece piece, ArmorData item, GameObject prefab, List<string> problems)
+        {
+            if (piece.Slot != EquipmentSlot.head)
+            {
+                problems.Add($"{piece.Folder}: its prefab has no skinned mesh, and only head pieces can be worn rigidly so far; its part has to be made by hand.");
+                return false;
+            }
+
+            MeshFilter[] filters = prefab.GetComponentsInChildren<MeshFilter>(true).Where(f => f.sharedMesh != null && f.GetComponent<MeshRenderer>() != null).ToArray();
+            if (filters.Length == 0)
+            {
+                problems.Add($"{piece.Folder}: its prefab has no skinned mesh and no plain meshes, so the item has no look yet.");
+                return false;
+            }
+
+            GameObject body = AssetDatabase.LoadAssetAtPath<GameObject>(HumanMaleSetup.ModelPath);
+            Transform head = body != null ? body.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == HeadBone) : null;
+            if (head == null)
+            {
+                problems.Add($"{piece.Folder}: no '{HeadBone}' bone found in {HumanMaleSetup.ModelPath}, so a rigid piece cannot be placed on the head.");
+                return false;
+            }
+
+            string partPath = $"{PartsFolder}/{piece.Folder}_Rigid.asset";
+            string meshPath = $"{PartsFolder}/{piece.Folder}_RigidMesh.asset";
+            Mesh combined;
+            var materials = new List<Material>();
+            try
+            {
+                var instances = new List<CombineInstance>();
+                Matrix4x4 intoPrefab = prefab.transform.worldToLocalMatrix;
+                foreach (MeshFilter filter in filters)
+                {
+                    Material[] shared = filter.GetComponent<MeshRenderer>().sharedMaterials;
+                    for (int sub = 0; sub < filter.sharedMesh.subMeshCount; sub++)
+                    {
+                        instances.Add(new CombineInstance { mesh = filter.sharedMesh, subMeshIndex = sub, transform = intoPrefab * filter.transform.localToWorldMatrix });
+                        materials.Add(sub < shared.Length ? shared[sub] : null);
+                    }
+                }
+
+                combined = AssetDatabase.LoadAssetAtPath<Mesh>(meshPath);
+                bool isNew = combined == null;
+                if (isNew) combined = new Mesh { name = piece.Folder + "_RigidMesh" };
+                else combined.Clear();
+
+                combined.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+                combined.CombineMeshes(instances.ToArray(), false, true);
+                combined.RecalculateBounds();
+                if (isNew) AssetDatabase.CreateAsset(combined, meshPath);
+                EditorUtility.SetDirty(combined);
+            }
+            catch (System.Exception e)
+            {
+                problems.Add($"{piece.Folder}: could not combine its meshes ({e.Message}). If its model is not readable, turn on Read/Write in the model's import settings.");
+                return false;
+            }
+
+            BodyPartDefinition part = AssetDatabase.LoadAssetAtPath<BodyPartDefinition>(partPath);
+            if (part == null)
+            {
+                part = ScriptableObject.CreateInstance<BodyPartDefinition>();
+                part.EnsureId();
+                AssetDatabase.CreateAsset(part, partPath);
+            }
+
+            Matrix4x4 local = head.worldToLocalMatrix;
+            part.Configure(BodyPartSlot.Head, combined, materials.ToArray(), null, "", combined.bounds, HeadBone, local.GetPosition(), local.rotation, local.lossyScale);
             part.Dress(item);
             string problem = part.Problem();
             if (problem != null) problems.Add($"{piece.Folder}: {problem}");

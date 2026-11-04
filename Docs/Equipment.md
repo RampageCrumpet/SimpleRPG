@@ -60,14 +60,16 @@ The starting numbers are a seed, not a design decision:
 | Slot | Piece | Armor Rating | Grid size |
 |---|---|---|---|
 | Head | Padded Coif / Kettle Helm / Visored Sallet | 5 / 12 / 18 | 2 by 2 |
-| Chest | Linen Tunic / Gambeson / Mail Hauberk / Plate Armor | 2 / 10 / 28 / 45 | 2 by 2 / 3 by 2 / 3 by 3 / 3 by 3 |
-| Hands | Leather Gloves / Reinforced Gloves / Plate Gauntlets | 3 / 6 / 12 | 2 by 1 / 2 by 2 / 2 by 2 |
+| Chest | Linen Tunic / Gambeson / Mail Hauberk / Plate Armor | 2 / 10 / 28 / 45 | 2 wide, 3 tall |
+| Hands | Leather Gloves / Reinforced Gloves / Plate Gauntlets | 3 / 6 / 12 | 2 by 2 |
+
+Grid sizes follow the standard of the games this one follows: 2 by 2 for head, hands and feet, 2 wide and 3 tall for body armor (legs are not settled). The ratings are placeholders; everything here will be rebalanced after playtesting.
 
 With the player profile's starting curve (see Stats), a full set of the heaviest pieces so far (45 + 18 + 12 = 75) gives about 39 percent physical reduction from armor, plus Constitution's 8 percent.
 
 ### What it cannot do yet
 
-- **Rigid pieces.** A piece whose prefab has no skinned mesh, such as the **Visored Sallet** (a shell and a moving visor on a pivot), has an item but no look: the tool reports it, and its part has to be made by hand as a rigid part on the head bone.
+- **Rigid helmets are combined.** A head piece whose prefab has no skinned mesh, such as the **Visored Sallet** (a shell and a visor on a pivot), is built from every plain mesh in its prefab, combined into one mesh and worn rigidly on the head bone (appearance holds one part per slot, so a shell and a visor have to be one part). The visor is as the prefab has it, which is closed; it does not move. The prefab is placed on the head the way the eyebrows are, assuming it shares the body model's space; if it sits wrong, adjust the part's attach position and rotation in its asset. Rigid pieces for other slots are not supported yet and are reported.
 - **Hands and feet name their side.** A skinned mesh for gloves or boots must end in `_L` or `_R` (or contain Left or Right); otherwise the tool says so and skips it.
 - **Legs and feet** have no art yet; add them to the seed when they do.
 - **No world form.** The items have no `WorldPrefab`, so they cannot be dropped on the ground or placed as floor loot (`DungeonPopulation`). They can be found in chests and loot tables, which add item instances straight to an inventory.

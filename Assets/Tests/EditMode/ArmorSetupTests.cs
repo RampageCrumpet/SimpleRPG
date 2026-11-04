@@ -83,6 +83,37 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
+        public void TheSeed_UsesTheStandardGridSizes()
+        {
+            // 2 by 2 for head, hands and feet; 2 wide and 3 tall for body armor.
+            foreach (ArmorSetup.Piece piece in ArmorSetup.Pieces)
+            {
+                if (ArmorSetup.TryStandardSize(piece.Slot, out Vector2Int standard))
+                {
+                    Assert.AreEqual(standard, piece.Size, piece.Folder);
+                }
+            }
+        }
+
+        [TestCase(EquipmentSlot.head, 2, 2)]
+        [TestCase(EquipmentSlot.hands, 2, 2)]
+        [TestCase(EquipmentSlot.feet, 2, 2)]
+        [TestCase(EquipmentSlot.chest, 2, 3)]
+        public void TheStandardSizes(EquipmentSlot slot, int width, int height)
+        {
+            Assert.IsTrue(ArmorSetup.TryStandardSize(slot, out Vector2Int size));
+            Assert.AreEqual(new Vector2Int(width, height), size);
+        }
+
+        [TestCase(EquipmentSlot.legs)]
+        [TestCase(EquipmentSlot.neck)]
+        [TestCase(EquipmentSlot.mainHand)]
+        public void ASlotWithNoStandardSizeYet_HasNone(EquipmentSlot slot)
+        {
+            Assert.IsFalse(ArmorSetup.TryStandardSize(slot, out _));
+        }
+
+        [Test]
         public void TheSeed_HeavierPiecesOfASlotProtectMore()
         {
             foreach (var group in ArmorSetup.Pieces.GroupBy(p => p.Slot))
