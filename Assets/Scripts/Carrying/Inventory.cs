@@ -250,7 +250,7 @@ namespace SimpleRPG.InventorySystem
         /// <returns> True if we suceeded in placing the item, false otherwise.</returns>
         public bool AddItem(Item item)
         {
-            return TryAddAtFreeLocation(item, cloneFirst: false);
+            return TryAddAtFreeLocation(item, cloneFirst: false, ItemLevel.Minimum);
         }
 
         /// <summary>
@@ -258,16 +258,17 @@ namespace SimpleRPG.InventorySystem
         /// This is useful for when we want to create a new item from a loot table and place it in the inventory.
         /// </summary>
         /// <param name="item"> The item to be placed.</param>
+        /// <param name="itemLevel"> The level of the loot source it comes from, which decides which affix tiers it can roll (see <see cref="ItemLevel"/>).</param>
         /// <returns> True if we suceeded in placing the item, false otherwise.</returns>
-        public bool AddItemInstance(Item item)
+        public bool AddItemInstance(Item item, int itemLevel = ItemLevel.Minimum)
         {
-            return TryAddAtFreeLocation(item, cloneFirst: true);
+            return TryAddAtFreeLocation(item, cloneFirst: true, itemLevel);
         }
 
         /// <summary>
         /// Places the item (or a fresh instance of it) at the first free location, if this machine may add it. Authority only.
         /// </summary>
-        private bool TryAddAtFreeLocation(Item item, bool cloneFirst)
+        private bool TryAddAtFreeLocation(Item item, bool cloneFirst, int itemLevel)
         {
             if (!TryFindFreeLocation(item, out Vector2Int location) || !CanPlaceAsAuthority(item, location))
             {
@@ -276,7 +277,7 @@ namespace SimpleRPG.InventorySystem
             }
 
             // A new instance rolls its affixes here, once, from the gameplay stream; an item with no pool draws nothing.
-            PlaceItem(cloneFirst ? item.CloneInstance(item.RollAffixes(SimpleRPG.Gameplay.GameplayServices.Current.Random)) : item, location);
+            PlaceItem(cloneFirst ? item.CloneInstance(item.RollAffixes(SimpleRPG.Gameplay.GameplayServices.Current.Random, itemLevel)) : item, location);
             return true;
         }
 

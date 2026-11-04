@@ -6,18 +6,31 @@ them. There is no durability: nothing in the game wears out or breaks through us
 ## The rules
 
 - An item asset may point at an **Affix Pool**. An item with no pool has no affixes, and the game rolls nothing for it.
-- Each new *instance* rolls once, when it is created from the asset (into a chest, a pickup, any inventory through `AddItemInstance`). The asset is never changed.
-- The roll comes from the seeded gameplay stream, in a fixed order: one draw for how many affixes, then for each one a draw to pick it and one for its value. An item with no pool draws nothing, so adding affixes to some items never changes what the rest of a dungeon's loot rolls for a seed.
-- An affix never rolls twice on an item, and two affixes with the same **exclusive group** never both roll.
-- What is kept is the **result**: the affix's network id and its value in thousandths, up to four per item (`ItemAffixes`). It is not a seed, so editing an affix's range later cannot change an item that already rolled. That is also the shape a stash database can store: item id, instance, and up to four (affix id, value) pairs.
-- A rolled affix is an attribute modifier on the wearer, applied through the same grant engine as an item's own grants (`Item.AllGrants` = the asset's grants plus what this instance rolled). Taking the item off releases exactly those modifiers.
+- Each new *instance* rolls once, when it is created from the asset (into a chest, a pickup, any inventory through `AddItemInstance(item, itemLevel)`). The asset is never changed.
+- An affix is a **prefix or suffix** of the item's name and does **one or more things** (its *effects*). Each effect rolls its own value, independently, from its own range. There is no limit to the number of effects in an affix.
+- Affixes of one **family** are its tiers: an item never gets two of a family, nor the same affix twice. A pool limits how many prefixes and suffixes an instance gets, and how many in all.
+- **Item level and tier.** An affix has a minimum item level, so a higher tier is only offered from a stronger loot source. The level is passed in by whoever makes the item; it is not stored on the item (the result is).
+- The roll comes from the seeded gameplay stream, in a fixed order: one draw for how many affixes, then for each one a draw to pick it and one per value in order. An item with no pool draws nothing, so adding affixes to some items never changes what the rest of a dungeon's loot rolls for a seed.
+- What is kept is the **result**: for each affix its network id and the value of each effect in thousandths, as one flat run of whole numbers (`ItemAffixes`: `[id, count, values...]`, affix after affix). It is not a seed, so editing an affix's range later cannot change an item that already rolled; a stash database stores the same run. The run is a fixed 32 words because it is replicated inside an inventory entry. That bounds a whole item, not an affix, and `AffixPool.Problems()` reports a pool whose largest roll could exceed it.
+- A rolled affix is applied through the same grant engine as an item's own grants (`Item.AllGrants` = the asset's grants plus what this instance rolled). Taking the item off releases exactly those modifiers.
+
+## Effects
+
+An effect is a class (`AffixEffect`), serialized by reference, so a new kind is a new class and needs no change to the roller, the storage or the affix. The first kind is `StatModifierEffect`: one attribute, one layer (flat `Add`, `PercentAdd`, or `Multiply`), one range. The same shape is meant to carry granted abilities and conditional triggers later, reusing the item's grant and ability machinery; none exist yet.
+
+- **Percentages of the item itself.** A stat effect with scope *This Item* is a percentage of what that item's own asset grants of the attribute, and is applied as a flat amount. "+10% Armor Rating (this item)" on a 40-armor cuirass is +4, and does not scale armor worn elsewhere. A flat Armor Rating and a wearer-scoped percentage are the other two forms.
+- **Live effects only.** `AttributeConsumers` lists the attributes gameplay reads. An affix on an attribute nothing reads (Dexterity, Intelligence, Magical Power, attack, casting and interaction speed, and so on) is not live, and `AffixPool.Problems()` and `AffixContentTests` fail for a pool that holds one. Add an attribute to `AttributeConsumers` in the same change that makes something read it.
 
 ## Making them
 
-1. **Items > Affix**: a label ("Strength"), the attribute key, where it applies (flat, percent, or factor), the range it rolls in, a weight, an optional exclusive group, and the slots it may roll on (empty is any).
-2. **Items > Affix Pool**: the list of affixes and the fewest and most an item rolls (at most four).
+1. **Items > Affix**: the name it adds ("Riveted"), prefix or suffix, family and tier, the minimum item level, a weight, the slots it may roll on (empty is any), and its effects (each with its attribute key, layer, scope and range).
+2. **Items > Affix Pool**: the list of affixes, the fewest and most an item rolls, and the most prefixes and suffixes.
 3. On the item asset, set **Affix Pool**.
-4. Run **SimpleRPG > Definitions > Rebuild Definition Registry**. An affix has to be in the registry, because clients look it up by id; one that is not is skipped when rolling, and an item that already holds a removed one logs a warning and ignores it.
+4. Run **SimpleRPG > Definitions > Rebuild Definition Registry**. An affix has to be in the registry, because clients look it up by id; one that is not is skipped when rolling, and an item that already holds a removed one logs a warning and ignores it. An item holding an affix whose number of values has since changed ignores that affix with a warning.
+
+## Where item level comes from
+
+**Not decided, and nothing in the codebase constrains it yet.** Item level is an argument of `AddItemInstance` and `Item.RollAffixes` that defaults to the lowest level, so everything rolls first-tier affixes only until a loot source passes a level. The loot containers and world pickups have no level to pass, and the dungeon has no difficulty value to derive one from. (A search of the code found no existing area or drop-power limit; if one is meant to exist, it is not in this repository.) The pieces to decide are the source's own strength, the dungeon's difficulty, and the ceiling an area allows; the level is then a pure function of those, computed where loot is placed.
 
 ## Dropped items
 
@@ -56,5 +69,5 @@ Not every derived stat is consumed by gameplay yet (see [Stats](Stats.md)): an a
 ## Not built yet
 
 - **Tooltips.** Nothing in the UI shows an item's affixes yet; `AffixDefinition.Describe` gives the lines ("+3 Strength", "+10% Strength").
-- **Tiers or levels of affixes**, and **weapon affixes that change a weapon's own damage**: a weapon's damage is on its asset, so affixes only reach it through attributes the damage rules read.
+- **Weapon affixes that change a weapon's own damage**: a weapon's damage is on its asset, so affixes only reach it through attributes the damage rules read.
 - **Rolling at pickup, not at the world pickup's creation.** A pickup lying in the dungeon is the asset; it rolls as it enters an inventory.

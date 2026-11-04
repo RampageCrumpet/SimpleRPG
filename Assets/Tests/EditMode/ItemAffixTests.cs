@@ -54,17 +54,18 @@ namespace SimpleRPG.Tests.EditMode
             throw new System.ArgumentException(field);
         }
 
-        private AffixDefinition Affix(string key, ModifierLayer layer, float min, float max, string label = "Strength", string group = "", params EquipmentSlot[] slots)
+        private AffixDefinition Affix(string key, ModifierLayer layer, float min, float max, string label = "Strength", string family = "", params EquipmentSlot[] slots)
+        {
+            return Affix(new List<AffixEffect> { new StatModifierEffect(label, key, layer, min, max) }, family, slots);
+        }
+
+        private AffixDefinition Affix(List<AffixEffect> effects, string family = "", params EquipmentSlot[] slots)
         {
             AffixDefinition affix = ScriptableObject.CreateInstance<AffixDefinition>();
             created.Add(affix);
             affix.EnsureId();
-            Set(affix, "label", label);
-            Set(affix, "attributeKey", key);
-            Set(affix, "layer", layer);
-            Set(affix, "minimum", min);
-            Set(affix, "maximum", max);
-            Set(affix, "exclusiveGroup", group);
+            Set(affix, "effects", effects);
+            Set(affix, "family", family);
             Set(affix, "allowedSlots", slots.ToList());
             return affix;
         }
@@ -76,6 +77,8 @@ namespace SimpleRPG.Tests.EditMode
             Set(pool, "affixes", affixes.ToList());
             Set(pool, "minimumCount", min);
             Set(pool, "maximumCount", max);
+            Set(pool, "maximumPrefixes", 99);
+            Set(pool, "maximumSuffixes", 99);
             return pool;
         }
 
@@ -101,22 +104,118 @@ namespace SimpleRPG.Tests.EditMode
         // ---- The affix itself ----
 
         [Test]
-        public void AnAffixDescribesItselfByHowItApplies()
+        public void AnAffixDescribesEachEffectByHowItApplies()
         {
-            Assert.AreEqual("+3 Strength", Affix("k", ModifierLayer.Add, 1, 3).Describe(3f));
-            Assert.AreEqual("-2 Strength", Affix("k", ModifierLayer.Add, 1, 3).Describe(-2f));
-            Assert.AreEqual("+10% Strength", Affix("k", ModifierLayer.PercentAdd, 0.05f, 0.2f).Describe(0.1f));
-            Assert.AreEqual("x1.5 Strength", Affix("k", ModifierLayer.Multiply, 1f, 2f).Describe(1.5f));
+            Assert.AreEqual("+3 Strength", Affix("k", ModifierLayer.Add, 1, 3).Describe(new[] { 3f })[0]);
+            Assert.AreEqual("-2 Strength", Affix("k", ModifierLayer.Add, 1, 3).Describe(new[] { -2f })[0]);
+            Assert.AreEqual("+10% Strength", Affix("k", ModifierLayer.PercentAdd, 0.05f, 0.2f).Describe(new[] { 0.1f })[0]);
+            Assert.AreEqual("x1.5 Strength", Affix("k", ModifierLayer.Multiply, 1f, 2f).Describe(new[] { 1.5f })[0]);
         }
 
         [Test]
-        public void AnAffixBecomesTheGrantTheEngineApplies()
+        public void AnAffixCanHaveSeveralEffects_EachWithItsOwnValueAndRange()
         {
-            GrantSpec grant = Affix("simplerpg.attr.strength", ModifierLayer.PercentAdd, 0.05f, 0.2f).ToGrant(0.15f);
+            AffixDefinition affix = Affix(new List<AffixEffect>
+            {
+                new StatModifierEffect("Armor Rating", "simplerpg.stat.armor_rating", ModifierLayer.Add, 3f, 4f),
+                new StatModifierEffect("Constitution", "simplerpg.attr.constitution", ModifierLayer.PercentAdd, 0.03f, 0.04f),
+                new StatModifierEffect("Movement Speed", "simplerpg.stat.movement_speed", ModifierLayer.PercentAdd, -0.01f, -0.01f),
+                new StatModifierEffect("Willpower", "simplerpg.attr.willpower", ModifierLayer.Add, 1f, 2f),
+            });
 
-            Assert.AreEqual("simplerpg.attr.strength", grant.AttributeKey);
-            Assert.AreEqual(ModifierLayer.PercentAdd, grant.Layer);
-            Assert.AreEqual(0.15f, grant.Value, 1e-6f);
+            Assert.AreEqual(4, affix.ValueCount);
+            Assert.AreEqual(0.03f, affix.Ranges()[1].Minimum, 1e-6f);
+            var grants = new List<GrantSpec>();
+            affix.AddGrants(new List<GrantSpec>(), new[] { 3.5f, 0.035f, -0.01f, 1.5f }, grants);
+
+            Assert.AreEqual(4, grants.Count);
+            Assert.AreEqual("simplerpg.attr.constitution", grants[1].AttributeKey);
+            Assert.AreEqual(0.035f, grants[1].Value, 1e-6f);
+            Assert.AreEqual(4, affix.Describe(new[] { 3.5f, 0.035f, -0.01f, 1.5f }).Count);
+        }
+
+        [Test]
+        public void APercentageOfThisItem_IsAFlatAmountOfTheItemsOwnGrants_NotOfOtherArmor()
+        {
+            AffixDefinition affix = Affix(new List<AffixEffect>
+            {
+                new StatModifierEffect("Armor Rating", "simplerpg.stat.armor_rating", ModifierLayer.PercentAdd, 0.1f, 0.1f, AffixScope.ThisItem),
+            });
+            var own = new List<GrantSpec>
+            {
+                new GrantSpec { AttributeKey = "simplerpg.stat.armor_rating", Layer = ModifierLayer.Add, Value = 40f },
+                new GrantSpec { AttributeKey = "simplerpg.attr.strength", Layer = ModifierLayer.Add, Value = 5f },
+            };
+            var grants = new List<GrantSpec>();
+
+            affix.AddGrants(own, new[] { 0.1f }, grants);
+
+            Assert.AreEqual(1, grants.Count);
+            Assert.AreEqual(ModifierLayer.Add, grants[0].Layer, "It becomes a flat amount, so it cannot scale armor worn elsewhere.");
+            Assert.AreEqual(4f, grants[0].Value, 1e-4f, "10% of this item's 40, not of the wearer's whole Armor Rating.");
+            Assert.AreEqual("+10% Armor Rating (this item)", affix.Describe(new[] { 0.1f })[0]);
+        }
+
+        [Test]
+        public void APercentageOfThisItem_OnAnItemWithNoneOfThatStat_AddsNothing()
+        {
+            AffixDefinition affix = Affix(new List<AffixEffect>
+            {
+                new StatModifierEffect("Armor Rating", "simplerpg.stat.armor_rating", ModifierLayer.PercentAdd, 0.1f, 0.1f, AffixScope.ThisItem),
+            });
+            var grants = new List<GrantSpec>();
+
+            affix.AddGrants(new List<GrantSpec>(), new[] { 0.1f }, grants);
+
+            Assert.IsEmpty(grants);
+        }
+
+        [Test]
+        public void AnAffixIsOnlyAuthoredCorrectly_IfItHasEffectsThatAreSound()
+        {
+            Assert.IsNotNull(Affix(new List<AffixEffect>()).Problem(), "No effects.");
+            Assert.IsNotNull(Affix("", ModifierLayer.Add, 1, 2).Problem(), "No attribute key.");
+            Assert.IsNotNull(Affix("k", ModifierLayer.Add, 3, 1).Problem(), "Maximum below minimum.");
+            Assert.IsNotNull(new StatModifierEffect("x", "k", ModifierLayer.Add, 1, 2, AffixScope.ThisItem).Problem(), "Only a percentage can be of this item.");
+            Assert.IsNull(Affix("k", ModifierLayer.Add, 1, 2).Problem());
+        }
+
+        [Test]
+        public void AnAffixOnAnAttributeNothingReads_IsNotLive_AndKeepsItsPoolFromShipping()
+        {
+            AffixDefinition inactive = Affix("simplerpg.attr.dexterity", ModifierLayer.Add, 1, 2);
+            AffixDefinition live = Affix("simplerpg.stat.armor_rating", ModifierLayer.Add, 1, 2);
+
+            Assert.IsFalse(inactive.IsLive(out string reason));
+            StringAssert.Contains("dexterity", reason);
+            Assert.IsTrue(live.IsLive(out _));
+            Assert.IsEmpty(Pool(1, 1, live).Problems());
+            Assert.IsNotEmpty(Pool(1, 1, live, inactive).Problems());
+        }
+
+        [Test]
+        public void APoolThatCouldOutgrowAnItemsRoom_IsReported()
+        {
+            var effects = new List<AffixEffect>();
+            for (int i = 0; i < 7; i++) effects.Add(new StatModifierEffect("x", "simplerpg.attr.strength", ModifierLayer.Add, 1, 2));
+            AffixDefinition big = Affix(effects);
+            AffixDefinition big2 = Affix(effects);
+            AffixDefinition big3 = Affix(effects);
+            AffixDefinition big4 = Affix(effects);
+
+            Assert.IsNotEmpty(Pool(4, 4, big, big2, big3, big4).Problems(), "Four of 9 words each is 36, and an item has room for 32.");
+            Assert.IsEmpty(Pool(1, 3, big, big2, big3, big4).Problems());
+        }
+
+        [Test]
+        public void AnAffixNeedsItsItemLevel()
+        {
+            AffixDefinition affix = Affix("k", ModifierLayer.Add, 1, 2);
+            Set(affix, "minimumItemLevel", 16);
+
+            Assert.IsFalse(affix.AllowsItemLevel(15));
+            Assert.IsTrue(affix.AllowsItemLevel(16));
+            Assert.IsTrue(affix.AllowsItemLevel(40));
         }
 
         [Test]
@@ -131,6 +230,27 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         // ---- Rolling from a pool ----
+
+        [Test]
+        public void ARollOffersOnlyTheTiersTheItemLevelAllows_AndOneTierPerFamily()
+        {
+            AffixDefinition low = Affix("simplerpg.attr.strength", ModifierLayer.Add, 1, 2, family: "might");
+            AffixDefinition high = Affix("simplerpg.attr.strength", ModifierLayer.Add, 5, 6, family: "might");
+            Set(high, "minimumItemLevel", 10);
+            Set(high, "tier", 2);
+            Register(low, high);
+            ArmorData chest = MakeItem<ArmorData>(Pool(2, 2, low, high));
+            Set(chest, "slot", EquipmentSlot.chest);
+
+            for (int seed = 1; seed < 30; seed++)
+            {
+                Assert.AreEqual(1, chest.RollAffixes(new SeededRandom(seed), 9).Count);
+                Assert.AreEqual(1, chest.RollAffixes(new SeededRandom(seed), 10).Count, "Same family, so only one tier of it even when both are allowed.");
+            }
+
+            DefinitionRegistry.Instance.TryGetShortId(low.Id, out uint lowId);
+            Assert.AreEqual(lowId, chest.RollAffixes(new SeededRandom(1), 9)[0].AffixId, "Below level 10 only the first tier can roll.");
+        }
 
         [Test]
         public void ARollFromAPool_UsesOnlyAffixesThatFitTheSlot_AndAreRegistered()
@@ -182,7 +302,7 @@ namespace SimpleRPG.Tests.EditMode
             created.Add(copy);
 
             Assert.AreEqual(1, instance.Affixes.Count);
-            Assert.AreEqual(2000, instance.Affixes[0].ValueMilli);
+            Assert.AreEqual(2000, instance.Affixes[0].ValuesMilli[0]);
             Assert.AreEqual(rolled, copy.Affixes, "A copy of an instance keeps its roll.");
             Assert.IsTrue(sword.Affixes.IsEmpty, "The asset itself is never changed.");
         }

@@ -148,7 +148,14 @@ namespace SimpleRPG.InventorySystem
                         AffixRoll roll = Affixes[i];
                         if (registry != null && registry.TryGetByShortId(roll.AffixId, out GameplayDefinition definition) && definition is AffixDefinition affix)
                         {
-                            combinedGrants.Add(affix.ToGrant(roll.Value));
+                            if (affix.ValueCount != roll.ValueCount)
+                            {
+                                Debug.LogWarning($"{name}: affix {affix.name} now rolls {affix.ValueCount} values but this item rolled {roll.ValueCount}, so it does nothing.", this);
+                                continue;
+                            }
+
+                            // Scaled by the item's own grants (the asset's), not by the grants of other affixes.
+                            affix.AddGrants(grants, roll.Values(), combinedGrants);
                         }
                         else
                         {
@@ -165,7 +172,8 @@ namespace SimpleRPG.InventorySystem
         /// Rolls affixes for a new instance of this item from its pool. Draws nothing if it has no pool, so adding affixes to some items never
         /// changes what the rest of a dungeon's loot rolls. Server (or offline) only.
         /// </summary>
-        public ItemAffixes RollAffixes(SimpleRPG.Gameplay.IGameplayRandom random)
+        /// <param name="itemLevel">The level of the loot source this instance comes from (see <see cref="ItemLevel"/>).</param>
+        public ItemAffixes RollAffixes(SimpleRPG.Gameplay.IGameplayRandom random, int itemLevel = ItemLevel.Minimum)
         {
             if (affixPool == null)
             {
@@ -173,7 +181,7 @@ namespace SimpleRPG.InventorySystem
             }
 
             DefinitionRegistry registry = DefinitionRegistry.Instance;
-            return AffixRoller.Roll(affixPool, WornSlot, random, affix => registry != null && registry.TryGetShortId(affix.Id, out uint id) ? id : 0u);
+            return AffixRoller.Roll(affixPool, WornSlot, itemLevel, random, affix => registry != null && registry.TryGetShortId(affix.Id, out uint id) ? id : 0u);
         }
 
         /// <summary>

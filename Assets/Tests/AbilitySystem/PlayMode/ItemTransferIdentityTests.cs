@@ -117,11 +117,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             AffixDefinition affix = ScriptableObject.CreateInstance<AffixDefinition>();
             created.Add(affix);
             affix.EnsureId();
-            Set(affix, "label", "Armor Rating");
-            Set(affix, "attributeKey", DerivedStats.ArmorRating.Key);
-            Set(affix, "layer", ModifierLayer.Add);
-            Set(affix, "minimum", Rolled);
-            Set(affix, "maximum", Rolled);
+            Set(affix, "effects", new List<AffixEffect> { new StatModifierEffect("Armor Rating", DerivedStats.ArmorRating.Key, ModifierLayer.Add, Rolled, Rolled) });
 
             AffixPool pool = ScriptableObject.CreateInstance<AffixPool>();
             created.Add(pool);
@@ -188,7 +184,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             var instanceId = inventory.GetInstanceId(piece);
             ItemAffixes rolled = piece.Affixes;
             Assert.AreEqual(1, rolled.Count, "It rolled one affix.");
-            Assert.AreEqual((int)(Rolled * AffixRoll.Scale), rolled[0].ValueMilli);
+            Assert.AreEqual((int)(Rolled * AffixRoll.Scale), rolled[0].ValuesMilli[0]);
             Assert.AreEqual(0d, ArmorRating(player), "Carried, it protects nothing.");
 
             // Worn.

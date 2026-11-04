@@ -1,5 +1,7 @@
 # Armor affix catalog: DRAFT for review
 
+> **Superseded in part (2026-11-04).** The model now supports what this draft listed as gaps: several effects per affix with independent values, prefix/suffix, families and tiers, item-level eligibility, and item-scoped percentages (see `Docs/Affixes.md`). The numbers below are provisional and the uniform 10% budget rule is not adopted. Affixes on stats nothing reads cannot be put in a live pool.
+
 **Status: a draft. Nothing here is in the game.** No production item data has been populated, no assets created, no code changed. Names and numbers are provisional and expected to change for balance and lore. This page exists so the catalog, its numbers and the concerns it raises can be reviewed before anything is authored.
 
 Scope is the eight families requested: four prefixes and four suffixes, three tiers each, for armor. It extends the existing affix system (`AffixDefinition`, `AffixPool`, `AffixRoller`, `ItemAffixes`; see [Item affixes](Affixes.md)) and invents no stat or mechanic.
