@@ -50,6 +50,14 @@ Plate Armor is the first user: `PlateArmor_PlateArmor` is the plate with the mai
 
 **Not done:** rigid pieces are only produced by hand or by the helmet path (one combined mesh on the head bone); a shell and a separately moving visor would be two pieces once the visor has its own bone or socket. Rigid pieces for a head piece are placed in the body model's space, which depends on the rig pose question (A-pose armor vs the game's T-pose body), not on a per-item fix.
 
+## Sockets
+
+Where something sits on the body is body art data. A **socket** is an empty transform authored in the body model under the bone it belongs to, posed in Blender, and carried into `HumanMale_Rig.prefab` by `HumanMaleSetup` (which reports a missing one; it never invents one). Rigid pieces attach to a socket by name exactly as to a bone. The names are in `RigSockets`:
+
+- `Socket_Headgear` under `Head`: origin where a helmet's own origin goes (bottom centre of the helmet), axes up and forward the way the face looks. Head pieces are authored with their origin and orientation to match, so `ArmorSetup` attaches them with an identity pose and assumes nothing about the body model's space. The sallet's origin is the bottom of the helmet, which is why it needs this.
+
+`RigConformanceTests` fails if the body rig lacks the socket, if a rigid part names a bone or socket the rig lacks, or if armor is bound to a different rest pose than the body rig (`RigConformance`, which compares a mesh's bind poses with the rig's bones).
+
 ## Known limits
 
 - The rig faces +Z with the sword mounted at `RightHand` (`Longsword`). Its calibrated local position is approximately `(-0.055777, 0.104543, -0.037857)` metres; its rotation is also essential. Hurtbox shapes still need a visual check in play.

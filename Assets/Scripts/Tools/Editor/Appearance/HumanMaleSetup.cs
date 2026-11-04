@@ -102,6 +102,10 @@ namespace SimpleRPG.AppearanceTools
             if (animator != null) Object.DestroyImmediate(animator);
 
             if (instance.transform.Find(RigRootName) == null) Debug.LogError("[Appearance] The model has no " + RigRootName + " child.");
+            if (!instance.GetComponentsInChildren<Transform>(true).Any(t => t.name == RigSockets.Headgear))
+            {
+                Debug.LogError("[Appearance] The model has no " + RigSockets.Headgear + ". Sockets are authored in the body model (an empty under the bone), not made here; see Docs/CharacterAppearance.md.");
+            }
             PrefabUtility.SaveAsPrefabAsset(instance, RigPrefabPath);
             Object.DestroyImmediate(instance);
         }

@@ -26,7 +26,6 @@ namespace SimpleRPG.AppearanceTools
         private const string ArtFolder = "Assets/Art/3d Models/Items";
         public const string ItemsFolder = "Assets/Items/Armor";
         public const string PartsFolder = "Assets/Art/BodyParts/Armor";
-        private const string HeadBone = "Head";
 
         /// <summary>One piece of armor as the seed describes it.</summary>
         public readonly struct Piece
@@ -325,10 +324,9 @@ namespace SimpleRPG.AppearanceTools
             }
         }
 
-        // A piece that is not skinned: every mesh in its prefab is combined, in the prefab's own space, into one mesh worn rigidly on the head
-        // bone. Parts are one per slot, so a shell and a visor have to be one part; the visor is as the prefab has it (closed). The pose of the
-        // prefab relative to the head bone is taken the way the eyebrows are: the art is assumed to share the body model's space. If the piece
-        // sits wrong on the head, adjust the part's attach position and rotation in its asset.
+        // A piece that is not skinned: every mesh in its prefab is combined, in the prefab's own space, into one mesh worn rigidly on the headgear
+        // socket (see RigSockets.Headgear). A piece's origin is the socket, so a head piece is authored with its origin where a helmet sits and
+        // nothing about the body model's space is assumed. The visor is as the prefab has it (closed).
         private static bool WriteRigidPart(Piece piece, ArmorData item, GameObject prefab, List<string> problems)
         {
             if (piece.Slot != EquipmentSlot.head)
@@ -344,11 +342,9 @@ namespace SimpleRPG.AppearanceTools
                 return false;
             }
 
-            GameObject body = AssetDatabase.LoadAssetAtPath<GameObject>(HumanMaleSetup.ModelPath);
-            Transform head = body != null ? body.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == HeadBone) : null;
-            if (head == null)
+            if (!RigHasTransform(RigSockets.Headgear))
             {
-                problems.Add($"{piece.Folder}: no '{HeadBone}' bone found in {HumanMaleSetup.ModelPath}, so a rigid piece cannot be placed on the head.");
+                problems.Add($"{piece.Folder}: the body rig has no '{RigSockets.Headgear}' (an empty under the Head bone, posed in Blender where a helmet's origin goes). Add it to the body export, run Build Human Male Parts And Rig, then run this again.");
                 return false;
             }
 
@@ -395,13 +391,19 @@ namespace SimpleRPG.AppearanceTools
                 AssetDatabase.CreateAsset(part, partPath);
             }
 
-            Matrix4x4 local = head.worldToLocalMatrix;
-            part.Configure(BodyPartSlot.Headgear, combined, materials.ToArray(), null, "", combined.bounds, HeadBone, local.GetPosition(), local.rotation, local.lossyScale);
+            part.Configure(BodyPartSlot.Headgear, combined, materials.ToArray(), null, "", combined.bounds, RigSockets.Headgear, Vector3.zero, Quaternion.identity, Vector3.one);
+            part.SetAdditionalPieces(null);
             part.Dress(item);
             string problem = part.Problem();
             if (problem != null) problems.Add($"{piece.Folder}: {problem}");
             EditorUtility.SetDirty(part);
             return true;
+        }
+
+        private static bool RigHasTransform(string name)
+        {
+            var rig = AssetDatabase.LoadAssetAtPath<GameObject>(HumanMaleSetup.RigPrefabPath);
+            return rig != null && rig.GetComponentsInChildren<Transform>(true).Any(t => t.name == name);
         }
 
         private static void Report(int itemsMade, int partsWritten, List<string> problems)
