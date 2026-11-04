@@ -50,10 +50,12 @@ There is no lookup table to keep in step: `ArmorParts` finds an item's parts by 
 
 ### Making armor
 
-1. Put the art in `Assets/Art/3d Models/Items/<Name>/` as `<Name>.prefab` (skinned to the shared rig) and `<Name>_Icon.png`.
+1. Author the piece in the Blender authoring scene on the **canonical rig** (52 bones, A-pose; its names are listed in `Authoring/GameRig_Bones.json` beside the scene). Add it to `PIECES` in `Authoring/export_armor.py` and run `export_piece("<Name>")`. The script checks the rig and the vertex weights, refuses a piece the game could not wear, and writes `Assets/Art/3d Models/Items/<Name>/<Name>.fbx`; the folder also needs `<Name>.prefab` (a variant of the FBX) and `<Name>_Icon.png`. Textures go through `Authoring/pack_item_textures.py` (BaseColor and Normal copied, Metallic and Roughness packed into `MetallicSmoothness`).
 2. Add the piece to the seed in `ArmorSetup.Pieces` (name, slot, grid size, starting Armor Rating).
 3. Run **SimpleRPG > Items > Build Armor Items And Parts**. It creates the item and its parts, sets the icon up as a sprite, and rebuilds the definition registry. It shows what it could not do (below).
 4. Tune the item **in its asset** from then on. The tool never changes an item that exists; it only updates parts from the art, so ids and references survive a re-export.
+
+**One skeleton.** Armor is skinned to exactly the bones of the body rig and no others, so wearing it never needs a fix-up: the tool reports a piece skinned to a bone the body rig lacks, and `ArmorSetupTests` fails if a shipped part is. The animation rigs in the authoring scene also carry twist and `MCH_` helper bones; those are authoring-only and are not part of the game rig, so armor is never skinned to them. If the game rig gains bones, add them to the body first and to `GameRig_Bones.json` after.
 
 The starting numbers are a seed, not a design decision:
 

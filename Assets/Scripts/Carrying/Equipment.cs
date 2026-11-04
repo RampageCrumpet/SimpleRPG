@@ -264,7 +264,7 @@ namespace SimpleRPG
                 SetCharges(instanceId, remaining);
             }
 
-            Changed?.Invoke();
+            RaiseChanged();
 
             equipmentSet.Equip((int)slot, new ItemInstanceId(instanceId));
             return true;
@@ -396,7 +396,7 @@ namespace SimpleRPG
             }
 
             RemoveEntry(slot);
-            Changed?.Invoke();
+            RaiseChanged();
 
             equipmentSet.Unequip((int)slot);
             return true;
@@ -489,7 +489,30 @@ namespace SimpleRPG
                 Destroy(stale);
             }
 
-            Changed?.Invoke();
+            RaiseChanged();
+        }
+
+        // Each listener is called on its own. A view that fails while redrawing (an appearance part that cannot bind, say) is logged and must not
+        // abort an equip halfway, which would leave the item worn but its grants never applied.
+        private void RaiseChanged()
+        {
+            Action handlers = Changed;
+            if (handlers == null)
+            {
+                return;
+            }
+
+            foreach (Delegate handler in handlers.GetInvocationList())
+            {
+                try
+                {
+                    ((Action)handler)();
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogException(exception, this);
+                }
+            }
         }
     }
 }

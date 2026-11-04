@@ -218,6 +218,16 @@ namespace SimpleRPG.AppearanceTools
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }
 
+        /// <summary>
+        /// The bone names, out of those given, that the body rig does not have. Empty means the art can be bound to the body.
+        /// </summary>
+        public static List<string> BonesMissingFromRig(IEnumerable<string> boneNames)
+        {
+            var rig = AssetDatabase.LoadAssetAtPath<GameObject>(HumanMaleSetup.RigPrefabPath);
+            var have = new HashSet<string>(rig != null ? rig.GetComponentsInChildren<Transform>(true).Select(t => t.name) : Enumerable.Empty<string>());
+            return boneNames.Where(name => !have.Contains(name)).Distinct().ToList();
+        }
+
         private static bool WritePart(Piece piece, ArmorData item, SkinnedMeshRenderer mesh, List<string> problems)
         {
             if (!TryPartSlot(piece.Slot, mesh.name, out BodyPartSlot slot))
@@ -232,6 +242,15 @@ namespace SimpleRPG.AppearanceTools
                 return false;
             }
 
+            // Art skinned to bones the body does not have cannot be worn. Say so here, and do not write a part the game would throw on.
+            string[] boneNames = mesh.bones.Select(b => b != null ? b.name : "").ToArray();
+            List<string> missingBones = BonesMissingFromRig(boneNames);
+            if (missingBones.Count > 0)
+            {
+                problems.Add($"{piece.Folder}: '{mesh.name}' is skinned to bones the body rig does not have ({string.Join(", ", missingBones)}). Export it from the authoring scene with Authoring/export_armor.py.");
+                return false;
+            }
+
             string path = $"{PartsFolder}/{piece.Folder}_{mesh.name}.asset";
             BodyPartDefinition part = AssetDatabase.LoadAssetAtPath<BodyPartDefinition>(path);
             if (part == null)
@@ -241,7 +260,7 @@ namespace SimpleRPG.AppearanceTools
                 AssetDatabase.CreateAsset(part, path);
             }
 
-            part.Configure(slot, mesh.sharedMesh, mesh.sharedMaterials, mesh.bones.Select(b => b != null ? b.name : "").ToArray(), mesh.rootBone.name,
+            part.Configure(slot, mesh.sharedMesh, mesh.sharedMaterials, boneNames, mesh.rootBone.name,
                 mesh.localBounds, "", Vector3.zero, Quaternion.identity, Vector3.one);
             part.Dress(item);
             string problem = part.Problem();

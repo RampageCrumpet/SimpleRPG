@@ -134,5 +134,18 @@ namespace SimpleRPG.Tests.EditMode
         {
             CollectionAssert.IsSupersetOf(ArmorSetup.Pieces.Select(p => p.Slot).Distinct(), new[] { EquipmentSlot.head, EquipmentSlot.chest, EquipmentSlot.hands });
         }
+
+        [Test]
+        public void EveryArmorPart_IsSkinnedOnlyToBonesTheBodyRigHas()
+        {
+            foreach (string guid in UnityEditor.AssetDatabase.FindAssets("t:BodyPartDefinition", new[] { ArmorSetup.PartsFolder }))
+            {
+                var part = UnityEditor.AssetDatabase.LoadAssetAtPath<BodyPartDefinition>(UnityEditor.AssetDatabase.GUIDToAssetPath(guid));
+                if (part.IsSkinned)
+                {
+                    Assert.IsEmpty(ArmorSetup.BonesMissingFromRig(part.BoneNames), part.name + " is skinned to bones the body rig lacks; export it with Authoring/export_armor.py");
+                }
+            }
+        }
     }
 }

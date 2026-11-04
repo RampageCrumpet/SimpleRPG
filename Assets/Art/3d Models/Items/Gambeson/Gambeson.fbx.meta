@@ -7,8 +7,8 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Gambeson_Atlas
-    second: {fileID: 2100000, guid: a489aaa0221a45b47921a0bbd56403bb, type: 2}
+      name: SRPG_gambeson_Game_PBR
+    second: {fileID: 2100000, guid: 3405b06809c0b8f48a82a8ef68eb928b, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

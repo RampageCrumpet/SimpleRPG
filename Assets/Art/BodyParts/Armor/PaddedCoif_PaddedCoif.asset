@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 72a214674ef3ded4eac74b41c7680c12, type: 3}
-  m_Name: PaddedCoif_PaddedCoif.001
+  m_Name: PaddedCoif_PaddedCoif
   m_EditorClassIdentifier: SimpleRPG.Presentation::SimpleRPG.Appearance.BodyPartDefinition
-  definitionId: 5725dcde95144b3a85e41a595efeff27
+  definitionId: d343341652e04b08bfd7e6c4573ab92c
   slot: 8
-  mesh: {fileID: -8819816803335849266, guid: 46beed55163496047a201421a1059230, type: 3}
+  mesh: {fileID: -9049956222222516434, guid: 46beed55163496047a201421a1059230, type: 3}
   materials:
   - {fileID: 2100000, guid: 9702de5575b60264eb1a47b72f436d9a, type: 2}
   dressesItem: {fileID: 11400000, guid: 3097f005b8c5fc7499aa4a0e382f4120, type: 2}
@@ -44,12 +44,6 @@ MonoBehaviour:
   - LeftLittleProximal
   - LeftLittleIntermediate
   - LeftLittleDistal
-  - LeftLowerArmTwist1
-  - LeftLowerArmTwist2
-  - LeftLowerArmTwist3
-  - LeftUpperArmTwist1
-  - LeftUpperArmTwist2
-  - LeftUpperArmTwist3
   - RightShoulder
   - RightUpperArm
   - RightLowerArm
@@ -69,12 +63,6 @@ MonoBehaviour:
   - RightLittleProximal
   - RightLittleIntermediate
   - RightLittleDistal
-  - RightLowerArmTwist1
-  - RightLowerArmTwist2
-  - RightLowerArmTwist3
-  - RightUpperArmTwist1
-  - RightUpperArmTwist2
-  - RightUpperArmTwist3
   - LeftUpperLeg
   - LeftLowerLeg
   - LeftFoot
@@ -85,8 +73,8 @@ MonoBehaviour:
   - RightToes
   rootBoneName: Hips
   localBounds:
-    m_Center: {x: 0.00043800473, y: 0.5587572, z: -0.0067016184}
-    m_Extent: {x: 0.2537329, y: 0.2589985, z: 0.16415185}
+    m_Center: {x: 0.00043800473, y: 0.5587572, z: -0.0053825825}
+    m_Extent: {x: 0.2537329, y: 0.2589985, z: 0.16547088}
   attachBoneName: 
   attachPosition: {x: 0, y: 0, z: 0}
   attachRotation: {x: 0, y: 0, z: 0, w: 1}

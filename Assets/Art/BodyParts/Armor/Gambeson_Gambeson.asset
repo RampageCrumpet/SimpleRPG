@@ -16,7 +16,7 @@ MonoBehaviour:
   slot: 1
   mesh: {fileID: 6151081485653884047, guid: 7c60702b25967c54fb3a06e7e273bd65, type: 3}
   materials:
-  - {fileID: 2100000, guid: a489aaa0221a45b47921a0bbd56403bb, type: 2}
+  - {fileID: 2100000, guid: 3405b06809c0b8f48a82a8ef68eb928b, type: 2}
   dressesItem: {fileID: 11400000, guid: bdca4e194dc117f4f8e52e87bf7d5b32, type: 2}
   boneNames:
   - Hips
@@ -44,12 +44,6 @@ MonoBehaviour:
   - LeftLittleProximal
   - LeftLittleIntermediate
   - LeftLittleDistal
-  - LeftLowerArmTwist1
-  - LeftLowerArmTwist2
-  - LeftLowerArmTwist3
-  - LeftUpperArmTwist1
-  - LeftUpperArmTwist2
-  - LeftUpperArmTwist3
   - RightShoulder
   - RightUpperArm
   - RightLowerArm
@@ -69,12 +63,6 @@ MonoBehaviour:
   - RightLittleProximal
   - RightLittleIntermediate
   - RightLittleDistal
-  - RightLowerArmTwist1
-  - RightLowerArmTwist2
-  - RightLowerArmTwist3
-  - RightUpperArmTwist1
-  - RightUpperArmTwist2
-  - RightUpperArmTwist3
   - LeftUpperLeg
   - LeftLowerLeg
   - LeftFoot
@@ -85,8 +73,8 @@ MonoBehaviour:
   - RightToes
   rootBoneName: Hips
   localBounds:
-    m_Center: {x: 0.00021718442, y: 0.15989044, z: 0.003950283}
-    m_Extent: {x: 0.47975522, y: 0.48088214, z: 0.22220476}
+    m_Center: {x: 0.000960812, y: 0.15880851, z: 0.004870467}
+    m_Extent: {x: 0.46859902, y: 0.47956657, z: 0.21554014}
   attachBoneName: 
   attachPosition: {x: 0, y: 0, z: 0}
   attachRotation: {x: 0, y: 0, z: 0, w: 1}

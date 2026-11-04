@@ -44,12 +44,6 @@ MonoBehaviour:
   - LeftLittleProximal
   - LeftLittleIntermediate
   - LeftLittleDistal
-  - LeftLowerArmTwist1
-  - LeftLowerArmTwist2
-  - LeftLowerArmTwist3
-  - LeftUpperArmTwist1
-  - LeftUpperArmTwist2
-  - LeftUpperArmTwist3
   - RightShoulder
   - RightUpperArm
   - RightLowerArm
@@ -69,12 +63,6 @@ MonoBehaviour:
   - RightLittleProximal
   - RightLittleIntermediate
   - RightLittleDistal
-  - RightLowerArmTwist1
-  - RightLowerArmTwist2
-  - RightLowerArmTwist3
-  - RightUpperArmTwist1
-  - RightUpperArmTwist2
-  - RightUpperArmTwist3
   - LeftUpperLeg
   - LeftLowerLeg
   - LeftFoot
@@ -85,8 +73,8 @@ MonoBehaviour:
   - RightToes
   rootBoneName: Hips
   localBounds:
-    m_Center: {x: -0.0012760609, y: 0.23879285, z: 0.0063154846}
-    m_Extent: {x: 0.4899677, y: 0.37128347, z: 0.20895217}
+    m_Center: {x: -0.0012760609, y: 0.23879285, z: 0.008914337}
+    m_Extent: {x: 0.4899677, y: 0.37128347, z: 0.21155103}
   attachBoneName: 
   attachPosition: {x: 0, y: 0, z: 0}
   attachRotation: {x: 0, y: 0, z: 0, w: 1}
