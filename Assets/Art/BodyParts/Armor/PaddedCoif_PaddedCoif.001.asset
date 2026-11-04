@@ -1,0 +1,93 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72a214674ef3ded4eac74b41c7680c12, type: 3}
+  m_Name: PaddedCoif_PaddedCoif.001
+  m_EditorClassIdentifier: SimpleRPG.Presentation::SimpleRPG.Appearance.BodyPartDefinition
+  definitionId: 5725dcde95144b3a85e41a595efeff27
+  slot: 8
+  mesh: {fileID: -8819816803335849266, guid: 46beed55163496047a201421a1059230, type: 3}
+  materials:
+  - {fileID: 2100000, guid: 9702de5575b60264eb1a47b72f436d9a, type: 2}
+  dressesItem: {fileID: 11400000, guid: 3097f005b8c5fc7499aa4a0e382f4120, type: 2}
+  boneNames:
+  - Hips
+  - Spine
+  - Chest
+  - UpperChest
+  - Neck
+  - Head
+  - LeftShoulder
+  - LeftUpperArm
+  - LeftLowerArm
+  - LeftHand
+  - LeftThumbProximal
+  - LeftThumbIntermediate
+  - LeftThumbDistal
+  - LeftIndexProximal
+  - LeftIndexIntermediate
+  - LeftIndexDistal
+  - LeftMiddleProximal
+  - LeftMiddleIntermediate
+  - LeftMiddleDistal
+  - LeftRingProximal
+  - LeftRingIntermediate
+  - LeftRingDistal
+  - LeftLittleProximal
+  - LeftLittleIntermediate
+  - LeftLittleDistal
+  - LeftLowerArmTwist1
+  - LeftLowerArmTwist2
+  - LeftLowerArmTwist3
+  - LeftUpperArmTwist1
+  - LeftUpperArmTwist2
+  - LeftUpperArmTwist3
+  - RightShoulder
+  - RightUpperArm
+  - RightLowerArm
+  - RightHand
+  - RightThumbProximal
+  - RightThumbIntermediate
+  - RightThumbDistal
+  - RightIndexProximal
+  - RightIndexIntermediate
+  - RightIndexDistal
+  - RightMiddleProximal
+  - RightMiddleIntermediate
+  - RightMiddleDistal
+  - RightRingProximal
+  - RightRingIntermediate
+  - RightRingDistal
+  - RightLittleProximal
+  - RightLittleIntermediate
+  - RightLittleDistal
+  - RightLowerArmTwist1
+  - RightLowerArmTwist2
+  - RightLowerArmTwist3
+  - RightUpperArmTwist1
+  - RightUpperArmTwist2
+  - RightUpperArmTwist3
+  - LeftUpperLeg
+  - LeftLowerLeg
+  - LeftFoot
+  - LeftToes
+  - RightUpperLeg
+  - RightLowerLeg
+  - RightFoot
+  - RightToes
+  rootBoneName: Hips
+  localBounds:
+    m_Center: {x: 0.00043800473, y: 0.5587572, z: -0.0067016184}
+    m_Extent: {x: 0.2537329, y: 0.2589985, z: 0.16415185}
+  attachBoneName: 
+  attachPosition: {x: 0, y: 0, z: 0}
+  attachRotation: {x: 0, y: 0, z: 0, w: 1}
+  attachScale: {x: 1, y: 1, z: 1}

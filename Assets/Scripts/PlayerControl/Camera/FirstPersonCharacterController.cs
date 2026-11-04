@@ -32,7 +32,7 @@ namespace SimpleRPG
         /// </summary>
         [SerializeField]
         [Tooltip("The furthest down our character can look.")]
-        private float maximumPitch = 60;
+        private float maximumPitch = 85;
 
         /// <summary>
         /// The distance above our horizon line the character can look.

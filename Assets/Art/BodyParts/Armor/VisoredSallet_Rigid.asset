@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72a214674ef3ded4eac74b41c7680c12, type: 3}
+  m_Name: VisoredSallet_Rigid
+  m_EditorClassIdentifier: SimpleRPG.Presentation::SimpleRPG.Appearance.BodyPartDefinition
+  definitionId: ad82db781f5f4d7e969fce31c30e5554
+  slot: 8
+  mesh: {fileID: 4300000, guid: 4d739f1af6b61a84b87663ef055ed576, type: 2}
+  materials:
+  - {fileID: 2100000, guid: 7531657042466a1459bbc6d60703b391, type: 2}
+  - {fileID: 2100000, guid: 7531657042466a1459bbc6d60703b391, type: 2}
+  dressesItem: {fileID: 11400000, guid: b022a52359d3f904686171b51b32fad2, type: 2}
+  boneNames: []
+  rootBoneName: 
+  localBounds:
+    m_Center: {x: 0, y: 0.11999997, z: -0.020417467}
+    m_Extent: {x: 0.1125, y: 0.12, z: 0.16999997}
+  attachBoneName: Head
+  attachPosition: {x: 0, y: -1.4643221, z: 0.054866984}
+  attachRotation: {x: -0.029641232, y: 0, z: 0, w: 0.9995606}
+  attachScale: {x: 1, y: 1, z: 1}

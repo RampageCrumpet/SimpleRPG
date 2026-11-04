@@ -184,7 +184,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             byConstitution.SetBase(PrimaryAttributes.Constitution, 40);
             byArmor.AddModifier(AttributeModifier.Flat(DerivedStats.ArmorRating, 40, Chestplate));
 
-            Assert.AreNotEqual(byConstitution.Get(DerivedStats.PhysicalDamageReduction), byArmor.Get(DerivedStats.PhysicalDamageReduction), 1e-6,
+            Assert.That(byConstitution.Get(DerivedStats.PhysicalDamageReduction), Is.Not.EqualTo(byArmor.Get(DerivedStats.PhysicalDamageReduction)).Within(1e-6),
                 "Forty points of each are only worth the same if the curves are tuned that way.");
         }
 

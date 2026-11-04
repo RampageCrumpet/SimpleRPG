@@ -282,7 +282,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   rotationSpeed: 360
-  maximumPitch: 60
+  maximumPitch: 85
   minimumPitch: -60
   eye: {fileID: 4544152594189161446}
   restEye: {x: 0, y: 1.043, z: 0.12}
@@ -404,6 +404,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SimpleRPG.Abilities.Integration::SimpleRPG.Abilities.Integration.ComboMeleeDelivery
   ShowTopMostFoldoutHeaderGroup: 1
+  bounceStaggerSeconds: 0.6
 --- !u!114 &1280965052588903103
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -549,7 +550,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Appearance.OwnerViewBodyHider
   ShowTopMostFoldoutHeaderGroup: 1
-  hiddenSlots: 0000000007000000i
+  hiddenSlots: 000000000700000008000000i
 --- !u!114 &3463122332262826166
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -599,6 +600,19 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 76b59de91a0ffdb42b941797eb301d93, type: 2}
   - {fileID: 11400000, guid: ad82ddef38eacee43985f7cd31508d92, type: 2}
   defaultWeapon: {fileID: 11400000, guid: fe75756d0facf1c438525ed1bb428a95, type: 2}
+--- !u!114 &8530000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1669218347359381997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bf5c720e84e50d15c28f3e16abb19b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Appearance.EquipmentAppearance
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &3806423276993517633
 GameObject:
   m_ObjectHideFlags: 0
@@ -746,6 +760,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b78a4dce3dbe0894e933930046f155e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  obstructionLayer: World
 --- !u!114 &3663488237140871413
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -759,6 +774,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  obstructionHeight: 1.3
 --- !u!54 &7458854288637318587
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1709,16 +1725,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: SimpleRPG::HitDetection.HurtBox
   <BodyLocation>k__BackingField: 2
   <Priority>k__BackingField: 0
---- !u!114 &8530000000000000001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1669218347359381997}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3bf5c720e84e50d15c28f3e16abb19b2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: SimpleRPG::SimpleRPG.Appearance.EquipmentAppearance
-  ShowTopMostFoldoutHeaderGroup: 1

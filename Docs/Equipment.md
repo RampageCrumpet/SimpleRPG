@@ -21,7 +21,7 @@ Armor is worn on five slots: head, chest, hands, legs, feet. This page covers wh
 
 ## Using it in the game
 
-- Right-click armor in your inventory to wear it. Right-click or left-click a worn slot on the paper doll to take it off. Dragging is not used for equipping.
+- Right-click armor in your inventory to wear it, or drag it onto the paper doll and let go anywhere over the doll; it goes in the slot it declares. Right-click or left-click a worn slot on the paper doll to take it off.
 - `RegisterWithUI` binds the paper doll for the owning client through `LootMenuUI.BindPlayer`. See [Inventory screens](InventoryScreens.md) for where it sits.
 - To make armor: create an **Items > ArmorData** asset, set its slot, icon and size. Items are gameplay definitions, so the asset is given a permanent id when it is created; run **SimpleRPG > Definitions > Rebuild Definition Registry** to register it and give it a network id (never reused).
 
@@ -36,7 +36,7 @@ An armor piece is two things, made together by one tool and kept apart in the ga
 - **The item** (`ArmorData`, in `Assets/Items/Armor`): its slot, size, icon, and what it does, which is a **grant of Armor Rating** (`simplerpg.stat.armor_rating`, a flat amount). Nothing else about protection lives anywhere else: affixes on the piece add to or scale that same stat, and Armor Rating becomes Physical Damage Reduction through the player profile (see [Stats](Stats.md)).
 - **The look**: one `BodyPartDefinition` per skinned mesh in the piece's art prefab, each marked as **the look of that item** (`dressesItem`). A pair of gloves has two (left and right); a helmet or chest piece has one.
 
-`EquipmentAppearance` (a server-side component on the player prefab) joins them. It watches the character's `Equipment` and, for each worn piece, finds its parts and puts them on the character's `CharacterAppearance` in place of the bare parts in the same slots; take the armor off and the bare parts return. Clients do nothing: appearance already replicates, so every machine and every late joiner shows what the server decided. A character that spawns already wearing armor (a returning player) is dressed at once. The owner's first-person view already hides whatever is on the head slot from the inside, so a helmet is hidden from the owner and seen by everyone else; gloves and sleeves show.
+`EquipmentAppearance` (a server-side component on the player prefab) joins them. It watches the character's `Equipment` and, for each worn piece, finds its parts and puts them on the character's `CharacterAppearance` in place of the bare parts in the same slots; take the armor off and the bare parts return. Clients do nothing: appearance already replicates, so every machine and every late joiner shows what the server decided. A character that spawns already wearing armor (a returning player) is dressed at once. Helmets go in the separate **Headgear** body slot, so they sit over the bare head and the face stays. The owner's first-person view already hides the head and headgear from the inside, so a helmet is hidden from the owner and seen by everyone else; gloves and sleeves show.
 
 ```
 Equipment (replicated slot -> item)

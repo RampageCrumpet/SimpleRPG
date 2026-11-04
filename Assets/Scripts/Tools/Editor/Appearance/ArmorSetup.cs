@@ -99,7 +99,7 @@ namespace SimpleRPG.AppearanceTools
             slot = default;
             switch (equipmentSlot)
             {
-                case EquipmentSlot.head: slot = BodyPartSlot.Head; return true;
+                case EquipmentSlot.head: slot = BodyPartSlot.Headgear; return true;
                 case EquipmentSlot.chest: slot = BodyPartSlot.Torso; return true;
                 case EquipmentSlot.legs: slot = BodyPartSlot.Legs; return true;
                 case EquipmentSlot.hands: return TrySide(meshName, BodyPartSlot.HandLeft, BodyPartSlot.HandRight, out slot);
@@ -321,7 +321,7 @@ namespace SimpleRPG.AppearanceTools
             }
 
             Matrix4x4 local = head.worldToLocalMatrix;
-            part.Configure(BodyPartSlot.Head, combined, materials.ToArray(), null, "", combined.bounds, HeadBone, local.GetPosition(), local.rotation, local.lossyScale);
+            part.Configure(BodyPartSlot.Headgear, combined, materials.ToArray(), null, "", combined.bounds, HeadBone, local.GetPosition(), local.rotation, local.lossyScale);
             part.Dress(item);
             string problem = part.Problem();
             if (problem != null) problems.Add($"{piece.Folder}: {problem}");

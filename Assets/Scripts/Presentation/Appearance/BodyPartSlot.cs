@@ -13,5 +13,8 @@ namespace SimpleRPG.Appearance
         HandLeft = 5,
         HandRight = 6,
         Eyebrows = 7,
+
+        /// <summary>Helmets and hoods. Worn over the head, never in place of it, so the face stays.</summary>
+        Headgear = 8,
     }
 }

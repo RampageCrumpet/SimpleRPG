@@ -31,7 +31,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         private const string SkeletonPrefab = "Assets/Prefabs/Characters/Enemies/SkeletonFootman.prefab";
         private const int WeaponDamage = 20;
 
-        // The longsword's 20 is multiplied by the wielder's Melee Power (x1.5 at the default attributes), so a torso blow is 30; head x1.75 = 53, limbs x0.75 = 23 (rounded).
+        // The longsword's 20 is multiplied by the wielder's Melee Power (x1.5 at the default attributes), so a torso blow is 30; head x1.75 = 53, limbs x0.75 = 23 (rounded). A player victim takes the Physical Damage Reduction of the baseline attribute of 10 (0.9 x 10 / 110, about 8 percent), rounded once: head 48, torso 28, limbs 21.
 
         private GameObject managerObject;
         private GameObject cameraObject;
@@ -237,12 +237,12 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         [UnityTest] public IEnumerator Skeleton_Shin_IsALegBlow() => StrikeSkeleton("LeftLowerLeg", BodyLocation.Legs, 23);
         [UnityTest] public IEnumerator Skeleton_Foot_IsALegBlow() => StrikeSkeleton("RightFoot", BodyLocation.Legs, 23);
 
-        [UnityTest] public IEnumerator Player_Head_IsAHeadshot() => StrikePlayer("Head", BodyLocation.Head, 53);
-        [UnityTest] public IEnumerator Player_Chest_IsATorsoBlow() => StrikePlayer("UpperChest", BodyLocation.Torso, 30);
-        [UnityTest] public IEnumerator Player_UpperArm_IsAnArmBlow() => StrikePlayer("LeftUpperArm", BodyLocation.Arms, 23);
-        [UnityTest] public IEnumerator Player_Forearm_IsAnArmBlow() => StrikePlayer("RightLowerArm", BodyLocation.Arms, 23);
-        [UnityTest] public IEnumerator Player_Thigh_IsALegBlow() => StrikePlayer("LeftUpperLeg", BodyLocation.Legs, 23);
-        [UnityTest] public IEnumerator Player_Shin_IsALegBlow() => StrikePlayer("RightLowerLeg", BodyLocation.Legs, 23);
+        [UnityTest] public IEnumerator Player_Head_IsAHeadshot() => StrikePlayer("Head", BodyLocation.Head, 48);
+        [UnityTest] public IEnumerator Player_Chest_IsATorsoBlow() => StrikePlayer("UpperChest", BodyLocation.Torso, 28);
+        [UnityTest] public IEnumerator Player_UpperArm_IsAnArmBlow() => StrikePlayer("LeftUpperArm", BodyLocation.Arms, 21);
+        [UnityTest] public IEnumerator Player_Forearm_IsAnArmBlow() => StrikePlayer("RightLowerArm", BodyLocation.Arms, 21);
+        [UnityTest] public IEnumerator Player_Thigh_IsALegBlow() => StrikePlayer("LeftUpperLeg", BodyLocation.Legs, 21);
+        [UnityTest] public IEnumerator Player_Shin_IsALegBlow() => StrikePlayer("RightLowerLeg", BodyLocation.Legs, 21);
 
         [UnityTest]
         public IEnumerator ADamageEvent_CarriesTheAttackerTheLocationAndTheFinalAmount()
@@ -380,7 +380,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             OpenWindow(attacker);
             yield return Steps(2);
             Assert.AreEqual(1, hits.Count(h => h.Victim == victim.Id), "one blow: " + string.Join(", ", damage.Select(d => d.Request.Amount + "@" + d.Request.BodyLocation)));
-            Assert.AreEqual(53, Dealt(victim, before));
+            Assert.AreEqual(48, Dealt(victim, before));
         }
 
         // ----- Poses -----

@@ -12,7 +12,7 @@ namespace SimpleRPG.Tests.EditMode
     /// </summary>
     public class ArmorSetupTests
     {
-        [TestCase(EquipmentSlot.head, "Armor_KettleHelm", BodyPartSlot.Head)]
+        [TestCase(EquipmentSlot.head, "Armor_KettleHelm", BodyPartSlot.Headgear)]
         [TestCase(EquipmentSlot.chest, "MailHauberk", BodyPartSlot.Torso)]
         [TestCase(EquipmentSlot.legs, "Greaves", BodyPartSlot.Legs)]
         public void SinglePlaceSlots_NeedNoSide(EquipmentSlot equipment, string mesh, BodyPartSlot expected)

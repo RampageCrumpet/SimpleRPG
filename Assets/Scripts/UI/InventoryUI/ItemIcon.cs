@@ -114,10 +114,18 @@ namespace SimpleRPG.UI
                 }
             }
 
-            // Dragged out of the player's own inventory onto the world (not onto another inventory, nor the paper doll): put it on the ground.
-            if (targetInventoryUI == null && inventoryUI != null && inventoryUI.CanDropItems && !IsOverPaperDoll())
+            if (targetInventoryUI == null && inventoryUI != null)
             {
-                inventoryUI.RequestDrop(Item);
+                if (IsOverPaperDoll())
+                {
+                    // Let go over the paper doll: wear it, as right-clicking does. Anything that is not armor is refused by the equipment rules.
+                    inventoryUI.RequestEquip(Item);
+                }
+                else if (inventoryUI.CanDropItems)
+                {
+                    // Dragged out of the player's own inventory onto the world (not onto another inventory, nor the paper doll): put it on the ground.
+                    inventoryUI.RequestDrop(Item);
+                }
             }
 
             // If it wasn't dragged and dropped onto an inventory send it back to where it started.
@@ -125,7 +133,7 @@ namespace SimpleRPG.UI
             transform.localPosition = originalPosition;
         }
 
-        // The paper doll is somewhere an item is worn from, not dropped onto, so letting go over it never drops the item.
+        // The paper doll is where an item is worn, not dropped, so letting go over it never drops the item.
         private static bool IsOverPaperDoll()
         {
             foreach (PaperDollUI doll in FindObjectsByType<PaperDollUI>())

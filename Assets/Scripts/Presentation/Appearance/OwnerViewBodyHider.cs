@@ -13,7 +13,7 @@ namespace SimpleRPG.Appearance
     public sealed class OwnerViewBodyHider : NetworkBehaviour
     {
         [SerializeField, Tooltip("The slots the owner does not see from inside.")]
-        private BodyPartSlot[] hiddenSlots = { BodyPartSlot.Head, BodyPartSlot.Eyebrows };
+        private BodyPartSlot[] hiddenSlots = { BodyPartSlot.Head, BodyPartSlot.Eyebrows, BodyPartSlot.Headgear };
 
         private CharacterAppearance appearance;
 

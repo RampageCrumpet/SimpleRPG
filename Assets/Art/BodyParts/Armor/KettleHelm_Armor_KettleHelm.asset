@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72a214674ef3ded4eac74b41c7680c12, type: 3}
+  m_Name: KettleHelm_Armor_KettleHelm
+  m_EditorClassIdentifier: SimpleRPG.Presentation::SimpleRPG.Appearance.BodyPartDefinition
+  definitionId: 73e95844dd414ccbb0156d01f8dc2d5f
+  slot: 8
+  mesh: {fileID: -4842565444943004942, guid: 9dfbe3f308e0f5c42a85b883c81a3e23, type: 3}
+  materials:
+  - {fileID: 2100000, guid: 8075eaf1dff1d044888af18988175a20, type: 2}
+  dressesItem: {fileID: 11400000, guid: 9a75145ffac423349adf8244188e9b0a, type: 2}
+  boneNames:
+  - Hips
+  - Spine
+  - Chest
+  - UpperChest
+  - Neck
+  - Head
+  rootBoneName: Hips
+  localBounds:
+    m_Center: {x: 0, y: 0.7409405, z: 0.042172894}
+    m_Extent: {x: 0.16059795, y: 0.09017497, z: 0.17283519}
+  attachBoneName: 
+  attachPosition: {x: 0, y: 0, z: 0}
+  attachRotation: {x: 0, y: 0, z: 0, w: 1}
+  attachScale: {x: 1, y: 1, z: 1}

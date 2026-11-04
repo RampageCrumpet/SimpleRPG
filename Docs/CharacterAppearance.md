@@ -6,7 +6,7 @@ A character is one animated skeleton plus swappable visual parts. The skeleton c
 
 | Type | Job |
 |---|---|
-| `BodyPartSlot` | The places on a body (head, torso, legs, feet, hands, eyebrows). Network-visible; append only, never renumber. |
+| `BodyPartSlot` | The places on a body (head, torso, legs, feet, hands, eyebrows, headgear). Headgear is separate from the head so a helmet is worn over the face, not instead of it. Network-visible; append only, never renumber. |
 | `BodyPartDefinition` | A `GameplayDefinition`: slot, mesh, materials and how it attaches. Skinned parts list the rig bone for each bind pose; rigid parts name one bone and a local pose. Immutable at runtime, with a permanent id and a short network id in the `DefinitionRegistry`. |
 | `RigBoneIndex` | Finds a rig's bones by name. |
 | `BodyPartBinder` | Builds the renderer for a part and attaches it to a rig. The only code that knows how a part meets a skeleton. |

@@ -490,7 +490,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             float deadline = Time.time + 8f;
             while (target.Health == StartingHealth && Time.time < deadline) yield return null;
 
-            Assert.AreEqual(StartingHealth - ConfiguredDamage(firebolt), target.Health, "The projectile should reach the target and damage it once.");
+            // The target is a player, so the 20 is a magical blow reduced by 0.9 x 10 / 110 and rounded once: 18.
+            Assert.AreEqual(StartingHealth - 18, target.Health, "The projectile should reach the target and damage it once.");
         }
     }
 }
