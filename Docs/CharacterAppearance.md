@@ -34,6 +34,44 @@ The current body FBX comes from `I:/Art/3d Models/Human_Male/Human_Male_Correcte
 
 The skeleton retains its 52 bones and original proportions. Wrist weights blend across the forearm/hand transition. The TestCharacter prefab's sword mount and Grip_Left target are calibrated to the corrected closed hands; retain these transforms when replacing the weapon model. HandGripIK removes the small residual from Unity's compressed Humanoid curves.
 
+## One part per slot: what is and is not supported
+
+Inspected against the code as it is (`BodyPartDefinition`, `BodyPartBinder`, `AppearanceView`, `CharacterAppearance`, `ArmorAppearancePlan`). This records the limit; it does not change the design, which is for the owner to review.
+
+**What one item can have today**
+
+| Need | Supported? | How |
+|---|---|---|
+| Several materials on one piece | **Yes** | A part's `Materials` array maps onto the mesh's submeshes, drawn by one renderer. Plate Gauntlets (steel and brass) use it. |
+| Parts in several different slots (a left and right glove, a boot pair) | **Yes** | An item can have any number of parts; each is in its own slot. `EquipmentAppearance` puts all of them on. |
+| Skinned or rigid | **Either, per part** | Skinned parts list a bone per bind pose; rigid parts name one bone and a pose. |
+| **Several meshes (several renderers) in the same slot** | **No** | See below. |
+| A skinned mesh and a rigid mesh together in a slot | **No** | Same reason. |
+
+**Why not.** A `BodyPartDefinition` holds exactly one `Mesh`. `BodyPartBinder.Create` builds exactly one renderer from it. `AppearanceView` keeps one object and one part per `BodyPartSlot` (`Show` clears the slot first), and `CharacterAppearance` replicates one `(slot, partId)` entry per slot. So a slot shows one renderer, and the way to get more than one mesh onto a character is more slots.
+
+**Where it already bites.**
+
+- **Plate Armor** has two skinned renderers, the plate and a mail undercoat, and the tool makes a part for each: `PlateArmor_PlateArmor` and `PlateArmor_MailHauberk`, both in `Torso` and both marked as the look of the plate armor. `EquipmentAppearance` hands the plan both and the later one wins (`ArmorAppearancePlan.Desired`); "later" is the order the definition registry lists them, which is stable but arbitrary. **Only one of the two shows, and which one is not defined.** The authoring tool now reports this when it happens.
+- **The Visored Sallet** was a shell and a visor. It was worked around by combining every mesh into one rigid mesh (`ArmorSetup`, in a design where one part is one mesh), which loses nothing visible while the visor is fixed shut but means the two cannot move separately.
+- **Headgear** was added as its own slot (value 8) so a helmet is worn over the bare head. That solved a different problem (the face) by adding a slot; it is the pattern that more slots would repeat.
+
+**What would have to be true of a change.** Whichever way it goes, these constraints exist in the code today:
+
+- `BodyPartSlot` is sent over the network and is append-only.
+- `AppearanceView.ShownIn(slot)` returns one `GameObject`, and `OwnerViewBodyHider` and the first-person view use it. It already hides by `GetComponentsInChildren<Renderer>`, so it copes with several renderers under that one object.
+- `CharacterPreviewUI` shows `CurrentParts` (the definitions), not objects.
+- Parts are server-authoritative state; a client never chooses one.
+
+**Options for review** (none implemented):
+
+1. **A part with several pieces.** `BodyPartDefinition` holds a list of pieces (mesh, materials, bone names, root bone), each drawn by its own renderer under one object per slot. No network change, no new slots, `ShownIn` still returns one object, and every existing part is a list of one. The plate and its undercoat become one part; so would a shell and a separately animated visor if the visor were later given its own bone. The cost is a change to the definition's shape and its editor tooling.
+2. **Several parts per slot, layered.** The slot holds an ordered list of parts. This changes what the network replicates (one entry per slot becomes several), `AppearanceView`, and every place that assumes a slot has one part.
+3. **Keep one mesh per part and combine at export.** What the sallet does. No code change; the cost is that anything combined cannot be separated in game, and mixed skinned and rigid content cannot be combined at all.
+4. **More slots for layers** (an `Undercoat`, as `Headgear` was added). Cheap each time, but it is the pattern that grows without end.
+
+Option 1 meets the case in front of us (a plate over an undercoat) with the smallest change to what already exists; option 3 is what is in place.
+
 ## Known limits
 
 - The rig faces +Z with the sword mounted at `RightHand` (`Longsword`). Its calibrated local position is approximately `(-0.055777, 0.104543, -0.037857)` metres; its rotation is also essential. Hurtbox shapes still need a visual check in play.

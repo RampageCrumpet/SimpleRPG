@@ -163,9 +163,21 @@ namespace SimpleRPG.AppearanceTools
                     continue;
                 }
 
+                var claimed = new Dictionary<BodyPartSlot, string>();
                 foreach (SkinnedMeshRenderer mesh in meshes)
                 {
-                    if (WritePart(piece, item, mesh, problems)) partsWritten++;
+                    if (!WritePart(piece, item, mesh, problems, out BodyPartSlot slot))
+                    {
+                        continue;
+                    }
+
+                    partsWritten++;
+
+                    // A character shows one part per slot, so a second mesh in the same slot is never shown with the first.
+                    if (!claimed.TryAdd(slot, mesh.name))
+                    {
+                        problems.Add($"{piece.Folder}: '{mesh.name}' and '{claimed[slot]}' are both in {slot}. A character shows ONE part per slot, so only one of them will show (which one is not defined). See Docs/CharacterAppearance.md, 'One part per slot'.");
+                    }
                 }
             }
 
@@ -237,9 +249,9 @@ namespace SimpleRPG.AppearanceTools
             return boneNames.Where(name => !have.Contains(name)).Distinct().ToList();
         }
 
-        private static bool WritePart(Piece piece, ArmorData item, SkinnedMeshRenderer mesh, List<string> problems)
+        private static bool WritePart(Piece piece, ArmorData item, SkinnedMeshRenderer mesh, List<string> problems, out BodyPartSlot slot)
         {
-            if (!TryPartSlot(piece.Slot, mesh.name, out BodyPartSlot slot))
+            if (!TryPartSlot(piece.Slot, mesh.name, out slot))
             {
                 problems.Add($"{piece.Folder}: cannot tell which side of the body '{mesh.name}' is for ({piece.Slot}); name it with a trailing _L or _R.");
                 return false;
