@@ -52,6 +52,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         private AbilityExecutor executor;
         private GameObject prefab;
         private TestCombatant caster;
+        private ulong nextTarget = 10;
 
         [SetUp]
         public void SetUp()
@@ -91,10 +92,10 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             CompileResult compiled = ability.Compile();
             Assert.IsTrue(compiled.Success, compiled.Report.ToString());
 
-            var target = new Defended(10, 1000, physical, magical);
+            var target = new Defended(nextTarget++, 1000, physical, magical);
             combatants.Register(target);
             executor.Execute(compiled.Ability, new ExecutionRequest(SourceHandle.FromEntity(caster.Id), caster.Id, new Position3(0, 1, 0), new Position3(0, 0, 1)));
-            projectiles.Hit(0, target.Id);
+            projectiles.Hit(projectiles.Launches.Count - 1, target.Id);
             return 1000 - target.Health;
         }
 
