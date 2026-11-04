@@ -42,6 +42,11 @@ namespace SimpleRPG.Abilities
         [Tooltip("The ability to run. It runs with the host as its source and the owner as its instigator.")]
         private AbilityDefinition ability;
 
+        [SerializeField]
+        [TextArea(1, 3)]
+        [Tooltip("What the player reads where this effect is shown, for example 'Chance to cause bleeding on hit'. Empty: it is not shown.")]
+        private string description = "";
+
         public EffectTrigger Trigger => trigger;
 
         public EffectScope Scope => scope;
@@ -53,6 +58,8 @@ namespace SimpleRPG.Abilities
         public EffectTarget Target => target;
 
         public AbilityDefinition Ability => ability;
+
+        public string Description => description;
 
         /// <summary>
         /// True if a trigger that happened to <paramref name="host"/>'s owner is one this effect reacts to: the right trigger, the right actor, and

@@ -95,21 +95,7 @@ namespace SimpleRPG.InventorySystem
 
         public override string Describe(IReadOnlyList<float> values)
         {
-            float value = values[0];
-            string amount;
-            switch (layer)
-            {
-                case ModifierLayer.PercentAdd:
-                    amount = (value >= 0f ? "+" : "") + (value * 100f).ToString("0.#") + "%";
-                    break;
-                case ModifierLayer.Multiply:
-                    amount = "x" + value.ToString("0.##");
-                    break;
-                default:
-                    amount = (value >= 0f ? "+" : "") + value.ToString("0.##");
-                    break;
-            }
-
+            string amount = ModifierText.Amount(layer, values[0]);
             return amount + " " + label + (scope == AffixScope.ThisItem ? " (this item)" : "");
         }
 

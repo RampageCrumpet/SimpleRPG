@@ -17,19 +17,11 @@ namespace SimpleRPG.InventorySystem
         [Tooltip("The triggered effect the item has while it is worn.")]
         private TriggeredEffect effect;
 
-        [SerializeField]
-        [Tooltip("What the player reads, for example 'Shreds armor on hit'.")]
-        private string description = "";
-
         public TriggeredAffixEffect()
         {
         }
 
-        public TriggeredAffixEffect(TriggeredEffect effect, string description)
-        {
-            this.effect = effect;
-            this.description = description;
-        }
+        public TriggeredAffixEffect(TriggeredEffect effect) => this.effect = effect;
 
         public TriggeredEffect Effect => effect;
 
@@ -46,7 +38,7 @@ namespace SimpleRPG.InventorySystem
             if (effect != null) into.Add(effect);
         }
 
-        public override string Describe(IReadOnlyList<float> values) => description;
+        public override string Describe(IReadOnlyList<float> values) => effect != null ? effect.Description : null;
 
         public override string Problem()
         {

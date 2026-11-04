@@ -197,7 +197,7 @@ namespace SimpleRPG.Tests.EditMode
         public void APoolThatCouldOutgrowAnItemsRoom_IsReported()
         {
             var effects = new List<AffixEffect>();
-            for (int i = 0; i < 7; i++) effects.Add(new StatModifierEffect("x", "simplerpg.attr.strength", ModifierLayer.Add, 1, 2));
+            for (int i = 0; i < 7; i++) effects.Add(new StatModifierEffect("x", "simplerpg.attr.constitution", ModifierLayer.Add, 1, 2));
             AffixDefinition big = Affix(effects);
             AffixDefinition big2 = Affix(effects);
             AffixDefinition big3 = Affix(effects);
@@ -368,10 +368,11 @@ namespace SimpleRPG.Tests.EditMode
 
         // ---- Affixes that bring triggered effects ----
 
-        private TriggeredEffect Reaction(bool withAbility = true)
+        private TriggeredEffect Reaction(bool withAbility = true, string description = "")
         {
             TriggeredEffect effect = ScriptableObject.CreateInstance<TriggeredEffect>();
             created.Add(effect);
+            Set(effect, "description", description);
             AbilityDefinition ability = null;
             if (withAbility)
             {
@@ -386,9 +387,9 @@ namespace SimpleRPG.Tests.EditMode
         [Test]
         public void AnAffixCanBringTriggeredEffects_ThatTheItemHasOnlyWhileItCarriesTheAffix()
         {
-            TriggeredEffect shred = Reaction();
+            TriggeredEffect shred = Reaction(description: "Shreds armor on hit");
             TriggeredEffect own = Reaction();
-            AffixDefinition affix = Affix(new List<AffixEffect> { new TriggeredAffixEffect(shred, "Shreds armor on hit") });
+            AffixDefinition affix = Affix(new List<AffixEffect> { new TriggeredAffixEffect(shred) });
             Register(affix);
             Item sword = MakeItem<Item>(Pool(1, 1, affix));
             Set(sword, "triggeredEffects", new List<TriggeredEffect> { own });
@@ -406,12 +407,12 @@ namespace SimpleRPG.Tests.EditMode
         [Test]
         public void AnAffixWithSeveralTriggeredEffects_HasSeveralIndependentReactions()
         {
-            TriggeredEffect headshot = Reaction();
-            TriggeredEffect limb = Reaction();
+            TriggeredEffect headshot = Reaction(description: "Extra damage on a killing blow to the head");
+            TriggeredEffect limb = Reaction(description: "Hurts you on a blow to a limb");
             AffixDefinition affix = Affix(new List<AffixEffect>
             {
-                new TriggeredAffixEffect(headshot, "Extra damage on a killing blow to the head"),
-                new TriggeredAffixEffect(limb, "Hurts you on a blow to a limb"),
+                new TriggeredAffixEffect(headshot),
+                new TriggeredAffixEffect(limb),
                 new StatModifierEffect("Strength", "simplerpg.attr.strength", ModifierLayer.Add, 1, 1),
             });
             var into = new List<TriggeredEffect>();
@@ -426,10 +427,65 @@ namespace SimpleRPG.Tests.EditMode
         [Test]
         public void ATriggeredAffixEffect_IsLiveOnlyWithAnAbilityToRun()
         {
-            Assert.IsTrue(new TriggeredAffixEffect(Reaction(), "x").IsLive(out _));
-            Assert.IsFalse(new TriggeredAffixEffect(Reaction(withAbility: false), "x").IsLive(out string reason));
+            Assert.IsTrue(new TriggeredAffixEffect(Reaction()).IsLive(out _));
+            Assert.IsFalse(new TriggeredAffixEffect(Reaction(withAbility: false)).IsLive(out string reason));
             StringAssert.Contains("ability", reason);
-            Assert.IsNotNull(new TriggeredAffixEffect(null, "x").Problem());
+            Assert.IsNotNull(new TriggeredAffixEffect(null).Problem());
+        }
+
+        // ---- Names and tooltips ----
+
+        private AffixDefinition Named(string name, AffixKind kind, string key = "simplerpg.stat.armor_rating", float value = 2f)
+        {
+            AffixDefinition affix = Affix(key, ModifierLayer.Add, value, value, label: AttributeLabels.For(key));
+            Set(affix, "displayName", name);
+            Set(affix, "kind", kind);
+            return affix;
+        }
+
+        [Test]
+        public void AnItemIsNamedPrefixThenItemThenSuffix()
+        {
+            AffixDefinition riveted = Named("Riveted", AffixKind.Prefix);
+            AffixDefinition veteran = Named("of the Veteran", AffixKind.Suffix, "simplerpg.attr.constitution");
+            Register(riveted, veteran);
+            Item hauberk = MakeItem<Item>(Pool(2, 2, riveted, veteran));
+            Set(hauberk, "<ItemName>k__BackingField", "Mail Hauberk");
+
+            Item instance = hauberk.CloneInstance(hauberk.RollAffixes(new SeededRandom(4)));
+            created.Add(instance);
+
+            Assert.AreEqual("Riveted Mail Hauberk of the Veteran", instance.DisplayName);
+            Assert.AreEqual("Mail Hauberk", hauberk.DisplayName, "The asset on its own is just its name.");
+        }
+
+        [Test]
+        public void ATooltip_ListsTheNameThenWhatTheItemGrantsThenWhatEachAffixRolled()
+        {
+            AffixDefinition riveted = Named("Riveted", AffixKind.Prefix, value: 3f);
+            Register(riveted);
+            ArmorData hauberk = MakeItem<ArmorData>(Pool(1, 1, riveted));
+            Set(hauberk, "<ItemName>k__BackingField", "Mail Hauberk");
+            Set(hauberk, "grants", new List<GrantSpec> { new GrantSpec { AttributeKey = "simplerpg.stat.armor_rating", Layer = ModifierLayer.Add, Value = 28f } });
+            Item instance = hauberk.CloneInstance(hauberk.RollAffixes(new SeededRandom(4)));
+            created.Add(instance);
+
+            var lines = ItemTooltip.Build(instance);
+
+            Assert.AreEqual("Riveted Mail Hauberk", lines[0].Text);
+            Assert.AreEqual(TooltipLineKind.Name, lines[0].Kind);
+            Assert.AreEqual("+28 Armor Rating", lines[1].Text);
+            Assert.AreEqual(TooltipLineKind.Property, lines[1].Kind);
+            Assert.AreEqual("+3 Armor Rating", lines[2].Text);
+            Assert.AreEqual(TooltipLineKind.Affix, lines[2].Kind);
+        }
+
+        [Test]
+        public void AttributesAreNamedFromTheirKeys()
+        {
+            Assert.AreEqual("Armor Rating", AttributeLabels.For("simplerpg.stat.armor_rating"));
+            Assert.AreEqual("Strength", AttributeLabels.For("simplerpg.attr.strength"));
+            Assert.AreEqual("", AttributeLabels.For(""));
         }
     }
 }

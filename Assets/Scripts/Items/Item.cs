@@ -119,6 +119,7 @@ namespace SimpleRPG.InventorySystem
         /// </summary>
         public ItemAffixes Affixes { get; private set; }
 
+        private string displayName;
         private List<GrantSpec> combinedGrants;
         private List<TriggeredEffect> combinedEffects;
 
@@ -166,6 +167,43 @@ namespace SimpleRPG.InventorySystem
                 }
 
                 return combinedGrants;
+            }
+        }
+
+        /// <summary>
+        /// The name the player reads: the prefixes this instance rolled, the item's name, then its suffixes, such as "Riveted Mail Hauberk of the
+        /// Veteran". An item without affixes is just its name. Affixes are fixed for the life of an instance, so this is worked out once.
+        /// </summary>
+        public string DisplayName
+        {
+            get
+            {
+                if (displayName != null)
+                {
+                    return displayName;
+                }
+
+                if (Affixes.IsEmpty)
+                {
+                    return ItemName;
+                }
+
+                var prefixes = new List<string>();
+                var suffixes = new List<string>();
+                DefinitionRegistry registry = DefinitionRegistry.Instance;
+                for (int i = 0; i < Affixes.Count; i++)
+                {
+                    if (registry != null && registry.TryGetByShortId(Affixes[i].AffixId, out GameplayDefinition definition) && definition is AffixDefinition affix &&
+                        !string.IsNullOrWhiteSpace(affix.DisplayName))
+                    {
+                        (affix.Kind == AffixKind.Prefix ? prefixes : suffixes).Add(affix.DisplayName.Trim());
+                    }
+                }
+
+                var words = new List<string>(prefixes) { ItemName };
+                words.AddRange(suffixes);
+                displayName = string.Join(" ", words);
+                return displayName;
             }
         }
 
