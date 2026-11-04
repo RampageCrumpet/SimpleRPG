@@ -45,7 +45,7 @@ An affix names an attribute by its stable key, and any attribute in a character'
 
 | Core attributes (`simplerpg.attr.`) | Derived stats (`simplerpg.stat.`) |
 |---|---|
-| `strength`, `constitution`, `dexterity`, `agility`, `willpower`, `intelligence` (`armor` and `wisdom` also appear in the project) | `max_health`, `physical_power`, `magical_power`, `physical_damage_reduction`, `magical_damage_reduction`, `movement_speed`, `attack_speed`, `casting_speed`, `interaction_speed`, `equip_speed`, `carrying_capacity`, `spell_preparation_capacity` |
+| `strength`, `constitution`, `dexterity`, `agility`, `willpower`, `intelligence` (`armor` and `wisdom` also appear in the project) | `armor_rating`, `max_health`, `physical_power`, `magical_power`, `physical_damage_reduction`, `magical_damage_reduction`, `movement_speed`, `attack_speed`, `casting_speed`, `interaction_speed`, `equip_speed`, `carrying_capacity`, `spell_preparation_capacity` |
 
 Not every derived stat is consumed by gameplay yet (see [Stats](Stats.md)): an affix on one that nothing reads has no visible effect until something does.
 

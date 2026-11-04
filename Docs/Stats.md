@@ -1,6 +1,6 @@
 # Character stats
 
-Six core attributes (Strength, Constitution, Dexterity, Agility, Willpower, Intelligence) and twelve derived stats (`DerivedStats`) share one `AttributeSet` per character. A `StatProfile` asset chooses how a kind of character gets its derived stats:
+Six core attributes (Strength, Constitution, Dexterity, Agility, Willpower, Intelligence) and thirteen derived stats (`DerivedStats`) share one `AttributeSet` per character. A `StatProfile` asset chooses how a kind of character gets its derived stats:
 
 - **Derived** (players): each stat is `base + sum of curve(source)` over core attributes or other derived stats. Curves are linear (`scale * x`) or diminishing (`scale * x / (x + halfPoint)`).
 - **Direct** (enemies): each stat is an authored value; no core attributes are needed.
@@ -13,22 +13,41 @@ Consumers: `Character.MaxHealth` (rounded, at least 1, replicated; a character w
 
 ## Damage reduction
 
-Applied by `CombatResolver`, the one path damage takes, through `DamageMitigation` (plain code, tested exactly). A target that implements `IDamageMitigator` (a `Character` does, from its stats) says what fraction of a blow its defences remove:
+Applied by `CombatResolver`, the one path damage takes, through `DamageMitigation` (plain code, tested exactly). A target that implements `IDamageMitigator` (a `Character` does, from its stats) says what fraction of damage of a given type its defences remove.
 
-- **Which defence.** A blow meets the defence its origin names: a weapon blow is **physical** (Physical Damage Reduction); a spell, or an item's triggered effect, is **magical** (Magical Damage Reduction). A damage-over-time tick, a hazard and a raw request meet neither and are never reduced. This mapping is a decision, `DamageMitigation.KindOf`; change it there if damage over time should be armoured.
-- **The range.** A reduction is the fraction of damage removed, kept between 0 and 0.9, so nothing makes a character immune. The stats themselves come from a diminishing curve, and reductions from separate sources stack through the stat's modifier layers (an item's grant, a status).
-- **One rounding.** The struck region's factor and the reduction are applied together and the result rounded once, so rounding never compounds. A blow that was above zero and lands at all does at least 1.
-- **Fatal or not is judged on what lands**, and the events, including `DamageResolvedEvent`, report the damage after both adjustments.
+**Mitigation depends on the damage type, and on nothing else.** Every `DamageRequest` carries a `DamageType`:
 
-A character with no defence stats, and damage of no kind, are unaffected, so enemies authored with a direct profile take what they always did unless that profile gives them a reduction.
+- **Physical** is met by Physical Damage Reduction: weapon blows, and effects like a bleed.
+- **Magical** is met by Magical Damage Reduction: spells, and effects like a burn or a curse.
+- There are only these two. Elemental resistances are not part of the game yet.
 
-**What this changes for players today.** The player profile derives Physical Damage Reduction from Constitution and Magical from Willpower with a diminishing curve (0.9 times attribute over attribute plus 100), so at the baseline attribute of 10 a player turns aside about 8 percent of a weapon blow or a spell. Armour does not exist as a stat yet: see the open question below.
+How the damage was delivered (`DamageProvenance`: a swing, a spell, a proc, a periodic tick, the environment) does **not** choose the defence. Provenance is for rules, so that an on-hit proc reacts to a weapon blow and not to its own explosion. A burning tick is magical because the burn says so; a bleeding tick is physical because the bleed says so.
 
-### Open: how armour feeds the reduction
+**Bypassing is explicit.** A request that skips the defences sets `BypassesMitigation`; nothing is bypassed by default or by inference. The ability graph's damage node has the same two settings, **Type** (physical unless set) and **Bypasses Mitigation**. A bleed that ignores armour once applied is a damage node, or a status tick, with Bypasses Mitigation ticked: a deliberate property of that effect. No such effect exists yet. `Character.TakeDamage` takes both too and mitigates unless told not to; tests and scripted deaths that must not be reduced pass `bypassesMitigation: true`.
 
-Worn armour has no rating in the stat system, so it cannot reduce damage until it is given one. The two ways to do it, for a decision:
+Firebolt and Icebolt are declared magical in their assets. A new damage node is physical until set, so a magical effect has to say so.
 
-1. **An armour rating attribute** (for example `simplerpg.attr.armor`): armour grants points, and the player profile adds a contribution to Physical Damage Reduction from it with the same diminishing curve as Constitution. Pieces are authored in readable numbers (a chestplate gives 20), the diminishing curve keeps stacking from reaching the cap, and affixes can add or scale armour like any attribute. Recommended.
-2. **Armour grants reduction directly** (a grant on Physical Damage Reduction, authored as a fraction like 0.04). Simplest, but designers write raw fractions and stacking is linear until it hits the 0.9 cap.
+**The arithmetic:**
 
-Either way an item grant needs no code: it is a `GrantSpec` on an attribute, applied by the grant engine.
+- A reduction is the fraction of damage removed, kept between 0 and 0.9, so nothing makes a character immune. The stats come from diminishing curves, and reductions from separate sources stack through the stat's modifier layers (an item's grant, an affix, a status).
+- The struck region's factor and the reduction are applied together and the result rounded once, so rounding never compounds. A blow that was above zero and lands at all does at least 1.
+- Fatal or not is judged on what lands, and the events, including `DamageResolvedEvent`, report the damage after both adjustments.
+
+A character with no defence stats is unaffected, so enemies authored with a direct profile take what they always did unless that profile gives them a reduction.
+
+## Armor Rating
+
+`simplerpg.stat.armor_rating` (`DerivedStats.ArmorRating`) is a **derived stat, not a seventh core attribute**. It starts at zero and is supplied by equipment: a worn piece grants it with an ordinary `GrantSpec` on the stat key, and an affix can add to it (flat) or scale it (percent or factor) through the same layers, exactly as for any other stat. Taking the piece off releases its modifiers. Nothing about it is special-cased in code.
+
+The player profile (`Assets/Stats/PlayerStats.asset`) turns it into **Physical Damage Reduction** with a contribution of its own, beside Constitution's:
+
+| Contribution to `physical_damage_reduction` | Source | Curve | Scale | Half point |
+|---|---|---|---|---|
+| 1 | `simplerpg.attr.constitution` | diminishing | 0.9 | 100 |
+| 2 | `simplerpg.stat.armor_rating` | diminishing | 0.9 | 100 |
+
+Each contribution has its **own scale and half point**, so the two are tuned independently and an armor point is not assumed to be worth a Constitution point. The values above are a starting point for playtesting, not a decision: they are authored data in the profile asset, and `ArmorRatingTests` checks the mechanics (and builds sheets with deliberately unlike curves), not these numbers. Magical Damage Reduction is not affected by armor. The two contributions can sum past the cap before the resolver holds the total to 0.9.
+
+With the starting numbers a Constitution of 10 alone turns aside about 8 percent of a physical blow, and 100 Armor Rating adds 45 percent on top of that.
+
+Enemies use direct profiles, which take authored values and have no contributions: give an enemy reduction by authoring its Physical Damage Reduction directly.
