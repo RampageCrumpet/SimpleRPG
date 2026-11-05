@@ -29,7 +29,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
 
             Assert.AreEqual(StatOwnership.Derived, profile.Ownership);
             CollectionAssert.AreEquivalent(
-                new[] { DerivedStats.MaximumHealth, DerivedStats.MovementSpeed, DerivedStats.PhysicalPower, DerivedStats.MagicalPower, DerivedStats.WeaponDamage, DerivedStats.WeaponDamageMultiplier, DerivedStats.PhysicalDamageReduction, DerivedStats.MagicalDamageReduction, DerivedStats.ArmorRating },
+                new[] { DerivedStats.MaximumHealth, DerivedStats.MovementSpeed, DerivedStats.PhysicalPower, DerivedStats.MagicalPower, DerivedStats.WeaponDamage, DerivedStats.WeaponDamageMultiplier, DerivedStats.InteractionSpeed, DerivedStats.PhysicalDamageReduction, DerivedStats.MagicalDamageReduction, DerivedStats.ArmorRating },
                 System.Linq.Enumerable.Select(profile.Sheet.Rules, x => x.Stat));
         }
 

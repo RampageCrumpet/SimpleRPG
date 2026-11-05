@@ -45,7 +45,7 @@ namespace SimpleRPG
             if (interactor != null && interactor.Interactable != null)
             {
                 countdownText.text = interactor.InteractionTimeRemaining.ToString("F1");
-                countdownImage.fillAmount = interactor.InteractionTimeRemaining / interactor.Interactable.InteractionTime;
+                countdownImage.fillAmount = interactor.InteractionDuration > 0f ? interactor.InteractionTimeRemaining / interactor.InteractionDuration : 0f;
             }
         }
     }

@@ -1,5 +1,6 @@
 using SimpleRPG.Audio;
 using SimpleRPG.ObjectInteractions;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace SimpleRPG.Keys
@@ -34,12 +35,43 @@ namespace SimpleRPG.Keys
             return collider.transform.IsChildOf(transform);
         }
 
+        // A lock is not a networked object, so a player's machine names it by its key through the key ring, which is.
+        public override bool TryGetHandle(out NetworkObjectReference anchor, out int id)
+        {
+            anchor = default;
+            id = keyId;
+            if (ring == null || ring.NetworkObject == null || !ring.NetworkObject.IsSpawned)
+            {
+                return false;
+            }
+
+            anchor = ring.NetworkObject;
+            return true;
+        }
+
+        private const byte UnlockMessage = 0;
+        private const byte LockedMessage = 1;
+
         /// <inheritdoc/>
         public override void ActivateInteraction(Interactor interactor)
         {
-            if (ring != null && ring.Holds(keyId))
+            // The server decides whether the party holds the key and the player is near the door.
+            KeyUseResult result = KeyUseResult.NotHeld;
+            if (ring != null && (ring.IsServer || !ring.IsSpawned))
             {
-                ring.RequestOpen(keyId);
+                float? distance = ring.DistanceToLock(keyId, interactor.transform.position);
+                result = distance.HasValue ? ring.TryOpen(keyId, distance.Value) : KeyUseResult.NotHeld;
+            }
+
+            NotifyInteractor(interactor, result == KeyUseResult.Opened ? UnlockMessage : LockedMessage);
+            interactor.StopInteraction();
+        }
+
+        /// <summary>The player who tried the door hears whether it opened.</summary>
+        protected override void OnInteractorMessage(byte message)
+        {
+            if (message == UnlockMessage)
+            {
                 InteractableAudio.TryPlay(this, InteractionCue.Unlock);
             }
             else
@@ -47,8 +79,6 @@ namespace SimpleRPG.Keys
                 Debug.Log($"This door is locked (key {keyId}).");
                 InteractableAudio.TryPlay(this, InteractionCue.Locked);
             }
-
-            interactor.StopInteraction();
         }
 
         /// <inheritdoc/>

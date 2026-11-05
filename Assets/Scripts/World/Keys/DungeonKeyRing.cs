@@ -1,4 +1,3 @@
-using SimpleRPG.Networking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +12,7 @@ namespace SimpleRPG.Keys
     /// Every machine builds the same locked doors from the dungeon seed and registers them here with <see cref="RegisterLock"/>.
     /// Lives next to the <c>LevelGeneratorController</c>.
     /// </summary>
-    public class DungeonKeyRing : NetworkBehaviour
+    public class DungeonKeyRing : NetworkBehaviour, SimpleRPG.ObjectInteractions.IInteractableHost
     {
         /// <summary>
         /// How close a player must stand to open a locked door.
@@ -159,55 +158,27 @@ namespace SimpleRPG.Keys
         }
 
         /// <summary>
-        /// Asks the server to open a lock for the calling player. Safe to call from any machine.
+        /// The ring stands for the locked doors, which are not networked objects: a player's machine names a lock by its key id, and the
+        /// server finds the interactable on that lock's objects.
         /// </summary>
-        public void RequestOpen(int keyId)
+        public bool TryFindInteractable(int keyId, out SimpleRPG.ObjectInteractions.Interactable interactable)
         {
-            RequestOpenRpc(keyId);
-        }
-
-        private readonly RequestThrottle openThrottle = new RequestThrottle(perSecond: 5d, burst: 10d);
-
-        [Rpc(SendTo.Server)]
-        private void RequestOpenRpc(int keyId, RpcParams rpcParams = default)
-        {
-            if (!openThrottle.TryAllow(rpcParams.Receive.SenderClientId, UnityEngine.Time.unscaledTimeAsDouble))
-            {
-                return;
-            }
-
-            if (!TryGetPlayerPosition(rpcParams.Receive.SenderClientId, out Vector3 player))
-            {
-                return;
-            }
-
-            float? distance = DistanceToLock(keyId, player);
-            if (distance.HasValue)
-            {
-                TryOpen(keyId, distance.Value);
-            }
-        }
-
-        /// <summary>
-        /// Finds where a connected client's character is, as the server sees it.
-        /// </summary>
-        public static bool TryGetPlayerPosition(ulong clientId, out Vector3 position)
-        {
-            position = default;
-            NetworkManager manager = NetworkManager.Singleton;
-            if (manager == null || !manager.ConnectedClients.TryGetValue(clientId, out NetworkClient client) || client.PlayerObject == null)
+            interactable = null;
+            if (!locks.TryGetValue(keyId, out List<GameObject> objects))
             {
                 return false;
             }
 
-            Character character = PlayerCharacters.Of(client);
-            if (character == null || !character.IsAlive)
+            foreach (GameObject lockObject in objects)
             {
-                return false;
+                if (lockObject != null && lockObject.TryGetComponent(out LockedDoorInteractable door))
+                {
+                    interactable = door;
+                    return true;
+                }
             }
 
-            position = character.transform.position;
-            return true;
+            return false;
         }
     }
 }

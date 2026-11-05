@@ -48,6 +48,9 @@ MonoBehaviour:
   - statKey: simplerpg.stat.weapon_damage_multiplier
     baseValue: 1
     contributions: []
+  - statKey: simplerpg.stat.interaction_speed
+    baseValue: 1
+    contributions: []
   - statKey: simplerpg.stat.armor_rating
     baseValue: 0
     contributions: []

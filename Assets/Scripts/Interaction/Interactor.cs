@@ -1,17 +1,37 @@
 using UnityEngine;
+using SimpleRPG.Networking;
 using SimpleRPG.ObjectInteractions;
 using SimpleRPG.Abilities;
-using System.Collections.Generic;
-using System.Linq;
+using Unity.Netcode;
 
 namespace SimpleRPG
 {
-    public class Interactor : MonoBehaviour
+    /// <summary>
+    /// A character's use of the world: finding what it is looking at and interacting with it. The server owns the interaction. The player asks to
+    /// start and to stop; the server checks the target is reachable, times the interaction (faster with Interaction Speed), cancels it if the
+    /// character walks off or dies, and applies its effect when the time is up. The player's machine only shows the countdown. With no network
+    /// (a test, an offline scene) the interactor is its own authority and does all of this itself.
+    /// </summary>
+    public class Interactor : NetworkBehaviour
     {
         /// <summary>
         /// The interactable object that the player is currently interacting with. Is null if the player is not interacting with anything.
         /// </summary>
-        public Interactable Interactable {get; private set; }
+        public Interactable Interactable { get; private set; }
+
+        /// <summary>
+        /// The maximum distance in unity units the player can move from the interaction location before the interaction is cancelled.
+        /// </summary>
+        private const float MaximumMoveDistance = 0.5f;
+
+        /// <summary>
+        /// How far beyond an interactable's range the server still lets a request start, to absorb the difference between what the player's
+        /// machine and the server saw.
+        /// </summary>
+        private const float ServerRangeSlack = 2f;
+
+        /// <summary>The slowest an interaction can be timed, so a stat that falls to nothing cannot make one last forever.</summary>
+        private const float MinimumSpeed = 0.1f;
 
         /// <summary>
         /// The source location of the interaction.
@@ -19,28 +39,27 @@ namespace SimpleRPG
         private Vector3 interactionLocation;
 
         /// <summary>
-        /// The maximum distance in unity units the player can move from the interaction location before the interaction is cancelled.
-        /// </summary>
-        private const float maximumMoveDistance = 0.5f;
-
-
-        /// <summary>
-        /// The time the player last interacted with this object.
+        /// The time left before the interaction takes effect. On the server it is the real clock; on the player's machine it is a display that the
+        /// server's answer sets.
         /// </summary>
         public float InteractionTimeRemaining { get; private set; }
 
+        /// <summary>How long the current interaction takes in all, after Interaction Speed. Zero when not interacting.</summary>
+        public float InteractionDuration { get; private set; }
+
+        private bool isInteracting;
 
         /// <summary>
-        /// Backing field for the IsInteracting property.
+        /// Has the interaction taken effect? (Server only.)
         /// </summary>
-        private bool isInteracting = false;
-
-        /// <summary>
-        /// Is the interaction effect currently active?
-        /// </summary>
-        private bool isInteractionActive = false;
+        private bool isInteractionActive;
 
         private Character character;
+
+        private readonly RequestThrottle beginThrottle = new RequestThrottle(perSecond: 5d, burst: 10d);
+
+        /// <summary>The character this interacts for.</summary>
+        public Character Character => character;
 
         /// <summary>
         /// True while the character may interact with the world. A dead character cannot.
@@ -50,17 +69,10 @@ namespace SimpleRPG
         /// <summary>
         /// Is this Interactor currently interacting with something.
         /// </summary>
-        public bool IsInteracting
-        {
-            get
-            {
-                return isInteracting && Interactable != null;
-            }
-            set
-            {
-                isInteracting = value;
-            }
-        }
+        public bool IsInteracting => isInteracting && Interactable != null;
+
+        // The server, or no network at all: this machine decides.
+        private bool HasAuthority => !IsSpawned || IsServer;
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Start()
@@ -73,17 +85,34 @@ namespace SimpleRPG
             {
                 slot.Activated += HandleAbilityActivated;
             }
-        } 
+        }
 
         // Update is called once per frame
         private void Update()
         {
-            CheckInteractionDistance();
+            if (!isInteracting)
+            {
+                return;
+            }
+
+            if (!HasAuthority)
+            {
+                // The player's machine only counts down what the server said.
+                InteractionTimeRemaining -= Time.deltaTime;
+                return;
+            }
+
+            // The target was destroyed, or the character walked away from where it started.
+            if (Interactable == null || (transform.position - interactionLocation).magnitude > MaximumMoveDistance)
+            {
+                StopOnAuthority();
+                return;
+            }
 
             InteractionTimeRemaining -= Time.deltaTime;
 
             // Check to see if we've completed interacting with the object.
-            if (InteractionTimeRemaining <= 0 && IsInteracting && !isInteractionActive && CanInteract)
+            if (InteractionTimeRemaining <= 0 && !isInteractionActive && CanInteract)
             {
                 isInteractionActive = true;
                 Interactable.ActivateInteraction(this);
@@ -91,42 +120,172 @@ namespace SimpleRPG
         }
 
         /// <summary>
-        /// Start interacting with the interactable.
+        /// Start interacting with the interactable. On a player's machine this asks the server, which may refuse (too far, out of reach).
         /// </summary>
         /// <param name="interactable"> The <see cref="ObjectInteractions.Interactable"/> we want to start interacting with.</param>
         public void StartInteraction(Interactable interactable)
         {
-            if (!CanInteract)
+            if (!CanInteract || interactable == null)
             {
                 return;
             }
 
-            InteractionTimeRemaining = interactable.InteractionTime;
-
-            interactionLocation = transform.position;
-            this.Interactable = interactable;
-            this.IsInteracting = true;
-        }
-
-        public void StopInteraction()
-        {
-            if(Interactable != null)
+            if (HasAuthority)
             {
-                this.IsInteracting = false;
-                this.isInteractionActive = false;
-                Interactable.FinishInteraction(this);
-                Interactable = null;
+                BeginOnAuthority(interactable);
+                return;
             }
+
+            if (!IsOwner || !interactable.TryGetHandle(out NetworkObjectReference anchor, out int id))
+            {
+                return;
+            }
+
+            // Show the countdown at once with the interaction's own time; the server's answer corrects it for Interaction Speed.
+            SetState(interactable, interactable.InteractionTime);
+            BeginRpc(anchor, id);
         }
 
         /// <summary>
-        /// Check to ensure that the player hasn't left the interaction range of the object they are interacting with.
+        /// Stop interacting. On a player's machine this tells the server, which ends it and tells the interactable.
         /// </summary>
-        private void CheckInteractionDistance()
+        public void StopInteraction()
         {
-            if((this.gameObject.transform.position - interactionLocation).magnitude > maximumMoveDistance)
+            if (HasAuthority)
             {
-                StopInteraction();
+                StopOnAuthority();
+                return;
+            }
+
+            if (!IsOwner || Interactable == null)
+            {
+                return;
+            }
+
+            ClearState();
+            StopRpc();
+        }
+
+        // ----- The server's side -----
+
+        private void BeginOnAuthority(Interactable interactable)
+        {
+            if (!CanReach(interactable))
+            {
+                RefuseToOwner();
+                return;
+            }
+
+            // One interaction at a time.
+            if (Interactable != null)
+            {
+                StopOnAuthority();
+            }
+
+            float duration = interactable.InteractionTime / Speed();
+            SetState(interactable, duration);
+            interactionLocation = transform.position;
+            if (IsSpawned && !IsOwner)
+            {
+                BeganRpc(duration);
+            }
+        }
+
+        private bool CanReach(Interactable interactable)
+        {
+            return CanInteract && interactable.isActiveAndEnabled && interactable.CanBeInteractedWith &&
+                   Vector3.Distance(transform.position, interactable.transform.position) <= interactable.InteractionRange + ServerRangeSlack;
+        }
+
+        private float Speed()
+        {
+            float speed = character != null && character.Stats != null ? character.Stats.InteractionSpeed : 1f;
+            return Mathf.Max(MinimumSpeed, speed);
+        }
+
+        private void StopOnAuthority()
+        {
+            if (Interactable == null)
+            {
+                ClearState();
+                return;
+            }
+
+            Interactable finished = Interactable;
+            ClearState();
+            finished.FinishInteraction(this);
+            if (IsSpawned && !IsOwner)
+            {
+                EndedRpc();
+            }
+        }
+
+        // The server turned a request down, so the machine that showed a countdown for it stops.
+        private void RefuseToOwner()
+        {
+            if (IsSpawned && !IsOwner)
+            {
+                EndedRpc();
+            }
+        }
+
+        private void SetState(Interactable interactable, float duration)
+        {
+            Interactable = interactable;
+            isInteracting = true;
+            isInteractionActive = false;
+            InteractionDuration = duration;
+            InteractionTimeRemaining = duration;
+        }
+
+        private void ClearState()
+        {
+            Interactable = null;
+            isInteracting = false;
+            isInteractionActive = false;
+            InteractionDuration = 0f;
+        }
+
+        [Rpc(SendTo.Server, RequireOwnership = true)]
+        private void BeginRpc(NetworkObjectReference anchor, int id, RpcParams rpcParams = default)
+        {
+            if (!beginThrottle.TryAllow(rpcParams.Receive.SenderClientId, Time.unscaledTimeAsDouble))
+            {
+                RefuseToOwner();
+                return;
+            }
+
+            if (Interactable.TryResolve(anchor, id, out Interactable interactable))
+            {
+                BeginOnAuthority(interactable);
+            }
+            else
+            {
+                RefuseToOwner();
+            }
+        }
+
+        [Rpc(SendTo.Server, RequireOwnership = true)]
+        private void StopRpc() => StopOnAuthority();
+
+        // ----- The player's machine -----
+
+        [Rpc(SendTo.Owner)]
+        private void BeganRpc(float duration)
+        {
+            if (!HasAuthority)
+            {
+                InteractionDuration = duration;
+                InteractionTimeRemaining = duration;
+            }
+        }
+
+        [Rpc(SendTo.Owner)]
+        private void EndedRpc()
+        {
+            if (!HasAuthority)
+            {
+                ClearState();
             }
         }
 
@@ -136,7 +295,7 @@ namespace SimpleRPG
         /// <param name="slot">The ability that was used.</param>
         private void HandleAbilityActivated(IAbilitySlot slot)
         {
-            if(Interactable != null)
+            if (Interactable != null)
             {
                 StopInteraction();
             }
@@ -185,18 +344,20 @@ namespace SimpleRPG
             return null;
         }
 
-        private void OnDestroy()
+        public override void OnDestroy()
         {
-            if (character == null) return;
-
-            character.OnDeath -= StopInteraction;
-
-            // Unsubscribe from the ability activation event.
-            foreach (IAbilitySlot slot in character.Loadout.Slots)
+            if (character != null)
             {
-                slot.Activated -= HandleAbilityActivated;
-            }
-        }
+                character.OnDeath -= StopInteraction;
 
+                // Unsubscribe from the ability activation event.
+                foreach (IAbilitySlot slot in character.Loadout.Slots)
+                {
+                    slot.Activated -= HandleAbilityActivated;
+                }
+            }
+
+            base.OnDestroy();
+        }
     }
 }

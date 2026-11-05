@@ -81,18 +81,48 @@ namespace SimpleRPG.ObjectInteractions
             }
         }
 
-        /// <inheritdoc/>
-        public override void FinishInteraction(Interactor interactor)
-        {
-            CloseRequested?.Invoke();
-            InteractableAudio.TryPlay(this, InteractionCue.Close);
-        }
+        private const byte OpenMessage = 0;
+        private const byte CloseMessage = 1;
+
+        private bool rolled;
+
+        /// <summary>
+        /// True for a container that fills itself the first time it is opened, not when it spawns, so nothing about its contents is fixed until
+        /// someone looks. A corpse and a loot bag fill at their own moments instead.
+        /// </summary>
+        protected virtual bool RollsWhenOpened => false;
 
         /// <inheritdoc/>
         public override void ActivateInteraction(Interactor interactor)
         {
-            OpenRequested?.Invoke(this.Inventory);
-            InteractableAudio.TryPlay(this, InteractionCue.Open);
+            // The server decides what is inside, the first time anyone looks.
+            if (RollsWhenOpened && !rolled && (!IsSpawned || IsServer))
+            {
+                RollLoot();
+            }
+
+            NotifyInteractor(interactor, OpenMessage);
+        }
+
+        /// <inheritdoc/>
+        public override void FinishInteraction(Interactor interactor)
+        {
+            NotifyInteractor(interactor, CloseMessage);
+        }
+
+        /// <summary>The opening player's machine shows the loot menu and plays the sound; the menu closes the same way.</summary>
+        protected override void OnInteractorMessage(byte message)
+        {
+            if (message == OpenMessage)
+            {
+                OpenRequested?.Invoke(this.Inventory);
+                InteractableAudio.TryPlay(this, InteractionCue.Open);
+            }
+            else if (message == CloseMessage)
+            {
+                CloseRequested?.Invoke();
+                InteractableAudio.TryPlay(this, InteractionCue.Close);
+            }
         }
 
         /// <summary>
@@ -100,6 +130,7 @@ namespace SimpleRPG.ObjectInteractions
         /// </summary>
         protected void RollLoot()
         {
+            rolled = true;
             if (lootTable != null)
             {
                 // Only lootable items can go in a container; other entry types and items without an Item are skipped.

@@ -2,6 +2,7 @@
     "name": "SimpleRPG.Interaction",
     "rootNamespace": "SimpleRPG",
     "references": [
+        "SimpleRPG.Foundation",
         "SimpleRPG.Combat",
         "SimpleRPG.Gameplay.Core",
         "SimpleRPG.Abilities.Runtime",

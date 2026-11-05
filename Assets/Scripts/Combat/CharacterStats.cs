@@ -49,6 +49,12 @@ namespace SimpleRPG
         public float MovementSpeed => Attributes != null ? (float)Mathf.Max(0f, (float)Attributes.Get(DerivedStats.MovementSpeed)) : 0f;
 
         /// <summary>
+        /// How fast this character interacts: its resolved Interaction Speed, where 1 is the interaction's own time and 2 is half of it. One for a
+        /// character with no such stat, and on clients, which never decide it.
+        /// </summary>
+        public float InteractionSpeed => Attributes != null && HasDerivedStat(DerivedStats.InteractionSpeed) ? (float)Attributes.Get(DerivedStats.InteractionSpeed) : 1f;
+
+        /// <summary>
         /// The fraction of damage of a type that this character's defences remove, from its Physical or Magical Damage Reduction stat, held to
         /// the range a defence can have (see <see cref="DamageMitigation"/>). Zero for a character with no such stat, and on clients, which never
         /// take damage.

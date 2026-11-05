@@ -172,13 +172,18 @@ namespace SimpleRPG.Tests.PlayMode
             GameObject chest = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(ChestPrefab));
             chest.GetComponent<NetworkObject>().Spawn();
             created.Add(chest);
+
+            // A chest is filled the first time it is opened, not when it spawns.
+            Assert.IsEmpty(chest.GetComponent<Inventory>().GetItems(), "Nothing is decided before someone looks.");
+            chest.GetComponent<Chest>().ActivateInteraction(null);
+            chest.GetComponent<Chest>().ActivateInteraction(null);
             List<string> names = chest.GetComponent<Inventory>().GetItems().Select(i => i.item.ItemName).OrderBy(n => n).ToList();
             chest.GetComponent<NetworkObject>().Despawn();
             return names;
         }
 
         [UnityTest]
-        public IEnumerator ASpawnedChest_IsFilledFromItsLootTable_ReproduciblyForASeed()
+        public IEnumerator AChest_IsFilledFromItsLootTable_WhenFirstOpened_ReproduciblyForASeed()
         {
             host = StartHost();
             yield return null;

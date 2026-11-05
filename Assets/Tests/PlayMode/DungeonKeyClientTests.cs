@@ -4,6 +4,7 @@ using System.Linq;
 using SimpleRPG.LevelGeneration;
 using NUnit.Framework;
 using SimpleRPG.Keys;
+using SimpleRPG.ObjectInteractions;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEditor;
@@ -159,11 +160,18 @@ namespace SimpleRPG.Tests.PlayMode
             var gate = new GameObject("Gate" + keyId);
             gate.transform.position = new Vector3(0f, 5f, 1f);
             ring.RegisterLock(keyId, gate);
+
+            // As the level builder does, each lock object gets its interactable.
+            gate.AddComponent<LockedDoorInteractable>().Setup(ring, keyId);
             return gate;
         }
 
+        // The client's own character interacts, as a player would; the server times it and decides.
+        private static Interactor ClientInteractor(NetworkManager client) =>
+            client.LocalClient.PlayerObject.GetComponent<Player>().character.GetComponent<Interactor>();
+
         [UnityTest]
-        public IEnumerator Client_PicksUpKey_ThroughTheRpc_AndTheKeyLeavesTheWorld()
+        public IEnumerator Client_PicksUpKey_ByInteracting_AndTheKeyLeavesTheWorld()
         {
             yield return Connect("Client");
             DungeonKeyRing clientRing = ClientRing(clients[0]);
@@ -172,7 +180,7 @@ namespace SimpleRPG.Tests.PlayMode
             KeyPickup clientPickup = ClientPickup(clients[0], 5);
             Assert.AreEqual(5, clientPickup.KeyId, "The key id should replicate with the spawn.");
 
-            clientPickup.RequestPickUp();
+            ClientInteractor(clients[0]).StartInteraction(clientPickup);
 
             yield return WaitFor(() => hostRing.Holds(5), "The server never recorded the key.");
             yield return WaitFor(() => clientRing.Holds(5), "The client's ring never showed the key.");
@@ -180,7 +188,7 @@ namespace SimpleRPG.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator Client_OpensDoor_ThroughTheRpc_WithItsKey_AndEveryMachineSeesItOpen()
+        public IEnumerator Client_OpensDoor_ByInteracting_WithItsKey_AndEveryMachineSeesItOpen()
         {
             yield return Connect("Client");
             DungeonKeyRing clientRing = ClientRing(clients[0]);
@@ -189,7 +197,7 @@ namespace SimpleRPG.Tests.PlayMode
             hostRing.AddKey(1);
             yield return WaitFor(() => clientRing.Holds(1), "The client never saw it holds key 1.");
 
-            clientRing.RequestOpen(1);
+            ClientInteractor(clients[0]).StartInteraction(clientGate.GetComponent<LockedDoorInteractable>());
 
             yield return WaitFor(() => hostRing.IsOpen(1), "The server never opened the door.");
             yield return WaitFor(() => clientRing.IsOpen(1) && !clientGate.activeSelf, "The client's door never opened.");
@@ -207,8 +215,8 @@ namespace SimpleRPG.Tests.PlayMode
             hostRing.AddKey(2);
             yield return WaitFor(() => clientRing.Holds(2), "The client never saw it holds key 2.");
 
-            clientRing.RequestOpen(1);
-            for (int i = 0; i < 30; i++) yield return null;
+            ClientInteractor(clients[0]).StartInteraction(clientGate.GetComponent<LockedDoorInteractable>());
+            for (int i = 0; i < 150; i++) yield return null;
 
             Assert.IsFalse(hostRing.IsOpen(1));
             Assert.IsFalse(clientRing.IsOpen(1));

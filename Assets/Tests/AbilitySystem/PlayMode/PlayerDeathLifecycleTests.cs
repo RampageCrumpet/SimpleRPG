@@ -498,6 +498,49 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator TheServerTimesAnInteraction_InteractionSpeedShortensIt()
+        {
+            Character player = SpawnPlayer();
+            Interactor interactor = player.GetComponent<Interactor>();
+            RecordingInteractable normal = CreateInteractable(1.0f);
+            RecordingInteractable fast = CreateInteractable(1.0f);
+            yield return new WaitForSeconds(0.5f);
+
+            interactor.StartInteraction(normal);
+            Assert.AreEqual(1.0f, interactor.InteractionDuration, 1e-4f, "A starting character interacts at the interaction's own time.");
+            yield return new WaitForSeconds(0.4f);
+            Assert.AreEqual(0, normal.Activations, "Not before its time is up.");
+            interactor.StopInteraction();
+
+            player.Stats.Attributes.AddModifier(new AttributeModifier(DerivedStats.InteractionSpeed, ModifierLayer.Multiply, 4d, SourceHandle.FromEntity(player.Id)));
+            interactor.StartInteraction(fast);
+            Assert.AreEqual(0.25f, interactor.InteractionDuration, 1e-4f, "Interaction Speed 4 takes a quarter of the time.");
+            yield return new WaitForSeconds(0.5f);
+            Assert.AreEqual(1, fast.Activations);
+        }
+
+        [UnityTest]
+        public IEnumerator AnInteractionOutOfReach_IsRefused_AndOneWhoseTargetVanishesEnds()
+        {
+            Character player = SpawnPlayer();
+            Interactor interactor = player.GetComponent<Interactor>();
+            RecordingInteractable distant = CreateInteractable(0.2f);
+            distant.transform.position = new Vector3(0f, 0f, 1000f);
+            RecordingInteractable vanishing = CreateInteractable(5f);
+            yield return new WaitForSeconds(0.5f);
+
+            interactor.StartInteraction(distant);
+            Assert.IsFalse(interactor.IsInteracting, "The server will not start what is out of reach.");
+
+            interactor.StartInteraction(vanishing);
+            Assert.IsTrue(interactor.IsInteracting);
+            Object.Destroy(vanishing.gameObject);
+            yield return null;
+            yield return null;
+            Assert.IsFalse(interactor.IsInteracting, "The interaction ends with its target.");
+        }
+
+        [UnityTest]
         public IEnumerator AfterRespawn_AbilitiesAttacksAndInteractionsWorkAgain()
         {
             Character player = SpawnPlayer();

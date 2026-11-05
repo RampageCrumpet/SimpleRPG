@@ -83,3 +83,5 @@ It is built from three things, all configured by hand and none of them the floor
 - **The result** is `clamp(area base + offsets, lowest, area ceiling)` (`LootArea.LevelFor`).
 
 Placed by the population: world pickups carry their level (`WorldItemPickup.ItemLevel`) and roll with it when picked up; enemies' corpses get their floor's area and their encounter's offset. **Not yet:** chests roll their contents the moment they spawn with the room, before the population knows their floor, so they are the lowest level until they roll later. The loot box that enemies' bags hold, and items nothing places, are the lowest level.
+
+**Chests** fill themselves the first time a player opens them (`LootContainer.RollsWhenOpened`), on the server, so nothing about their contents is decided until someone looks and anything that changes a roll in the meantime still counts. The population gives every container in a room its floor's loot area, so a chest's level is the area's. Corpses still fill at death and loot bags are filled by their owner's death drop.

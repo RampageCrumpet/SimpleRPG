@@ -1,4 +1,3 @@
-using SimpleRPG.Networking;
 using SimpleRPG.Audio;
 using SimpleRPG.InventorySystem;
 using Unity.Netcode;
@@ -68,27 +67,14 @@ namespace SimpleRPG.ObjectInteractions
 
         public override bool IsLookedAtVia(Collider collider) => collider != null && collider.GetComponentInParent<WorldItemPickup>() == this;
 
+        // The server timed the interaction and now takes the item for the player who made it. A one-shot interaction ends itself.
         public override void ActivateInteraction(Interactor interactor)
         {
-            if (IsSpawned) PickUpRpc();
+            if (IsSpawned && IsServer) TryPickUp(interactor.Character);
             interactor.StopInteraction();
         }
 
         public override void FinishInteraction(Interactor interactor) { }
-
-        private readonly RequestThrottle pickUpThrottle = new RequestThrottle(perSecond: 5d, burst: 10d);
-
-        [Rpc(SendTo.Server)]
-        private void PickUpRpc(RpcParams rpcParams = default)
-        {
-            if (!pickUpThrottle.TryAllow(rpcParams.Receive.SenderClientId, Time.unscaledTimeAsDouble))
-            {
-                return;
-            }
-
-            if (!NetworkManager.ConnectedClients.TryGetValue(rpcParams.Receive.SenderClientId, out var client)) return;
-            TryPickUp(PlayerCharacters.Of(client));
-        }
 
         public bool TryPickUp(Character character)
         {

@@ -1,4 +1,3 @@
-using SimpleRPG.Networking;
 using SimpleRPG.ObjectInteractions;
 using Unity.Netcode;
 using UnityEngine;
@@ -44,19 +43,13 @@ namespace SimpleRPG.Keys
         /// <inheritdoc/>
         public override void ActivateInteraction(Interactor interactor)
         {
-            RequestPickUp();
-            interactor.StopInteraction();
-        }
-
-        /// <summary>
-        /// Asks the server to give the calling player's party this key. Safe to call from any machine.
-        /// </summary>
-        public void RequestPickUp()
-        {
-            if (IsSpawned)
+            // The server timed the interaction; now it gives the party the key if the player is still close enough.
+            if (IsSpawned && IsServer)
             {
-                PickUpRpc();
+                TryPickUp(Vector3.Distance(interactor.transform.position, transform.position));
             }
+
+            interactor.StopInteraction();
         }
 
         /// <inheritdoc/>
@@ -102,22 +95,6 @@ namespace SimpleRPG.Keys
             }
 
             return null;
-        }
-
-        private readonly RequestThrottle pickUpThrottle = new RequestThrottle(perSecond: 5d, burst: 10d);
-
-        [Rpc(SendTo.Server)]
-        private void PickUpRpc(RpcParams rpcParams = default)
-        {
-            if (!pickUpThrottle.TryAllow(rpcParams.Receive.SenderClientId, UnityEngine.Time.unscaledTimeAsDouble))
-            {
-                return;
-            }
-
-            if (DungeonKeyRing.TryGetPlayerPosition(rpcParams.Receive.SenderClientId, out Vector3 player))
-            {
-                TryPickUp(Vector3.Distance(player, transform.position));
-            }
         }
     }
 }

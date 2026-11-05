@@ -93,6 +93,12 @@ namespace SimpleRPG.LevelGeneration
             {
                 LootArea area = AreaOf(rooms[i], floorHeight);
 
+                // Containers placed with the room (chests) fill themselves when first opened, with this area's loot level.
+                foreach (LootContainer container in rooms[i].GetComponentsInChildren<LootContainer>(true))
+                {
+                    container.Area = area;
+                }
+
                 // Keep the arrival room safe. No restrictions on room types or dungeon size.
                 if (i > 0 && encounters != null && random.NextDouble() < encounterChance)
                 {
