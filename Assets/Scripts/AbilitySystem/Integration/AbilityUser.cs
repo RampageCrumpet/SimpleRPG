@@ -441,8 +441,10 @@ namespace SimpleRPG.Abilities.Integration
 
             Vector3 origin = transform.TransformPoint(muzzleOffset);
             Vector3 direction = transform.forward;
+            // A weapon swing is the wielded weapon's doing, so the weapon item is its source (and the host effects scoped to the weapon look
+            // for), while the character stays the instigator: who is credited, who is targeted and who owns the result do not change.
             ExecutionRequest request = new ExecutionRequest(
-                SourceHandle.FromEntity(character.Id),
+                melee != null ? WeaponOrCharacterSource() : SourceHandle.FromEntity(character.Id),
                 character.Id,
                 new Position3(origin.x, origin.y, origin.z),
                 new Position3(direction.x, direction.y, direction.z));
@@ -452,6 +454,14 @@ namespace SimpleRPG.Abilities.Integration
             // If the ability never went on to start the swing it was promised, the promise is dropped.
             melee?.CancelPress();
             return result.Completed;
+        }
+
+        // The weapon item in the main hand, or the character itself when it fights with its default weapon (which is not an item).
+        private SourceHandle WeaponOrCharacterSource()
+        {
+            Equipment equipment = GetComponent<Equipment>();
+            ItemInstanceId weapon = equipment != null && equipment.MainHandWeapon != null ? equipment.GetItemInstanceId(EquipmentSlot.mainHand) : default;
+            return weapon.IsValid ? SourceHandle.FromItem(weapon) : SourceHandle.FromEntity(character.Id);
         }
 
         private static bool Contains(System.Collections.Generic.IReadOnlyList<AbilityDefinition> abilities, AbilityDefinition ability)

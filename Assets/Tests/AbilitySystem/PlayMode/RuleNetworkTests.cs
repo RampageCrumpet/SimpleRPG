@@ -213,6 +213,30 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator ARealBlow_IsTheWieldedSwordsDoing_ButTheWielderIsStillTheInstigator()
+        {
+            // A sword's own effect, scoped to the sword, must fire for a real swing, and the blow must still be credited to the wielder.
+            rule.Configure(rule.Ability, 1f, EffectTrigger.OnHit, EffectScope.Host);
+            Character wielder = Spawn(PlayerPrefab, Vector3.zero);
+            Character victim = Spawn(TargetPrefab, new Vector3(0f, 0f, 2f));
+            yield return null;
+            wielder.Loadout.DefaultWeapon = sword;
+            Assert.IsTrue(EquipmentOf(wielder).Equip(EquipmentSlot.mainHand, sword, 500));
+            DamageRequest blow = default;
+            services.Events.Subscribe<DamageResolvedEvent>(e =>
+            {
+                if (e.Request.Provenance == DamageProvenance.DirectWeaponHit && !blow.Target.IsValid) blow = e.Request;
+            });
+
+            SwingAt(wielder, victim);
+            yield return null;
+
+            Assert.AreEqual(wielder.Id, blow.Instigator, "The wielder is credited with the blow.");
+            Assert.AreEqual(SourceHandle.FromItem(new ItemInstanceId(500)), blow.Source, "The sword is what struck.");
+            Assert.AreEqual(1, LiveProjectiles().Count, "So the sword's own effect fired.");
+        }
+
+        [UnityTest]
         public IEnumerator TheExplosion_IsNotAnotherWeaponHit_SoTheSwordDoesNotCastAgain()
         {
             Character wielder = Spawn(PlayerPrefab, Vector3.zero);
