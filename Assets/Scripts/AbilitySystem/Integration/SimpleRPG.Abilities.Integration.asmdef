@@ -10,6 +10,7 @@
         "SimpleRPG.Items",
         "SimpleRPG.Combat",
         "SimpleRPG.Carrying",
+        "SimpleRPG.Interaction",
         "SimpleRPG.Melee",
         "SimpleRPG.AudioPlayback",
         "SimpleRPG.Presentation",

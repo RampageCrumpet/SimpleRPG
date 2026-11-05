@@ -17,7 +17,7 @@ MonoBehaviour:
   <Icon>k__BackingField: {fileID: 21300000, guid: d788cbcdae8b6564b8305c2f2f63f9fd, type: 3}
   <ItemName>k__BackingField: Visored Sallet
   <ItemSize>k__BackingField: {x: 2, y: 2}
-  rules: []
+  triggeredEffects: []
   audioProfile: {fileID: 0}
   movementAudio: {fileID: 0}
   audioSubject: {fileID: 0}
@@ -28,5 +28,5 @@ MonoBehaviour:
   startingCharges: 0
   grantedAbilities: []
   fixedAttributes: []
-  affixPool: {fileID: 0}
+  affixPool: {fileID: 11400000, guid: 8bbf9c8442e9d7946a42cd55f93cf68c, type: 2}
   slot: 1

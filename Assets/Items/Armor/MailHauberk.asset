@@ -17,7 +17,7 @@ MonoBehaviour:
   <Icon>k__BackingField: {fileID: 21300000, guid: 702e6a163e33a5342841e66ab7bd3ba7, type: 3}
   <ItemName>k__BackingField: Mail Hauberk
   <ItemSize>k__BackingField: {x: 2, y: 3}
-  rules: []
+  triggeredEffects: []
   audioProfile: {fileID: 0}
   movementAudio: {fileID: 0}
   audioSubject: {fileID: 0}
@@ -28,5 +28,5 @@ MonoBehaviour:
   startingCharges: 0
   grantedAbilities: []
   fixedAttributes: []
-  affixPool: {fileID: 0}
+  affixPool: {fileID: 11400000, guid: 1bccf11d93368f14383e9bec64ffce96, type: 2}
   slot: 2

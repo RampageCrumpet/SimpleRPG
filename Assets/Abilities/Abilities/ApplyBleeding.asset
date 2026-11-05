@@ -1,0 +1,71 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24a66e9a34419854b8728e7d48d58996, type: 3}
+  m_Name: ApplyBleeding
+  m_EditorClassIdentifier: SimpleRPG.Abilities.Runtime::SimpleRPG.Abilities.AbilityDefinition
+  definitionId: b4218a0823804d899f4595c0f83d7d1f
+  abilityName: Apply Bleeding
+  toolTip: 
+  icon: {fileID: 0}
+  sound: {fileID: 0}
+  cooldownSeconds: 0
+  nodes:
+  - NodeId: entry
+    TypeId: simplerpg.flow.triggerentry.v1
+    Config:
+      rid: 6207374376817393882
+    EditorPosition: {x: 0, y: 0}
+  - NodeId: target
+    TypeId: simplerpg.data.triggertarget.v1
+    Config:
+      rid: 6207374376817393883
+    EditorPosition: {x: 0, y: 0}
+  - NodeId: strength
+    TypeId: simplerpg.data.constant.v1
+    Config:
+      rid: 6207374376817393884
+    EditorPosition: {x: 0, y: 0}
+  - NodeId: apply
+    TypeId: simplerpg.action.applystatus.v1
+    Config:
+      rid: 6207374376817393885
+    EditorPosition: {x: 0, y: 0}
+  edges:
+  - FromNodeId: entry
+    FromPortId: Next
+    ToNodeId: apply
+    ToPortId: In
+  - FromNodeId: target
+    FromPortId: Value
+    ToNodeId: apply
+    ToPortId: Target
+  - FromNodeId: strength
+    FromPortId: Value
+    ToNodeId: apply
+    ToPortId: Potency
+  references:
+    version: 2
+    RefIds:
+    - rid: 6207374376817393882
+      type: {class: TriggerEntryConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data: 
+    - rid: 6207374376817393883
+      type: {class: TriggerDataConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data: 
+    - rid: 6207374376817393884
+      type: {class: ConstantConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data:
+        Value: 2
+    - rid: 6207374376817393885
+      type: {class: ApplyStatusConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data:
+        Status: {fileID: 11400000, guid: 089daab0e79db3f479c45b7b0107ff74, type: 2}

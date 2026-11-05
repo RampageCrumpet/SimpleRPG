@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b5fac26d94e5071b8c2f3e1ad604b85, type: 3}
+  m_Name: Suffix_Giant
+  m_EditorClassIdentifier: SimpleRPG.Items::SimpleRPG.InventorySystem.AffixDefinition
+  definitionId: a5a532fc32e74658b94d8ce1da5ddd38
+  displayName: of the Giant
+  kind: 1
+  family: strength
+  tier: 3
+  minimumItemLevel: 16
+  weight: 2
+  allowedSlots: 
+  effects:
+  - rid: 6207374376817393868
+  references:
+    version: 2
+    RefIds:
+    - rid: 6207374376817393868
+      type: {class: StatModifierEffect, ns: SimpleRPG.InventorySystem, asm: SimpleRPG.Items}
+      data:
+        label: Strength
+        attributeKey: simplerpg.attr.strength
+        layer: 0
+        scope: 0
+        minimum: 3
+        maximum: 4

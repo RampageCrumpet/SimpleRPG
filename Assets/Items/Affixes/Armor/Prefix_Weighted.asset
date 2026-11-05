@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b5fac26d94e5071b8c2f3e1ad604b85, type: 3}
+  m_Name: Prefix_Weighted
+  m_EditorClassIdentifier: SimpleRPG.Items::SimpleRPG.InventorySystem.AffixDefinition
+  definitionId: 73bd0c7ce57b4e658485a7adfa935f26
+  displayName: Weighted
+  kind: 0
+  family: burden
+  tier: 1
+  minimumItemLevel: 1
+  weight: 10
+  allowedSlots: 
+  effects:
+  - rid: 6207374376817393845
+  - rid: 6207374376817393846
+  - rid: 6207374376817393847
+  references:
+    version: 2
+    RefIds:
+    - rid: 6207374376817393845
+      type: {class: StatModifierEffect, ns: SimpleRPG.InventorySystem, asm: SimpleRPG.Items}
+      data:
+        label: Armor Rating
+        attributeKey: simplerpg.stat.armor_rating
+        layer: 0
+        scope: 0
+        minimum: 3
+        maximum: 4
+    - rid: 6207374376817393846
+      type: {class: StatModifierEffect, ns: SimpleRPG.InventorySystem, asm: SimpleRPG.Items}
+      data:
+        label: Constitution
+        attributeKey: simplerpg.attr.constitution
+        layer: 1
+        scope: 0
+        minimum: 0.03
+        maximum: 0.04
+    - rid: 6207374376817393847
+      type: {class: StatModifierEffect, ns: SimpleRPG.InventorySystem, asm: SimpleRPG.Items}
+      data:
+        label: Movement Speed
+        attributeKey: simplerpg.stat.movement_speed
+        layer: 1
+        scope: 0
+        minimum: -0.01
+        maximum: -0.01

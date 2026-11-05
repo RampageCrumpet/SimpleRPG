@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b5fac26d94e5071b8c2f3e1ad604b85, type: 3}
+  m_Name: Suffix_Survivor
+  m_EditorClassIdentifier: SimpleRPG.Items::SimpleRPG.InventorySystem.AffixDefinition
+  definitionId: ea39a2aa55c54f87ba1e1e3a24a04419
+  displayName: of the Survivor
+  kind: 1
+  family: vigor
+  tier: 2
+  minimumItemLevel: 8
+  weight: 5
+  allowedSlots: 
+  effects:
+  - rid: 6207374376817393858
+  references:
+    version: 2
+    RefIds:
+    - rid: 6207374376817393858
+      type: {class: StatModifierEffect, ns: SimpleRPG.InventorySystem, asm: SimpleRPG.Items}
+      data:
+        label: Maximum Health
+        attributeKey: simplerpg.stat.max_health
+        layer: 0
+        scope: 0
+        minimum: 9
+        maximum: 14

@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1800af56b76604c419cf001789a4bb3a, type: 3}
+  m_Name: Bleeding
+  m_EditorClassIdentifier: SimpleRPG.Abilities.Runtime::SimpleRPG.Abilities.StatusDefinition
+  definitionId: d5dab232bc394d6c9e6ada710d3e6647
+  statusName: Bleeding
+  icon: {fileID: 0}
+  grouping: 0
+  reapplication: 0
+  maxStacks: 5
+  overflow: 1
+  durationSeconds: 6
+  duration: 0
+  refresh: 1
+  magnitude: 0
+  tickIntervalSeconds: 1
+  periodic: 0
+  tickAbility: {fileID: 11400000, guid: ad1e43ccb1e89674fb89259f1bec665f, type: 2}
+  statModifiers: []
+  triggeredEffects: []

@@ -514,7 +514,8 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             player.Stats.Attributes.AddModifier(new AttributeModifier(DerivedStats.InteractionSpeed, ModifierLayer.Multiply, 4d, SourceHandle.FromEntity(player.Id)));
             interactor.StartInteraction(fast);
-            Assert.AreEqual(0.25f, interactor.InteractionDuration, 1e-4f, "Interaction Speed 4 takes a quarter of the time.");
+            // The player profile soft-caps Interaction Speed: past 2 it counts half, so a stat of 4 acts as 3.
+            Assert.AreEqual(1f / 3f, interactor.InteractionDuration, 1e-4f, "Interaction Speed 4 is soft-capped to 3, so it takes a third of the time.");
             yield return new WaitForSeconds(0.5f);
             Assert.AreEqual(1, fast.Activations);
         }

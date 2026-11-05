@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c60bd37ea5f6182c9d3a4f2be715c96, type: 3}
+  m_Name: ReinforcedGloves
+  m_EditorClassIdentifier: SimpleRPG.Items::SimpleRPG.InventorySystem.AffixPool
+  affixes:
+  - {fileID: 11400000, guid: 05165f5c00153f64982fc98b779a9726, type: 2}
+  - {fileID: 11400000, guid: ac8f9c6f12ce6d548b797459f67b8b64, type: 2}
+  - {fileID: 11400000, guid: 631902984b442f842b5d3e4a68c17c07, type: 2}
+  - {fileID: 11400000, guid: 49c1d6d47bd6108489d8201d61fb62b6, type: 2}
+  - {fileID: 11400000, guid: ac923ba5ce3b988458633ed9e401e1b7, type: 2}
+  - {fileID: 11400000, guid: 67f17d51816580b43ba5d11eed42263f, type: 2}
+  - {fileID: 11400000, guid: ec48583264d842d48a9e18f049e3ac36, type: 2}
+  - {fileID: 11400000, guid: 5191ae3b93f5dec42a74f98c02cda8f5, type: 2}
+  - {fileID: 11400000, guid: 94e71bcd93d1d234aa4b83d1e2ed37f5, type: 2}
+  - {fileID: 11400000, guid: c8261b4959826d14bbbb3393713cc553, type: 2}
+  - {fileID: 11400000, guid: f51def272aa32fe428c40469777bedf4, type: 2}
+  - {fileID: 11400000, guid: b1360e6324b02244bab77232a66ac7bc, type: 2}
+  - {fileID: 11400000, guid: 31ced5b0a323bf641970592b617a268a, type: 2}
+  - {fileID: 11400000, guid: 8a7bac8e0055fd146997b0723cd8666a, type: 2}
+  - {fileID: 11400000, guid: dd0e401e809a81a44801131fcf410afb, type: 2}
+  - {fileID: 11400000, guid: 81f0f1a3e9b09794f9bfd8606fc8d253, type: 2}
+  - {fileID: 11400000, guid: 5933a59411042744aaeddffc7883a915, type: 2}
+  - {fileID: 11400000, guid: c89619526367657418bebf8d447677d0, type: 2}
+  - {fileID: 11400000, guid: 20aaf8b013f037b4e9df66bb42efc1eb, type: 2}
+  - {fileID: 11400000, guid: d6e0e4c274e3ebd498faa8ec1cc5389d, type: 2}
+  - {fileID: 11400000, guid: 67c6373cb48f0344aa333cf4a41213d4, type: 2}
+  - {fileID: 11400000, guid: 8295dd97f74c88d48a5f9d359ba10ae3, type: 2}
+  - {fileID: 11400000, guid: 10be8496fd59cce42b8509186e9ca694, type: 2}
+  - {fileID: 11400000, guid: 4b6a4294d6bc95243880aea30da56e16, type: 2}
+  - {fileID: 11400000, guid: 09442cb64c6a43b4084b40adf34535bf, type: 2}
+  - {fileID: 11400000, guid: 68e8e198a370347489ff2c29631d5a53, type: 2}
+  - {fileID: 11400000, guid: 625110fff3297ab4aa4d7cef0077ba53, type: 2}
+  - {fileID: 11400000, guid: e8a2dbf74611d30498a28a8e715c2b3c, type: 2}
+  - {fileID: 11400000, guid: e59fbfa84268b8a40b437b8fd0721e1f, type: 2}
+  - {fileID: 11400000, guid: 430fb85419ae7c24b9b646ebcdd6d6c4, type: 2}
+  - {fileID: 11400000, guid: e8422eac8d2b92f4e9c0e5fede24f64e, type: 2}
+  - {fileID: 11400000, guid: 2df4cacda6739ce498f7e383c5966376, type: 2}
+  - {fileID: 11400000, guid: f7ff26859c6f40045af3dbe7e224b249, type: 2}
+  - {fileID: 11400000, guid: 53bde151c8e99374d90a8241119ca66f, type: 2}
+  - {fileID: 11400000, guid: b6903961c993d224aa4b4f8c3c2a7d54, type: 2}
+  - {fileID: 11400000, guid: 6a9e4451e791a7f4ba8a2392956ed016, type: 2}
+  - {fileID: 11400000, guid: 74e699be9f0b2c545aaf83550bad1772, type: 2}
+  - {fileID: 11400000, guid: d10644362302b47428c820afba17edc6, type: 2}
+  - {fileID: 11400000, guid: b41ea087f808a94498d2055016c57c88, type: 2}
+  minimumCount: 0
+  maximumCount: 2
+  maximumPrefixes: 1
+  maximumSuffixes: 1

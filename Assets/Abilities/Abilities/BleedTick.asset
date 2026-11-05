@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24a66e9a34419854b8728e7d48d58996, type: 3}
+  m_Name: BleedTick
+  m_EditorClassIdentifier: SimpleRPG.Abilities.Runtime::SimpleRPG.Abilities.AbilityDefinition
+  definitionId: 7efd19defc64457a8c2b953cd96290d7
+  abilityName: Bleed Tick
+  toolTip: 
+  icon: {fileID: 0}
+  sound: {fileID: 0}
+  cooldownSeconds: 0
+  nodes:
+  - NodeId: tick
+    TypeId: simplerpg.flow.statustick.v1
+    Config:
+      rid: 6207374376817393878
+    EditorPosition: {x: 0, y: 0}
+  - NodeId: holder
+    TypeId: simplerpg.data.statusholder.v1
+    Config:
+      rid: 6207374376817393879
+    EditorPosition: {x: 0, y: 0}
+  - NodeId: potency
+    TypeId: simplerpg.data.statuspotency.v1
+    Config:
+      rid: 6207374376817393880
+    EditorPosition: {x: 0, y: 0}
+  - NodeId: damage
+    TypeId: simplerpg.action.damage.v1
+    Config:
+      rid: 6207374376817393881
+    EditorPosition: {x: 0, y: 0}
+  edges:
+  - FromNodeId: tick
+    FromPortId: Next
+    ToNodeId: damage
+    ToPortId: In
+  - FromNodeId: holder
+    FromPortId: Value
+    ToNodeId: damage
+    ToPortId: Target
+  - FromNodeId: potency
+    FromPortId: Value
+    ToNodeId: damage
+    ToPortId: Amount
+  references:
+    version: 2
+    RefIds:
+    - rid: 6207374376817393878
+      type: {class: StatusTickConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data: 
+    - rid: 6207374376817393879
+      type: {class: StatusDataConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data: 
+    - rid: 6207374376817393880
+      type: {class: StatusDataConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data: 
+    - rid: 6207374376817393881
+      type: {class: DamageConfig, ns: SimpleRPG.Abilities, asm: SimpleRPG.Abilities.Runtime}
+      data:
+        Provenance: 8
+        Type: 0
+        BypassesMitigation: 1
