@@ -28,3 +28,4 @@ For sound effects (Audacity MCP, sourcing, measuring, known tool quirks), start 
 - [Animations: hips, masks and the fixed pelvis](Animations.md)
 - [Character appearance](CharacterAppearance.md)
 - [Anatomical hit regions](HitRegions.md)
+- [Audio system](Audio.md) and its [completion report](AudioFoundationReport.md)

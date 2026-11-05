@@ -41,6 +41,9 @@ namespace SimpleRPG.ObjectInteractions
             if (IsSpawned)
             {
                 affixes.Value = instance.Affixes;
+
+                // Every machine hears the item land; a pickup the dungeon placed does not announce itself.
+                DroppedRpc();
             }
         }
 
@@ -63,6 +66,12 @@ namespace SimpleRPG.ObjectInteractions
             }
 
             base.OnNetworkDespawn();
+        }
+
+        [Rpc(SendTo.ClientsAndHost)]
+        private void DroppedRpc()
+        {
+            if (item != null) InventoryAudio.PlayAt(item, InventoryAudioAction.Drop, transform.position);
         }
 
         public override bool IsLookedAtVia(Collider collider) => collider != null && collider.GetComponentInParent<WorldItemPickup>() == this;

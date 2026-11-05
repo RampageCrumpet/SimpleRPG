@@ -56,6 +56,8 @@ gameplay event ──► adapter (CombatAudio, FootstepEmitter, AudioIdentity, .
 - **Swing**: `ComboStep.SwingSound` + `SwingSoundTime` (seconds into the step). `CombatAudio` plays it on every machine that shows the attack, joins late if the news is late, and cancels it if the owner's predicted swing is refused.
 - **Impact**: `MeleeDeliveryBase` sends `HitConfirmedClientRpc` (victim id, region, attack number, blade position) when the server confirms a hit on a living target. `CombatAudio` plays from that. Entering an attack never plays an impact.
 - **Hurt and death**: `AudioIdentity` follows the replicated `OnTakeDamage` / `OnDeath` events.
+- **Collapse**: the body landing is a separate moment from dying. `AudioIdentity.OnCollapse()` is called by an animation event on the death clip at the frame the body hits the ground; it resolves its `Collapse` event against the ground under the body (surface, overlay, the object's impact contact sounds), the creature and its body material. Each machine plays it from its own animation; nothing is sent.
+- **Why not `WeaponHitConfirmedEvent`.** It is a server-side gameplay event on the dispatcher (what triggered effects react to), after damage resolves, and it does not exist on clients. Impact audio uses `HitConfirmedClientRpc`, raised at the same place in `MeleeDeliveryBase`, which does reach every machine. One hit, two consumers, no second hit pathway.
 - **Spells**: `SpellAudioProfile` (cast prepare, release, flight, impact, periodic). `ProjectileAudio` on a projectile prefab plays release at spawn, a flight loop *attached to the projectile* (it cannot outlive it), and impact at the last position unless the projectile simply expired.
 
 ### Inventory, interactables, ambience
@@ -74,6 +76,8 @@ Audio is client-side and sends nothing. Triggers:
 | Swing | `MeleeAttackStarted` (the owner's prediction, or the server's word) | One event per attack; a refused prediction cancels it |
 | Impact | `HitConfirmedClientRpc` from the server on a confirmed hit | Server |
 | Hurt, death | Replicated health and life state | Server |
+| Collapse | Each machine's own death animation (`OnCollapse` event) | None, never replicated |
+| Drop on the ground | `DroppedRpc` from the pickup the server just made for a dropped item | Server |
 | Footsteps | Each machine's own animation | None, never replicated, so never duplicated |
 | Inventory place | The local player's own move request | Courtesy; a refused move snaps back |
 | Pickup | Server despawning the pickup | Server |
@@ -106,10 +110,10 @@ Audio is client-side and sends nothing. Triggers:
 - Nothing here is verified by ear. Tests check which sound is chosen, when it starts, how many play and that everything is released; they do not and cannot check how it sounds, how loud attenuation is, or that the mixer is balanced.
 - The example catalog has real clips for the longsword swings, the steel-on-bone impacts and the skeleton's bare-foot footstep only. The boots footstep, plate rattle, gem sounds, torch loop and drip are valid but silent placeholders (they show as validation warnings).
 - **Wired:** `SimpleRPG > Audio > Wire Gameplay Prefabs And Scene` (idempotent) put `CombatAudio`, `AudioIdentity`, `FootstepEmitter` and `MovementAudioState` on the player (`TestCharacter`) and skeleton prefabs, plus `EquipmentMovementAudio` on the player, an `AmbienceController` in `SampleScene`, the gem profile on the four cut gems, and a steel material on the skeleton sword. The skeleton's two swing events now name audio events (`PlayEvent`) instead of bare clips, and its walk clip has foot-down events at 0.06 s and 0.68 s. The player's footsteps come from the foot bones (humanoid rig, root 0.43 m above the soles, measured from the run clip). The skeleton's death plays `Death_Skeleton`.
-- Not wired: skeleton rise and hurt sounds, `AmbienceZone`s on room prefabs (the scene's default profile covers every room), door and lever interactables other than the chest and locked door, and the player's hurt and death sounds (no recordings).
+- Not wired: the collapse event on the skeleton's death clip (add `OnCollapse` as an animation event in the model import, and an event asset for the collapse), skeleton rise and hurt sounds, `AmbienceZone`s on room prefabs (the scene's default profile covers every room), door and lever interactables other than the chest and locked door, and the player's hurt and death sounds (no recordings).
 - The boots footstep (the player's default footwear), plate rattle, gem sounds, torch loop and drip are silent placeholders, so **the player's own footsteps make no sound until a boots recording is added**. Skeleton footsteps do sound.
 - The service plays nothing when there is no `AudioListener` in the scene, and does not warn about events with no clip: use the validator for that.
-- Cast preparation and periodic effects have a profile slot and an API, but no ability node calls them yet. Drop has an action but no drop mechanic exists. Stack has an action but there is no stacking.
+- Cast preparation and periodic effects have a profile slot and an API, but no ability node calls them yet. A dropped item plays its Drop sound on every machine (`WorldItemPickup.DroppedRpc`, sent once when the server makes the pickup). Stack has an action but there is no stacking.
 - `ProjectileAudio` decides "expired" from the projectile's age; a projectile destroyed exactly at its lifespan by a hit would be heard as expired.
 - A pickup sound is played from the pickup's despawn on clients; a despawn for another reason (room teardown outside shutdown) would also play it.
 - No occlusion, room reverb or AI hearing, by design.

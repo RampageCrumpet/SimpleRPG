@@ -247,6 +247,59 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             Assert.AreEqual(1, service.ActiveCount);
         }
 
+        // ----- The collapse: a separate moment from dying -----
+
+        [Test]
+        public void ACollapseSoundsLikeTheGroundTheBodyLandsOn()
+        {
+            AcousticSurface stone = Track(AudioTag.Create<AcousticSurface>("Stone"));
+            AcousticSurface wood = Track(AudioTag.Create<AcousticSurface>("Wood"));
+            AudioTag bone = Track(AudioTag.Create("Bone"));
+            AudioEventDefinition onStone = Event("CollapseStone");
+            AudioEventDefinition onWood = Event("CollapseWood");
+            AudioEventTable collapse = Track(AudioEventTable.Create("Collapse", null,
+                AudioEventTable.Row(onStone, On(AudioFacet.Surface, stone)), AudioEventTable.Row(onWood, On(AudioFacet.Surface, wood))));
+            var (body, _) = Victim(bone);
+            AudioIdentity identity = body.GetComponent<AudioIdentity>();
+            SetField(identity, "collapse", collapse);
+
+            identity.Collapse(Vector3.zero, new SurfaceSample { Surface = stone });
+            Assert.AreSame(onStone.Layers[0].clips[0].clip, Playing()[0].clip);
+
+            service.StopAll();
+            identity.Collapse(Vector3.zero, new SurfaceSample { Surface = wood });
+            Assert.AreSame(onWood.Layers[0].clips[0].clip, Playing()[0].clip);
+        }
+
+        [Test]
+        public void ADyingBodyDoesNotCollapseUntilTheAnimationSaysSo_AndAnOldBridgeCreaksUnderIt()
+        {
+            AcousticSurface wood = Track(AudioTag.Create<AcousticSurface>("Wood"));
+            AudioEventDefinition thud = Event("Thud");
+            AudioEventDefinition creak = Event("Creak");
+            var (body, _) = Victim(Track(AudioTag.Create("Bone")));
+            AudioIdentity identity = body.GetComponent<AudioIdentity>();
+            SetField(identity, "collapse", thud);
+            GameObject bridge = Track(new GameObject("Bridge"));
+            AcousticSurfaceSource source = bridge.AddComponent<AcousticSurfaceSource>();
+            source.ContactSounds = new[] { new ContactSound { sound = creak, kinds = AudioContactKind.Impact, chance = 1f } };
+
+            Assert.AreEqual(0, service.ActiveCount, "Nothing plays until the landing.");
+
+            identity.Collapse(Vector3.zero, new SurfaceSample { Surface = wood, BaseSource = source });
+            Assert.AreEqual(2, service.ActiveCount, "The body's landing and the bridge's creak.");
+        }
+
+        [Test]
+        public void ACollapseWithNoSoundOrNoSurfaceIsSilentAndSafe()
+        {
+            var (body, _) = Victim(Track(AudioTag.Create("Bone")));
+            AudioIdentity identity = body.GetComponent<AudioIdentity>();
+
+            Assert.DoesNotThrow(() => identity.Collapse(Vector3.zero, default));
+            Assert.AreEqual(0, service.ActiveCount);
+        }
+
         [Test]
         public void HitOnATargetWithNoAudioIdentityAndNoTablesStaysSilentAndSafe()
         {
