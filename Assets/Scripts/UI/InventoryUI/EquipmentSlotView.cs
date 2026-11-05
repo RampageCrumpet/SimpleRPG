@@ -11,8 +11,15 @@ namespace SimpleRPG.UI
     /// One square on the paper doll: the icon of what is worn in a slot, or the slot's name while it is empty.
     /// It holds no equipment state; <see cref="PaperDollUI"/> tells it what to show and what a click means.
     /// </summary>
-    public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler
+    public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
+        /// <summary>Hovering a worn item shows what it is and does.</summary>
+        public void OnPointerEnter(PointerEventData eventData) => ItemTooltipView.Show(DisplayedItem, transform);
+
+        public void OnPointerExit(PointerEventData eventData) => ItemTooltipView.Hide();
+
+        private void OnDisable() => ItemTooltipView.Hide();
+
         private static readonly Color EmptyColor = new Color(0.16f, 0.16f, 0.16f, 0.9f);
 
         private static readonly Color FilledColor = new Color(0.25f, 0.25f, 0.25f, 0.95f);

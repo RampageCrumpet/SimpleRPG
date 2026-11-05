@@ -10,8 +10,15 @@ namespace SimpleRPG.UI
     /// The UI representation of an item in the inventory.
     /// </summary>
     [RequireComponent(typeof(Image))]
-    public class ItemIcon : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
+    public class ItemIcon : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
+        /// <summary>Hovering an item shows what it is and does.</summary>
+        public void OnPointerEnter(PointerEventData eventData) => ItemTooltipView.Show(Item, transform);
+
+        public void OnPointerExit(PointerEventData eventData) => ItemTooltipView.Hide();
+
+        private void OnDisable() => ItemTooltipView.Hide();
+
         /// <summary>
         /// Right-clicking an item asks to wear it. Only armor in the player's own inventory can be; anything else is refused by the equipment rules.
         /// </summary>
@@ -66,6 +73,7 @@ namespace SimpleRPG.UI
         ///<inheritdoc/>
         public void OnBeginDrag(PointerEventData eventData)
         {
+            ItemTooltipView.Hide();
             originalParent = transform.parent;
             originalPosition = transform.localPosition;
 
