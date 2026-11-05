@@ -18,7 +18,7 @@ For sound effects (Audacity MCP, sourcing, measuring, known tool quirks), start 
 - [Stats: derived stats, weapon damage, soft caps](Stats.md)
 - [Moving the game body to the canonical A-pose rig](RigMigrationReport.md), its [hand-off](BodyMigrationHandoff.md) and [report](BodyMigrationReport.md)
 - [Art and rig leftovers (to file as beads)](ArtLeftoversHandoff.md)
-- [Notes for the next audit](SessionAuditNotes.md)
+- [Audit and hand-off (state, risks, first steps)](AuditAndHandoff.md)
 - [Hand-off: bring-up and verification of the latest changes](LocalAgentHandoff.md)
 - [Code layout: which assembly new code goes in](CodeLayout.md)
 - [HUD and inventory screens](InventoryScreens.md)
