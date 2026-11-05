@@ -119,6 +119,12 @@ namespace SimpleRPG.InventorySystem
         /// </summary>
         public ItemAffixes Affixes { get; private set; }
 
+        /// <summary>
+        /// What a percentage scoped to this item (see <c>AffixScope.ThisItem</c>) is a percentage of: the grants the asset declares, plus any
+        /// number of its own that is not a grant, such as a weapon's damage. These are not applied to the wearer; they only give the percentage a base.
+        /// </summary>
+        protected virtual IReadOnlyList<GrantSpec> ScalableGrants => grants;
+
         private string displayName;
         private List<GrantSpec> combinedGrants;
         private List<TriggeredEffect> combinedEffects;
@@ -157,7 +163,7 @@ namespace SimpleRPG.InventorySystem
                             }
 
                             // Scaled by the item's own grants (the asset's), not by the grants of other affixes.
-                            affix.AddGrants(grants, roll.Values(), combinedGrants);
+                            affix.AddGrants(ScalableGrants, roll.Values(), combinedGrants);
                         }
                         else
                         {

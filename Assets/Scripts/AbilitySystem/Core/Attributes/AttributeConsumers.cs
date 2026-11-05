@@ -9,8 +9,8 @@ namespace SimpleRPG.Gameplay
     /// <para>
     /// Add an attribute here in the same change that makes a system read it, and remove it when its last reader goes. Constitution, Agility and
     /// Willpower count because the player profile derives Maximum Health, Movement Speed and the damage reductions from them. Strength and
-    /// Physical Power are <b>not</b> read yet: melee damage is the weapon's damage times the combo scalar and nothing more, until the weapon damage
-    /// calculation reads Physical Power. Dexterity, Intelligence (it feeds Magical Power, which no spell reads), Magical Power, Attack, Casting,
+    /// Physical Power count because the player profile derives Physical Power from Strength and the melee attack ability (the asset, not code)
+    /// multiplies a blow by 1 + 0.05 per point of it. The Weapon Damage stats are read by the weapon damage calculation. Dexterity, Intelligence (it feeds Magical Power, which no spell reads), Magical Power, Attack, Casting,
     /// Interaction and Equip Speed, Carrying Capacity and Spell Preparation Capacity are read by nothing yet.
     /// </para>
     /// </summary>
@@ -18,10 +18,14 @@ namespace SimpleRPG.Gameplay
     {
         private static readonly HashSet<string> Read = new HashSet<string>
         {
+            PrimaryAttributes.Strength.Key,
             PrimaryAttributes.Constitution.Key,
             PrimaryAttributes.Agility.Key,
             PrimaryAttributes.Willpower.Key,
             DerivedStats.MaximumHealth.Key,
+            DerivedStats.PhysicalPower.Key,
+            DerivedStats.WeaponDamage.Key,
+            DerivedStats.WeaponDamageMultiplier.Key,
             DerivedStats.PhysicalDamageReduction.Key,
             DerivedStats.MagicalDamageReduction.Key,
             DerivedStats.MovementSpeed.Key,

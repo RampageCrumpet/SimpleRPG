@@ -363,7 +363,10 @@ namespace SimpleRPG
             }
 
             WeaponData weaponData = Character.Loadout.Weapon;
-            float baseDamage = weaponData != null && weaponData.damage != null ? weaponData.damage.Damage : 0f;
+            float weaponDamage = weaponData != null && weaponData.damage != null ? weaponData.damage.Damage : 0f;
+
+            // The wielder's bonuses and Physical Power change what the weapon does; the combo scalar and the target's defences come after.
+            float baseDamage = Character.Stats != null ? Character.Stats.ResolveWeaponDamage(weaponDamage) : weaponDamage;
             bool victimWasAlive = victim.IsAlive;
 
             MeleeHit hit = new MeleeHit(victim.Id, (int)location, swing.AttackNumber, DamageScalar(swing.AttackNumber), baseDamage);

@@ -14,8 +14,8 @@ namespace SimpleRPG.Tests.EditMode
         {
             Assert.IsTrue(AttributeConsumers.IsRead(DerivedStats.ArmorRating.Key));
             Assert.IsTrue(AttributeConsumers.IsRead(PrimaryAttributes.Constitution.Key));
-            Assert.IsFalse(AttributeConsumers.IsRead(PrimaryAttributes.Strength.Key), "Melee damage does not read Physical Power yet.");
-            Assert.IsFalse(AttributeConsumers.IsRead(DerivedStats.PhysicalPower.Key));
+            Assert.IsTrue(AttributeConsumers.IsRead(PrimaryAttributes.Strength.Key), "The melee attack ability reads Physical Power, which Strength feeds.");
+            Assert.IsTrue(AttributeConsumers.IsRead(DerivedStats.PhysicalPower.Key));
             Assert.IsFalse(AttributeConsumers.IsRead(PrimaryAttributes.Dexterity.Key));
             Assert.IsFalse(AttributeConsumers.IsRead(DerivedStats.AttackSpeed.Key));
             Assert.IsFalse(AttributeConsumers.IsRead(DerivedStats.MagicalPower.Key));

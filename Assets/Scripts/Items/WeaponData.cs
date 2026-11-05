@@ -24,6 +24,27 @@ namespace SimpleRPG
         public DamageInfo damage;
 
         /// <summary>
+        /// A weapon's base damage is what its Enhanced Damage affix is a percentage of. It is not a grant (the weapon damage calculation adds it),
+        /// so it is offered here as the number an item-scoped percentage scales.
+        /// </summary>
+        protected override System.Collections.Generic.IReadOnlyList<SimpleRPG.Abilities.GrantSpec> ScalableGrants
+        {
+            get
+            {
+                var scalable = new System.Collections.Generic.List<SimpleRPG.Abilities.GrantSpec>(Grants)
+                {
+                    new SimpleRPG.Abilities.GrantSpec
+                    {
+                        AttributeKey = SimpleRPG.Gameplay.DerivedStats.WeaponDamage.Key,
+                        Layer = SimpleRPG.Gameplay.ModifierLayer.Add,
+                        Value = damage != null ? damage.Damage : 0f,
+                    },
+                };
+                return scalable;
+            }
+        }
+
+        /// <summary>
         /// The chain of melee attacks this weapon performs. Empty for weapons without one.
         /// </summary>
         [SerializeField]

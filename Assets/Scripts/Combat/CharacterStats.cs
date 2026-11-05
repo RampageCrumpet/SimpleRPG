@@ -65,6 +65,22 @@ namespace SimpleRPG
         }
 
         /// <summary>
+        /// What a blow from a weapon with this much damage does before the combo scalar and defences (see <see cref="WeaponDamageCalculator"/>).
+        /// A character whose profile has no weapon damage stats, or that has no attributes (a client), deals the weapon's damage as it is.
+        /// </summary>
+        public float ResolveWeaponDamage(float weaponDamage)
+        {
+            if (Attributes == null)
+            {
+                return weaponDamage;
+            }
+
+            double bonus = HasDerivedStat(DerivedStats.WeaponDamage) ? Attributes.Get(DerivedStats.WeaponDamage) : 0d;
+            double multiplier = HasDerivedStat(DerivedStats.WeaponDamageMultiplier) ? Attributes.Get(DerivedStats.WeaponDamageMultiplier) : 1d;
+            return WeaponDamageCalculator.Compute(weaponDamage, bonus, multiplier);
+        }
+
+        /// <summary>
         /// True if this character's stat profile defines the derived stat, so a stat sheet can leave out stats the character does not have.
         /// </summary>
         public bool HasDerivedStat(AttributeId stat)

@@ -42,6 +42,12 @@ MonoBehaviour:
       curve: 0
       scale: 1
       halfPoint: 0
+  - statKey: simplerpg.stat.weapon_damage
+    baseValue: 0
+    contributions: []
+  - statKey: simplerpg.stat.weapon_damage_multiplier
+    baseValue: 1
+    contributions: []
   - statKey: simplerpg.stat.armor_rating
     baseValue: 0
     contributions: []

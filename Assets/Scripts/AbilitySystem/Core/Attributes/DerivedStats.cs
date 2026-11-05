@@ -29,12 +29,27 @@ namespace SimpleRPG.Gameplay
         public static readonly AttributeId ArmorRating = new AttributeId("simplerpg.stat.armor_rating");
 
         /// <summary>
-        /// All thirteen, in a fixed order.
+        /// Damage added to the wearer's weapon attacks before the multiplier: flat bonuses from any worn item, and an item-local percentage of a
+        /// weapon's own base damage (applied as a flat amount by its affix, see <c>AffixScope.ThisItem</c>). It holds only bonuses: the weapon's
+        /// own damage is added by the weapon damage calculation. Absent from a profile, it contributes nothing.
+        /// </summary>
+        public static readonly AttributeId WeaponDamage = new AttributeId("simplerpg.stat.weapon_damage");
+
+        /// <summary>
+        /// What a weapon attack's damage is multiplied by for the percentage Weapon Damage bonuses of worn items: 1 plus their sum (a +10 percent
+        /// affix is its percent layer on a base of 1, so they add together). Physical Power is a separate factor, applied by the melee attack
+        /// ability itself. Applies to weapon attacks only, never to ability damage. Absent from a profile, it is 1.
+        /// </summary>
+        public static readonly AttributeId WeaponDamageMultiplier = new AttributeId("simplerpg.stat.weapon_damage_multiplier");
+
+        /// <summary>
+        /// All fifteen, in a fixed order.
         /// </summary>
         public static readonly AttributeId[] All =
         {
             MaximumHealth, PhysicalPower, MagicalPower, PhysicalDamageReduction, MagicalDamageReduction, MovementSpeed,
             AttackSpeed, CastingSpeed, InteractionSpeed, EquipSpeed, CarryingCapacity, SpellPreparationCapacity, ArmorRating,
+            WeaponDamage, WeaponDamageMultiplier,
         };
 
         private static readonly HashSet<AttributeId> AllSet = new HashSet<AttributeId>(All);

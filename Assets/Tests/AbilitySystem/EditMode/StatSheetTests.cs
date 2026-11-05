@@ -27,7 +27,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         [Test]
         public void Catalog_HasTheThirteenDistinctDerivedStats()
         {
-            Assert.AreEqual(13, DerivedStats.All.Length);
+            Assert.AreEqual(15, DerivedStats.All.Length);
             CollectionAssert.AllItemsAreUnique(DerivedStats.All);
             Assert.IsTrue(DerivedStats.All.All(DerivedStats.IsCatalogued));
             Assert.IsFalse(DerivedStats.IsCatalogued(PrimaryAttributes.Strength));

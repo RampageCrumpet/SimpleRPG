@@ -51,3 +51,16 @@ Each contribution has its **own scale and half point**, so the two are tuned ind
 With the starting numbers a Constitution of 10 alone turns aside about 8 percent of a physical blow, and 100 Armor Rating adds 45 percent on top of that.
 
 Enemies use direct profiles, which take authored values and have no contributions: give an enemy reduction by authoring its Physical Damage Reduction directly.
+
+## Weapon damage
+
+A weapon blow is worked out in three steps, and only weapon attacks take them. Ability and magical damage never do.
+
+1. **The weapon damage calculation** (`WeaponDamageCalculator`, run when the weapon touches a target): `(weapon base + Weapon Damage) x Weapon Damage Multiplier`.
+   - *Weapon Damage* (`simplerpg.stat.weapon_damage`) holds only bonuses: flat bonuses from any worn item, and item-local **Enhanced Damage**. Enhanced Damage is an affix stat effect scoped to *This Item*: a percentage of that one weapon's own base damage, applied as a flat amount, so it never scales another item's bonus.
+   - *Weapon Damage Multiplier* (`simplerpg.stat.weapon_damage_multiplier`) is 1 plus the percentage Weapon Damage bonuses of worn items. They are the stat's percent layer, so they add together (+10% and +20% are +30%) before they scale.
+   - Bonuses of one kind are added together before the kinds multiply.
+2. **The melee attack ability** then multiplies by the combo scalar and by Physical Power (1 + 0.05 per point, constants in `MeleeAttack.asset`, tuned there). A starting character (Strength 10) deals the same as before: nothing here changes a blow with no bonuses.
+3. **The combat resolver** applies the target's mitigation.
+
+A character whose profile lacks the two stats (the skeleton) deals its weapon's damage as it is. Nothing displays the two stats beyond the stat sheet.
