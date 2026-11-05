@@ -29,6 +29,7 @@ namespace SimpleRPG.Tests.PlayMode
         private readonly List<NetworkManager> clients = new List<NetworkManager>();
         private DungeonKeyRing hostRing;
         private GameObject mainCamera;
+        private GameObject floor;
 
         private static NetworkManager NewManager(string name)
         {
@@ -54,6 +55,12 @@ namespace SimpleRPG.Tests.PlayMode
         {
             // The first person controller of every spawned character looks for the scene's MainCamera.
             mainCamera = new GameObject("TestCamera", typeof(Camera)) { tag = "MainCamera" };
+
+            // The server places the character at (0, 5, 0); without a floor it would fall, and an interaction ends when the character moves off.
+            floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            floor.name = "TestFloor";
+            floor.transform.position = new Vector3(0f, 4.5f, 0f);
+            floor.transform.localScale = new Vector3(20f, 1f, 20f);
             host = NewManager("TestHost");
             Assert.IsTrue(host.StartHost(), "The test host should start.");
             yield return null;
@@ -93,6 +100,7 @@ namespace SimpleRPG.Tests.PlayMode
 
             clients.Clear();
             if (hostRing != null) Object.Destroy(hostRing.gameObject);
+            if (floor != null) Object.Destroy(floor);
             if (host != null) Object.Destroy(host.gameObject);
             yield return null;
 

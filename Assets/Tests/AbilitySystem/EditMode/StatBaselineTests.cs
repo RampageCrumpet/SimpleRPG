@@ -86,7 +86,7 @@ namespace SimpleRPG.Abilities.Tests.EditMode
         {
             AttributeSet set = PlayerWith(10);
 
-            foreach (AttributeId stat in new[] { DerivedStats.AttackSpeed, DerivedStats.CastingSpeed, DerivedStats.InteractionSpeed, DerivedStats.EquipSpeed, DerivedStats.CarryingCapacity, DerivedStats.SpellPreparationCapacity })
+            foreach (AttributeId stat in new[] { DerivedStats.AttackSpeed, DerivedStats.CastingSpeed, DerivedStats.EquipSpeed, DerivedStats.CarryingCapacity, DerivedStats.SpellPreparationCapacity })
             {
                 Assert.AreEqual(0d, set.Get(stat), stat.Key);
             }

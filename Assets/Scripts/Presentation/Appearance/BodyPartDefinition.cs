@@ -73,12 +73,6 @@ namespace SimpleRPG.Appearance
         public Quaternion AttachRotation => attachRotation;
         public Vector3 AttachScale => attachScale;
 
-        protected override void OnValidate()
-        {
-            base.OnValidate();
-            pieces = null;
-        }
-
         public bool IsSkinned => boneNames != null && boneNames.Length > 0;
 
         /// <summary>Why this part cannot be built, or null if it can. Used by tests and the definition check.</summary>
@@ -94,6 +88,12 @@ namespace SimpleRPG.Appearance
         }
 
 #if UNITY_EDITOR
+        protected override void OnValidate()
+        {
+            base.OnValidate();
+            pieces = null;
+        }
+
         /// <summary>Makes this part the look of an item. Editor tooling only.</summary>
         public void Dress(Item item) => dressesItem = item;
 
