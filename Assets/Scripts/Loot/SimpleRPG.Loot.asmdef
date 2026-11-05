@@ -3,7 +3,8 @@
     "rootNamespace": "SimpleRPG",
     "references": [
         "SimpleRPG.Items",
-        "SimpleRPG.Gameplay.Core"
+        "SimpleRPG.Gameplay.Core",
+        "SimpleRPG.Abilities.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

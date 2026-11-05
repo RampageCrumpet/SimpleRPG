@@ -36,7 +36,7 @@ namespace SimpleRPG.Tests.EditMode
         {
             CompileResult result = Track(BleedingSetup.BuildTickAbility()).Compile();
 
-            Assert.IsTrue(result.Success, result.Report);
+            Assert.IsTrue(result.Success, result.Report.ToString());
         }
 
         [Test]
@@ -48,7 +48,7 @@ namespace SimpleRPG.Tests.EditMode
 
             CompileResult result = apply.Compile();
 
-            Assert.IsTrue(result.Success, result.Report);
+            Assert.IsTrue(result.Success, result.Report.ToString());
             Assert.IsTrue(apply.HasNode(NodeTypes.TriggerEntry));
             Assert.AreSame(tick, status.TickAbility);
             Assert.AreEqual(BleedingSetup.MaxStacks, status.MaxStacks);

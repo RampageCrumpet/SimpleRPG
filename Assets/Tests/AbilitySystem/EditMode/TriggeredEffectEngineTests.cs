@@ -506,11 +506,8 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             services.Diagnostic += diagnostics.Add;
             engine.Dispose();
             engine = NewEngine();
-            melee.OnBegin = (launch, swingEvents) =>
-            {
-                swingEvents.Hit(launch.Token, new MeleeHit(victim.Id, 1, 1, 1f, 1f));
-                events.Enqueue(Blow(wielder, victim));
-            };
+            // The swing's hit goes through the real combat pipeline, so its damage is itself the next weapon hit; queuing another here would double every level.
+            melee.OnBegin = (launch, swingEvents) => swingEvents.Hit(launch.Token, new MeleeHit(victim.Id, 1, 1, 1f, 1f));
 
             AbilityDefinition swing = AbilityBuilder.MeleeAttack();
             created.Add(swing);
