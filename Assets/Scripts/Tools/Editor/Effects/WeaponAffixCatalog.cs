@@ -59,7 +59,7 @@ namespace SimpleRPG.EffectTools
             if (bleeding == null) Debug.LogWarning("[Affixes] OfBleeding is missing: run Build Bleeding Effect first, then this again.");
             else pool.Add(bleeding);
 
-            EnsurePools<WeaponData>(WeaponFolder, ArmorAffixCatalog.PoolFolder, pool, 0, 2, out int pools, out int assigned, weapon => Weapons.Contains(weapon.name));
+            EnsurePools<WeaponData>(WeaponFolder, ArmorAffixCatalog.PoolFolder, pool, 0, 2, out int pools, out int assigned, weapon => Weapons.Contains(weapon.name), RareNameSeed.EnsureAsset(), RareNameSeed.DefaultChance);
 
             AssetDatabase.SaveAssets();
             EditorApplication.ExecuteMenuItem("SimpleRPG/Definitions/Rebuild Definition Registry");

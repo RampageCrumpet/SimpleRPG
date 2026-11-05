@@ -85,7 +85,7 @@ namespace SimpleRPG.EffectTools
         public static void BuildAssets()
         {
             List<AffixDefinition> affixes = EnsureAffixAssets(Build(), AffixFolder, out int made);
-            EnsurePools<ArmorData>(ArmorFolder, PoolFolder, affixes, 0, 2, out int pools, out int assigned);
+            EnsurePools<ArmorData>(ArmorFolder, PoolFolder, affixes, 0, 2, out int pools, out int assigned, null, RareNameSeed.EnsureAsset(), RareNameSeed.DefaultChance);
 
             AssetDatabase.SaveAssets();
             EditorApplication.ExecuteMenuItem("SimpleRPG/Definitions/Rebuild Definition Registry");

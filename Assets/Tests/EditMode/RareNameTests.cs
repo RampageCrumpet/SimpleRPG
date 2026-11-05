@@ -55,12 +55,11 @@ namespace SimpleRPG.Tests.EditMode
 
         private static NameWord Word(int id, string text) => new NameWord { id = id, text = text };
 
-        private RareNameComponents Words()
+        private RareNames Names()
         {
-            RareNameComponents words = Track(ScriptableObject.CreateInstance<RareNameComponents>());
-            Set(words, "firstWords", new List<NameWord> { Word(1, "Grim"), Word(2, "Dread"), Word(3, "Gloom") });
-            Set(words, "secondWords", new List<NameWord> { Word(10, "Bulwark"), Word(11, "Shell") });
-            return words;
+            RareNames names = Track(ScriptableObject.CreateInstance<RareNames>());
+            Set(names, "names", new List<NameWord> { Word(1, "Grave Bite"), Word(2, "Iron Requiem"), Word(3, "Dusk Reaver") });
+            return names;
         }
 
         private AffixDefinition Affix(string display, AffixKind kind, string key)
@@ -73,12 +72,11 @@ namespace SimpleRPG.Tests.EditMode
             return affix;
         }
 
-        // An armor asset whose pool rolls a prefix and a suffix and makes anything with both rare.
-        private ArmorData Armor(RareNameComponents words, int rareFrom, out AffixDefinition[] affixes)
+        // An armor asset whose pool rolls a prefix and a suffix and, with the given chance, makes the item rare.
+        private ArmorData Armor(RareNames names, float rareChance)
         {
             AffixDefinition prefix = Affix("Riveted", AffixKind.Prefix, "simplerpg.stat.armor_rating");
             AffixDefinition suffix = Affix("of the Bear", AffixKind.Suffix, "simplerpg.attr.constitution");
-            affixes = new[] { prefix, suffix };
             DefinitionRegistry registry = Track(ScriptableObject.CreateInstance<DefinitionRegistry>());
             Assert.IsTrue(registry.Rebuild(new GameplayDefinition[] { prefix, suffix }).Success);
             DefinitionRegistry.Instance = registry;
@@ -89,8 +87,12 @@ namespace SimpleRPG.Tests.EditMode
             Set(pool, "maximumCount", 2);
             Set(pool, "maximumPrefixes", 1);
             Set(pool, "maximumSuffixes", 1);
-            Set(pool, "rareNames", words);
-            Set(pool, "rareFromCount", rareFrom);
+            Set(pool, "rareNames", names);
+            Set(pool, "rareChance", rareChance);
+            Set(pool, "rareMinimumCount", 1);
+            Set(pool, "rareMaximumCount", 2);
+            Set(pool, "rareMaximumPrefixes", 1);
+            Set(pool, "rareMaximumSuffixes", 1);
 
             ArmorData armor = Track(ScriptableObject.CreateInstance<ArmorData>());
             armor.EnsureId();
@@ -100,110 +102,122 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
-        public void AWordIsPickedBySampleAcrossTheList()
+        public void ANameIsPickedBySampleAcrossTheList()
         {
-            RareNameComponents words = Words();
+            RareNames names = Names();
 
-            Assert.AreEqual(1, RareNameComponents.Pick(words.FirstWords, 0.0));
-            Assert.AreEqual(2, RareNameComponents.Pick(words.FirstWords, 0.5));
-            Assert.AreEqual(3, RareNameComponents.Pick(words.FirstWords, 0.999));
-            Assert.AreEqual(0, RareNameComponents.Pick(new List<NameWord>(), 0.5), "No words, no pick.");
+            Assert.AreEqual(1, names.Pick(0.0));
+            Assert.AreEqual(2, names.Pick(0.5));
+            Assert.AreEqual(3, names.Pick(0.999));
+            Assert.AreEqual(0, Track(ScriptableObject.CreateInstance<RareNames>()).Pick(0.5), "No names, no pick.");
         }
 
         [Test]
-        public void AnItemWithEnoughAffixes_IsRare_AndNamedFromTwoWords_NotFromItsAffixes()
+        public void ARareItem_IsCalledByItsName_NotByItsAffixes_WithTheBaseItemBeneath()
         {
-            ArmorData armor = Armor(Words(), rareFrom: 2, out _);
+            ArmorData armor = Armor(Names(), rareChance: 1f);
 
             Item instance = Track(armor.CloneInstance(armor.RollAffixes(new SeededRandom(7))));
 
             Assert.IsTrue(instance.Affixes.IsRare);
             StringAssert.DoesNotContain("Riveted", instance.DisplayName);
-            Assert.AreEqual(2, instance.DisplayName.Split(' ').Length, "Two words.");
+            CollectionAssert.Contains(new[] { "Grave Bite", "Iron Requiem", "Dusk Reaver" }, instance.DisplayName);
             Assert.AreEqual(instance.DisplayName, instance.RareName);
             var lines = ItemTooltip.Build(instance);
             Assert.AreEqual(instance.DisplayName, lines[0].Text);
-            Assert.AreEqual("Plate Armor", lines[1].Text, "The base item is named beneath the rare name.");
+            Assert.AreEqual("Plate Armor", lines[1].Text);
         }
 
         [Test]
-        public void AnItemBelowTheThreshold_IsNotRare_AndDrawsNothingExtra()
+        public void APoolThatCannotBeRare_DrawsExactlyWhatItDidBefore_AndNamesFromAffixes()
         {
-            ArmorData rare = Armor(Words(), rareFrom: 0, out _);
-            var plain = new SeededRandom(3);
-            var again = new SeededRandom(3);
+            ArmorData armor = Armor(Names(), rareChance: 0f);
+            var a = new SeededRandom(3);
+            var b = new SeededRandom(3);
 
-            ItemAffixes a = rare.RollAffixes(plain);
-            ItemAffixes b = rare.RollAffixes(again);
+            ItemAffixes first = armor.RollAffixes(a);
+            ItemAffixes second = armor.RollAffixes(b);
 
-            Assert.IsFalse(a.IsRare);
-            Assert.AreEqual(a, b);
-            Assert.AreEqual("Riveted Plate Armor of the Bear", Track(rare.CloneInstance(a)).DisplayName, "Named for its affixes as before.");
+            Assert.IsFalse(first.IsRare);
+            Assert.AreEqual(first, second);
+            Assert.AreEqual(a.NextDouble(), b.NextDouble(), "Same stream position: no extra draws.");
+            Assert.AreEqual("Riveted Plate Armor of the Bear", Track(armor.CloneInstance(first)).DisplayName);
         }
 
         [Test]
-        public void TheSameSeedGivesTheSameName_AndSeedsVary()
+        public void ARollWithAChance_IsRareSometimes_AndTheSameSeedGivesTheSameItem()
         {
-            ArmorData armor = Armor(Words(), rareFrom: 2, out _);
-            var names = new HashSet<string>();
+            ArmorData armor = Armor(Names(), rareChance: 0.5f);
+            int rare = 0;
 
-            for (int seed = 1; seed <= 40; seed++)
+            for (int seed = 1; seed <= 200; seed++)
             {
-                string first = Track(armor.CloneInstance(armor.RollAffixes(new SeededRandom(seed)))).DisplayName;
-                string again = Track(armor.CloneInstance(armor.RollAffixes(new SeededRandom(seed)))).DisplayName;
-                Assert.AreEqual(first, again);
-                names.Add(first);
+                ItemAffixes a = armor.RollAffixes(new SeededRandom(seed));
+                Assert.AreEqual(a, armor.RollAffixes(new SeededRandom(seed)));
+                if (a.IsRare) rare++;
             }
 
-            Assert.Greater(names.Count, 1, "Different seeds do not all give the same name.");
+            Assert.That(rare, Is.InRange(60, 140), "About half.");
         }
 
         [Test]
-        public void EditingTheWordList_NeverRenamesAnItemAlreadyRolled()
+        public void EditingTheNameList_NeverRenamesAnItemAlreadyRolled()
         {
-            RareNameComponents words = Words();
-            ArmorData armor = Armor(words, rareFrom: 2, out _);
+            RareNames names = Names();
+            ArmorData armor = Armor(names, rareChance: 1f);
             Item instance = Track(armor.CloneInstance(armor.RollAffixes(new SeededRandom(7))));
             string name = instance.RareName;
-            (int first, int second) = instance.Affixes.RareName;
+            int id = instance.Affixes.RareNameId;
 
-            // Add words ahead of everything and change the order: the ids it holds still mean the same words.
-            Set(words, "firstWords", new List<NameWord> { Word(99, "Cruel") }.Concat(words.FirstWords.Reverse()).ToList());
+            // New names ahead of everything and the order reversed: the id it holds still means the same name.
+            Set(names, "names", new List<NameWord> { Word(99, "Cruel Fortune") }.Concat(names.Names.Reverse()).ToList());
 
-            Assert.AreEqual((first, second), instance.Affixes.RareName);
+            Assert.AreEqual(id, instance.Affixes.RareNameId);
             Assert.AreEqual(name, Track(armor.CloneInstance(instance.Affixes)).RareName);
         }
 
         [Test]
-        public void ARemovedWord_FallsBackToTheAffixNames_NotAnError()
+        public void ARemovedName_FallsBackToTheAffixNames_NotAnError()
         {
-            RareNameComponents words = Words();
-            ArmorData armor = Armor(words, rareFrom: 2, out _);
+            RareNames names = Names();
+            ArmorData armor = Armor(names, rareChance: 1f);
             Item instance = Track(armor.CloneInstance(armor.RollAffixes(new SeededRandom(7))));
-            Set(words, "firstWords", new List<NameWord> { Word(50, "Other") });
+            Set(names, "names", new List<NameWord> { Word(50, "Other") });
 
             Assert.IsNull(instance.RareName);
-            Assert.AreEqual("Riveted Plate Armor of the Bear", Track(armor.CloneInstance(instance.Affixes)).DisplayName);
+            StringAssert.Contains("Plate Armor", Track(armor.CloneInstance(instance.Affixes)).DisplayName);
+            StringAssert.DoesNotContain("Other", Track(armor.CloneInstance(instance.Affixes)).DisplayName);
         }
 
         [Test]
         public void ARareNameIsPartOfWhatIsStoredAndCompared()
         {
             ItemAffixes plain = ItemAffixes.From(new[] { new AffixRoll(1, 100) });
-            ItemAffixes rare = plain.WithRareName(2, 11);
+            ItemAffixes rare = plain.WithRareName(11);
 
             Assert.AreNotEqual(plain, rare);
-            Assert.AreEqual(rare, plain.WithRareName(2, 11));
-            Assert.AreEqual((2, 11), rare.RareName);
+            Assert.AreEqual(rare, plain.WithRareName(11));
+            Assert.AreEqual(11, rare.RareNameId);
             Assert.IsFalse(plain.IsRare);
         }
 
         [Test]
-        public void APoolThatMakesRaresWithoutWords_IsReported()
+        public void APoolThatMakesRaresWithoutNames_IsReported()
         {
-            ArmorData armor = Armor(null, rareFrom: 2, out _);
+            ArmorData armor = Armor(null, rareChance: 0.2f);
 
             Assert.IsNotEmpty(armor.AffixPool.Problems());
+        }
+
+        [Test]
+        public void TheSeedNames_AreTheHundredSupplied_WithPermanentIds()
+        {
+            RareNames seed = Track(SimpleRPG.EffectTools.RareNameSeed.Build());
+
+            Assert.AreEqual(100, seed.Names.Count);
+            Assert.IsNull(seed.Problem());
+            Assert.AreEqual("Grave Bite", seed.TextOf(1));
+            Assert.AreEqual("Eternal Silence", seed.TextOf(100));
         }
     }
 }

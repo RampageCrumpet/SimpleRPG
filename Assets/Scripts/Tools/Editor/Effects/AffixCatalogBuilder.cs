@@ -84,7 +84,7 @@ namespace SimpleRPG.EffectTools
         }
 
         /// <summary>A pool for one item, with at most one prefix and one suffix. The counts are the designer's to change per item.</summary>
-        public static AffixPool BuildPool(string name, IEnumerable<AffixDefinition> affixes, int minimum = 0, int maximum = 2)
+        public static AffixPool BuildPool(string name, IEnumerable<AffixDefinition> affixes, int minimum = 0, int maximum = 2, RareNames rareNames = null, float rareChance = 0f)
         {
             AffixPool pool = ScriptableObject.CreateInstance<AffixPool>();
             pool.name = name;
@@ -98,7 +98,24 @@ namespace SimpleRPG.EffectTools
             serialized.FindProperty("maximumPrefixes").intValue = 1;
             serialized.FindProperty("maximumSuffixes").intValue = 1;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+            if (rareNames != null && rareChance > 0f) EnableRare(pool, rareNames, rareChance);
             return pool;
+        }
+
+        /// <summary>
+        /// Lets a pool's items be rare: with this chance an instance rolls three to six affixes (up to three of each kind) and is called by one of
+        /// the names. The counts are the pool's own to change afterwards.
+        /// </summary>
+        public static void EnableRare(AffixPool pool, RareNames rareNames, float chance)
+        {
+            var serialized = new SerializedObject(pool);
+            serialized.FindProperty("rareNames").objectReferenceValue = rareNames;
+            serialized.FindProperty("rareChance").floatValue = chance;
+            serialized.FindProperty("rareMinimumCount").intValue = 3;
+            serialized.FindProperty("rareMaximumCount").intValue = 6;
+            serialized.FindProperty("rareMaximumPrefixes").intValue = 3;
+            serialized.FindProperty("rareMaximumSuffixes").intValue = 3;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         /// <summary>Makes an affix asset for each spec that has none, and returns every affix (made or already there), in spec order.</summary>
@@ -128,7 +145,7 @@ namespace SimpleRPG.EffectTools
         /// <summary>
         /// Gives each item of a type in a folder (that <paramref name="include"/> accepts, if given) its own pool (made only if missing) and sets it on the item only if it has none.
         /// </summary>
-        public static void EnsurePools<T>(string itemFolder, string poolFolder, IReadOnlyList<AffixDefinition> affixes, int minimum, int maximum, out int pools, out int assigned, System.Func<T, bool> include = null) where T : Item
+        public static void EnsurePools<T>(string itemFolder, string poolFolder, IReadOnlyList<AffixDefinition> affixes, int minimum, int maximum, out int pools, out int assigned, System.Func<T, bool> include = null, RareNames rareNames = null, float rareChance = 0f) where T : Item
         {
             Directory.CreateDirectory(poolFolder);
             pools = 0;
@@ -145,7 +162,7 @@ namespace SimpleRPG.EffectTools
                 AffixPool pool = AssetDatabase.LoadAssetAtPath<AffixPool>(poolPath);
                 if (pool == null)
                 {
-                    pool = BuildPool(item.name, affixes, minimum, maximum);
+                    pool = BuildPool(item.name, affixes, minimum, maximum, rareNames, rareChance);
                     AssetDatabase.CreateAsset(pool, poolPath);
                     pools++;
                 }

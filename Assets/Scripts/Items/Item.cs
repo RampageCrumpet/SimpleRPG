@@ -220,14 +220,13 @@ namespace SimpleRPG.InventorySystem
             }
         }
 
-        /// <summary>The generated name of a rare item, or null if this is not one (or the words it was named from are gone).</summary>
+        /// <summary>The name of a rare item, or null if this is not one (or the name it was given is gone from the list).</summary>
         public string RareName
         {
             get
             {
-                RareNameComponents words = SourceAsset.AffixPool != null ? SourceAsset.AffixPool.RareNames : null;
-                (int first, int second) = Affixes.RareName;
-                return Affixes.IsRare && words != null ? words.NameOf(first, second) : null;
+                RareNames names = SourceAsset.AffixPool != null ? SourceAsset.AffixPool.RareNames : null;
+                return Affixes.IsRare && names != null ? names.TextOf(Affixes.RareNameId) : null;
             }
         }
 

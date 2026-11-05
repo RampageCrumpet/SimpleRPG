@@ -135,14 +135,16 @@ namespace SimpleRPG.InventorySystem
                 }
             }
 
-            ItemAffixes rolled = Roll(candidates, new AffixLimits(pool.MinimumCount, pool.MaximumCount, pool.MaximumPrefixes, pool.MaximumSuffixes), random);
+            // Whether this one is rare is decided first, and only by a pool that can make rares, so a pool that cannot draws exactly what it did before.
+            bool rare = pool.CanBeRare && random != null && random.NextDouble() < pool.RareChance;
+            AffixLimits limits = rare ? pool.RareLimits : new AffixLimits(pool.MinimumCount, pool.MaximumCount, pool.MaximumPrefixes, pool.MaximumSuffixes);
+            ItemAffixes rolled = Roll(candidates, limits, random);
 
-            // A rare item is named last, from two more draws, so a pool that makes none rare draws exactly what it did before.
-            if (pool.RareFromCount > 0 && pool.RareNames != null && rolled.Count >= pool.RareFromCount && random != null)
+            // A rare item is then named, from one more draw. Nothing to name (no affixes rolled) is not rare.
+            if (rare && !rolled.IsEmpty)
             {
-                int first = RareNameComponents.Pick(pool.RareNames.FirstWords, random.NextDouble());
-                int second = RareNameComponents.Pick(pool.RareNames.SecondWords, random.NextDouble());
-                if (first != 0 && second != 0) rolled = rolled.WithRareName(first, second);
+                int nameId = pool.RareNames.Pick(random.NextDouble());
+                if (nameId != 0) rolled = rolled.WithRareName(nameId);
             }
 
             return rolled;

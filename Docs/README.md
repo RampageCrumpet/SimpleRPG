@@ -14,7 +14,6 @@ For sound effects (Audacity MCP, sourcing, measuring, known tool quirks), start 
 - [The delve: dying, extracting, and the loot bag](Delve.md)
 - [Equipment and the paper doll](Equipment.md)
 - [Item affixes (rolled bonuses)](Affixes.md)
-- [Armor affix catalog: DRAFT for review](AffixCatalogDraft.md)
 - [Hand-off: bring-up and verification of the latest changes](LocalAgentHandoff.md)
 - [Code layout: which assembly new code goes in](CodeLayout.md)
 - [HUD and inventory screens](InventoryScreens.md)

@@ -56,3 +56,9 @@ MonoBehaviour:
   maximumCount: 2
   maximumPrefixes: 1
   maximumSuffixes: 1
+  rareNames: {fileID: 11400000, guid: 06ed16dd02ce4c9a8cf5ee480fa717e9, type: 2}
+  rareChance: 0.15
+  rareMinimumCount: 3
+  rareMaximumCount: 6
+  rareMaximumPrefixes: 3
+  rareMaximumSuffixes: 3

@@ -35,19 +35,45 @@ namespace SimpleRPG.InventorySystem
         private int maximumSuffixes = 1;
 
         [SerializeField]
-        [Tooltip("The words rare items of this pool are named from. Empty: its items are never rare.")]
-        private RareNameComponents rareNames;
+        [Tooltip("The names rare items of this pool are called by. Empty: its items are never rare.")]
+        private RareNames rareNames;
+
+        [SerializeField]
+        [Range(0f, 1f)]
+        [Tooltip("The chance an instance is rare: it then rolls the counts below instead of the ones above, and is given a rare name. Zero: never.")]
+        private float rareChance;
 
         [SerializeField]
         [Min(0)]
-        [Tooltip("An instance that rolls at least this many affixes is rare and gets a generated name. Zero: never.")]
-        private int rareFromCount;
+        [Tooltip("The fewest affixes a rare instance rolls.")]
+        private int rareMinimumCount = 3;
+
+        [SerializeField]
+        [Min(0)]
+        [Tooltip("The most affixes a rare instance rolls.")]
+        private int rareMaximumCount = 6;
+
+        [SerializeField]
+        [Min(0)]
+        [Tooltip("The most prefixes a rare instance rolls.")]
+        private int rareMaximumPrefixes = 3;
+
+        [SerializeField]
+        [Min(0)]
+        [Tooltip("The most suffixes a rare instance rolls.")]
+        private int rareMaximumSuffixes = 3;
 
         public IReadOnlyList<AffixDefinition> Affixes => affixes;
 
-        public RareNameComponents RareNames => rareNames;
+        public RareNames RareNames => rareNames;
 
-        public int RareFromCount => rareFromCount;
+        /// <summary>True if instances of this pool can be rare.</summary>
+        public bool CanBeRare => rareChance > 0f && rareNames != null;
+
+        public float RareChance => rareChance;
+
+        /// <summary>How many affixes, and of which kind, a rare instance rolls.</summary>
+        public AffixLimits RareLimits => new AffixLimits(rareMinimumCount, rareMaximumCount, rareMaximumPrefixes, rareMaximumSuffixes);
 
         public int MinimumCount => minimumCount;
 
@@ -84,16 +110,16 @@ namespace SimpleRPG.InventorySystem
                 footprints.Add(ItemAffixes.Footprint(affix.ValueCount));
             }
 
-            if (rareFromCount > 0)
+            if (rareChance > 0f)
             {
-                if (rareNames == null) problems.Add(name + " makes items rare from " + rareFromCount + " affixes but has no words to name them.");
+                if (rareNames == null) problems.Add(name + " can make rare items but has no names for them.");
                 else if (rareNames.Problem() != null) problems.Add(rareNames.Problem());
-                if (rareFromCount > maximumCount) problems.Add(name + " makes items rare from " + rareFromCount + " affixes but never rolls more than " + maximumCount + ".");
+                if (rareMinimumCount > rareMaximumCount) problems.Add(name + " rolls at least " + rareMinimumCount + " affixes for a rare but at most " + rareMaximumCount + ".");
             }
 
             // The most space a roll of the allowed size can take: the largest affixes, as many as may roll.
             footprints.Sort((a, b) => b.CompareTo(a));
-            int take = Mathf.Min(maximumCount, footprints.Count);
+            int take = Mathf.Min(rareChance > 0f ? Mathf.Max(maximumCount, rareMaximumCount) : maximumCount, footprints.Count);
             int worst = 0;
             for (int i = 0; i < take; i++) worst += footprints[i];
             if (worst > ItemAffixes.WordCapacity)

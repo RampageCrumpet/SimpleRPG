@@ -19,10 +19,9 @@ The last commits (interaction authority, soft caps, weapon and armor affix catal
 - **Interaction cancel** is now server-side for ability use, death, distance and a vanished target. It still cannot see an item being dropped or a menu action; add those if they should end an interaction.
 
 ## Docs to tidy
-- `Docs/AffixCatalogDraft.md` is superseded by `Docs/Affixes.md` and the catalog tools; delete it or fold anything still wanted into `Affixes.md`.
 - `Docs/LocalAgentHandoff.md` and the two reports are history; keep or archive.
 
 ## Content waiting on the owner
-- The rare item word lists (`RareNameComponents`) and which pools make rares.
+- The rare item chance and counts (15%, three to six affixes) are first guesses.
 - A hand-made world form for any armor whose generated one folds badly.
 - The art and rig list in `Docs/ArtLeftoversHandoff.md`.

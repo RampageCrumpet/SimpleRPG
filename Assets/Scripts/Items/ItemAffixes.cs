@@ -58,21 +58,20 @@ namespace SimpleRPG.InventorySystem
 
         private WordBlock block0, block1, block2, block3;
 
-        // The ids of the two words that name a rare item (see RareNameComponents); zero when the item is not rare.
-        private int rareFirst, rareSecond;
+        // The id of the name a rare item is called by (see RareNames); zero when the item is not rare.
+        private int rareName;
 
-        /// <summary>True for a rare item, which has a generated name.</summary>
-        public bool IsRare => rareFirst != 0 && rareSecond != 0;
+        /// <summary>True for a rare item, which has a name of its own.</summary>
+        public bool IsRare => rareName != 0;
 
-        /// <summary>The ids of the two words of the rare name.</summary>
-        public (int first, int second) RareName => (rareFirst, rareSecond);
+        /// <summary>The id of the rare name, or zero.</summary>
+        public int RareNameId => rareName;
 
-        /// <summary>The same affixes with a rare name.</summary>
-        public ItemAffixes WithRareName(int firstId, int secondId)
+        /// <summary>The same affixes, made rare with the name of this id.</summary>
+        public ItemAffixes WithRareName(int nameId)
         {
             ItemAffixes copy = this;
-            copy.rareFirst = firstId;
-            copy.rareSecond = secondId;
+            copy.rareName = nameId;
             return copy;
         }
 
@@ -169,13 +168,12 @@ namespace SimpleRPG.InventorySystem
             serializer.SerializeValue(ref block1);
             serializer.SerializeValue(ref block2);
             serializer.SerializeValue(ref block3);
-            serializer.SerializeValue(ref rareFirst);
-            serializer.SerializeValue(ref rareSecond);
+            serializer.SerializeValue(ref rareName);
         }
 
         public bool Equals(ItemAffixes other)
         {
-            if (rareFirst != other.rareFirst || rareSecond != other.rareSecond) return false;
+            if (rareName != other.rareName) return false;
             for (int i = 0; i < WordCapacity; i++)
             {
                 if (Get(i) != other.Get(i)) return false;
@@ -190,8 +188,7 @@ namespace SimpleRPG.InventorySystem
         {
             var hash = new HashCode();
             for (int i = 0; i < WordCapacity; i++) hash.Add(Get(i));
-            hash.Add(rareFirst);
-            hash.Add(rareSecond);
+            hash.Add(rareName);
             return hash.ToHashCode();
         }
 
