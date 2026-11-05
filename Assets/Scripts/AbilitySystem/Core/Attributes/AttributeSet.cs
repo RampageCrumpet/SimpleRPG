@@ -144,7 +144,8 @@ namespace SimpleRPG.Gameplay
                 }
             }
 
-            return (start + add) * (1d + percent) * factor;
+            double result = (start + add) * (1d + percent) * factor;
+            return schema.TryGetSoftCap(attribute, out SoftCap softCap) ? softCap.Apply(result) : result;
         }
 
         private void Changed()

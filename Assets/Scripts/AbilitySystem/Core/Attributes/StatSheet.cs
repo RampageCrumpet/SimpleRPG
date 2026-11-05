@@ -75,7 +75,7 @@ namespace SimpleRPG.Gameplay
     /// </summary>
     public sealed class StatRule
     {
-        public StatRule(AttributeId stat, double baseValue, IEnumerable<StatContribution> contributions = null)
+        public StatRule(AttributeId stat, double baseValue, IEnumerable<StatContribution> contributions = null, SoftCap softCap = default)
         {
             if (stat.IsNone) throw new ArgumentException("A rule needs a stat.", nameof(stat));
             if (Array.IndexOf(PrimaryAttributes.All, stat) >= 0) throw new ArgumentException(stat + " is a primary attribute and cannot be derived.", nameof(stat));
@@ -83,6 +83,7 @@ namespace SimpleRPG.Gameplay
 
             Stat = stat;
             BaseValue = baseValue;
+            SoftCap = softCap;
             Contributions = new List<StatContribution>(contributions ?? Array.Empty<StatContribution>()).AsReadOnly();
         }
 
@@ -91,6 +92,9 @@ namespace SimpleRPG.Gameplay
         public double BaseValue { get; }
 
         public IReadOnlyList<StatContribution> Contributions { get; }
+
+        /// <summary>Holds the stat's final value down past a threshold (see <see cref="Gameplay.SoftCap"/>). None if unset.</summary>
+        public SoftCap SoftCap { get; }
     }
 
     /// <summary>
@@ -161,7 +165,7 @@ namespace SimpleRPG.Gameplay
                                 }
 
                                 return value;
-                            });
+                            }, captured.SoftCap);
                         }
                     }
 

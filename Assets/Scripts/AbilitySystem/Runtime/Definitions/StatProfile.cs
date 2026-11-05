@@ -37,6 +37,12 @@ namespace SimpleRPG.Abilities
 
         [Tooltip("Derived profiles only: what the stat gains from other attributes.")]
         public List<StatContributionData> contributions;
+
+        [Tooltip("Derived profiles only: the value above which each further point counts for less (a soft cap). Zero means no cap.")]
+        public double softCapThreshold;
+
+        [Tooltip("Past the soft cap threshold, how much of each point still counts: 1 is no cap, 0 a hard cap.")]
+        public double softCapSlope;
     }
 
     /// <summary>
@@ -95,7 +101,7 @@ namespace SimpleRPG.Abilities
                     }
                 }
 
-                built.Add(new StatRule(new AttributeId(rule.statKey), rule.baseValue, contributions));
+                built.Add(new StatRule(new AttributeId(rule.statKey), rule.baseValue, contributions, rule.softCapThreshold > 0d ? new SoftCap(rule.softCapThreshold, rule.softCapSlope) : default));
             }
 
             return new StatSheet(ownership, built);

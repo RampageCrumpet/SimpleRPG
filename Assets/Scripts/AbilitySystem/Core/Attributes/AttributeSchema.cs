@@ -21,13 +21,14 @@ namespace SimpleRPG.Gameplay
     public sealed class AttributeSchema
     {
         private readonly Dictionary<AttributeId, Func<IAttributeReader, double>> derived = new Dictionary<AttributeId, Func<IAttributeReader, double>>();
+        private readonly Dictionary<AttributeId, SoftCap> softCaps = new Dictionary<AttributeId, SoftCap>();
 
         /// <summary>
         /// Registers a derived attribute. The formula reads other attributes, primary or derived, through the reader it is given.
-        /// The formula's result is then modified like any other attribute.
+        /// The formula's result is then modified like any other attribute, and held to the soft cap if there is one.
         /// </summary>
         /// <returns>This schema, so registrations can be chained.</returns>
-        public AttributeSchema Define(AttributeId attribute, Func<IAttributeReader, double> formula)
+        public AttributeSchema Define(AttributeId attribute, Func<IAttributeReader, double> formula, SoftCap softCap = default)
         {
             if (attribute.IsNone) throw new ArgumentException("A derived attribute needs an ID.", nameof(attribute));
             if (formula == null) throw new ArgumentNullException(nameof(formula));
@@ -35,6 +36,7 @@ namespace SimpleRPG.Gameplay
             if (derived.ContainsKey(attribute)) throw new ArgumentException(attribute + " is already defined.", nameof(attribute));
 
             derived.Add(attribute, formula);
+            if (softCap.IsActive) softCaps.Add(attribute, softCap);
             return this;
         }
 
@@ -42,6 +44,8 @@ namespace SimpleRPG.Gameplay
         /// True if the attribute is computed from other attributes.
         /// </summary>
         public bool IsDerived(AttributeId attribute) => derived.ContainsKey(attribute);
+
+        internal bool TryGetSoftCap(AttributeId attribute, out SoftCap softCap) => softCaps.TryGetValue(attribute, out softCap);
 
         internal bool TryGetFormula(AttributeId attribute, out Func<IAttributeReader, double> formula) => derived.TryGetValue(attribute, out formula);
     }

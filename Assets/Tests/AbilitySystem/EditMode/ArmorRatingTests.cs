@@ -125,9 +125,10 @@ namespace SimpleRPG.Abilities.Tests.EditMode
 
             double reduction = set.Get(DerivedStats.PhysicalDamageReduction);
 
-            // The two contributions together can pass the cap before the resolver holds them to it.
-            Assert.Greater(reduction, DamageMitigation.MaxReduction);
-            Assert.AreEqual(DamageMitigation.MaxReduction, DamageMitigation.Clamp(reduction), 1e-12);
+            // The shipped profile counts reduction past 0.6 at a quarter, so even absurd armor stays well short of the hard ceiling.
+            Assert.Greater(reduction, 0.6);
+            Assert.Less(reduction, DamageMitigation.MaxReduction);
+            Assert.AreEqual(reduction, DamageMitigation.Clamp(reduction), 1e-12);
         }
 
         // ---- The contributions are independent ----

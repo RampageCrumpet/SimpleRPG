@@ -64,3 +64,9 @@ A weapon blow is worked out in three steps, and only weapon attacks take them. A
 3. **The combat resolver** applies the target's mitigation.
 
 A character whose profile lacks the two stats (the skeleton) deals its weapon's damage as it is. Nothing displays the two stats beyond the stat sheet.
+
+## Soft caps
+
+A stat rule can carry a **soft cap** (`SoftCap`, set on the rule in a stat profile: `softCapThreshold` and `softCapSlope`). Up to the threshold the stat is what it adds up to; past it each further point counts only the slope's fraction (0.25: four points for one). It is applied to the stat's **final** value, after every modifier, so no mix of flat, percentage and multiplying bonuses gets around it, and it never stops growth outright. A threshold of zero is no cap. It applies to derived profiles; a direct profile (an enemy) states its values.
+
+The player profile caps both damage reductions at 0.6 with a slope of 0.25, provisionally. A starting character and anyone with less than about 100 armor are well under it, so nothing they have changes. The hard ceiling (`DamageMitigation.MaxReduction`, 0.9) stays as an absolute limit beyond the soft cap.

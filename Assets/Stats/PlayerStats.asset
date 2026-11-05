@@ -65,6 +65,8 @@ MonoBehaviour:
       curve: 1
       scale: 0.9
       halfPoint: 100
+    softCapThreshold: 0.6
+    softCapSlope: 0.25
   - statKey: simplerpg.stat.magical_damage_reduction
     baseValue: 0
     contributions:
@@ -72,3 +74,5 @@ MonoBehaviour:
       curve: 1
       scale: 0.9
       halfPoint: 100
+    softCapThreshold: 0.6
+    softCapSlope: 0.25
