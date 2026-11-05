@@ -29,3 +29,13 @@ For sound effects (Audacity MCP, sourcing, measuring, known tool quirks), start 
 - [Character appearance](CharacterAppearance.md)
 - [Anatomical hit regions](HitRegions.md)
 - [Audio system](Audio.md) and its [completion report](AudioFoundationReport.md)
+
+## Plans, histories and reports
+
+Written for a piece of work and kept as the record of it; they describe the design and measurements at the time. For the current state of a system, use the documents above.
+
+- Skeleton animation plans: [Skeleton animation](SkeletonAnimationPlan.md), [Idle](IdlePlan.md), [Walk](WalkPlan.md), [Ready](ReadyPlan.md), [Overhead](OverheadPlan.md), [Diagonal slash](DiagonalSlashPlan.md)
+- [Combo chain](ComboChain.md)
+- [First-person camera and weapon readability: investigation](FirstPersonCameraWeaponReadabilityInvestigation.md)
+- [MVP gap assessment](MvpGapAssessment.md)
+- Local-agent work: [bring-up report](LocalAgentHandoffReport.md); [A-pose body hand-off](BodyMigrationHandoff.md) and [report](BodyMigrationReport.md)

@@ -22,7 +22,7 @@ Status: **report for approval, nothing implemented.** Written 2026-11-04 from th
 | Sword mount (`Longsword` under `RightHand`) | **Yes, recalibrate** | Local position `(-0.055777, 0.104543, -0.037857)` and rotation were fitted to the T-pose hand. The hand's rest orientation changes, so the mount changes. |
 | Hurtboxes | **Yes, re-fit** | They are shapes on bones; the bone axes and lengths change slightly. Visual check in play; hit-region tests still apply. |
 | Eyebrows (rigid, on `Head`), Headgear | Re-check | Rigid pieces take their pose relative to the head bone. The head-socket work (below) replaces the "same space as the body model" assumption. |
-| `Docs/IdlePlan.md` | Re-derive | Its arm angles are measured from T-pose rest. |
+| `Docs/IdlePlan.md` | **No (corrected)** | An earlier version of this report said it needed re-deriving. It is the *skeleton monster's* idle plan, measured on the skeleton's own rig, which the migration does not touch. |
 | Skeleton monster | **Not affected** | Separate model and clips (`Skeleton_Model.fbx`, own rig). |
 | Network, gameplay, stats | None | Appearance ids and bone names are unchanged. |
 
