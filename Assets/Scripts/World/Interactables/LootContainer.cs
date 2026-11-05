@@ -92,6 +92,9 @@ namespace SimpleRPG.ObjectInteractions
         /// </summary>
         protected virtual bool RollsWhenOpened => false;
 
+        /// <summary>Lets the container fill itself again the next time it is opened, for a body whose character died another life.</summary>
+        protected void ResetRoll() => rolled = false;
+
         /// <inheritdoc/>
         public override void ActivateInteraction(Interactor interactor)
         {

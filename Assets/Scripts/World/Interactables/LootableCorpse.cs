@@ -3,8 +3,8 @@ using UnityEngine;
 namespace SimpleRPG.ObjectInteractions
 {
     /// <summary>
-    /// A character's body that can be searched once it is dead. The loot table is rolled once, on the server, when the character dies, and the
-    /// body then opens like any other <see cref="LootContainer"/>. While the character is alive it cannot be interacted with.
+    /// A character's body that can be searched once it is dead. The loot table is rolled once per life, on the server, the first time the body is
+    /// searched (so what changes a roll in the meantime still counts), and the body opens like any other <see cref="LootContainer"/>. While the character is alive it cannot be interacted with.
     /// Bodies are kept for the whole session.
     /// </summary>
     [RequireComponent(typeof(Character))]
@@ -12,8 +12,11 @@ namespace SimpleRPG.ObjectInteractions
     {
         private Character character;
 
-        /// <summary>The life whose loot has been rolled, so a life is only ever rolled once.</summary>
+        /// <summary>The life whose body has been marked to fill, so a life is only ever filled once.</summary>
         private int rolledLife = -1;
+
+        /// <inheritdoc/>
+        protected override bool RollsWhenOpened => true;
 
         /// <inheritdoc/>
         public override bool CanBeInteractedWith => character != null && !character.IsAlive;
@@ -56,8 +59,9 @@ namespace SimpleRPG.ObjectInteractions
                 return;
             }
 
+            // A new death means a new body to fill the next time it is searched.
             rolledLife = character.LifeId;
-            RollLoot();
+            ResetRoll();
         }
     }
 }

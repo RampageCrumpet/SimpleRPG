@@ -112,13 +112,16 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
 
             Assert.IsFalse(skeleton.IsAlive);
             Assert.IsTrue(corpse.CanBeInteractedWith, "a dead enemy can be searched");
+            Assert.IsEmpty(Loot(skeleton), "Nothing is decided until someone searches the body.");
+            corpse.ActivateInteraction(null);
             List<string> loot = Loot(skeleton);
             Assert.AreEqual(2, loot.Count, "the skeleton's loot table gives its gold and one piece of armor");
             Assert.AreEqual(1, loot.Count(name => name.StartsWith("Golden")), "one of them from the gold table the skeleton's own table nests");
 
             Kill(skeleton);
             yield return null;
-            CollectionAssert.AreEqual(loot, Loot(skeleton), "a body is rolled once, however many hits it takes afterwards");
+            corpse.ActivateInteraction(null);
+            CollectionAssert.AreEqual(loot, Loot(skeleton), "a body is rolled once, however many hits it takes afterwards or times it is searched");
         }
 
         [UnityTest]
@@ -174,6 +177,7 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
             GameplayServices.Current.Random = new SeededRandom(seed);
             Character skeleton = SpawnSkeleton();
             Kill(skeleton);
+            skeleton.GetComponent<LootableCorpse>().ActivateInteraction(null);
             List<string> loot = Loot(skeleton);
             skeleton.GetComponent<NetworkObject>().Despawn();
             return loot;
