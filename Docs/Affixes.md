@@ -85,3 +85,13 @@ It is built from three things, all configured by hand and none of them the floor
 Placed by the population: world pickups carry their level (`WorldItemPickup.ItemLevel`) and roll with it when picked up; enemies' corpses get their floor's area and their encounter's offset. **Not yet:** chests roll their contents the moment they spawn with the room, before the population knows their floor, so they are the lowest level until they roll later. The loot box that enemies' bags hold, and items nothing places, are the lowest level.
 
 **Chests** fill themselves the first time a player opens them (`LootContainer.RollsWhenOpened`), on the server, so nothing about their contents is decided until someone looks and anything that changes a roll in the meantime still counts. The population gives every container in a room its floor's loot area, so a chest's level is the area's. Corpses still fill at death and loot bags are filled by their owner's death drop.
+
+## The catalogs
+
+Provisional first catalogs, made by menu tools that create an asset only if it is missing and never change one that exists (so the numbers are yours from the first run):
+
+- **SimpleRPG > Items > Build Armor Affix Catalog**: 13 families of three tiers (tier 1 from item level 1, tier 2 from 8, tier 3 from 16) and one pool per armor item that has none: none to two affixes, at most one prefix and one suffix. Every effect is on a stat the game reads.
+- **SimpleRPG > Effects > Build Bleeding Effect**: the stacking bleed and an "of Bleeding" suffix.
+- **SimpleRPG > Items > Build Weapon Affix Catalog** (after the other two): Enhanced Damage (a percentage of that weapon's own base) and flat damage prefixes, and a pool for the player's weapons (listed in `WeaponAffixCatalog.Weapons`) that adds the armor catalog's Strength and Weapon Damage suffixes and the bleed.
+
+Tests build the same catalogs in memory and check they are sound, live, climb with item level, and fit in a pool.

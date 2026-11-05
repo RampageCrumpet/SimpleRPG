@@ -1,7 +1,6 @@
 using UnityEngine;
 using SimpleRPG.Networking;
 using SimpleRPG.ObjectInteractions;
-using SimpleRPG.Abilities;
 using Unity.Netcode;
 
 namespace SimpleRPG
@@ -79,12 +78,6 @@ namespace SimpleRPG
         {
             character = GetComponent<Character>();
             character.OnDeath += StopInteraction;
-
-            // Subscribe to the ability activation event.
-            foreach (IAbilitySlot slot in character.Loadout.Slots)
-            {
-                slot.Activated += HandleAbilityActivated;
-            }
         }
 
         // Update is called once per frame
@@ -290,18 +283,6 @@ namespace SimpleRPG
         }
 
         /// <summary>
-        /// Stop the interaction with the interactable if the player takes any action.
-        /// </summary>
-        /// <param name="slot">The ability that was used.</param>
-        private void HandleAbilityActivated(IAbilitySlot slot)
-        {
-            if (Interactable != null)
-            {
-                StopInteraction();
-            }
-        }
-
-        /// <summary>
         /// What the player is looking at and could interact with, refreshed once a frame by the owning player's controls. Null if nothing.
         /// </summary>
         public Interactable Target { get; private set; }
@@ -349,12 +330,6 @@ namespace SimpleRPG
             if (character != null)
             {
                 character.OnDeath -= StopInteraction;
-
-                // Unsubscribe from the ability activation event.
-                foreach (IAbilitySlot slot in character.Loadout.Slots)
-                {
-                    slot.Activated -= HandleAbilityActivated;
-                }
             }
 
             base.OnDestroy();

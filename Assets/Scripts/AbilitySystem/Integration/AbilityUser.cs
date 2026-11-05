@@ -324,7 +324,9 @@ namespace SimpleRPG.Abilities.Integration
                 new Position3(origin.x, origin.y, origin.z),
                 new Position3(direction.x, direction.y, direction.z));
 
-            return itemCaster.Cast(request, character.IsAlive);
+            ItemCastResult result = itemCaster.Cast(request, character.IsAlive);
+            if (result == ItemCastResult.Cast) EndInteraction();
+            return result;
         }
 
         /// <inheritdoc/>
@@ -441,6 +443,9 @@ namespace SimpleRPG.Abilities.Integration
 
             Vector3 origin = transform.TransformPoint(muzzleOffset);
             Vector3 direction = transform.forward;
+            // Acting ends an interaction in progress. The server does it, so it does not depend on the player's machine saying so.
+            EndInteraction();
+
             // A weapon swing is the wielded weapon's doing, so the weapon item is its source (and the host effects scoped to the weapon look
             // for), while the character stays the instigator: who is credited, who is targeted and who owns the result do not change.
             ExecutionRequest request = new ExecutionRequest(
@@ -454,6 +459,11 @@ namespace SimpleRPG.Abilities.Integration
             // If the ability never went on to start the swing it was promised, the promise is dropped.
             melee?.CancelPress();
             return result.Completed;
+        }
+
+        private void EndInteraction()
+        {
+            if (TryGetComponent(out Interactor interactor)) interactor.StopInteraction();
         }
 
         // The weapon item in the main hand, or the character itself when it fights with its default weapon (which is not an item).

@@ -2,10 +2,9 @@ using SimpleRPG.Abilities;
 using SimpleRPG.Gameplay;
 using SimpleRPG.InventorySystem;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using static SimpleRPG.EffectTools.AffixCatalogBuilder;
 
 namespace SimpleRPG.EffectTools
 {
@@ -23,50 +22,6 @@ namespace SimpleRPG.EffectTools
         public const string AffixFolder = "Assets/Items/Affixes/Armor";
         public const string PoolFolder = "Assets/Items/AffixPools";
         public const string ArmorFolder = "Assets/Items/Armor";
-
-        /// <summary>One affix as the catalog describes it.</summary>
-        public sealed class Spec
-        {
-            public string AssetName;
-            public string DisplayName;
-            public AffixKind Kind;
-            public string Family;
-            public int Tier;
-            public int MinimumItemLevel;
-            public float Weight;
-            public EquipmentSlot[] Slots = new EquipmentSlot[0];
-            public List<AffixEffect> Effects = new List<AffixEffect>();
-        }
-
-        // Tier 1 from item level 1, tier 2 from 8, tier 3 from 16: the same ladder for every family.
-        private static readonly int[] TierLevels = { 1, 8, 16 };
-        private static readonly float[] TierWeights = { 10f, 5f, 2f };
-
-        private static StatModifierEffect Stat(string label, string key, ModifierLayer layer, float min, float max, AffixScope scope = AffixScope.Wearer) =>
-            new StatModifierEffect(label, key, layer, min, max, scope);
-
-        // Adds the three tiers of one family. ranges[tier][effect] = (min, max) for each effect, in the order of the effect makers.
-        private static void Family(List<Spec> into, string family, AffixKind kind, string[] names, EquipmentSlot[] slots,
-            System.Func<int, List<AffixEffect>> effectsOfTier)
-        {
-            for (int tier = 0; tier < 3; tier++)
-            {
-                into.Add(new Spec
-                {
-                    AssetName = (kind == AffixKind.Prefix ? "Prefix_" : "Suffix_") + names[tier].Replace("of the ", "").Replace("of ", "").Replace(" ", ""),
-                    DisplayName = names[tier],
-                    Kind = kind,
-                    Family = family,
-                    Tier = tier + 1,
-                    MinimumItemLevel = TierLevels[tier],
-                    Weight = TierWeights[tier],
-                    Slots = slots,
-                    Effects = effectsOfTier(tier),
-                });
-            }
-        }
-
-        private static List<AffixEffect> One(AffixEffect effect) => new List<AffixEffect> { effect };
 
         /// <summary>The whole catalog.</summary>
         public static List<Spec> Build()
@@ -126,99 +81,15 @@ namespace SimpleRPG.EffectTools
             return specs;
         }
 
-        public static AffixDefinition BuildAffix(Spec spec)
-        {
-            AffixDefinition affix = ScriptableObject.CreateInstance<AffixDefinition>();
-            affix.name = spec.AssetName;
-            var serialized = new SerializedObject(affix);
-            serialized.FindProperty("displayName").stringValue = spec.DisplayName;
-            serialized.FindProperty("kind").enumValueIndex = (int)spec.Kind;
-            serialized.FindProperty("family").stringValue = spec.Family;
-            serialized.FindProperty("tier").intValue = spec.Tier;
-            serialized.FindProperty("minimumItemLevel").intValue = spec.MinimumItemLevel;
-            serialized.FindProperty("weight").floatValue = spec.Weight;
-
-            SerializedProperty slots = serialized.FindProperty("allowedSlots");
-            slots.arraySize = spec.Slots.Length;
-            for (int i = 0; i < spec.Slots.Length; i++) slots.GetArrayElementAtIndex(i).enumValueIndex = (int)spec.Slots[i];
-
-            SerializedProperty effects = serialized.FindProperty("effects");
-            effects.arraySize = spec.Effects.Count;
-            for (int i = 0; i < spec.Effects.Count; i++) effects.GetArrayElementAtIndex(i).managedReferenceValue = spec.Effects[i];
-
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            return affix;
-        }
-
-        /// <summary>A pool for one armor item: none to two affixes, at most one prefix and one suffix. The counts are the designer's to change per item.</summary>
-        public static AffixPool BuildPool(string name, IEnumerable<AffixDefinition> affixes)
-        {
-            AffixPool pool = ScriptableObject.CreateInstance<AffixPool>();
-            pool.name = name;
-            var serialized = new SerializedObject(pool);
-            SerializedProperty list = serialized.FindProperty("affixes");
-            AffixDefinition[] all = affixes.ToArray();
-            list.arraySize = all.Length;
-            for (int i = 0; i < all.Length; i++) list.GetArrayElementAtIndex(i).objectReferenceValue = all[i];
-            serialized.FindProperty("minimumCount").intValue = 0;
-            serialized.FindProperty("maximumCount").intValue = 2;
-            serialized.FindProperty("maximumPrefixes").intValue = 1;
-            serialized.FindProperty("maximumSuffixes").intValue = 1;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            return pool;
-        }
-
         [MenuItem("SimpleRPG/Items/Build Armor Affix Catalog")]
         public static void BuildAssets()
         {
-            Directory.CreateDirectory(AffixFolder);
-            Directory.CreateDirectory(PoolFolder);
-
-            var affixes = new List<AffixDefinition>();
-            int made = 0;
-            foreach (Spec spec in Build())
-            {
-                string path = $"{AffixFolder}/{spec.AssetName}.asset";
-                AffixDefinition affix = AssetDatabase.LoadAssetAtPath<AffixDefinition>(path);
-                if (affix == null)
-                {
-                    affix = BuildAffix(spec);
-                    affix.EnsureId();
-                    AssetDatabase.CreateAsset(affix, path);
-                    made++;
-                }
-
-                affixes.Add(affix);
-            }
-
-            int pools = 0;
-            int assigned = 0;
-            foreach (string guid in AssetDatabase.FindAssets("t:ArmorData", new[] { ArmorFolder }))
-            {
-                var armor = AssetDatabase.LoadAssetAtPath<ArmorData>(AssetDatabase.GUIDToAssetPath(guid));
-                string poolPath = $"{PoolFolder}/{armor.name}.asset";
-                AffixPool pool = AssetDatabase.LoadAssetAtPath<AffixPool>(poolPath);
-                if (pool == null)
-                {
-                    pool = BuildPool(armor.name, affixes);
-                    AssetDatabase.CreateAsset(pool, poolPath);
-                    pools++;
-                }
-
-                var item = new SerializedObject(armor);
-                SerializedProperty slot = item.FindProperty("affixPool");
-                if (slot.objectReferenceValue == null)
-                {
-                    slot.objectReferenceValue = pool;
-                    item.ApplyModifiedPropertiesWithoutUndo();
-                    EditorUtility.SetDirty(armor);
-                    assigned++;
-                }
-            }
+            List<AffixDefinition> affixes = EnsureAffixAssets(Build(), AffixFolder, out int made);
+            EnsurePools<ArmorData>(ArmorFolder, PoolFolder, affixes, 0, 2, out int pools, out int assigned);
 
             AssetDatabase.SaveAssets();
             EditorApplication.ExecuteMenuItem("SimpleRPG/Definitions/Rebuild Definition Registry");
-            Debug.Log($"[Affixes] {made} new affix asset(s), {pools} new pool(s), {assigned} armor item(s) given a pool. Numbers are provisional.");
+            Debug.Log($"[Affixes] {made} new armor affix asset(s), {pools} new pool(s), {assigned} armor item(s) given a pool. Numbers are provisional.");
         }
     }
 }

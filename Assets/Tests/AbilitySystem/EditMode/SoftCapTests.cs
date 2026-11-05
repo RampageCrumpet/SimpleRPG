@@ -96,5 +96,26 @@ namespace SimpleRPG.Abilities.Tests.EditMode
             Assert.AreEqual(0.6 + (raw - 0.6) * 0.25, set.Get(DerivedStats.PhysicalDamageReduction), 1e-9);
             Assert.Less(set.Get(DerivedStats.PhysicalDamageReduction), DamageMitigation.MaxReduction);
         }
+
+        [Test]
+        public void MovementAndInteractionSpeedAndWeaponDamage_AreSoftCappedInTheShippedProfile()
+        {
+            StatProfile profile = AssetDatabase.LoadAssetAtPath<StatProfile>("Assets/Stats/PlayerStats.asset");
+            AttributeSet set = profile.CreateSet();
+            foreach (AttributeId primary in PrimaryAttributes.All) set.SetBase(primary, 10);
+            SourceHandle source = SourceHandle.FromItem(new ItemInstanceId(1));
+
+            Assert.AreEqual(4d, set.Get(DerivedStats.MovementSpeed), 1e-9, "A starting character is unchanged.");
+            Assert.AreEqual(1d, set.Get(DerivedStats.InteractionSpeed), 1e-9);
+            Assert.AreEqual(1d, set.Get(DerivedStats.WeaponDamageMultiplier), 1e-9);
+
+            set.AddModifier(new AttributeModifier(DerivedStats.MovementSpeed, ModifierLayer.PercentAdd, 2d, source));
+            set.AddModifier(new AttributeModifier(DerivedStats.InteractionSpeed, ModifierLayer.PercentAdd, 4d, source));
+            set.AddModifier(new AttributeModifier(DerivedStats.WeaponDamageMultiplier, ModifierLayer.PercentAdd, 2d, source));
+
+            Assert.AreEqual(6d + (12d - 6d) * 0.5, set.Get(DerivedStats.MovementSpeed), 1e-9, "+200% would be 12; past 6 it counts half.");
+            Assert.AreEqual(2d + (5d - 2d) * 0.5, set.Get(DerivedStats.InteractionSpeed), 1e-9);
+            Assert.AreEqual(1.5d + (3d - 1.5d) * 0.5, set.Get(DerivedStats.WeaponDamageMultiplier), 1e-9);
+        }
     }
 }

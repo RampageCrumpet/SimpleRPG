@@ -28,9 +28,9 @@ namespace SimpleRPG.Tests.EditMode
             created.Clear();
         }
 
-        private List<AffixDefinition> BuildAll(List<ArmorAffixCatalog.Spec> specs)
+        private List<AffixDefinition> BuildAll(List<AffixCatalogBuilder.Spec> specs)
         {
-            var built = specs.Select(ArmorAffixCatalog.BuildAffix).ToList();
+            var built = specs.Select(AffixCatalogBuilder.BuildAffix).ToList();
             created.AddRange(built);
             return built;
         }
@@ -71,7 +71,7 @@ namespace SimpleRPG.Tests.EditMode
         {
             var specs = ArmorAffixCatalog.Build();
             var affixes = BuildAll(specs);
-            AffixPool pool = ArmorAffixCatalog.BuildPool("Test", affixes);
+            AffixPool pool = AffixCatalogBuilder.BuildPool("Test", affixes);
             created.Add(pool);
             var ids = new Dictionary<AffixDefinition, uint>();
             uint next = 1;
@@ -97,7 +97,7 @@ namespace SimpleRPG.Tests.EditMode
         public void ThePoolOfAll_IsFitToShip_AndGivesAtMostOnePrefixAndOneSuffix()
         {
             var affixes = BuildAll(ArmorAffixCatalog.Build());
-            AffixPool pool = ArmorAffixCatalog.BuildPool("Test", affixes);
+            AffixPool pool = AffixCatalogBuilder.BuildPool("Test", affixes);
             created.Add(pool);
 
             Assert.IsEmpty(pool.Problems());

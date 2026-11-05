@@ -541,6 +541,23 @@ namespace SimpleRPG.Abilities.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator ActingEndsAnInteraction_DecidedByTheServer()
+        {
+            Character player = SpawnPlayer();
+            Interactor interactor = player.GetComponent<Interactor>();
+            RecordingInteractable slow = CreateInteractable(5f);
+            yield return new WaitForSeconds(0.5f);
+
+            interactor.StartInteraction(slow);
+            Assert.IsTrue(interactor.IsInteracting);
+
+            Assert.IsTrue(Press(player), "The server accepts the swing.");
+
+            Assert.IsFalse(interactor.IsInteracting, "A swing ends the interaction, whatever the player's machine said.");
+            Assert.AreEqual(1, slow.Finishes);
+        }
+
+        [UnityTest]
         public IEnumerator AfterRespawn_AbilitiesAttacksAndInteractionsWorkAgain()
         {
             Character player = SpawnPlayer();
