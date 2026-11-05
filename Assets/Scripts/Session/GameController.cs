@@ -58,7 +58,7 @@ namespace SimpleRPG
                 var population = GetComponentInChildren<DungeonPopulation>();
                 if (population != null)
                 {
-                    population.Populate(levelGeneratorController.GeneratedRooms, levelGeneratorController.Roomset.cellSize, levelGeneratorController.GeneratedSeed);
+                    population.Populate(levelGeneratorController.GeneratedRooms, levelGeneratorController.Roomset.cellSize, levelGeneratorController.GeneratedSeed, levelGeneratorController.Roomset.floorHeight);
                     if (delveController != null && population.IsReady && population.HasExtraction)
                         delveController.ConfigureExtraction(population.ExtractionPosition);
                 }

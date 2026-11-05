@@ -1,6 +1,6 @@
 # Character stats
 
-Six core attributes (Strength, Constitution, Dexterity, Agility, Willpower, Intelligence) and thirteen derived stats (`DerivedStats`) share one `AttributeSet` per character. A `StatProfile` asset chooses how a kind of character gets its derived stats:
+Six core attributes (Strength, Constitution, Dexterity, Agility, Willpower, Intelligence) and fifteen derived stats (`DerivedStats`) share one `AttributeSet` per character. A `StatProfile` asset chooses how a kind of character gets its derived stats:
 
 - **Derived** (players): each stat is `base + sum of curve(source)` over core attributes or other derived stats. Curves are linear (`scale * x`) or diminishing (`scale * x / (x + halfPoint)`).
 - **Direct** (enemies): each stat is an authored value; no core attributes are needed.

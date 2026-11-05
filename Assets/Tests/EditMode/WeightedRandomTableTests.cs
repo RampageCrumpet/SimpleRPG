@@ -258,6 +258,49 @@ namespace SimpleRPG.Tests.EditMode
             }
         }
 
+        // ----- Item level offsets -----
+
+        [Test]
+        public void ADropCarriesTheOffsetsOfEveryEntryItCameThrough()
+        {
+            LootableItem sword = Entry(weight: 1);
+            sword.ItemLevelOffset = 1;
+            WeightedRandomTable inner = Table(count: 1, sword);
+            inner.ItemLevelOffset = 2;
+            inner.DropChance = 1;
+            WeightedRandomTable outer = Table(count: 1, inner);
+            outer.ItemLevelOffset = 4;
+
+            LootDrop drop = outer.GetDrops(new System.Random(1)).Single();
+
+            Assert.AreSame(sword, drop.Entry);
+            Assert.AreEqual(1 + 2 + 4, drop.LevelOffset);
+        }
+
+        [Test]
+        public void NoOffsets_MeansADropOfOffsetZero_AndTheSameEntriesAsBefore()
+        {
+            LootableItem a = Entry(weight: 1);
+            LootableItem b = Entry(weight: 3);
+            WeightedRandomTable table = Table(count: 5, a, b);
+
+            var drops = table.GetDrops(new System.Random(9)).ToList();
+            var results = table.GetResult(new System.Random(9)).ToList();
+
+            CollectionAssert.AreEqual(results, drops.Select(d => d.Entry).ToList(), "The same seed picks the same entries either way.");
+            Assert.IsTrue(drops.All(d => d.LevelOffset == 0));
+        }
+
+        [Test]
+        public void AnAlwaysEntry_AlsoCarriesItsOffset()
+        {
+            LootableItem key = Entry(weight: 0, always: true);
+            key.ItemLevelOffset = 3;
+            WeightedRandomTable table = Table(count: 0, key);
+
+            Assert.AreEqual(3, table.GetDrops(new System.Random(1)).Single().LevelOffset);
+        }
+
         private LootableItem Entry(double weight, bool always = false, bool unique = false, bool enabled = true)
         {
             LootableItem entry = Create<LootableItem>(weight);

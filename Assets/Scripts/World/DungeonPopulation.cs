@@ -1,5 +1,7 @@
+using SimpleRPG.InventorySystem;
 using SimpleRPG.LevelGeneration;
 using SimpleRPG.InventorySystem.LootGeneration;
+using SimpleRPG.ObjectInteractions;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
@@ -20,6 +22,8 @@ namespace SimpleRPG.LevelGeneration
         private int expectedPartySize;
         [SerializeField, Min(0f), Tooltip("Each player beyond the first adds this much to how many groups of enemies wait where a lone player would meet one. 0.5 is one extra group for every two extra players.")]
         private float extraEncountersPerExtraPlayer = 0.5f;
+        [SerializeField, Tooltip("How strong the loot on each floor can be, floor by floor: the level ordinary loot there starts at and the ceiling nothing can pass. These are set by hand and are not the floor's number. A floor past the end of the list uses the last entry; with none, all loot is the lowest level.")]
+        private LootArea[] floorLoot = new LootArea[0];
         private readonly List<Vector3> occupied = new List<Vector3>();
         public Vector3 PlayerSpawnPosition { get; private set; }
 
@@ -38,18 +42,18 @@ namespace SimpleRPG.LevelGeneration
         public bool HasFailed { get; private set; }
         public string FailureReason { get; private set; }
 
-        public void Populate(IReadOnlyList<RoomBlueprint> rooms, float cellSize, int seed)
+        public void Populate(IReadOnlyList<RoomBlueprint> rooms, float cellSize, int seed, float floorHeight = 0f)
         {
             IsReady = false;
             HasFailed = false;
             FailureReason = null;
             if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
-            if (!TryPopulate(rooms, cellSize, seed, out string error))
+            if (!TryPopulate(rooms, cellSize, seed, out string error, floorHeight))
                 Debug.LogError($"Dungeon population failed: {error}", this);
         }
 
         /// <summary>Populates the rooms. On failure, records <see cref="FailureReason"/>, sets <see cref="HasFailed"/> and returns false.</summary>
-        public bool TryPopulate(IReadOnlyList<RoomBlueprint> rooms, float cellSize, int seed, out string error)
+        public bool TryPopulate(IReadOnlyList<RoomBlueprint> rooms, float cellSize, int seed, out string error, float floorHeight = 0f)
         {
             IsReady = false;
             HasFailed = false;
@@ -68,7 +72,7 @@ namespace SimpleRPG.LevelGeneration
                 else
                 {
                     occupied.Add(start);
-                    PopulateRooms(rooms, cellSize, random);
+                    PopulateRooms(rooms, cellSize, random, floorHeight);
 
                     // Chosen after everything else so adding it does not change where enemies and treasure go for a given seed.
                     HasExtraction = TryFindExtraction(rooms, cellSize, random, out Vector3 extraction);
@@ -82,33 +86,44 @@ namespace SimpleRPG.LevelGeneration
             return false;
         }
 
-        private void PopulateRooms(IReadOnlyList<RoomBlueprint> rooms, float cellSize, System.Random random)
+        private void PopulateRooms(IReadOnlyList<RoomBlueprint> rooms, float cellSize, System.Random random, float floorHeight)
         {
 
             for (int i = 0; i < rooms.Count; i++)
             {
+                LootArea area = AreaOf(rooms[i], floorHeight);
+
                 // Keep the arrival room safe. No restrictions on room types or dungeon size.
                 if (i > 0 && encounters != null && random.NextDouble() < encounterChance)
                 {
                     // A bigger party meets more groups in the same room; a party of one rolls exactly once, as it always did.
                     int groups = SimpleRPG.Delve.PartyScaling.Groups(expectedPartySize, extraEncountersPerExtraPlayer, random);
                     for (int group = 0; group < groups; group++)
-                        foreach (var enemy in encounters.GetResult(random).OfType<EncounterEntry>())
-                            if (enemy.EnemyPrefab != null && TryFindPosition(rooms[i], cellSize, random, true, out Vector3 point))
+                        foreach (LootDrop encounter in encounters.GetDrops(random))
+                            if (encounter.Entry is EncounterEntry enemy && enemy.EnemyPrefab != null && TryFindPosition(rooms[i], cellSize, random, true, out Vector3 point))
                             {
-                                Spawn(enemy.EnemyPrefab, point, Quaternion.Euler(0, (float)random.NextDouble() * 360, 0));
+                                GameObject spawned = Spawn(enemy.EnemyPrefab, point, Quaternion.Euler(0, (float)random.NextDouble() * 360, 0));
+
+                                // What the enemy drops when it dies is as strong as this area allows, and as much better or worse as the encounter says.
+                                if (spawned.TryGetComponent(out LootContainer corpse))
+                                {
+                                    corpse.Area = area;
+                                    corpse.ItemLevelOffset += encounter.LevelOffset;
+                                }
+
                                 occupied.Add(point);
                                 EnemyCount++;
                             }
                 }
                 if (treasure == null) continue;
                 for (int roll = 0; roll < treasureRollsPerRoom; roll++)
-                    foreach (var entry in treasure.GetResult(random).OfType<LootableItem>())
-                        if (entry.Item != null && entry.Item.WorldPrefab != null && TryFindPosition(rooms[i], cellSize, random, true, out Vector3 point))
+                    foreach (LootDrop drop in treasure.GetDrops(random))
+                        if (drop.Entry is LootableItem entry && entry.Item != null && entry.Item.WorldPrefab != null && TryFindPosition(rooms[i], cellSize, random, true, out Vector3 point))
                         {
                             Vector3 ground = Physics.Raycast(point + Vector3.up * 0.5f, Vector3.down, out RaycastHit hit, 2f, geometryLayers, QueryTriggerInteraction.Ignore)
                                 ? hit.point : point;
-                            Spawn(entry.Item.WorldPrefab, ground + Vector3.up * 0.01f, Quaternion.Euler(0, (float)random.NextDouble() * 360, 0));
+                            GameObject placed = Spawn(entry.Item.WorldPrefab, ground + Vector3.up * 0.01f, Quaternion.Euler(0, (float)random.NextDouble() * 360, 0));
+                            if (placed.TryGetComponent(out WorldItemPickup pickup)) pickup.ItemLevel = area.LevelFor(drop.LevelOffset);
                             occupied.Add(point);
                             TreasureCount++;
                         }
@@ -159,10 +174,23 @@ namespace SimpleRPG.LevelGeneration
             return false;
         }
 
-        private static void Spawn(GameObject prefab, Vector3 position, Quaternion rotation)
+        // The loot area of a room: that of the floor it is on, which is found from its height.
+        private LootArea AreaOf(RoomBlueprint room, float floorHeight)
+        {
+            if (floorLoot == null || floorLoot.Length == 0)
+            {
+                return LootArea.Lowest;
+            }
+
+            int floor = floorHeight > 0f ? Mathf.Max(0, Mathf.RoundToInt(room.transform.position.y / floorHeight)) : 0;
+            return floorLoot[Mathf.Min(floor, floorLoot.Length - 1)];
+        }
+
+        private static GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation)
         {
             var instance = Instantiate(prefab, position, rotation);
             instance.GetComponent<NetworkObject>().Spawn(true);
+            return instance;
         }
 
         public bool TryFindPosition(RoomBlueprint room, float cellSize, System.Random random, bool requirePath, out Vector3 position, bool avoidOccupied = true)

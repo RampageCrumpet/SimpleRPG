@@ -34,16 +34,22 @@ namespace SimpleRPG.InventorySystem.LootGeneration
         /// <inheritdoc/>
         public override IEnumerable<WeightedRandomEntry> GetResult(System.Random random)
         {
+            return GetDrops(random).Select(drop => drop.Entry).ToList();
+        }
+
+        /// <inheritdoc/>
+        public override IEnumerable<LootDrop> GetDrops(System.Random random)
+        {
             List<WeightedRandomEntry> contents = Contents == null
                 ? new List<WeightedRandomEntry>()
                 : Contents.Where(x => x != null).ToList();
 
-            List<WeightedRandomEntry> result = new List<WeightedRandomEntry>();
+            List<LootDrop> result = new List<LootDrop>();
 
             // Every enabled Always entry drops, regardless of the weighted rolls.
             foreach (WeightedRandomEntry item in contents.Where(x => x.Always && x.Enabled))
             {
-                AddResult(result, item.GetResult(random));
+                AddResult(result, item.GetDrops(random));
             }
 
             // Make up to Count weighted rolls. Unique entries that have already dropped are excluded from later rolls.
@@ -63,7 +69,7 @@ namespace SimpleRPG.InventorySystem.LootGeneration
                     droppedUnique.Add(picked);
                 }
 
-                AddResult(result, picked.GetResult(random));
+                AddResult(result, picked.GetDrops(random));
             }
 
             return result;
@@ -135,18 +141,19 @@ namespace SimpleRPG.InventorySystem.LootGeneration
             return random != null ? random.NextDouble() : UnityEngine.Random.value;
         }
 
-        private static void AddResult(List<WeightedRandomEntry> result, IEnumerable<WeightedRandomEntry> drops)
+        // The entries below this table come out with this table's offset added to theirs.
+        private void AddResult(List<LootDrop> result, IEnumerable<LootDrop> drops)
         {
             if (drops == null)
             {
                 return;
             }
 
-            foreach (WeightedRandomEntry drop in drops)
+            foreach (LootDrop drop in drops)
             {
-                if (drop != null)
+                if (drop.Entry != null)
                 {
-                    result.Add(drop);
+                    result.Add(new LootDrop(drop.Entry, drop.LevelOffset + ItemLevelOffset));
                 }
             }
         }

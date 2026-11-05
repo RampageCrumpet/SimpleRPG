@@ -40,6 +40,14 @@ namespace SimpleRPG.InventorySystem.LootGeneration
         public bool Enabled { get; set; } = true;
 
         /// <summary>
+        /// How much better (positive) or worse (negative) the loot below this entry is than the area's ordinary loot, in item levels. It adds up
+        /// along the nested tables an item came through. The area's ceiling still holds.
+        /// </summary>
+        [field: SerializeField]
+        [Tooltip("How many item levels better (or worse, if negative) than the area's ordinary loot everything under this entry is. Adds up through nested tables; the area's ceiling still holds.")]
+        public int ItemLevelOffset { get; set; }
+
+        /// <summary>
         /// Gets the resulting loot drop from this lootable object.
         /// </summary>
         /// <returns> An IEnumerable containing all of the loot drops from the object</returns>
@@ -53,6 +61,18 @@ namespace SimpleRPG.InventorySystem.LootGeneration
         public virtual IEnumerable<WeightedRandomEntry> GetResult(System.Random random)
         {
             return GetResult();
+        }
+
+        /// <summary>
+        /// Like <see cref="GetResult(System.Random)"/>, but each result carries the item level offset of the entries it came through. A table
+        /// overrides it to add its own offset to what its entries produce.
+        /// </summary>
+        public virtual IEnumerable<LootDrop> GetDrops(System.Random random)
+        {
+            foreach (WeightedRandomEntry entry in GetResult(random))
+            {
+                yield return new LootDrop(entry, ItemLevelOffset);
+            }
         }
     }
 }

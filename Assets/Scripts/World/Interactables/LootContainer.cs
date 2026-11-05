@@ -50,6 +50,18 @@ namespace SimpleRPG.ObjectInteractions
         [Tooltip("The loot table the contents are rolled from.")]
         private WeightedRandomTable lootTable;
 
+        [SerializeField]
+        [Tooltip("How many item levels better (or worse, if negative) than the area's ordinary loot this container's contents are. The area's ceiling still holds.")]
+        private int itemLevelOffset;
+
+        /// <summary>
+        /// How strong the loot where this container is can be. Set by the server where the container is placed; the lowest level otherwise.
+        /// </summary>
+        public LootArea Area { get; set; } = LootArea.Lowest;
+
+        /// <summary>How much better (or worse) than the area's ordinary loot this container is, on top of what its table and entries add.</summary>
+        public int ItemLevelOffset { get => itemLevelOffset; set => itemLevelOffset = value; }
+
         public override void Start()
         {
             base.Start();
@@ -91,15 +103,20 @@ namespace SimpleRPG.ObjectInteractions
             if (lootTable != null)
             {
                 // Only lootable items can go in a container; other entry types and items without an Item are skipped.
-                foreach (LootableItem lootable in lootTable.GetResult(GameplayRandomSource.Current).OfType<LootableItem>())
+                foreach (LootDrop drop in lootTable.GetDrops(GameplayRandomSource.Current))
                 {
+                    if (!(drop.Entry is LootableItem lootable))
+                    {
+                        continue;
+                    }
+
                     if (lootable.Item == null)
                     {
                         Debug.LogWarning($"Loot entry '{lootable.name}' in {lootTable.name} has no item assigned; skipping it.", this);
                         continue;
                     }
 
-                    if (!Inventory.AddItemInstance(lootable.Item))
+                    if (!Inventory.AddItemInstance(lootable.Item, Area.LevelFor(itemLevelOffset + drop.LevelOffset)))
                     {
                         Debug.LogWarning($"'{lootable.Item.name}' from {lootTable.name} could not be placed in {name}.", this);
                     }

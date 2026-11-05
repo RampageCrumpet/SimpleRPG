@@ -71,3 +71,15 @@ Not every derived stat is consumed by gameplay yet (see [Stats](Stats.md)): an a
 - **Tooltips.** Nothing in the UI shows an item's affixes yet; `AffixDefinition.Describe` gives the lines ("+3 Strength", "+10% Strength").
 - **Weapon affixes that change a weapon's own damage**: a weapon's damage is on its asset, so affixes only reach it through attributes the damage rules read.
 - **Rolling at pickup, not at the world pickup's creation.** A pickup lying in the dungeon is the asset; it rolls as it enters an inventory.
+
+## Item level
+
+An item's level decides which affix tiers it may roll (an affix has a minimum item level). It promises no rarity or quality. It is decided where an item enters the world and passed to the roll (`AddItemInstance(item, itemLevel)`); it is not stored on the item.
+
+It is built from three things, all configured by hand and none of them the floor's number:
+
+- **The area** (`LootArea`): the level its ordinary loot starts at and a **ceiling** nothing there can pass. `DungeonPopulation` has a list of these, one per floor (`floorLoot`); a floor past the end of the list uses the last, and with none, all loot is the lowest level.
+- **The source's potential** (`ItemLevelOffset`): how many levels better or worse than the area's ordinary loot a source is. It is a field on every loot entry, so it adds up through the nested weighted tables an item came through (`LootDrop`), and on a `LootContainer` (a corpse or chest). A boss table at +4 makes everything it drops +4.
+- **The result** is `clamp(area base + offsets, lowest, area ceiling)` (`LootArea.LevelFor`).
+
+Placed by the population: world pickups carry their level (`WorldItemPickup.ItemLevel`) and roll with it when picked up; enemies' corpses get their floor's area and their encounter's offset. **Not yet:** chests roll their contents the moment they spawn with the room, before the population knows their floor, so they are the lowest level until they roll later. The loot box that enemies' bags hold, and items nothing places, are the lowest level.

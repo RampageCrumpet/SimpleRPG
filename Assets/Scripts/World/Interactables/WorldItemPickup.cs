@@ -13,6 +13,12 @@ namespace SimpleRPG.ObjectInteractions
         public Item Item => item;
         private bool collected;
 
+        /// <summary>
+        /// The level of the loot source that placed this item, which decides which affix tiers it can roll when it is picked up. Set by the server
+        /// where the item is placed; the lowest level otherwise. Not used by an item a player dropped, which has already rolled.
+        /// </summary>
+        public int ItemLevel { get; set; } = SimpleRPG.InventorySystem.ItemLevel.Minimum;
+
         // A pickup a player dropped is that very item instance: it keeps what it rolled and picks up as itself. Held by the server only.
         private Item carried;
         private uint carriedInstanceId;
@@ -98,7 +104,7 @@ namespace SimpleRPG.ObjectInteractions
                 inventory.PutBack(carried, room, carriedInstanceId);
                 carried = null;
             }
-            else if (!inventory.AddItemInstance(item))
+            else if (!inventory.AddItemInstance(item, ItemLevel))
             {
                 return false;
             }

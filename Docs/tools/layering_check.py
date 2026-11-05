@@ -55,6 +55,7 @@ KNOWN_COLLISIONS = {
     ('Items/Item.cs', 'Inventory'),                                            # a tooltip
     ('Items/Item.cs', 'Instance'),                                             # DefinitionRegistry.Instance
     ('Items/ItemIds.cs', 'Instance'),                                          # DefinitionRegistry.Instance
+    ('Items/ItemTooltip.cs', 'Instance'),                                      # DefinitionRegistry.Instance
     ('Items/ArmorData.cs', 'Chest'),                                           # the armor slot's name, in a tooltip and a message
     ('Presentation/Articulation/ArticulationSettings.cs', 'Chest'),                  # HumanBodyBones.Chest
     ('AI/PrimarySenses/Blindsense.cs', 'Player'),               # the "Player" tag
