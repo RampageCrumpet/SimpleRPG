@@ -7,7 +7,7 @@ namespace SimpleRPG.EffectTools
 {
     /// <summary>
     /// The names rare items are called by, as the owner supplied them, and the tools that make the asset and turn rare items on in the pools.
-    /// A name's id is its place in this list, 1 to 100, and is permanent: new names are added to the end, never inserted or reused.
+    /// A name's id is its place in this list, starting at 1 (the first 100 are the owner's, the rest were added after), and is permanent: new names are added to the end, never inserted or reused.
     /// </summary>
     public static class RareNameSeed
     {
@@ -118,6 +118,19 @@ namespace SimpleRPG.EffectTools
             "Shattered Fate",
             "Crimson Requiem",
             "Eternal Silence",
+            // Added after the owner's hundred (ids 101 on).
+            "Gallows Hymn",
+            "Marrow Thirst",
+            "Pyre Warden",
+            "Ossuary Key",
+            "Gutter Saint",
+            "Lantern's Debt",
+            "Veil Splitter",
+            "Ravenous Dusk",
+            "Tithe of Ash",
+            "Widowmaker's Oath",
+            "Hangman's Mercy",
+            "Salt Wound",
         };
 
         /// <summary>The names as the asset holds them.</summary>

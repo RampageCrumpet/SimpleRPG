@@ -210,14 +210,15 @@ namespace SimpleRPG.Tests.EditMode
         }
 
         [Test]
-        public void TheSeedNames_AreTheHundredSupplied_WithPermanentIds()
+        public void TheSeedNames_AreTheHundredSuppliedPlusTheOnesAddedAfter_WithPermanentIds()
         {
             RareNames seed = Track(SimpleRPG.EffectTools.RareNameSeed.Build());
 
-            Assert.AreEqual(100, seed.Names.Count);
+            Assert.AreEqual(112, seed.Names.Count);
             Assert.IsNull(seed.Problem());
             Assert.AreEqual("Grave Bite", seed.TextOf(1));
             Assert.AreEqual("Eternal Silence", seed.TextOf(100));
+            Assert.AreEqual("Salt Wound", seed.TextOf(112));
         }
     }
 }

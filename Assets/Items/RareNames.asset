@@ -213,3 +213,27 @@ MonoBehaviour:
     text: Crimson Requiem
   - id: 100
     text: Eternal Silence
+  - id: 101
+    text: Gallows Hymn
+  - id: 102
+    text: Marrow Thirst
+  - id: 103
+    text: Pyre Warden
+  - id: 104
+    text: Ossuary Key
+  - id: 105
+    text: Gutter Saint
+  - id: 106
+    text: Lantern's Debt
+  - id: 107
+    text: Veil Splitter
+  - id: 108
+    text: Ravenous Dusk
+  - id: 109
+    text: Tithe of Ash
+  - id: 110
+    text: Widowmaker's Oath
+  - id: 111
+    text: Hangman's Mercy
+  - id: 112
+    text: Salt Wound
