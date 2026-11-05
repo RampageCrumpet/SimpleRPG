@@ -12,6 +12,8 @@ The owner ran EditMode and PlayMode after each round and fixed what failed. The 
 |---|---|
 | Bodies fill on first search | `LootContainer.RollsWhenOpened`, `LootableCorpse`, `LootableCorpseNetworkTests` |
 | Armor world forms | `ArmorWorldFormSetup`, `GarmentFold`, `GarmentFoldTests` |
+| Three reaction affixes (thorns, rampage, frost), rare names 101 to 112 | `ReactionAffixSetup`, `ReactionAffixSetupTests` |
+| Collapse sound, drop sound | `AudioIdentity.OnCollapse`, `WorldItemPickup.DroppedRpc`, three tests in `AudioCombatPlayModeTests` |
 | Rare items: chance on a pool, one name from a list | `AffixPool`, `AffixRoller`, `ItemAffixes`, `RareNames`, `RareNameSeed`, `RareNameTests`, ten patched pool assets, `Assets/Items/RareNames.asset` (written by hand) |
 | The roll no longer draws for a pool with nothing to roll | `AffixRoller` |
 
@@ -176,6 +178,7 @@ The catalogs hold 13 armor families (6 prefix: armor flat, armor enhanced, movem
 | Effects > Build Bleeding Effect | bleed abilities, status, effect, affix | changes an existing asset |
 | Items > Build Armor Affix Catalog | armor affixes, a pool per armor item | changes an existing asset or pool |
 | Items > Build Weapon Affix Catalog (after the two above) | weapon affixes, the longsword's pool | |
+| Effects > Build Reaction Affixes | thorns, rampage and frost abilities, statuses, effects and suffix affixes (in no pool) | changes an existing asset |
 | Items > Build Rare Names | `Assets/Items/RareNames.asset` | changes an existing one |
 | Items > Enable Rare Items On All Pools | rare fields on pools that lack them | |
 | Items > Build Armor World Forms | pickup prefabs, network-prefab entries | replaces an item's existing form |
