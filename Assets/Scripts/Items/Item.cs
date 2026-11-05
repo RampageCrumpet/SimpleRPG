@@ -194,6 +194,13 @@ namespace SimpleRPG.InventorySystem
                     return ItemName;
                 }
 
+                // A rare item is called by its generated name, with its base item beneath it in the tooltip.
+                if (Affixes.IsRare && RareName != null)
+                {
+                    displayName = RareName;
+                    return displayName;
+                }
+
                 var prefixes = new List<string>();
                 var suffixes = new List<string>();
                 DefinitionRegistry registry = DefinitionRegistry.Instance;
@@ -210,6 +217,17 @@ namespace SimpleRPG.InventorySystem
                 words.AddRange(suffixes);
                 displayName = string.Join(" ", words);
                 return displayName;
+            }
+        }
+
+        /// <summary>The generated name of a rare item, or null if this is not one (or the words it was named from are gone).</summary>
+        public string RareName
+        {
+            get
+            {
+                RareNameComponents words = SourceAsset.AffixPool != null ? SourceAsset.AffixPool.RareNames : null;
+                (int first, int second) = Affixes.RareName;
+                return Affixes.IsRare && words != null ? words.NameOf(first, second) : null;
             }
         }
 

@@ -135,7 +135,17 @@ namespace SimpleRPG.InventorySystem
                 }
             }
 
-            return Roll(candidates, new AffixLimits(pool.MinimumCount, pool.MaximumCount, pool.MaximumPrefixes, pool.MaximumSuffixes), random);
+            ItemAffixes rolled = Roll(candidates, new AffixLimits(pool.MinimumCount, pool.MaximumCount, pool.MaximumPrefixes, pool.MaximumSuffixes), random);
+
+            // A rare item is named last, from two more draws, so a pool that makes none rare draws exactly what it did before.
+            if (pool.RareFromCount > 0 && pool.RareNames != null && rolled.Count >= pool.RareFromCount && random != null)
+            {
+                int first = RareNameComponents.Pick(pool.RareNames.FirstWords, random.NextDouble());
+                int second = RareNameComponents.Pick(pool.RareNames.SecondWords, random.NextDouble());
+                if (first != 0 && second != 0) rolled = rolled.WithRareName(first, second);
+            }
+
+            return rolled;
         }
 
         // The index of the candidate the sample lands on, with each taking a share of the range in proportion to its weight.

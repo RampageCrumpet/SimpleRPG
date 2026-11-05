@@ -95,3 +95,11 @@ Provisional first catalogs, made by menu tools that create an asset only if it i
 - **SimpleRPG > Items > Build Weapon Affix Catalog** (after the other two): Enhanced Damage (a percentage of that weapon's own base) and flat damage prefixes, and a pool for the player's weapons (listed in `WeaponAffixCatalog.Weapons`) that adds the armor catalog's Strength and Weapon Damage suffixes and the bleed.
 
 Tests build the same catalogs in memory and check they are sound, live, climb with item level, and fit in a pool.
+
+## Rare items and their names
+
+A pool can make items **rare**: an instance that rolls at least `rareFromCount` affixes is called by a generated name, "{first word} {second word}" ("Grim Bulwark"), with its base item named beneath it in the tooltip. A pool that does not (the default) names items from their affixes, "{prefix} {item} {suffix}".
+
+- The words are an asset (**Items > Rare Names**, `RareNameComponents`): two lists, first words and second words, each word with its own permanent id (1 or more, never reused). The name is picked from the gameplay stream when the item is rolled, with two draws after the affixes (so a pool that makes none rare draws exactly what it did before), and **stored as the two ids**. Editing, adding, reordering or removing words never renames an item already rolled; if a word it holds is removed, the item reads by its affix names instead.
+- To use it: create the asset and fill in words; on an item's pool set *Rare Names* and *Rare From Count*, and raise the pool's *Maximum Count*, *Maximum Prefixes* and *Maximum Suffixes* so a rare can have more than a magic item. `AffixPool.Problems()` reports a pool that makes rares without words.
+- No word list is shipped. The owner supplies the words.

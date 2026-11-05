@@ -36,6 +36,11 @@ namespace SimpleRPG.InventorySystem
         {
             var lines = new List<TooltipLine> { new TooltipLine(TooltipLineKind.Name, item.DisplayName) };
 
+            if (item.RareName != null)
+            {
+                lines.Add(new TooltipLine(TooltipLineKind.Property, item.ItemName));
+            }
+
             foreach (GrantSpec grant in item.Grants)
             {
                 lines.Add(new TooltipLine(TooltipLineKind.Property, ModifierText.Describe(grant)));

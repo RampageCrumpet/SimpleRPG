@@ -34,7 +34,20 @@ namespace SimpleRPG.InventorySystem
         [Tooltip("The most suffixes an instance rolls.")]
         private int maximumSuffixes = 1;
 
+        [SerializeField]
+        [Tooltip("The words rare items of this pool are named from. Empty: its items are never rare.")]
+        private RareNameComponents rareNames;
+
+        [SerializeField]
+        [Min(0)]
+        [Tooltip("An instance that rolls at least this many affixes is rare and gets a generated name. Zero: never.")]
+        private int rareFromCount;
+
         public IReadOnlyList<AffixDefinition> Affixes => affixes;
+
+        public RareNameComponents RareNames => rareNames;
+
+        public int RareFromCount => rareFromCount;
 
         public int MinimumCount => minimumCount;
 
@@ -69,6 +82,13 @@ namespace SimpleRPG.InventorySystem
 
                 if (!affix.IsLive(out string reason)) problems.Add(name + " holds an affix that does nothing: " + reason);
                 footprints.Add(ItemAffixes.Footprint(affix.ValueCount));
+            }
+
+            if (rareFromCount > 0)
+            {
+                if (rareNames == null) problems.Add(name + " makes items rare from " + rareFromCount + " affixes but has no words to name them.");
+                else if (rareNames.Problem() != null) problems.Add(rareNames.Problem());
+                if (rareFromCount > maximumCount) problems.Add(name + " makes items rare from " + rareFromCount + " affixes but never rolls more than " + maximumCount + ".");
             }
 
             // The most space a roll of the allowed size can take: the largest affixes, as many as may roll.

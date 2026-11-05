@@ -58,6 +58,24 @@ namespace SimpleRPG.InventorySystem
 
         private WordBlock block0, block1, block2, block3;
 
+        // The ids of the two words that name a rare item (see RareNameComponents); zero when the item is not rare.
+        private int rareFirst, rareSecond;
+
+        /// <summary>True for a rare item, which has a generated name.</summary>
+        public bool IsRare => rareFirst != 0 && rareSecond != 0;
+
+        /// <summary>The ids of the two words of the rare name.</summary>
+        public (int first, int second) RareName => (rareFirst, rareSecond);
+
+        /// <summary>The same affixes with a rare name.</summary>
+        public ItemAffixes WithRareName(int firstId, int secondId)
+        {
+            ItemAffixes copy = this;
+            copy.rareFirst = firstId;
+            copy.rareSecond = secondId;
+            return copy;
+        }
+
         /// <summary>The words an affix with this many values takes.</summary>
         public static int Footprint(int valueCount) => HeaderWords + valueCount;
 
@@ -89,7 +107,7 @@ namespace SimpleRPG.InventorySystem
             }
         }
 
-        public bool IsEmpty => Get(0) == 0;
+        public bool IsEmpty => Get(0) == 0 && !IsRare;
 
         public AffixRoll this[int index]
         {
@@ -151,10 +169,13 @@ namespace SimpleRPG.InventorySystem
             serializer.SerializeValue(ref block1);
             serializer.SerializeValue(ref block2);
             serializer.SerializeValue(ref block3);
+            serializer.SerializeValue(ref rareFirst);
+            serializer.SerializeValue(ref rareSecond);
         }
 
         public bool Equals(ItemAffixes other)
         {
+            if (rareFirst != other.rareFirst || rareSecond != other.rareSecond) return false;
             for (int i = 0; i < WordCapacity; i++)
             {
                 if (Get(i) != other.Get(i)) return false;
@@ -169,6 +190,8 @@ namespace SimpleRPG.InventorySystem
         {
             var hash = new HashCode();
             for (int i = 0; i < WordCapacity; i++) hash.Add(Get(i));
+            hash.Add(rareFirst);
+            hash.Add(rareSecond);
             return hash.ToHashCode();
         }
 
