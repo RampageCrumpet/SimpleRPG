@@ -135,8 +135,9 @@ namespace SimpleRPG.InventorySystem
                 }
             }
 
-            // Whether this one is rare is decided first, and only by a pool that can make rares, so a pool that cannot draws exactly what it did before.
-            bool rare = pool.CanBeRare && random != null && random.NextDouble() < pool.RareChance;
+            // Whether this one is rare is decided first, and only by a pool that can make rares and has something to roll, so a pool that cannot draws exactly
+            // what it did before and an item with nothing to roll still draws nothing.
+            bool rare = pool.CanBeRare && candidates.Count > 0 && random != null && random.NextDouble() < pool.RareChance;
             AffixLimits limits = rare ? pool.RareLimits : new AffixLimits(pool.MinimumCount, pool.MaximumCount, pool.MaximumPrefixes, pool.MaximumSuffixes);
             ItemAffixes rolled = Roll(candidates, limits, random);
 
