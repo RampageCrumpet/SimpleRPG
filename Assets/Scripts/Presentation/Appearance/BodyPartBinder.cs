@@ -11,11 +11,12 @@ namespace SimpleRPG.Appearance
         /// <param name="part">The part to show.</param>
         /// <param name="rig">The bones of the character it goes on.</param>
         /// <param name="partsRoot">Where skinned pieces live. Rigid pieces go under their bone instead.</param>
+        /// <param name="simulateCloth">False on a machine that only simulates (a dedicated server) or for a still preview: cloth profiles are then ignored.</param>
         /// <returns>
         /// The part's root object, carrying a <see cref="BodyPartInstance"/>. A one-piece part is that one object, as it always was; a part of
         /// several pieces is an empty root under <paramref name="partsRoot"/> with each skinned piece beneath it.
         /// </returns>
-        public static GameObject Create(BodyPartDefinition part, RigBoneIndex rig, Transform partsRoot)
+        public static GameObject Create(BodyPartDefinition part, RigBoneIndex rig, Transform partsRoot, bool simulateCloth = true)
         {
             string problem = part.Problem();
             if (problem != null) throw new InvalidOperationException(problem);
@@ -24,21 +25,21 @@ namespace SimpleRPG.Appearance
             var instance = root.AddComponent<BodyPartInstance>();
             if (part.Pieces.Count == 1)
             {
-                BindPiece(root, part.Pieces[0], rig, partsRoot, instance);
+                BindPiece(root, part.Pieces[0], rig, partsRoot, instance, simulateCloth);
                 return root;
             }
 
             root.transform.SetParent(partsRoot, false);
             foreach (BodyPartPiece piece in part.Pieces)
             {
-                BindPiece(new GameObject(part.name + "_" + piece.Mesh.name), piece, rig, root.transform, instance);
+                BindPiece(new GameObject(part.name + "_" + piece.Mesh.name), piece, rig, root.transform, instance, simulateCloth);
             }
 
             return root;
         }
 
         // Skinned pieces go under skinnedParent; a rigid piece goes under its bone, which is outside the part's root.
-        private static void BindPiece(GameObject go, BodyPartPiece piece, RigBoneIndex rig, Transform skinnedParent, BodyPartInstance instance)
+        private static void BindPiece(GameObject go, BodyPartPiece piece, RigBoneIndex rig, Transform skinnedParent, BodyPartInstance instance, bool simulateCloth)
         {
             if (piece.IsSkinned)
             {
@@ -52,6 +53,8 @@ namespace SimpleRPG.Appearance
                 renderer.bones = bones;
                 renderer.rootBone = rig.Require(piece.RootBoneName);
                 renderer.localBounds = piece.LocalBounds;
+                if (piece.CordMotion != null) go.AddComponent<CordBoneMotion>().Initialize(piece.CordMotion, rig);
+                if (piece.Cloth != null && simulateCloth && ClothGarment.CanSimulate) go.AddComponent<ClothGarment>().Initialize(piece.Cloth, rig, instance);
                 instance.Add(renderer, false);
                 return;
             }

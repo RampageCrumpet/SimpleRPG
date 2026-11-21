@@ -14,6 +14,9 @@ namespace SimpleRPG.Appearance
         private readonly Dictionary<BodyPartSlot, GameObject> shown = new Dictionary<BodyPartSlot, GameObject>();
         private readonly Dictionary<BodyPartSlot, BodyPartDefinition> parts = new Dictionary<BodyPartSlot, BodyPartDefinition>();
 
+        /// <summary>Whether worn cloth is simulated. Off for a dedicated server and for still previews; set before parts are shown.</summary>
+        public bool SimulateCloth { get; set; } = true;
+
         /// <summary>The parts currently shown, so another view (a UI preview) can show the same ones.</summary>
         public IEnumerable<BodyPartDefinition> Parts => parts.Values;
 
@@ -32,8 +35,9 @@ namespace SimpleRPG.Appearance
         public void Show(BodyPartDefinition part)
         {
             Clear(part.Slot);
-            shown[part.Slot] = BodyPartBinder.Create(part, rig, partsRoot);
+            shown[part.Slot] = BodyPartBinder.Create(part, rig, partsRoot, SimulateCloth);
             parts[part.Slot] = part;
+            RefreshCordVisibility();
         }
 
         public void Clear(BodyPartSlot slot)
@@ -49,6 +53,15 @@ namespace SimpleRPG.Appearance
             }
             else if (Application.isPlaying) Object.Destroy(current);
             else Object.DestroyImmediate(current);
+            RefreshCordVisibility();
+        }
+
+        private void RefreshCordVisibility()
+        {
+            bool torsoArmor = parts.TryGetValue(BodyPartSlot.Torso, out var torso) && torso.DressesItem != null;
+            foreach (var root in shown.Values)
+                if (root != null)
+                    foreach (var cord in root.GetComponentsInChildren<CordBoneMotion>(true)) cord.SetTorsoArmorVisible(torsoArmor);
         }
 
         public void ClearAll()

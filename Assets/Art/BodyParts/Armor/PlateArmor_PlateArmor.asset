@@ -75,6 +75,8 @@ MonoBehaviour:
   localBounds:
     m_Center: {x: -0.0010922104, y: 0.18600532, z: 0.022227697}
     m_Extent: {x: 0.44826245, y: 0.37700537, z: 0.17101207}
+  cordMotion: {fileID: 0}
+  cloth: {fileID: 0}
   attachBoneName: 
   attachPosition: {x: 0, y: 0, z: 0}
   attachRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -140,6 +142,8 @@ MonoBehaviour:
     localBounds:
       m_Center: {x: 0.0008957982, y: 0.18352544, z: 0.007800214}
       m_Extent: {x: 0.45171064, y: 0.42358518, z: 0.19473419}
+    cordMotion: {fileID: 0}
+    cloth: {fileID: 11400000, guid: a8fef8b2d2053884c86f43a923187664, type: 2}
     attachBoneName: 
     attachPosition: {x: 0, y: 0, z: 0}
     attachRotation: {x: 0, y: 0, z: 0, w: 1}

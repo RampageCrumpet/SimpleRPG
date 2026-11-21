@@ -62,6 +62,8 @@ namespace SimpleRPG.Appearance
 
         public override void OnNetworkSpawn()
         {
+            // Cloth is cosmetic: a dedicated server (a server with no client) never builds it.
+            View.SimulateCloth = !IsServer || IsClient;
             if (IsServer)
             {
                 foreach (BodyPartDefinition part in defaultParts) ServerEquip(part);
@@ -164,7 +166,12 @@ namespace SimpleRPG.Appearance
         [ContextMenu("Clear Preview")]
         private void ClearPreview()
         {
-            for (int i = partsRoot.childCount - 1; i >= 0; i--) DestroyImmediate(partsRoot.GetChild(i).gameObject);
+            for (int i = partsRoot.childCount - 1; i >= 0; i--)
+            {
+                GameObject child = partsRoot.GetChild(i).gameObject;
+                if (child.TryGetComponent(out BodyPartInstance instance)) instance.Remove();
+                else DestroyImmediate(child);
+            }
         }
 #endif
     }

@@ -96,6 +96,8 @@ namespace SimpleRPG.AppearanceTools
             new Piece("LeatherGloves", "Leather Gloves", EquipmentSlot.hands, 3f),
             new Piece("ReinforcedGloves", "Reinforced Gloves", EquipmentSlot.hands, 6f),
             new Piece("PlateGauntlets", "Plate Gauntlets", EquipmentSlot.hands, 12f),
+            new Piece("Breeches", "Linen Breeches", EquipmentSlot.legs, 2f),
+            new Piece("ReinforcedLeatherLeggings", "Reinforced Leather Leggings", EquipmentSlot.legs, 6f),
         };
 
         /// <summary>
@@ -281,7 +283,7 @@ namespace SimpleRPG.AppearanceTools
             }
 
             made = new BodyPartPiece(mesh.sharedMesh, mesh.sharedMaterials, boneNames, mesh.rootBone.name, mesh.localBounds,
-                "", Vector3.zero, Quaternion.identity, Vector3.one);
+                "", Vector3.zero, Quaternion.identity, Vector3.one, mesh.GetComponent<CordBoneMotion>()?.Profile, ClothProfileBaker.FindFor(mesh.sharedMesh));
             return true;
         }
 
@@ -300,7 +302,7 @@ namespace SimpleRPG.AppearanceTools
 
             BodyPartPiece primary = group[0].piece;
             part.Configure(slot, primary.Mesh, primary.Materials, primary.BoneNames, primary.RootBoneName, primary.LocalBounds,
-                "", Vector3.zero, Quaternion.identity, Vector3.one);
+                "", Vector3.zero, Quaternion.identity, Vector3.one, primary.CordMotion, primary.Cloth);
             part.SetAdditionalPieces(group.Skip(1).Select(g => g.piece).ToArray());
             part.Dress(item);
             string problem = part.Problem();
@@ -411,8 +413,9 @@ namespace SimpleRPG.AppearanceTools
             var text = new StringBuilder();
             text.AppendLine($"Armor: {itemsMade} new item(s), {partsWritten} part(s) written or updated, {problems.Count} to look at.");
             foreach (string problem in problems) text.AppendLine("  - " + problem);
-            Debug.Log("[Armor] " + text);
-            EditorUtility.DisplayDialog("Armor items and parts", text.ToString(), "OK");
+            // A modal dialog would block the editor (and any tool driving it), so this only logs.
+            if (problems.Count > 0) Debug.LogWarning("[Armor] " + text);
+            else Debug.Log("[Armor] " + text);
         }
     }
 }

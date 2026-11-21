@@ -75,6 +75,8 @@ MonoBehaviour:
   localBounds:
     m_Center: {x: 0.39230222, y: -0.06349972, z: 0.088447124}
     m_Extent: {x: 0.13160521, y: 0.1373403, z: 0.14300504}
+  cordMotion: {fileID: 0}
+  cloth: {fileID: 0}
   attachBoneName: 
   attachPosition: {x: 0, y: 0, z: 0}
   attachRotation: {x: 0, y: 0, z: 0, w: 1}

@@ -19,6 +19,8 @@ namespace SimpleRPG.Appearance
         private string[] boneNames;
         [SerializeField] private string rootBoneName;
         [SerializeField] private Bounds localBounds;
+        [SerializeField] private CordMotionProfile cordMotion;
+        [SerializeField] private ClothProfile cloth;
 
         [SerializeField, Tooltip("The bone a rigid piece is parented to. Ignored when the piece is skinned.")]
         private string attachBoneName;
@@ -31,7 +33,7 @@ namespace SimpleRPG.Appearance
         }
 
         public BodyPartPiece(Mesh mesh, Material[] materials, string[] boneNames, string rootBoneName, Bounds localBounds,
-            string attachBoneName, Vector3 attachPosition, Quaternion attachRotation, Vector3 attachScale)
+            string attachBoneName, Vector3 attachPosition, Quaternion attachRotation, Vector3 attachScale, CordMotionProfile cordMotion = null, ClothProfile cloth = null)
         {
             this.mesh = mesh;
             this.materials = materials;
@@ -42,6 +44,8 @@ namespace SimpleRPG.Appearance
             this.attachPosition = attachPosition;
             this.attachRotation = attachRotation;
             this.attachScale = attachScale;
+            this.cordMotion = cordMotion;
+            this.cloth = cloth;
         }
 
         public Mesh Mesh => mesh;
@@ -49,6 +53,8 @@ namespace SimpleRPG.Appearance
         public string[] BoneNames => boneNames;
         public string RootBoneName => rootBoneName;
         public Bounds LocalBounds => localBounds;
+        public CordMotionProfile CordMotion => cordMotion;
+        public ClothProfile Cloth => cloth;
         public string AttachBoneName => attachBoneName;
         public Vector3 AttachPosition => attachPosition;
         public Quaternion AttachRotation => attachRotation;

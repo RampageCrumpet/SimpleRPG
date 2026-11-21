@@ -136,7 +136,7 @@ namespace SimpleRPG.Keys
         private static bool TryFindFloorSpot(RoomBlueprint room, float x, float z, Bounds bounds, out Vector3 spot)
         {
             var origin = new Vector3(x, bounds.max.y + 1f, z);
-            RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, bounds.size.y + 2f, ~0, QueryTriggerInteraction.Ignore);
+            RaycastHit[] hits = Physics.RaycastAll(origin, Vector3.down, bounds.size.y + 2f, PhysicsLayers.AllExceptCloth, QueryTriggerInteraction.Ignore);
             System.Array.Sort(hits, (a, b) => a.point.y.CompareTo(b.point.y));
 
             foreach (RaycastHit hit in hits)
@@ -147,7 +147,7 @@ namespace SimpleRPG.Keys
                 }
 
                 Vector3 candidate = hit.point + Vector3.up * KeyHeight;
-                if (!Physics.CheckSphere(candidate, KeyClearance, ~0, QueryTriggerInteraction.Ignore))
+                if (!Physics.CheckSphere(candidate, KeyClearance, PhysicsLayers.AllExceptCloth, QueryTriggerInteraction.Ignore))
                 {
                     spot = candidate;
                     return true;

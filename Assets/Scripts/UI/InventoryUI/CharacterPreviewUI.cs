@@ -89,7 +89,7 @@ namespace SimpleRPG.UI
             Transform partsRoot = new GameObject("Parts").transform;
             partsRoot.SetParent(rig.transform, false);
             Transform rigRoot = rig.transform.Find(appearance.RigRoot.name);
-            view = new AppearanceView(new RigBoneIndex(rigRoot != null ? rigRoot : rig.transform), partsRoot);
+            view = new AppearanceView(new RigBoneIndex(rigRoot != null ? rigRoot : rig.transform), partsRoot) { SimulateCloth = false };
 
             // The same animator setup as the character, so the preview stands in its idle pose.
             Animator source = character.GetComponent<Animator>();

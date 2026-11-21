@@ -73,8 +73,10 @@ MonoBehaviour:
   - RightToes
   rootBoneName: Hips
   localBounds:
-    m_Center: {x: 0.0008957982, y: 0.18352544, z: 0.010161698}
-    m_Extent: {x: 0.45171064, y: 0.42358518, z: 0.19709568}
+    m_Center: {x: 0.0008957982, y: 0.17932537, z: 0.010175586}
+    m_Extent: {x: 0.45171064, y: 0.42767748, z: 0.19708179}
+  cordMotion: {fileID: 0}
+  cloth: {fileID: 11400000, guid: a8fef8b2d2053884c86f43a923187664, type: 2}
   attachBoneName: 
   attachPosition: {x: 0, y: 0, z: 0}
   attachRotation: {x: 0, y: 0, z: 0, w: 1}

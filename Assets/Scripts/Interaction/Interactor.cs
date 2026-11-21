@@ -308,7 +308,7 @@ namespace SimpleRPG
             Ray ray = mainCamera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
             RaycastHit hit;
 
-            if (Physics.Raycast(ray, out hit))
+            if (Physics.Raycast(ray, out hit, Mathf.Infinity, PhysicsLayers.DefaultRaycastExceptCloth))
             {
                 // Only interactables above the collider that was hit can be looked at through it, so walk up from it
                 // instead of testing every interactable in the scene every frame.

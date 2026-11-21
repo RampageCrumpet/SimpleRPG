@@ -13,6 +13,7 @@ For sound effects (Audacity MCP, sourcing, measuring, known tool quirks), start 
 - [Network authority](NetworkAuthority.md)
 - [The delve: dying, extracting, and the loot bag](Delve.md)
 - [Equipment and the paper doll](Equipment.md)
+- [Cloth simulation: what we learned (shimmer, particle order, colliders, diagnostics)](ClothSimulation.md)
 - [Item affixes (rolled bonuses, item level, rare names, catalogs)](Affixes.md)
 - [Triggered effects (on hit, on kill, lasting spell effects)](TriggeredEffects.md)
 - [Stats: derived stats, weapon damage, soft caps](Stats.md)

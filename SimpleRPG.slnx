@@ -1,4 +1,5 @@
 ﻿<Solution>
+  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="SimpleRPG.Session.csproj" />
   <Project Path="SimpleRPG.Tests.EditMode.csproj" />
   <Project Path="SimpleRPG.Presentation.csproj" />
@@ -14,8 +15,10 @@
   <Project Path="SimpleRPG.Abilities.Editor.csproj" />
   <Project Path="SimpleRPG.Items.csproj" />
   <Project Path="SimpleRPG.Tests.PlayMode.csproj" />
+  <Project Path="ClothFitTest.SkirtSwayDemo.csproj" />
   <Project Path="SimpleRPG.AI.csproj" />
   <Project Path="SimpleRPG.Combat.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="SimpleRPG.AudioPlayback.csproj" />
   <Project Path="SimpleRPG.Foundation.csproj" />
   <Project Path="SimpleRPG.Rendering.csproj" />

@@ -22,6 +22,9 @@ float4 _DetailAlbedoMap_ST;
 half4 _BaseColor;
 half4 _ClothColor;
 half4 _ThreadColor;
+half4 _WrapColor;
+half4 _CordColor;
+half _FourColorMask;
 half4 _SpecColor;
 half4 _EmissionColor;
 half _Cutoff;
@@ -256,9 +259,11 @@ inline void InitializeStandardLitSurfaceData(float2 uv, out SurfaceData outSurfa
 
     half4 specGloss = SampleMetallicSpecGloss(uv, albedoAlpha.a);
     outSurfaceData.albedo = albedoAlpha.rgb * _BaseColor.rgb;
-    half2 recolour = saturate(SAMPLE_TEXTURE2D(_RecolorMaskMap, sampler_RecolorMaskMap, uv).rg);
+    half4 masks = saturate(SAMPLE_TEXTURE2D(_RecolorMaskMap, sampler_RecolorMaskMap, uv));
+    half2 recolour = masks.rg;
     half3 regionTint = saturate(1.0h - recolour.r - recolour.g) + recolour.r * _ClothColor.rgb + recolour.g * _ThreadColor.rgb;
-    outSurfaceData.albedo *= regionTint;
+    half3 fourTint = saturate(1.0h - dot(masks, half4(1,1,1,1))) + masks.r * _ClothColor.rgb + masks.g * _ThreadColor.rgb + masks.b * _WrapColor.rgb + masks.a * _CordColor.rgb;
+    outSurfaceData.albedo *= lerp(regionTint, fourTint, _FourColorMask);
     outSurfaceData.albedo = AlphaModulate(outSurfaceData.albedo, outSurfaceData.alpha);
 
 #if _SPECULAR_SETUP

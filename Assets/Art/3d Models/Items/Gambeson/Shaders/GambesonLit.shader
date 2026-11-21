@@ -11,6 +11,9 @@ Shader "SimpleRPG/Equipment/Masked Cloth Lit"
         _RecolorMaskMap("Recolour Mask (R Cloth, G Thread)", 2D) = "black" {}
         _ClothColor("Cloth Colour", Color) = (1,1,1,1)
         _ThreadColor("Thread Colour", Color) = (1,1,1,1)
+        _WrapColor("Wrap Colour", Color) = (1,1,1,1)
+        _CordColor("Cord Colour", Color) = (1,1,1,1)
+        [ToggleUI] _FourColorMask("Mask RGBA: Cloth / Thread / Wrap / Cord", Float) = 0
 
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 

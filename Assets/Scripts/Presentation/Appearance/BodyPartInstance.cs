@@ -17,6 +17,9 @@ namespace SimpleRPG.Appearance
         /// <summary>Every renderer of every piece of the part, wherever the piece is parented.</summary>
         public IReadOnlyList<Renderer> Renderers => renderers;
 
+        /// <summary>Takes ownership of an object this part put on the wearer's rig (cloth colliders on a thigh bone); it is destroyed with the part and nothing else.</summary>
+        internal void Own(GameObject go) => attached.Add(go);
+
         internal void Add(Renderer renderer, bool parentedElsewhere)
         {
             renderers.Add(renderer);
@@ -28,11 +31,14 @@ namespace SimpleRPG.Appearance
         {
             gameObject.hideFlags = flags;
             foreach (GameObject go in attached) go.hideFlags = flags;
+            foreach (CordBoneMotion cord in GetComponentsInChildren<CordBoneMotion>(true)) cord.SetBoneHideFlags(flags);
         }
 
         /// <summary>Removes the whole part: the root and every piece parented elsewhere.</summary>
         public void Remove()
         {
+            // Edit-mode components that never awakened do not receive OnDestroy.
+            foreach (CordBoneMotion cord in GetComponentsInChildren<CordBoneMotion>(true)) cord.Release();
             foreach (GameObject go in attached)
             {
                 if (go == null) continue;

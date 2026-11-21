@@ -1,0 +1,27 @@
+{
+    "name": "ClothFitTest.SkirtSwayDemo",
+    "rootNamespace": "",
+    "references": [
+        "SimpleRPG.Presentation",
+        "SimpleRPG.Foundation",
+        "SimpleRPG.AudioModel",
+        "SimpleRPG.Combat",
+        "SimpleRPG.Carrying",
+        "SimpleRPG.Melee",
+        "SimpleRPG.AudioPlayback",
+        "SimpleRPG.Gameplay.Core",
+        "SimpleRPG.Abilities.Runtime",
+        "Unity.Netcode.Runtime",
+        "Unity.InputSystem",
+        "SimpleRPG.Items"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -28,6 +28,8 @@ namespace SimpleRPG.Appearance
         private string[] boneNames;
         [SerializeField] private string rootBoneName;
         [SerializeField] private Bounds localBounds;
+        [SerializeField] private CordMotionProfile cordMotion;
+        [SerializeField] private ClothProfile cloth;
 
         [Header("Rigid parts")]
         [SerializeField, Tooltip("The bone a rigid part is parented to. Ignored when the part is skinned.")]
@@ -52,7 +54,7 @@ namespace SimpleRPG.Appearance
                 if (pieces != null) return pieces;
                 int extra = additionalPieces != null ? additionalPieces.Length : 0;
                 var all = new BodyPartPiece[1 + extra];
-                all[0] = new BodyPartPiece(mesh, materials, boneNames, rootBoneName, localBounds, attachBoneName, attachPosition, attachRotation, attachScale);
+                all[0] = new BodyPartPiece(mesh, materials, boneNames, rootBoneName, localBounds, attachBoneName, attachPosition, attachRotation, attachScale, cordMotion, cloth);
                 for (int i = 0; i < extra; i++) all[1 + i] = additionalPieces[i];
                 pieces = all;
                 return pieces;
@@ -99,7 +101,7 @@ namespace SimpleRPG.Appearance
 
         /// <summary>Fills the part from authored data. Editor tooling only; definitions are never written at runtime.</summary>
         public void Configure(BodyPartSlot slot, Mesh mesh, Material[] materials, string[] boneNames, string rootBoneName, Bounds localBounds,
-            string attachBoneName, Vector3 attachPosition, Quaternion attachRotation, Vector3 attachScale)
+            string attachBoneName, Vector3 attachPosition, Quaternion attachRotation, Vector3 attachScale, CordMotionProfile cordMotion = null, ClothProfile cloth = null)
         {
             this.slot = slot;
             this.mesh = mesh;
@@ -111,6 +113,8 @@ namespace SimpleRPG.Appearance
             this.attachPosition = attachPosition;
             this.attachRotation = attachRotation;
             this.attachScale = attachScale;
+            this.cordMotion = cordMotion;
+            this.cloth = cloth;
             pieces = null;
         }
 
