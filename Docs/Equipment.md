@@ -64,7 +64,8 @@ The starting numbers are a seed, not a design decision:
 | Head | Padded Coif / Kettle Helm / Visored Sallet | 5 / 12 / 18 | 2 by 2 |
 | Chest | Linen Tunic / Gambeson / Mail Hauberk / Plate Armor | 2 / 10 / 28 / 45 | 2 wide, 3 tall |
 | Hands | Leather Gloves / Reinforced Gloves / Plate Gauntlets | 3 / 6 / 12 | 2 by 2 |
-| Legs | Linen Breeches | 2 | 2 wide, 3 tall |
+| Legs | Linen Breeches | 2 |
+| Feet | Tall Leather Boots / Plate Boots | 4 / 14 | 2 by 2 |
 
 The breeches use one skinned renderer, one submesh and one shared masked material. Atlas RGBA selects linen, thread, lower-leg wraps and cords; their colors remain independent without extra material slots. `CordMotionProfile` supplies an item-local skin with 22 accessory bones: three for each waist tail and two for each of the eight short leg tails. `CordBoneMotion` uses critically damped bone springs driven by smoothed attachment motion after animation. Segment lengths stay fixed; inward pose corrections do not feed back as velocity, and teleports reset the springs. The canonical 52-bone body and exported FBX rig stay unchanged. `BodyPartBinder` creates the accessory bones when equipped; they are children of the item and disappear with it. No Unity Cloth or physics collider components are used.
 
@@ -92,7 +93,7 @@ With the player profile's starting curve (see Stats), a full set of the heaviest
 
 - **Rigid helmets are combined.** A head piece whose prefab has no skinned mesh, such as the **Visored Sallet** (a shell and a visor on a pivot), is built from every plain mesh in its prefab, combined into one mesh and worn rigidly on the head bone (appearance holds one part per slot, so a shell and a visor have to be one part). The visor is as the prefab has it, which is closed; it does not move. The prefab is placed on the head the way the eyebrows are, assuming it shares the body model's space; if it sits wrong, adjust the part's attach position and rotation in its asset. Rigid pieces for other slots are not supported yet and are reported.
 - **Hands and feet name their side.** A skinned mesh for gloves or boots must end in `_L` or `_R` (or contain Left or Right); otherwise the tool says so and skips it.
-- **Legs and feet** have no art yet; add them to the seed when they do.
+- **Feet pieces** (**Tall Leather Boots**, about 2,400 triangles each, and **Plate Boots**, about 11,000 each) are two skinned meshes (`<Name>_L`/`_R`) sharing one atlas and one material, worn as `FootLeft`/`FootRight`. The plate boots are one bone per rigid plate on the canonical rig (cap and forward lames on `Toes`, rear lames and heel on `Foot`, shaft on `LowerLeg`); their foot is built in the foot's own frame (`Plate_Boots/Authoring/foot_model.py`, `foot_retopo.py`). Neither has an affix pool or pose-corrective shapes; deep knee and ankle flexion are unchecked (in extreme ankle poses the rear heel-strap plate sinks up to 10 mm into the body).
 - **No world form.** The items have no `WorldPrefab`, so they cannot be dropped on the ground or placed as floor loot (`DungeonPopulation`). They can be found in chests and loot tables, which add item instances straight to an inventory.
 - **No equip sound** (`ItemAudioProfile`) and no affix pools yet.
 - **Wrist fit** between chest items and gloves is the art's job, not the game's: see `Docs/AssetCreationWorkflow.md`.

@@ -98,6 +98,8 @@ namespace SimpleRPG.AppearanceTools
             new Piece("PlateGauntlets", "Plate Gauntlets", EquipmentSlot.hands, 12f),
             new Piece("Breeches", "Linen Breeches", EquipmentSlot.legs, 2f),
             new Piece("ReinforcedLeatherLeggings", "Reinforced Leather Leggings", EquipmentSlot.legs, 6f),
+            new Piece("TallLeatherBoots", "Tall Leather Boots", EquipmentSlot.feet, 4f),
+            new Piece("PlateBoots", "Plate Boots", EquipmentSlot.feet, 14f),
         };
 
         /// <summary>
